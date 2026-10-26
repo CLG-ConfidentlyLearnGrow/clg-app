@@ -570,7 +570,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   ))}
                 </ul>
               )}
-              <SubHeading>Set a student&apos;s curriculum</SubHeading>
+              <SubHeading>Load skills by pasting rows</SubHeading>
+              <ImportSkillsForm frameworks={frameworkOptions} />
+              <SubHeading>Add a curriculum</SubHeading>
+              <FrameworkForm />
+            </Card>
+
+            <Card
+              title="Set a student's curriculum"
+              description="Choose which confirmed curriculum each student follows. A student can have more than one."
+            >
               <StudentFrameworkForm
                 students={studentRows.map((s) => ({
                   id: s.id,
@@ -578,10 +587,6 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 }))}
                 frameworks={confirmedOptions}
               />
-              <SubHeading>Load skills by pasting rows</SubHeading>
-              <ImportSkillsForm frameworks={frameworkOptions} />
-              <SubHeading>Add a curriculum</SubHeading>
-              <FrameworkForm />
             </Card>
 
             <Card
