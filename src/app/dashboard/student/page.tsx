@@ -29,7 +29,7 @@ export default async function StudentDashboard() {
         </Card>
         {me && (
           <Card title="Your next step and progress">
-            <TextLink href={`/students/${me.id}/progress`}>Open your progress page</TextLink>
+            <TextLink href={`/students/${me.id}/progress?view=family`}>Open your progress page</TextLink>
           </Card>
         )}
       </SectionShell>

@@ -3,8 +3,9 @@ import { closeGoal } from "@/app/actions/progress";
 import { Button, Card, Page, TextLink } from "@/components/ui";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Attendance, type SkillLevel } from "@/lib/progress";
+import { levelFits, subjectFits } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
-import { AddGoalForm, ReflectionForm, SessionNoteForm, type GoalSkill } from "./forms";
+import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill } from "./forms";
 
 type Skill = {
   id: string;
@@ -21,6 +22,14 @@ type Goal = {
   status: "active" | "achieved" | "stopped";
   goal_skills: { skill: Skill | null }[];
 };
+type FamilyNote = {
+  id: string;
+  kind: "feedback" | "home_progress";
+  body: string;
+  written_at: string;
+  writer: { full_name: string } | null;
+};
+const FAMILY_NOTE_NAMES = { feedback: "Feedback", home_progress: "Progress at home" } as const;
 type Reflection = { confidence: number; what_was_hard: string | null; what_i_will_try: string | null };
 type Note = {
   id: string;
@@ -47,11 +56,34 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const viewer = await requireViewer();
   if (needsTwoStep(viewer)) redirect("/mfa");
   const { id } = await params;
-  const { subject } = await searchParams;
+  const { subject, view } = await searchParams;
   const supabase = await createClient();
 
-  const student = await supabase.from("students").select("id, full_name, year_level").eq("id", id).maybeSingle();
+  const student = await supabase
+    .from("students")
+    .select("id, full_name, year_level, goals, extra_info, account_id")
+    .eq("id", id)
+    .maybeSingle();
   if (!student.data) notFound();
+
+  // Who is the viewer to this student? Someone can be a parent and also
+  // staff (Carla is both), so the family view is chosen from the link they
+  // came in on, and staff tools only show to this student's own tutors and
+  // admins.
+  const [familyLink, myAssignment, requested, familyNotes] = await Promise.all([
+    supabase.from("parent_student_links").select("student_id").eq("student_id", id).eq("parent_id", viewer.id).maybeSingle(),
+    supabase.from("tutor_assignments").select("id").eq("student_id", id).eq("tutor_id", viewer.id).limit(1),
+    supabase.from("student_subjects").select("subject, working_level").eq("student_id", id).order("added_at"),
+    supabase
+      .from("family_notes")
+      .select("id, kind, body, written_at, writer:accounts!family_notes_written_by_fkey(full_name)")
+      .eq("student_id", id)
+      .order("written_at", { ascending: false })
+      .limit(20),
+  ]);
+  const isFamilyMember = Boolean(familyLink.data) || student.data.account_id === viewer.id;
+  const isStudentStaff = viewer.roles.includes("admin") || (myAssignment.data ?? []).length > 0;
+  const familyView = isFamilyMember && (view === "family" || !isStudentStaff);
 
   const [frameworks, goals, levels, notes] = await Promise.all([
     supabase.from("student_frameworks").select("framework_id").eq("student_id", id),
@@ -74,8 +106,8 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       .limit(10),
   ]);
 
-  const isStaff = viewer.roles.includes("tutor") || viewer.roles.includes("admin");
-  const isFamily = viewer.roles.includes("parent") || viewer.roles.includes("student");
+  const isStaff = isStudentStaff && !familyView;
+  const isFamily = familyView;
   const goalRows = (goals.data ?? []) as unknown as Goal[];
   const activeGoals = goalRows.filter((g) => g.status === "active");
   const closedGoals = goalRows.filter((g) => g.status !== "active");
@@ -122,6 +154,12 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       subjectSkills = (list.data ?? []) as Skill[];
     }
   }
+
+  // Skills at the level the family gave for this subject (or the school
+  // year if they weren't sure) start ticked when adding a goal.
+  const startLevel =
+    (requested.data ?? []).find((r) => r.working_level && subjectFits(r.subject, chosenSubject))?.working_level ??
+    student.data.year_level;
 
   const noteSkills: GoalSkill[] = [];
   const seen = new Set<string>();
@@ -176,6 +214,38 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         </Card>
       )}
 
+      {isFamily && (
+        <Card
+          title="Tell the tutor"
+          description="Share feedback, or how practice is going at home. The tutor and CLG will see it."
+        >
+          <FamilyNoteForm studentId={id} />
+        </Card>
+      )}
+
+      {isStaff && (
+        <Card title="What the family asked for">
+          <div className="space-y-2 text-sm">
+            <p>
+              <strong>Subjects:</strong>{" "}
+              {(requested.data ?? []).length > 0
+                ? (requested.data ?? [])
+                    .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "level unsure"})`)
+                    .join(", ")
+                : "None given"}
+            </p>
+            <p>
+              <strong>End goal:</strong> {student.data.goals || "None given"}
+            </p>
+            {student.data.extra_info && (
+              <p>
+                <strong>Other information:</strong> {student.data.extra_info}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
       <Card title="Goals and skills">
         {activeGoals.length === 0 ? (
           <p className="text-sm">No goals set yet. The tutor sets 1 to 3 goals per subject in the first sessions.</p>
@@ -218,6 +288,10 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
             ))}
           </ul>
         )}
+        <p className="mt-4 text-xs text-zinc-500">
+          The tutor chooses the skills, starting from the level the student seems to be at. They may change in the
+          first three sessions as the tutor gets to know the student.
+        </p>
         {closedGoals.length > 0 && (
           <p className="mt-4 text-xs text-zinc-500">
             Finished goals: {closedGoals.map((g) => `${g.title} (${g.status})`).join("; ")}
@@ -268,11 +342,33 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                 <AddGoalForm
                   studentId={id}
                   subject={chosenSubject}
-                  skills={subjectSkills.map((s) => ({ id: s.id, label: skillLabel(s), levelBand: s.level_band }))}
+                  skills={subjectSkills.map((s) => ({
+                    id: s.id,
+                    label: skillLabel(s),
+                    levelBand: s.level_band,
+                    ticked: levelFits(startLevel, s.level_band),
+                  }))}
+                  startLevel={startLevel}
                 />
               )}
             </>
           )}
+        </Card>
+      )}
+
+      {(familyNotes.data ?? []).length > 0 && (
+        <Card collapsible title="Notes from home">
+          <ul className="space-y-3 text-sm">
+            {(familyNotes.data as unknown as FamilyNote[]).map((n) => (
+              <li key={n.id} className="border-t border-zinc-200 pt-3 first:border-0 first:pt-0">
+                <p className="text-xs text-zinc-500">
+                  {FAMILY_NOTE_NAMES[n.kind]}, {n.written_at.slice(0, 10)}
+                  {n.writer?.full_name && `, from ${n.writer.full_name}`}
+                </p>
+                <p className="whitespace-pre-line">{n.body}</p>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 

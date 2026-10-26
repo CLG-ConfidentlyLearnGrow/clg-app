@@ -64,3 +64,37 @@ export const SUBJECT_SUGGESTIONS = [
   "Research Project",
   "Study skills",
 ] as const;
+
+// The same subject and level matching the database uses to attach a
+// curriculum (private.subject_fits and private.level_fits), so "General
+// Maths" finds the Australian Curriculum's "Mathematics".
+function normSubject(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/\(.*\)/g, "")
+    .replace(/\s+(f|\d+)\s*[-–]\s*\d+$/, "")
+    .replace(/\bmaths?\b/g, "mathematics")
+    .replace(/^humanities and social sciences$/, "hass")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function subjectFits(requested: string, curriculum: string) {
+  const req = normSubject(requested);
+  const cur = normSubject(curriculum);
+  return (
+    req !== "" &&
+    (cur === req ||
+      cur === req.replace(/^(general|essential|advanced|specialist|foundation) /, "") ||
+      (req === "literacy" && cur === "english") ||
+      (req === "numeracy" && cur === "mathematics"))
+  );
+}
+
+export function levelFits(level: string | null, band: string) {
+  if (!level) return false;
+  const l = level.trim().toLowerCase();
+  const b = band.trim().toLowerCase();
+  return b === l || b.startsWith(`${l} (`);
+}

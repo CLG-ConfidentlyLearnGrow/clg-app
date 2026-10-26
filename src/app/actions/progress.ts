@@ -143,3 +143,23 @@ export async function saveReflection(_prev: FormState, formData: FormData): Prom
   revalidatePath(progressPath(v.student_id));
   return { message: "Thanks! Your tutor will see this before your next session." };
 }
+
+// Feedback, or how practice is going at home, from the student or a parent.
+const familyNoteSchema = z.object({
+  student_id: z.uuid(),
+  kind: z.enum(["feedback", "home_progress"], "Choose what kind of note this is."),
+  body: z.string().trim().min(1, "Write a few words.").max(2000, "Please keep it under 2,000 characters."),
+});
+
+export async function saveFamilyNote(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = familyNoteSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("family_notes").insert(parsed.data);
+  if (error) return { error: "Couldn't send it. Please try again." };
+
+  revalidatePath(progressPath(parsed.data.student_id));
+  return { message: "Thanks! The tutor and CLG will see this." };
+}

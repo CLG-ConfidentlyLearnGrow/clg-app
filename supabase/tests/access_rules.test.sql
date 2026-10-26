@@ -136,7 +136,7 @@ reset role;
 
 select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
-select public.add_my_child('Cara One', (current_date - interval '10 years')::date, 'SA', 'Year 5', 'Hill PS');
+select public.add_my_child('Cara One', (current_date - interval '10 years')::date, 'SA', 'Year 5', 'Hill PS', '[{"subject": "General Maths", "level": "Year 5"}]');
 select tests.eq((select count(*) from public.students), 1, 'P1 sees own child');
 select tests.eq((select count(*) from public.families), 1, 'P1 sees own family');
 -- Escalation attempts
@@ -163,8 +163,8 @@ set role authenticated;
 select tests.fails($$select public.add_my_child('No Year', (current_date - interval '12 years')::date, 'SA')$$, 'child without year level');
 select tests.fails($$select public.add_my_child('Bad Year', (current_date - interval '12 years')::date, 'SA', 'Grade 7', 'Hill PS')$$, 'child with unknown year level');
 select tests.fails($$select public.add_my_child('No School', (current_date - interval '12 years')::date, 'SA', 'Year 7', '  ')$$, 'child without school');
-select public.add_my_child('Cal Two', (current_date - interval '12 years')::date, 'SA', 'Year 7', 'Hill PS');
-select public.add_my_child('Vic Two', (current_date - interval '9 years')::date, 'VIC', 'Year 4', 'Bay PS');
+select public.add_my_child('Cal Two', (current_date - interval '12 years')::date, 'SA', 'Year 7', 'Hill PS', '[{"subject": "English"}]');
+select public.add_my_child('Vic Two', (current_date - interval '9 years')::date, 'VIC', 'Year 4', 'Bay PS', '[{"subject": "English"}]');
 select tests.eq((select count(*) from public.students), 2, 'P2 sees only own children');
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-000000000001'), 0, 'P2 cannot see P1');
 select tests.eq((select count(*) from public.account_private), 1, 'P2 sees only own contact details');

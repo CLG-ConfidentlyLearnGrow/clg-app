@@ -1,6 +1,6 @@
 "use client";
 
-import { addGoal, saveReflection, saveSessionNote } from "@/app/actions/progress";
+import { addGoal, saveFamilyNote, saveReflection, saveSessionNote } from "@/app/actions/progress";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
 import {
@@ -12,17 +12,19 @@ import {
   type SkillLevel,
 } from "@/lib/progress";
 
-export type SkillOption = { id: string; label: string; levelBand: string };
+export type SkillOption = { id: string; label: string; levelBand: string; ticked?: boolean };
 export type GoalSkill = { id: string; label: string; level: SkillLevel; goal: string };
 
 export function AddGoalForm({
   studentId,
   subject,
   skills,
+  startLevel,
 }: {
   studentId: string;
   subject: string;
   skills: SkillOption[];
+  startLevel?: string | null;
 }) {
   return (
     <ActionForm action={addGoal} submitLabel="Add goal">
@@ -39,12 +41,15 @@ export function AddGoalForm({
       <fieldset className="space-y-1">
         <legend className="mb-1 text-sm font-medium">Skills this goal covers</legend>
         <p className="text-xs text-zinc-500">
-          Pick by what the student is ready for, not their year level. The year is shown for context only.
+          {startLevel
+            ? `Skills at ${startLevel} (the level given for this subject) start ticked. Untick or add others to suit what the student is ready for.`
+            : "Pick by what the student is ready for, not their year level. The year is shown for context only."}{" "}
+          Skills may change in the first three sessions as you get to know the student.
         </p>
         <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2">
           {skills.map((s) => (
             <label key={s.id} className="flex items-start gap-2 text-sm">
-              <input type="checkbox" name="skill_id" value={s.id} className="mt-1" />
+              <input type="checkbox" name="skill_id" value={s.id} defaultChecked={s.ticked} className="mt-1" />
               <span>
                 <span className="text-zinc-500">{s.levelBand}:</span> {s.label}
               </span>
@@ -148,6 +153,26 @@ export function ReflectionForm({ studentId, noteId }: { studentId: string; noteI
       </Select>
       <Field label="What was hard? (optional)" name="what_was_hard" maxLength={500} />
       <Field label="What will you try before next time? (optional)" name="what_i_will_try" maxLength={500} />
+    </ActionForm>
+  );
+}
+
+export function FamilyNoteForm({ studentId }: { studentId: string }) {
+  return (
+    <ActionForm action={saveFamilyNote} submitLabel="Send">
+      <input type="hidden" name="student_id" value={studentId} />
+      <Select label="What is it?" name="kind" defaultValue="home_progress" required>
+        <option value="home_progress">Progress at home</option>
+        <option value="feedback">Feedback</option>
+      </Select>
+      <TextArea
+        label="Your note"
+        name="body"
+        rows={4}
+        required
+        maxLength={2000}
+        hint="For example, practice done this week, something that clicked, or how sessions are going. For a worry about safety, contact CLG directly."
+      />
     </ActionForm>
   );
 }
