@@ -136,7 +136,7 @@ export function Select({
 export function Button({ children, ...props }: ComponentProps<"button">) {
   return (
     <button
-      className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 hover:shadow disabled:opacity-50"
+      className="shrink-0 rounded-full bg-teal-700 px-5 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition hover:bg-teal-800 hover:shadow disabled:opacity-50"
       {...props}
     >
       {children}

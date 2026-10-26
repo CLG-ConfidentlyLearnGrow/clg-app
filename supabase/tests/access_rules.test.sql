@@ -269,9 +269,12 @@ insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at)
 select tests.fails($$update public.tutor_work_settings set work_state = 'NSW' where tutor_id = '00000000-0000-0000-0000-000000000011'$$, 'tutor changes own work state');
 select tests.fails($$insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at) values ('00000000-0000-0000-0000-000000000012', 1, '09:00', '10:00')$$, 'tutor edits another tutor availability');
 select tests.fails($$select public.eligible_tutors(gen_random_uuid())$$, 'tutor lists eligible tutors');
-select tests.fails($$insert into public.tutor_checks (tutor_id, kind, expires_on) values ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', current_date + 999)$$, 'tutor records own check');
+-- A tutor may add their own check, but it waits for an admin (see tutor_checks.test.sql).
+insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'SELF', current_date + 999);
+select tests.eq((select count(*) from public.tutor_checks where reference = 'SELF' and verified_at is not null), 0, 'tutor cannot verify own check');
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject) select '00000000-0000-0000-0000-000000000011', id, 'x' from public.students limit 1$$, 'tutor assigns self');
 reset role;
+delete from public.tutor_checks where reference = 'SELF';
 
 -- Parents see their child's tutor; other parents do not.
 select tests.claims('00000000-0000-0000-0000-000000000001');
@@ -348,8 +351,10 @@ select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
 set role authenticated;
 select tests.eq((select count(*) from public.students), 0, 'interstate tutor needs own state check too');
 reset role;
+select tests.claims(null);
 insert into public.tutor_checks (tutor_id, kind, reference, expires_on, verified_at) values
   ('00000000-0000-0000-0000-000000000011', 'wwc_vic', 'VIC-1', current_date + 365, now());
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
 set role authenticated;
 select tests.eq((select count(*) from public.students), 2, 'access back once both checks held');
 reset role;
