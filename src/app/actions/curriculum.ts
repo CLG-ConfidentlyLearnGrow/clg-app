@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
+import { ACARA_VERSION, acaraSource } from "@/lib/acara";
 import { createClient } from "@/lib/supabase/server";
 
 // Loading curricula into the shared skill library. Admins only; the
@@ -31,7 +32,7 @@ export async function createFramework(_prev: FormState, formData: FormData): Pro
   if (error) return { error: "Couldn't add it. That code and version may already exist." };
 
   revalidatePath("/admin");
-  return { message: "Curriculum added. Now load its skills." };
+  return { message: "Curriculum added as a draft. Load its skills, then check the summary and confirm it." };
 }
 
 // Splits one CSV line, allowing "quoted, text" with commas inside.
@@ -124,4 +125,117 @@ export async function setStudentFramework(_prev: FormState, formData: FormData):
 
   revalidatePath("/admin");
   return { message: "Curriculum set for this student." };
+}
+
+// Confirm a draft curriculum once its summary looks right, or throw it away.
+export async function confirmCurriculum(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("framework_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("confirm_curriculum", { p_framework: id.data });
+  revalidatePath("/admin");
+}
+
+export async function discardCurriculum(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("framework_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("discard_curriculum", { p_framework: id.data });
+  revalidatePath("/admin");
+}
+
+// Load many curricula at once from ACARA's Australian Curriculum file. The
+// file is read in the admin's browser; only the chosen subjects arrive here.
+// Each one is saved as a draft for an admin to check and confirm.
+const acaraPayload = z
+  .array(
+    z.object({
+      code: z.string().regex(/^[A-Za-z0-9_.-]{1,30}$/),
+      name: z.string().min(1).max(200),
+      subject: z.string().min(1).max(100),
+      skills: z
+        .array(
+          z.object({
+            code: z.string().max(40),
+            level_band: z.string().min(1).max(60),
+            description: z.string().min(1).max(2000),
+          }),
+        )
+        .min(1)
+        .max(1000),
+    }),
+  )
+  .min(1, "Tick at least one subject.")
+  .max(100);
+
+export async function importAcara(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("payload") ?? "[]"));
+  } catch {
+    return { error: "Couldn't read the subjects. Please choose the file again." };
+  }
+  const parsed = acaraPayload.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const total = parsed.data.reduce((n, c) => n + c.skills.length, 0);
+  if (total > 5000) return { error: "That's too many skills at once. Choose fewer subjects." };
+
+  const accessed = new Date().toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Australia/Adelaide",
+  });
+  const supabase = await createClient();
+  const loaded: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const cur of parsed.data) {
+    const { data: fw, error } = await supabase
+      .from("curriculum_frameworks")
+      .insert({ code: cur.code, name: cur.name, version: ACARA_VERSION, source: acaraSource(accessed) })
+      .select("id")
+      .single();
+    if (error || !fw) {
+      (error?.code === "23505" ? skipped : failed).push(cur.subject);
+      continue;
+    }
+    const rows = cur.skills.map((s, i) => ({
+      framework_id: fw.id,
+      subject: cur.subject,
+      level_band: s.level_band,
+      code: s.code || null,
+      description: s.description,
+      sort_order: i,
+    }));
+    const { error: skillError } = await supabase.from("curriculum_skills").insert(rows);
+    if (skillError) {
+      // Don't leave a half-loaded draft behind.
+      await supabase.rpc("discard_curriculum", { p_framework: fw.id });
+      failed.push(cur.subject);
+      continue;
+    }
+    loaded.push(cur.subject);
+  }
+
+  revalidatePath("/admin");
+  const parts = [];
+  if (loaded.length) parts.push(`${loaded.length} loaded as drafts. Check and confirm them above.`);
+  if (skipped.length) parts.push(`Already loaded, so skipped: ${skipped.join(", ")}.`);
+  if (failed.length) parts.push(`Couldn't load: ${failed.join(", ")}. Please try those again.`);
+  return loaded.length ? { message: parts.join(" ") } : { error: parts.join(" ") };
+}
+
+export async function confirmAllCurricula() {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data } = await supabase.from("curriculum_frameworks").select("id").is("confirmed_at", null);
+  for (const f of data ?? []) {
+    await supabase.rpc("confirm_curriculum", { p_framework: f.id });
+  }
+  revalidatePath("/admin");
 }

@@ -3,6 +3,8 @@ import {
   releaseHold,
   verifyParentLink,
 } from "@/app/actions/admin";
+import { confirmAllCurricula, confirmCurriculum, discardCurriculum } from "@/app/actions/curriculum";
+import { AcaraImportForm } from "./acara-import";
 import { Button, Card, Empty, SubHeading, Table } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
@@ -155,13 +157,37 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   }[];
   const frameworkList = await supabase
     .from("curriculum_frameworks")
-    .select("id, code, name, version")
+    .select("id, code, name, version, confirmed_at, source")
     .eq("active", true)
     .order("code");
-  const frameworkOptions = (frameworkList.data ?? []).map((f) => ({
-    id: f.id,
+  const frameworks = (frameworkList.data ?? []).map((f) => ({
+    id: f.id as string,
+    code: f.code as string,
     name: `${f.code}: ${f.name} (v${f.version})`,
+    confirmed: Boolean(f.confirmed_at),
+    source: (f.source as string | null) ?? null,
   }));
+  const frameworkOptions = frameworks.map(({ id, name }) => ({ id, name }));
+  const confirmedOptions = frameworks
+    .filter((f) => f.confirmed)
+    .map(({ id, name }) => ({ id, name }));
+  const drafts = await Promise.all(
+    frameworks
+      .filter((f) => !f.confirmed)
+      .map(async (f) => {
+        const summary = await supabase.rpc("curriculum_summary", {
+          p_framework: f.id,
+        });
+        return {
+          ...f,
+          summary: (summary.data ?? []) as {
+            subject: string;
+            level_band: string;
+            skills: number;
+          }[],
+        };
+      }),
+  );
   const isOwner = me.data?.level === "owner";
   const dueRows = (due.data ?? []) as Due[];
   const holdRows = (holds.data ?? []) as unknown as Hold[];
@@ -215,9 +241,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               ? pendingLinks.length
               : s.id === "tutors"
                 ? pendingCheckRows.length
-                : s.id === "records"
-                  ? dueRows.length
-                  : undefined,
+                : s.id === "curriculum" && drafts.length
+                  ? drafts.length
+                  : s.id === "records"
+                    ? dueRows.length
+                    : undefined,
         }))}
       >
         {section === "families" && (
@@ -428,19 +456,99 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
         {section === "curriculum" && (
           <>
+            {drafts.length > 0 && (
+              <Card
+                title={`Curricula to check and confirm (${drafts.length})`}
+                description="Each one is a draft until you confirm it. Open one to see how many skills it has for each year, then confirm it so tutors can use it in goals."
+              >
+                <ul className="divide-y divide-zinc-100">
+                  {drafts.map((d) => {
+                    const total = d.summary.reduce((n, r) => n + Number(r.skills), 0);
+                    return (
+                      <li key={d.id} className="py-3 first:pt-0">
+                        <details>
+                          <summary className="cursor-pointer text-sm">
+                            <span className="font-medium">{d.name}</span>{" "}
+                            <span className="text-zinc-600">({total.toLocaleString("en-AU")} skills)</span>
+                          </summary>
+                          <div className="mt-3 space-y-3">
+                            {total === 0 ? (
+                              <Empty>No skills loaded yet.</Empty>
+                            ) : (
+                              <div className="max-h-64 overflow-y-auto">
+                                <Table headings={["Subject", "Year or level", "Skills"]}>
+                                  {d.summary.map((r) => (
+                                    <tr key={`${r.subject}-${r.level_band}`}>
+                                      <td className="font-medium">{r.subject}</td>
+                                      <td>{r.level_band}</td>
+                                      <td>{r.skills}</td>
+                                    </tr>
+                                  ))}
+                                </Table>
+                              </div>
+                            )}
+                            {d.source && <p className="text-xs text-zinc-500">Source: {d.source}</p>}
+                          </div>
+                        </details>
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          {total > 0 && (
+                            <form action={confirmCurriculum}>
+                              <input type="hidden" name="framework_id" value={d.id} />
+                              <button type="submit" className="text-sm font-medium text-teal-800 underline">
+                                Confirm
+                              </button>
+                            </form>
+                          )}
+                          <form action={discardCurriculum}>
+                            <input type="hidden" name="framework_id" value={d.id} />
+                            <button type="submit" className="text-sm text-red-700 underline">
+                              Throw away
+                            </button>
+                          </form>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {drafts.length > 1 && (
+                  <form action={confirmAllCurricula} className="mt-4">
+                    <Button type="submit">Confirm all {drafts.length}</Button>
+                  </form>
+                )}
+              </Card>
+            )}
+
+            <Card
+              title="Load the Australian Curriculum"
+              description="Load many subjects at once from ACARA's curriculum file."
+            >
+              <AcaraImportForm loadedCodes={frameworks.map((f) => f.code)} />
+            </Card>
+
             <Card
               title="Curriculum and skills"
-              description={
-                <>
-                  Goals are built from these skills. Load each curriculum once,
-                  then set which one applies to each student.
-                </>
-              }
+              description="Goals are built from these skills. Load each curriculum once, confirm it, then set which one applies to each student."
             >
-              {frameworkOptions.length > 0 && (
-                <ul className="mb-4 list-disc pl-5 text-sm">
-                  {frameworkOptions.map((f) => (
-                    <li key={f.id}>{f.name}</li>
+              {frameworks.length === 0 ? (
+                <Empty>No curriculum loaded yet.</Empty>
+              ) : (
+                <ul className="mb-2 space-y-1 text-sm">
+                  {frameworks.map((f) => (
+                    <li
+                      key={f.id}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <span className="font-medium">{f.name}</span>
+                      {f.confirmed ? (
+                        <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-800">
+                          In use
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-zinc-100 px-2 text-xs text-zinc-600">
+                          Draft
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -450,9 +558,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   id: s.id,
                   name: `${s.full_name} (${s.state})`,
                 }))}
-                frameworks={frameworkOptions}
+                frameworks={confirmedOptions}
               />
-              <SubHeading>Load skills</SubHeading>
+              <SubHeading>Load skills by pasting rows</SubHeading>
               <ImportSkillsForm frameworks={frameworkOptions} />
               <SubHeading>Add a curriculum</SubHeading>
               <FrameworkForm />

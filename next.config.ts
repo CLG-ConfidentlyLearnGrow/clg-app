@@ -11,6 +11,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // Loading the whole Australian Curriculum at once sends about 1MB.
+      bodySizeLimit: "3mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -22,6 +22,11 @@ insert into public.curriculum_skills (id, framework_id, subject, level_band, cod
   ('00000000-0000-0000-0000-00000000c001', '00000000-0000-0000-0000-00000000f001', 'Mathematics', 'Year 5', 'M5-1', 'Fractions skill'),
   ('00000000-0000-0000-0000-00000000c002', '00000000-0000-0000-0000-00000000f001', 'Mathematics', 'Year 4', 'M4-1', 'Place value skill'),
   ('00000000-0000-0000-0000-00000000c003', '00000000-0000-0000-0000-00000000f001', 'English', 'Year 3', 'E3-1', 'Spelling skill');
+-- A new curriculum is a draft until confirmed.
+select tests.fails($$insert into public.student_frameworks (student_id, framework_id) values ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-00000000f001')$$, 'draft curriculum cannot be set for a student');
+select tests.fails($$update public.curriculum_frameworks set confirmed_at = now()$$, 'confirming by direct edit');
+select tests.eq((select public.confirm_curriculum('00000000-0000-0000-0000-00000000f001'))::int, 1, 'admin confirms curriculum');
+select tests.eq((select count(*) from public.curriculum_frameworks where confirmed_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'confirmation stamped');
 insert into public.student_frameworks (student_id, framework_id) values (:'cara', '00000000-0000-0000-0000-00000000f001');
 select tests.eq((select count(*) from public.student_frameworks where set_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'framework assignment stamped');
 select tests.fails($$delete from public.curriculum_skills where code = 'E3-1'$$, 'skills cannot be deleted');
