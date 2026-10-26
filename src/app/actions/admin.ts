@@ -25,6 +25,21 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   // Recorded through the admin's own session, so the database decides
   // whether this admin may invite this role.
   const supabase = await createClient();
+
+  // Someone who already has a CLG account (for example a parent who also
+  // tutors) gets the role straight away instead of an invitation email.
+  const existing = await supabase.rpc("grant_staff_role", { p_email: email, p_role: role });
+  if (existing.error) {
+    const plain = ["42501", "22023", "23505"].includes(existing.error.code ?? "");
+    return { error: plain ? `${existing.error.message}.` : "Couldn't add them. Please try again." };
+  }
+  if (existing.data === true) {
+    revalidatePath("/admin");
+    return {
+      message: `${email} already had a CLG account, so they are now a ${role}. They'll see the new tools next time they sign in, after setting up two-step login.`,
+    };
+  }
+
   const invitation = await supabase
     .from("invitations")
     .insert({ email, role, invited_by: viewer.id })
