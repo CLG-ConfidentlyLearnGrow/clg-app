@@ -508,14 +508,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                           {total > 0 && (
                             <form action={confirmCurriculum}>
                               <input type="hidden" name="framework_id" value={d.id} />
-                              <button type="submit" className="text-sm font-medium text-teal-800 underline">
+                              <button type="submit" className="text-sm font-medium text-teal-800 underline hover:font-bold hover:text-teal-950">
                                 Confirm
                               </button>
                             </form>
                           )}
                           <form action={discardCurriculum}>
                             <input type="hidden" name="framework_id" value={d.id} />
-                            <button type="submit" className="text-sm text-red-700 underline">
+                            <button type="submit" className="text-sm text-red-700 underline hover:font-bold hover:text-red-900">
                               Throw away
                             </button>
                           </form>

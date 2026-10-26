@@ -51,3 +51,13 @@ body {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/* Show a pointing hand over anything that can be clicked (Tailwind 4
+   leaves buttons with a plain arrow by default). */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
