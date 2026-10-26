@@ -3,6 +3,7 @@ import {
   releaseHold,
   verifyParentLink,
 } from "@/app/actions/admin";
+import { confirmCurriculum, discardCurriculum } from "@/app/actions/curriculum";
 import { Button, Card, Empty, SubHeading, Table } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
@@ -155,13 +156,36 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   }[];
   const frameworkList = await supabase
     .from("curriculum_frameworks")
-    .select("id, code, name, version")
+    .select("id, code, name, version, confirmed_at, source")
     .eq("active", true)
     .order("code");
-  const frameworkOptions = (frameworkList.data ?? []).map((f) => ({
-    id: f.id,
+  const frameworks = (frameworkList.data ?? []).map((f) => ({
+    id: f.id as string,
     name: `${f.code}: ${f.name} (v${f.version})`,
+    confirmed: Boolean(f.confirmed_at),
+    source: (f.source as string | null) ?? null,
   }));
+  const frameworkOptions = frameworks.map(({ id, name }) => ({ id, name }));
+  const confirmedOptions = frameworks
+    .filter((f) => f.confirmed)
+    .map(({ id, name }) => ({ id, name }));
+  const drafts = await Promise.all(
+    frameworks
+      .filter((f) => !f.confirmed)
+      .map(async (f) => {
+        const summary = await supabase.rpc("curriculum_summary", {
+          p_framework: f.id,
+        });
+        return {
+          ...f,
+          summary: (summary.data ?? []) as {
+            subject: string;
+            level_band: string;
+            skills: number;
+          }[],
+        };
+      }),
+  );
   const isOwner = me.data?.level === "owner";
   const dueRows = (due.data ?? []) as Due[];
   const holdRows = (holds.data ?? []) as unknown as Hold[];
@@ -215,9 +239,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               ? pendingLinks.length
               : s.id === "tutors"
                 ? pendingCheckRows.length
-                : s.id === "records"
-                  ? dueRows.length
-                  : undefined,
+                : s.id === "curriculum" && drafts.length
+                  ? drafts.length
+                  : s.id === "records"
+                    ? dueRows.length
+                    : undefined,
         }))}
       >
         {section === "families" && (
@@ -428,19 +454,89 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
         {section === "curriculum" && (
           <>
+            {drafts.map((d) => {
+              const total = d.summary.reduce((n, r) => n + Number(r.skills), 0);
+              const subjects = [...new Set(d.summary.map((r) => r.subject))];
+              return (
+                <Card
+                  key={d.id}
+                  title={`Check and confirm: ${d.name}`}
+                  description={
+                    <>
+                      This curriculum is a draft. Check the summary below, then
+                      confirm it so tutors can use it in goals.{" "}
+                      {d.source && <>Source: {d.source}.</>}
+                    </>
+                  }
+                >
+                  {total === 0 ? (
+                    <Empty>No skills loaded yet. Load them below.</Empty>
+                  ) : (
+                    <>
+                      <p className="mb-4 text-sm">
+                        <strong>{total.toLocaleString("en-AU")}</strong> skills
+                        across <strong>{subjects.length}</strong> subjects.
+                      </p>
+                      <div className="mb-4 max-h-80 overflow-y-auto">
+                        <Table
+                          headings={["Subject", "Year or level", "Skills"]}
+                        >
+                          {d.summary.map((r) => (
+                            <tr key={`${r.subject}-${r.level_band}`}>
+                              <td className="font-medium">{r.subject}</td>
+                              <td>{r.level_band}</td>
+                              <td>{r.skills}</td>
+                            </tr>
+                          ))}
+                        </Table>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {total > 0 && (
+                      <form action={confirmCurriculum}>
+                        <input type="hidden" name="framework_id" value={d.id} />
+                        <Button type="submit">Confirm this curriculum</Button>
+                      </form>
+                    )}
+                    <form action={discardCurriculum}>
+                      <input type="hidden" name="framework_id" value={d.id} />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-red-300 px-5 py-2.5 text-sm text-red-700 transition hover:bg-red-50"
+                      >
+                        Throw this draft away
+                      </button>
+                    </form>
+                  </div>
+                </Card>
+              );
+            })}
+
             <Card
               title="Curriculum and skills"
-              description={
-                <>
-                  Goals are built from these skills. Load each curriculum once,
-                  then set which one applies to each student.
-                </>
-              }
+              description="Goals are built from these skills. Load each curriculum once, confirm it, then set which one applies to each student."
             >
-              {frameworkOptions.length > 0 && (
-                <ul className="mb-4 list-disc pl-5 text-sm">
-                  {frameworkOptions.map((f) => (
-                    <li key={f.id}>{f.name}</li>
+              {frameworks.length === 0 ? (
+                <Empty>No curriculum loaded yet.</Empty>
+              ) : (
+                <ul className="mb-2 space-y-1 text-sm">
+                  {frameworks.map((f) => (
+                    <li
+                      key={f.id}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <span className="font-medium">{f.name}</span>
+                      {f.confirmed ? (
+                        <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-800">
+                          In use
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-zinc-100 px-2 text-xs text-zinc-600">
+                          Draft
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -450,7 +546,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   id: s.id,
                   name: `${s.full_name} (${s.state})`,
                 }))}
-                frameworks={frameworkOptions}
+                frameworks={confirmedOptions}
               />
               <SubHeading>Load skills</SubHeading>
               <ImportSkillsForm frameworks={frameworkOptions} />

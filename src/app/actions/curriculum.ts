@@ -31,7 +31,7 @@ export async function createFramework(_prev: FormState, formData: FormData): Pro
   if (error) return { error: "Couldn't add it. That code and version may already exist." };
 
   revalidatePath("/admin");
-  return { message: "Curriculum added. Now load its skills." };
+  return { message: "Curriculum added as a draft. Load its skills, then check the summary and confirm it." };
 }
 
 // Splits one CSV line, allowing "quoted, text" with commas inside.
@@ -124,4 +124,23 @@ export async function setStudentFramework(_prev: FormState, formData: FormData):
 
   revalidatePath("/admin");
   return { message: "Curriculum set for this student." };
+}
+
+// Confirm a draft curriculum once its summary looks right, or throw it away.
+export async function confirmCurriculum(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("framework_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("confirm_curriculum", { p_framework: id.data });
+  revalidatePath("/admin");
+}
+
+export async function discardCurriculum(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("framework_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("discard_curriculum", { p_framework: id.data });
+  revalidatePath("/admin");
 }
