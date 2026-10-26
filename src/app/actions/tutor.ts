@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
@@ -74,31 +75,67 @@ const myCheckSchema = z.object({
   expires_on: z.union([z.iso.date(), z.literal("")]).optional(),
 });
 
-// A tutor adds or renews one of their own checks. It is logged and waits for
-// CLG to confirm it against the official record before it counts.
+// The copy of a certificate a tutor attaches: a PDF or a photo.
+const MAX_DOCUMENT_BYTES = 3.5 * 1024 * 1024;
+
+// Works out the file type from its first bytes, not from its name.
+function documentType(bytes: Uint8Array): { ext: string; type: string } | null {
+  const starts = (...sig: number[]) => sig.every((b, i) => bytes[i] === b);
+  if (starts(0x25, 0x50, 0x44, 0x46)) return { ext: "pdf", type: "application/pdf" };
+  if (starts(0xff, 0xd8, 0xff)) return { ext: "jpg", type: "image/jpeg" };
+  if (starts(0x89, 0x50, 0x4e, 0x47)) return { ext: "png", type: "image/png" };
+  if (starts(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+    return { ext: "webp", type: "image/webp" };
+  }
+  return null;
+}
+
+// A tutor adds or renews one of their own checks, with a copy of the
+// certificate. It is logged and waits for CLG to confirm it against the
+// official record before it counts.
 export async function submitMyCheck(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireTutor();
-  const parsed = myCheckSchema.safeParse(Object.fromEntries(formData));
+  const { document, ...fields } = Object.fromEntries(formData);
+  const parsed = myCheckSchema.safeParse(fields);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
   const dates = checkDates(v.kind, v.reference, v.completed_on || undefined, v.expires_on || undefined);
   if ("error" in dates) return dates;
 
+  if (!(document instanceof File) || document.size === 0) {
+    return { error: "Attach a copy of your certificate or card (a PDF or a photo)." };
+  }
+  if (document.size > MAX_DOCUMENT_BYTES) {
+    return { error: "That file is too big. Please use a file under 3.5 MB, or take a photo instead." };
+  }
+  const bytes = new Uint8Array(await document.arrayBuffer());
+  const kind = documentType(bytes);
+  if (!kind) return { error: "Please attach a PDF or a photo (JPG, PNG or WebP)." };
+
   const supabase = await createClient();
+  const path = `${viewer.id}/${randomUUID()}.${kind.ext}`;
+  const upload = await supabase.storage
+    .from("check-documents")
+    .upload(path, bytes, { contentType: kind.type, upsert: false });
+  if (upload.error) return { error: "Couldn't upload your file. Please try again." };
+
   const { error } = await supabase.from("tutor_checks").insert({
     tutor_id: viewer.id,
     kind: v.kind,
     reference: v.reference || null,
     completed_on: v.completed_on || null,
     expires_on: dates.expiresOn,
+    document_path: path,
   });
   if (error) {
+    // Don't leave an unattached copy behind.
+    await supabase.storage.from("check-documents").remove([path]);
     return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save your check. Please try again." };
   }
 
   revalidatePath("/dashboard", "layout");
   revalidatePath("/admin");
-  return { message: "Saved. CLG will confirm it against the official record." };
+  return { message: "Saved. CLG will check your copy against the official record." };
 }
 
 const teachingSchema = z

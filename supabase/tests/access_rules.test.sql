@@ -277,11 +277,13 @@ select tests.fails($$update public.tutor_work_settings set work_state = 'NSW' wh
 select tests.fails($$insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at) values ('00000000-0000-0000-0000-000000000012', 1, '09:00', '10:00')$$, 'tutor edits another tutor availability');
 select tests.fails($$select public.eligible_tutors(gen_random_uuid())$$, 'tutor lists eligible tutors');
 -- A tutor may add their own check, but it waits for an admin (see tutor_checks.test.sql).
-insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'SELF', current_date + 999);
+insert into storage.objects (bucket_id, name) values ('check-documents', '00000000-0000-0000-0000-000000000011/self.pdf');
+insert into public.tutor_checks (tutor_id, kind, reference, expires_on, document_path) values ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'SELF', current_date + 999, '00000000-0000-0000-0000-000000000011/self.pdf');
 select tests.eq((select count(*) from public.tutor_checks where reference = 'SELF' and verified_at is not null), 0, 'tutor cannot verify own check');
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject) select '00000000-0000-0000-0000-000000000011', id, 'x' from public.students limit 1$$, 'tutor assigns self');
 reset role;
 delete from public.tutor_checks where reference = 'SELF';
+delete from storage.objects where name = '00000000-0000-0000-0000-000000000011/self.pdf';
 
 -- Parents see their child's tutor; other parents do not.
 select tests.claims('00000000-0000-0000-0000-000000000001');

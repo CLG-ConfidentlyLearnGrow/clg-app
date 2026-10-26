@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     serverActions: {
-      // Loading the whole Australian Curriculum at once sends about 1MB.
-      bodySizeLimit: "3mb",
+      // Curriculum loads (about 1MB) and certificate copies (up to 3.5MB). Vercel caps requests at 4.5MB.
+      bodySizeLimit: "4mb",
     },
   },
   turbopack: {
