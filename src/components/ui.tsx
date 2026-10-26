@@ -23,13 +23,14 @@ export function PageTitle({ title, intro }: { title: string; intro?: ReactNode }
 
 // A white panel. The title and any description sit together at the top so
 // the panel's contents read as belonging to it.
-// A card. With "collapsible", the person can open and close it by tapping
-// the title; "defaultOpen" sets whether it starts open.
+// A card. Every card with a title can be opened and closed by tapping the
+// title (Show / Hide). "defaultOpen" sets whether it starts open;
+// collapsible={false} keeps a card always open.
 export function Card({
   title,
   description,
   children,
-  collapsible = false,
+  collapsible = true,
   defaultOpen = true,
 }: {
   title?: string;

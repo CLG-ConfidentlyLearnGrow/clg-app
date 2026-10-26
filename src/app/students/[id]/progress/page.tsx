@@ -239,7 +239,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       )}
 
       {isStaff && (
-        <Card title="Add a goal">
+        <Card defaultOpen={false} title="Add a goal">
           {frameworkIds.length === 0 ? (
             <p className="text-sm">An admin needs to set this student&apos;s curriculum first.</p>
           ) : (
