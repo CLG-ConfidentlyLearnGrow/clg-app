@@ -29,7 +29,8 @@ create type public.tutor_check_kind as enum (
   'wwvp_act',                -- ACT Working with Vulnerable People registration
   'ochre_card_nt',           -- NT Working with Children Clearance (Ochre Card)
   'rrhan_ec_fundamentals',   -- SA RRHAN-EC Fundamentals
-  'rrhan_ec_masterclass'     -- SA RRHAN-EC Masterclass
+  'rrhan_ec_masterclass',    -- SA RRHAN-EC Masterclass
+  'police_check'             -- National police check (valid 5 years from issue)
 );
 
 -- Whose location a requirement follows: the student's state, or the state
@@ -163,6 +164,16 @@ insert into public.check_requirements (state, kind, basis) values
   -- ...plus CLG's SA training for SA students...
   ('SA', 'rrhan_ec_fundamentals', 'student_state'),
   ('SA', 'rrhan_ec_masterclass', 'student_state'),
+  -- ...plus CLG's own rule: a police check issued in the last 5 years, for
+  -- every tutor, whatever the state...
+  ('SA', 'police_check', 'student_state'),
+  ('NSW', 'police_check', 'student_state'),
+  ('VIC', 'police_check', 'student_state'),
+  ('QLD', 'police_check', 'student_state'),
+  ('WA', 'police_check', 'student_state'),
+  ('TAS', 'police_check', 'student_state'),
+  ('ACT', 'police_check', 'student_state'),
+  ('NT', 'police_check', 'student_state'),
   -- ...and, per CLG's child safe policy, the check for the state the tutor
   -- works from (for example, a tutor in Victoria teaching online).
   ('SA', 'wwcc_sa', 'tutor_state'),

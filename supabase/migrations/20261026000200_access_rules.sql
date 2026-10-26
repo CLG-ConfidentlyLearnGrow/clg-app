@@ -370,15 +370,23 @@ create trigger check_login_age before insert or update on public.students
   for each row execute function private.check_student_login_age();
 
 -- Admin entry of a check counts as verification against the screening
--- record, so stamp who did it.
+-- record, so stamp who did it. A police check counts for 5 years from the
+-- date it was issued, so its expiry is worked out here.
 create function private.stamp_tutor_check()
 returns trigger language plpgsql
 set search_path = ''
 as $$
 begin
+  if new.kind = 'police_check' then
+    if new.completed_on is null or new.completed_on > current_date then
+      raise exception 'Enter the date the police check was issued' using errcode = '23514';
+    end if;
+    new.expires_on := new.completed_on + interval '5 years';
+  end if;
   if tg_op = 'INSERT'
      or new.reference is distinct from old.reference
      or new.expires_on is distinct from old.expires_on
+     or new.completed_on is distinct from old.completed_on
      or new.kind is distinct from old.kind then
     new.verified_by := auth.uid();
     new.verified_at := now();
@@ -810,6 +818,11 @@ with needed as (
   select w.tutor_id, r.kind
   from public.tutor_work_settings w
   join public.check_requirements r on r.state = w.work_state and r.basis = 'tutor_state'
+  union
+  -- Every active tutor needs a police check.
+  select t.account_id, 'police_check'::public.tutor_check_kind
+  from public.tutor_profiles t
+  where t.active
 )
 select
   n.tutor_id,

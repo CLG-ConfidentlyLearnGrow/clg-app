@@ -164,7 +164,7 @@ async function TutorSection({ viewer }: { viewer: Viewer }) {
           <strong>{clearedStates.length ? clearedStates.join(", ") : "no states yet"}</strong>.
         </p>
         <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-          Each state needs its own check (South Australia also needs RRHAN-EC Fundamentals and Masterclass). The more
+          Every tutor needs a police check issued in the last 5 years. Each state also needs its own check (South Australia also needs RRHAN-EC Fundamentals and Masterclass). The more
           states you are cleared for, the more students you can be matched with when a suitable match comes up. No
           number of students or hours is guaranteed, whatever checks or availability you have.
         </p>

@@ -25,6 +25,7 @@ export const CHECK_KINDS = [
   "ochre_card_nt",
   "rrhan_ec_fundamentals",
   "rrhan_ec_masterclass",
+  "police_check",
 ] as const;
 export type CheckKind = (typeof CHECK_KINDS)[number];
 
@@ -39,6 +40,7 @@ export const CHECK_NAMES: Record<CheckKind, string> = {
   ochre_card_nt: "NT Working with Children Clearance (Ochre Card)",
   rrhan_ec_fundamentals: "RRHAN-EC Fundamentals (SA)",
   rrhan_ec_masterclass: "RRHAN-EC Masterclass (SA)",
+  police_check: "National police check (valid 5 years from issue)",
 };
 
 // Screening checks carry a card or registration number; training does not.
