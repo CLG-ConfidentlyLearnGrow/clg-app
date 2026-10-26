@@ -55,9 +55,19 @@ export function CheckForm({ tutors }: { tutors: Option[] }) {
           </option>
         ))}
       </Select>
-      <Field label="Card or registration number (not needed for RRHAN-EC)" name="reference" maxLength={100} />
-      <Field label="Completed on (optional)" name="completed_on" type="date" />
-      <Field label="Expires on" name="expires_on" type="date" required />
+      <Field label="Card, registration or certificate number (not needed for RRHAN-EC)" name="reference" maxLength={100} />
+      <Field
+        label="Completed or issued on"
+        name="completed_on"
+        type="date"
+        hint="Required for a police check: it counts for 5 years from this date."
+      />
+      <Field
+        label="Expires on"
+        name="expires_on"
+        type="date"
+        hint="Leave blank for a police check. The app works it out."
+      />
       <p className="text-xs text-zinc-500">
         Only save a check after confirming it on the official screening or training record.
       </p>

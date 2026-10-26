@@ -67,7 +67,7 @@ const checkSchema = z.object({
   kind: z.enum(CHECK_KINDS),
   reference: z.string().trim().max(100).optional(),
   completed_on: z.union([z.iso.date(), z.literal("")]).optional(),
-  expires_on: z.iso.date("Enter the expiry date."),
+  expires_on: z.union([z.iso.date(), z.literal("")]).optional(),
 });
 
 export async function recordCheck(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -76,7 +76,20 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
   if (NEEDS_REFERENCE.has(v.kind) && !v.reference) return { error: "Enter the card or registration number." };
-  if (new Date(v.expires_on) < new Date()) return { error: "That check has already expired." };
+
+  // A police check counts for 5 years from the date it was issued; the
+  // database works out the expiry from that date.
+  let expiresOn = v.expires_on || "";
+  if (v.kind === "police_check") {
+    if (!v.completed_on) return { error: "Enter the date the police check was issued." };
+    const expiry = new Date(v.completed_on);
+    expiry.setFullYear(expiry.getFullYear() + 5);
+    expiresOn = expiry.toISOString().slice(0, 10);
+    if (expiry < new Date()) return { error: "That police check is more than 5 years old. A new one is needed." };
+  } else {
+    if (!expiresOn) return { error: "Enter the expiry date." };
+    if (new Date(expiresOn) < new Date()) return { error: "That check has already expired." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("tutor_checks").insert({
@@ -84,7 +97,7 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
     kind: v.kind,
     reference: v.reference || null,
     completed_on: v.completed_on || null,
-    expires_on: v.expires_on,
+    expires_on: expiresOn,
   });
   if (error) return { error: "Couldn't save the check. Please try again." };
 
