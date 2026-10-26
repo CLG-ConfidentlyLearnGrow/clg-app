@@ -354,7 +354,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {section === "tutors" && (
           <>
             <Card
-              title="Checks to confirm"
+              collapsible
+              title={`Checks to confirm (${pendingCheckRows.length})`}
               description="Checks tutors have added themselves. Confirm each one against the official screening or training record before it counts."
             >
               {pendingCheckRows.length === 0 ? (
@@ -397,7 +398,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}
             </Card>
 
-            <Card title="Tutor child safety checks">
+            <Card collapsible defaultOpen={false} title="Tutor child safety checks">
               {checkRows.length === 0 ? (
                 <Empty>
                   No tutors yet. Checks appear here once tutors are added.
@@ -419,11 +420,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}
             </Card>
 
-            <Card title="Record a check">
+            <Card collapsible defaultOpen={false} title="Record a check">
               <CheckForm tutors={tutors} />
             </Card>
 
-            <Card title="States each tutor is cleared for">
+            <Card collapsible defaultOpen={false} title="States each tutor is cleared for">
               <ul className="space-y-1 text-sm">
                 {tutors.map((t) => (
                   <li key={t.id}>
@@ -434,7 +435,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               </ul>
             </Card>
 
-            <Card title="What each tutor teaches" description="Tutors add these themselves in their dashboard.">
+            <Card collapsible defaultOpen={false} title="What each tutor teaches" description="Tutors add these themselves in their dashboard.">
               <ul className="space-y-1 text-sm">
                 {tutors.map((t) => (
                   <li key={t.id}>
@@ -444,11 +445,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               </ul>
             </Card>
 
-            <Card title="Tutor work state">
+            <Card collapsible defaultOpen={false} title="Tutor work state">
               <WorkStateForm tutors={tutors} />
             </Card>
 
-            <Card title="Tutor finished with CLG">
+            <Card collapsible defaultOpen={false} title="Tutor finished with CLG">
               <TutorLeftForm tutors={tutors} />
             </Card>
           </>
