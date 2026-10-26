@@ -3,7 +3,8 @@ import {
   releaseHold,
   verifyParentLink,
 } from "@/app/actions/admin";
-import { confirmCurriculum, discardCurriculum } from "@/app/actions/curriculum";
+import { confirmAllCurricula, confirmCurriculum, discardCurriculum } from "@/app/actions/curriculum";
+import { AcaraImportForm } from "./acara-import";
 import { Button, Card, Empty, SubHeading, Table } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
@@ -161,6 +162,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     .order("code");
   const frameworks = (frameworkList.data ?? []).map((f) => ({
     id: f.id as string,
+    code: f.code as string,
     name: `${f.code}: ${f.name} (v${f.version})`,
     confirmed: Boolean(f.confirmed_at),
     source: (f.source as string | null) ?? null,
@@ -454,64 +456,74 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
         {section === "curriculum" && (
           <>
-            {drafts.map((d) => {
-              const total = d.summary.reduce((n, r) => n + Number(r.skills), 0);
-              const subjects = [...new Set(d.summary.map((r) => r.subject))];
-              return (
-                <Card
-                  key={d.id}
-                  title={`Check and confirm: ${d.name}`}
-                  description={
-                    <>
-                      This curriculum is a draft. Check the summary below, then
-                      confirm it so tutors can use it in goals.{" "}
-                      {d.source && <>Source: {d.source}.</>}
-                    </>
-                  }
-                >
-                  {total === 0 ? (
-                    <Empty>No skills loaded yet. Load them below.</Empty>
-                  ) : (
-                    <>
-                      <p className="mb-4 text-sm">
-                        <strong>{total.toLocaleString("en-AU")}</strong> skills
-                        across <strong>{subjects.length}</strong> subjects.
-                      </p>
-                      <div className="mb-4 max-h-80 overflow-y-auto">
-                        <Table
-                          headings={["Subject", "Year or level", "Skills"]}
-                        >
-                          {d.summary.map((r) => (
-                            <tr key={`${r.subject}-${r.level_band}`}>
-                              <td className="font-medium">{r.subject}</td>
-                              <td>{r.level_band}</td>
-                              <td>{r.skills}</td>
-                            </tr>
-                          ))}
-                        </Table>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex flex-wrap gap-3">
-                    {total > 0 && (
-                      <form action={confirmCurriculum}>
-                        <input type="hidden" name="framework_id" value={d.id} />
-                        <Button type="submit">Confirm this curriculum</Button>
-                      </form>
-                    )}
-                    <form action={discardCurriculum}>
-                      <input type="hidden" name="framework_id" value={d.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-red-300 px-5 py-2.5 text-sm text-red-700 transition hover:bg-red-50"
-                      >
-                        Throw this draft away
-                      </button>
-                    </form>
-                  </div>
-                </Card>
-              );
-            })}
+            {drafts.length > 0 && (
+              <Card
+                title={`Curricula to check and confirm (${drafts.length})`}
+                description="Each one is a draft until you confirm it. Open one to see how many skills it has for each year, then confirm it so tutors can use it in goals."
+              >
+                <ul className="divide-y divide-zinc-100">
+                  {drafts.map((d) => {
+                    const total = d.summary.reduce((n, r) => n + Number(r.skills), 0);
+                    return (
+                      <li key={d.id} className="py-3 first:pt-0">
+                        <details>
+                          <summary className="cursor-pointer text-sm">
+                            <span className="font-medium">{d.name}</span>{" "}
+                            <span className="text-zinc-600">({total.toLocaleString("en-AU")} skills)</span>
+                          </summary>
+                          <div className="mt-3 space-y-3">
+                            {total === 0 ? (
+                              <Empty>No skills loaded yet.</Empty>
+                            ) : (
+                              <div className="max-h-64 overflow-y-auto">
+                                <Table headings={["Subject", "Year or level", "Skills"]}>
+                                  {d.summary.map((r) => (
+                                    <tr key={`${r.subject}-${r.level_band}`}>
+                                      <td className="font-medium">{r.subject}</td>
+                                      <td>{r.level_band}</td>
+                                      <td>{r.skills}</td>
+                                    </tr>
+                                  ))}
+                                </Table>
+                              </div>
+                            )}
+                            {d.source && <p className="text-xs text-zinc-500">Source: {d.source}</p>}
+                          </div>
+                        </details>
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          {total > 0 && (
+                            <form action={confirmCurriculum}>
+                              <input type="hidden" name="framework_id" value={d.id} />
+                              <button type="submit" className="text-sm font-medium text-teal-800 underline">
+                                Confirm
+                              </button>
+                            </form>
+                          )}
+                          <form action={discardCurriculum}>
+                            <input type="hidden" name="framework_id" value={d.id} />
+                            <button type="submit" className="text-sm text-red-700 underline">
+                              Throw away
+                            </button>
+                          </form>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {drafts.length > 1 && (
+                  <form action={confirmAllCurricula} className="mt-4">
+                    <Button type="submit">Confirm all {drafts.length}</Button>
+                  </form>
+                )}
+              </Card>
+            )}
+
+            <Card
+              title="Load the Australian Curriculum"
+              description="Load many subjects at once from ACARA's curriculum file."
+            >
+              <AcaraImportForm loadedCodes={frameworks.map((f) => f.code)} />
+            </Card>
 
             <Card
               title="Curriculum and skills"
@@ -548,7 +560,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 }))}
                 frameworks={confirmedOptions}
               />
-              <SubHeading>Load skills</SubHeading>
+              <SubHeading>Load skills by pasting rows</SubHeading>
               <ImportSkillsForm frameworks={frameworkOptions} />
               <SubHeading>Add a curriculum</SubHeading>
               <FrameworkForm />

@@ -6,6 +6,8 @@ set role authenticated;
 insert into public.curriculum_frameworks (id, code, name, version, source)
   values ('00000000-0000-0000-0000-00000000f0d1', 'DRAFT', 'Draft curriculum', '1', 'Test file');
 select tests.fails($$select public.confirm_curriculum('00000000-0000-0000-0000-00000000f0d1')$$, 'cannot confirm an empty curriculum');
+select tests.fails($$insert into public.curriculum_frameworks (code, name, version, confirmed_at) values ('SKIP', 'Skip the check', '1', now())$$, 'loading straight in as confirmed');
+select tests.fails($$update public.curriculum_frameworks set confirmed_at = now() where code = 'DRAFT'$$, 'confirming without the confirm step');
 insert into public.curriculum_skills (id, framework_id, subject, level_band, code, description) values
   ('00000000-0000-0000-0000-00000000cd01', '00000000-0000-0000-0000-00000000f0d1', 'Science', 'Year 5', 'D-1', 'Draft skill');
 select tests.eq((select count(*) from public.curriculum_frameworks where id = '00000000-0000-0000-0000-00000000f0d1' and confirmed_at is null), 1, 'new curriculum starts as a draft');
