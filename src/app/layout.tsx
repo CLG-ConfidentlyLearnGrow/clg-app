@@ -29,11 +29,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <header className="border-b border-zinc-200 bg-white/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">
             <Link href="/dashboard" className="flex items-center gap-3" aria-label="CLG Tutoring home">
-              <Image src="/brand/clg-book.png" alt="" width={68} height={40} priority className="h-10 w-auto" />
-              <span className="leading-tight">
-                <span className="block text-sm font-semibold tracking-[0.3em] text-teal-700">CLG TUTORING</span>
-                <span className="block text-xs text-zinc-600">Confidently Learn &amp; Grow</span>
-              </span>
+              <Image src="/brand/clg-logo-book.png" alt="" width={453} height={256} priority className="h-14 w-auto sm:h-16" />
+              <span className="hidden text-xs text-zinc-600 sm:block">Confidently Learn &amp; Grow</span>
             </Link>
             {viewer && (
               <div className="ml-auto flex items-center gap-3">
