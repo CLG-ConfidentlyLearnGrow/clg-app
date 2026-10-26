@@ -152,3 +152,111 @@ export async function setTutorWorkState(_prev: FormState, formData: FormData): P
   revalidatePath("/admin");
   return { message: "Work state saved." };
 }
+
+// ---------------------------------------------------------------------------
+// Keeping and deleting records (see supabase/migrations/*_retention.sql)
+// ---------------------------------------------------------------------------
+
+const holdSchema = z.object({
+  target: z.string().regex(/^(student|account):[0-9a-f-]{36}$/, "Choose what to hold."),
+  reason: z.string().trim().min(3, "Give a short reason.").max(300),
+});
+
+// Stops a student or account being deleted automatically, for example while
+// a complaint or child safety matter is open.
+export async function placeHold(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = holdSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const [kind, id] = parsed.data.target.split(":");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("retention_holds")
+    .insert({ [kind === "student" ? "student_id" : "account_id"]: id, reason: parsed.data.reason });
+  if (error) return { error: "Couldn't place the hold." };
+
+  revalidatePath("/admin");
+  return { message: "Hold placed. These records won't be deleted until it is released." };
+}
+
+export async function releaseHold(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("hold_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.from("retention_holds").update({ released_at: new Date().toISOString() }).eq("id", id.data);
+  revalidatePath("/admin");
+}
+
+const tutorLeftSchema = z.object({
+  tutor_id: z.uuid("Choose a tutor."),
+  ended_on: z.iso.date("Enter the date they finished."),
+});
+
+// Marks a tutor as no longer working with CLG. This stops new assignments
+// and starts the 7-year clock for their records.
+export async function markTutorLeft(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = tutorLeftSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tutor_profiles")
+    .update({ active: false, ended_on: parsed.data.ended_on })
+    .eq("account_id", parsed.data.tutor_id);
+  if (error) return { error: "Couldn't update the tutor." };
+
+  revalidatePath("/admin");
+  return { message: "Tutor marked as finished." };
+}
+
+const eraseSchema = z.object({
+  student_id: z.uuid("Choose a student."),
+  confirm_name: z.string().trim().min(1, "Type the student's full name to confirm."),
+});
+
+// Deletes a student's records straight away when the family asks. Owner only.
+export async function eraseStudent(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = eraseSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("erase_student", {
+    p_student: parsed.data.student_id,
+    p_confirm_name: parsed.data.confirm_name,
+  });
+  if (error) {
+    // The database gives a plain reason: wrong name, a hold, or not the owner.
+    return { error: error.message || "Couldn't erase the student." };
+  }
+
+  revalidatePath("/admin");
+  return { message: "The student's records have been deleted." };
+}
+
+const periodSchema = z.object({
+  kind: z.enum(["student_records", "unused_accounts", "former_tutors", "activity_log"]),
+  months: z.coerce.number().int().min(1, "At least 1 month.").max(600),
+});
+
+// Changes how long a kind of record is kept. Owner only; the database
+// enforces this and logs the change.
+export async function setRetentionPeriod(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = periodSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("retention_rules")
+    .update({ keep_for: `${parsed.data.months} months` })
+    .eq("kind", parsed.data.kind)
+    .select("kind");
+  if (error || !data?.length) return { error: "Couldn't change the period. Only the owner can do this." };
+
+  revalidatePath("/admin");
+  return { message: "Period saved. It applies from tonight's run." };
+}

@@ -1,6 +1,16 @@
 "use client";
 
-import { assignTutor, inviteStaff, recordCheck, setTutorWorkState, unlockAccount } from "@/app/actions/admin";
+import {
+  assignTutor,
+  eraseStudent,
+  inviteStaff,
+  markTutorLeft,
+  placeHold,
+  recordCheck,
+  setRetentionPeriod,
+  setTutorWorkState,
+  unlockAccount,
+} from "@/app/actions/admin";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select } from "@/components/ui";
 import { CHECK_KINDS, CHECK_NAMES, STATES, STATE_NAMES } from "@/lib/checks";
@@ -86,6 +96,79 @@ export function UnlockForm() {
   return (
     <ActionForm action={unlockAccount} submitLabel="Unlock">
       <Field label="Email of locked account" name="email" type="email" required />
+    </ActionForm>
+  );
+}
+
+export function HoldForm({ due }: { due: { value: string; label: string }[] }) {
+  return (
+    <ActionForm action={placeHold} submitLabel="Place hold">
+      <Select label="Keep these records" name="target" required defaultValue="">
+        <option value="" disabled>
+          Choose…
+        </option>
+        {due.map((d) => (
+          <option key={d.value} value={d.value}>
+            {d.label}
+          </option>
+        ))}
+      </Select>
+      <Field
+        label="Reason"
+        name="reason"
+        required
+        maxLength={300}
+        hint="Keep it general, such as 'open complaint'. Concern details belong in the child safety record."
+      />
+    </ActionForm>
+  );
+}
+
+export function TutorLeftForm({ tutors }: { tutors: Option[] }) {
+  return (
+    <ActionForm action={markTutorLeft} submitLabel="Mark as finished">
+      <TutorSelect tutors={tutors} />
+      <Field label="Last day with CLG" name="ended_on" type="date" required />
+      <p className="text-xs text-zinc-500">
+        They can no longer be assigned students. Their records are deleted 7 years after this date.
+      </p>
+    </ActionForm>
+  );
+}
+
+export function EraseStudentForm({ students }: { students: Option[] }) {
+  return (
+    <ActionForm action={eraseStudent} submitLabel="Delete permanently">
+      <Select label="Student" name="student_id" required defaultValue="">
+        <option value="" disabled>
+          Choose…
+        </option>
+        {students.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </Select>
+      <Field label="Type the student's full name to confirm" name="confirm_name" required autoComplete="off" />
+      <p className="text-xs text-red-700">
+        This deletes the student, their learning needs, links and enrolments straight away. It cannot be undone.
+      </p>
+    </ActionForm>
+  );
+}
+
+export function RetentionPeriodForm({ rules }: { rules: { kind: string; label: string }[] }) {
+  return (
+    <ActionForm action={setRetentionPeriod} submitLabel="Save period">
+      <Select label="Records" name="kind" defaultValue={rules[0]?.kind}>
+        {rules.map((r) => (
+          <option key={r.kind} value={r.kind}>
+            {r.label}
+          </option>
+        ))}
+      </Select>
+      <Field label="Keep for (months)" name="months" type="number" min={1} max={600} required />
+      <p className="text-xs text-zinc-500">Check with your lawyer before shortening any period.</p>
     </ActionForm>
   );
 }

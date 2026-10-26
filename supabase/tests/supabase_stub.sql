@@ -16,6 +16,7 @@ create table auth.users (
   raw_app_meta_data jsonb not null default '{}',
   invited_at timestamptz,
   email_confirmed_at timestamptz,
+  last_sign_in_at timestamptz,
   created_at timestamptz not null default now()
 );
 

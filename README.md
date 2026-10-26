@@ -24,9 +24,10 @@ The database enforces these rules, so a bug in a screen can't leak another famil
 - **Admins** see everything, and the owner manages other admins.
 - Admins and tutors must sign in with **two-step login**. Without it, the database gives them no extra access.
 - Contact details are only visible to the person themselves and admins. Tutors and families see each other's names, never emails or phone numbers.
-- Learning needs are read and saved only through functions that record every view and change in the **audit log**. The log stores ids and changed column names, never the content, and nobody can edit or delete it.
+- Learning needs are read and saved only through functions that record every view and change in the **audit log**. The log stores ids and changed column names, never the content. Nobody can edit it, and entries are only removed by the nightly deletion job after 7 years.
 - **Sign-up is open** to parents and adult learners (18+). A new account sees nothing beyond its own profile until an admin confirms a parent link or a paid enrolment is added. Tutors and admins join only by invitation.
 - **Account lock:** 5 failed sign-ins within 15 minutes locks the account for 30 minutes. A password reset or an admin unlocks it.
+- **Automatic deletion:** every night the database deletes records CLG no longer needs, following the privacy policy: students 2 years after their last lesson, assignment or enrolment; accounts unused for 12 months; former tutors 7 years after they finish; the activity log after 7 years; failed-login records after 90 days. Admins see what is due in the next 30 days and can place a hold. Only the owner can change a period or delete a student early on request. Each run records counts only. The rules are in `supabase/migrations/20261026000400_retention.sql`.
 
 ## Setting up Supabase (once)
 
@@ -37,7 +38,8 @@ The database enforces these rules, so a bug in a screen can't leak another famil
 5. In **Authentication > URL Configuration**: set the Site URL to the app's address, and add `<site>/auth/confirm` as a redirect URL.
 6. In **Authentication > Emails**: copy the three templates from `supabase/templates` into Confirm signup, Invite user and Reset password.
 7. In **Authentication > Sessions** (paid plans): set an inactivity timeout of 8 hours.
-8. Create the owner account. In the SQL editor run:
+8. In **Database > Extensions**, check that `pg_cron` is on. The migrations then schedule the nightly deletion job, which you can see under **Integrations > Cron**.
+9. Create the owner account. In the SQL editor run:
    `select private.create_owner_invitation('owner@example.com');`
    then invite that email from **Authentication > Users > Invite user**. The owner sets a password, then sets up two-step login.
 

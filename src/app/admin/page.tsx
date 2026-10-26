@@ -1,9 +1,19 @@
-import { verifyParentLink } from "@/app/actions/admin";
+import { releaseHold, verifyParentLink } from "@/app/actions/admin";
 import { Button, Card, Page, TextLink } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
-import { AssignForm, CheckForm, InviteForm, UnlockForm, WorkStateForm } from "./forms";
+import {
+  AssignForm,
+  CheckForm,
+  EraseStudentForm,
+  HoldForm,
+  InviteForm,
+  RetentionPeriodForm,
+  TutorLeftForm,
+  UnlockForm,
+  WorkStateForm,
+} from "./forms";
 
 type PendingLink = {
   parent_id: string;
@@ -14,6 +24,33 @@ type PendingLink = {
 };
 type CheckRow = { tutor_id: string; full_name: string; kind: string; expires_on: string | null; status: string };
 
+type Due = { kind: "student" | "account" | "tutor"; record_id: string; full_name: string; due_on: string };
+type Hold = {
+  id: string;
+  reason: string;
+  placed_at: string;
+  student: { full_name: string } | null;
+  account: { full_name: string } | null;
+};
+type Rule = { kind: string; keep_for: string; description: string };
+
+const RULE_LABELS: Record<string, string> = {
+  student_records: "Student records",
+  unused_accounts: "Unused accounts",
+  former_tutors: "Former tutors",
+  activity_log: "Activity log",
+};
+const DUE_LABELS: Record<Due["kind"], string> = {
+  student: "Student",
+  account: "Unused account",
+  tutor: "Former tutor",
+};
+
+// Postgres writes "1 year 6 mons"; show it in plain words.
+function plainPeriod(p: string) {
+  return p.replace(/\bmons?\b/g, (m) => (m === "mon" ? "month" : "months"));
+}
+
 type Eligible = { tutor_id: string; full_name: string; subjects: string[]; max_weekly_hours: number | null };
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
@@ -22,7 +59,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const { student } = await searchParams;
   const studentId = typeof student === "string" ? student : null;
 
-  const [me, pending, checks, students, tutorList, cleared] = await Promise.all([
+  const [me, pending, checks, students, tutorList, cleared, due, holds, rules] = await Promise.all([
     supabase.from("admin_profiles").select("level").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("parent_student_links")
@@ -34,7 +71,18 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     supabase.from("students").select("id, full_name, state").order("full_name"),
     supabase.from("tutor_profiles").select("account_id, account:accounts(full_name)"),
     supabase.from("tutor_cleared_states").select("tutor_id, state"),
+    supabase.rpc("upcoming_deletions", { p_days: 30 }),
+    supabase
+      .from("retention_holds")
+      .select("id, reason, placed_at, student:students(full_name), account:accounts!retention_holds_account_id_fkey(full_name)")
+      .is("released_at", null)
+      .order("placed_at"),
+    supabase.from("retention_rules").select("kind, keep_for, description").order("kind"),
   ]);
+  const isOwner = me.data?.level === "owner";
+  const dueRows = (due.data ?? []) as Due[];
+  const holdRows = (holds.data ?? []) as unknown as Hold[];
+  const ruleRows = (rules.data ?? []) as Rule[];
 
   const eligible = studentId ? await supabase.rpc("eligible_tutors", { p_student: studentId }) : null;
   const eligibleRows = (eligible?.data ?? []) as Eligible[];
@@ -175,12 +223,100 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       </Card>
 
       <Card title="Invite staff">
-        <InviteForm canInviteAdmins={me.data?.level === "owner"} />
+        <InviteForm canInviteAdmins={isOwner} />
       </Card>
 
       <Card title="Unlock an account">
         <UnlockForm />
       </Card>
+
+      <Card title="Tutor finished with CLG">
+        <TutorLeftForm tutors={tutors} />
+      </Card>
+
+      <Card title="Records due for deletion">
+        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          The app deletes records automatically each night once CLG no longer needs them. These are due in the next 30
+          days. Place a hold to keep any of them, for example while a complaint or concern is open.
+        </p>
+        {dueRows.length === 0 ? (
+          <p className="text-sm">Nothing due in the next 30 days.</p>
+        ) : (
+          <>
+            <table className="mb-4 w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="py-1">Name</th>
+                  <th>Type</th>
+                  <th>Deleted on</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dueRows.map((d) => (
+                  <tr key={`${d.kind}-${d.record_id}`}>
+                    <td className="py-1">{d.full_name}</td>
+                    <td>{DUE_LABELS[d.kind]}</td>
+                    <td>{d.due_on}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <HoldForm
+              due={dueRows.map((d) => ({
+                value: `${d.kind === "student" ? "student" : "account"}:${d.record_id}`,
+                label: `${d.full_name} (${DUE_LABELS[d.kind].toLowerCase()})`,
+              }))}
+            />
+          </>
+        )}
+      </Card>
+
+      <Card title="Holds">
+        {holdRows.length === 0 ? (
+          <p className="text-sm">No holds in place.</p>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {holdRows.map((h) => (
+              <li key={h.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {h.student?.full_name ?? h.account?.full_name ?? "Deleted record"}: {h.reason} (since{" "}
+                  {h.placed_at.slice(0, 10)})
+                </span>
+                <form action={releaseHold}>
+                  <input type="hidden" name="hold_id" value={h.id} />
+                  <Button type="submit">Release</Button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card title="How long records are kept">
+        <ul className="mb-4 space-y-1 text-sm">
+          {ruleRows.map((r) => (
+            <li key={r.kind}>
+              <strong>
+                {RULE_LABELS[r.kind] ?? r.kind}: {plainPeriod(r.keep_for)}.
+              </strong>{" "}
+              {r.description}
+            </li>
+          ))}
+        </ul>
+        {isOwner && (
+          <RetentionPeriodForm rules={ruleRows.map((r) => ({ kind: r.kind, label: RULE_LABELS[r.kind] ?? r.kind }))} />
+        )}
+      </Card>
+
+      {isOwner && (
+        <Card title="Delete a student on request">
+          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+            When a family asks for their child&apos;s information to be deleted. Billing and child safety records kept
+            elsewhere are not affected.
+          </p>
+          <EraseStudentForm students={studentRows.map((s) => ({ id: s.id, name: s.full_name }))} />
+        </Card>
+      )}
     </Page>
   );
 }
