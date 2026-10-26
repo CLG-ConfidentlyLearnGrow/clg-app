@@ -23,17 +23,42 @@ export function PageTitle({ title, intro }: { title: string; intro?: ReactNode }
 
 // A white panel. The title and any description sit together at the top so
 // the panel's contents read as belonging to it.
+// A card. With "collapsible", the person can open and close it by tapping
+// the title; "defaultOpen" sets whether it starts open.
 export function Card({
   title,
   description,
   children,
+  collapsible = false,
+  defaultOpen = true,
 }: {
   title?: string;
   description?: ReactNode;
   children: ReactNode;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }) {
+  const box =
+    "rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(65,64,66,0.06),0_8px_24px_-12px_rgba(65,64,66,0.12)]";
+  if (collapsible && title) {
+    return (
+      <details open={defaultOpen} className={`group ${box}`}>
+        <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+          <span>
+            <span className="block text-lg font-semibold tracking-tight">{title}</span>
+            {description && <span className="mt-1 block text-sm text-zinc-600">{description}</span>}
+          </span>
+          <span className="mt-1 shrink-0 text-sm text-teal-800">
+            <span className="group-open:hidden">Show</span>
+            <span className="hidden group-open:inline">Hide</span>
+          </span>
+        </summary>
+        <div className="mt-5 border-t border-zinc-100 pt-5">{children}</div>
+      </details>
+    );
+  }
   return (
-    <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(65,64,66,0.06),0_8px_24px_-12px_rgba(65,64,66,0.12)]">
+    <section className={box}>
       {(title || description) && (
         <header className="mb-5 border-b border-zinc-100 pb-4">
           {title && <h2 className="text-lg font-semibold tracking-tight">{title}</h2>}

@@ -276,7 +276,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         </Card>
       )}
 
-      <Card title="Recent sessions">
+      <Card collapsible title="Recent sessions">
         {noteRows.length === 0 ? (
           <p className="text-sm">No sessions recorded yet.</p>
         ) : (
