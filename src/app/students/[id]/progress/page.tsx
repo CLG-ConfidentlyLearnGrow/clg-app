@@ -164,10 +164,14 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       </Card>
 
       {isFamily && latest && !reflectionOf(latest) && (
-        <Card title="How did it go?">
-          <p className="mb-3 text-sm text-zinc-600">
-            A few seconds of thinking back helps learning stick. Younger students can answer with a parent.
-          </p>
+        <Card
+          title="How did it go?"
+          description={
+            <>
+              A few seconds of thinking back helps learning stick. Younger students can answer with a parent.
+            </>
+          }
+        >
           <ReflectionForm studentId={id} noteId={latest.id} />
         </Card>
       )}
@@ -222,10 +226,14 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       </Card>
 
       {isStaff && (
-        <Card title="Write a session note">
-          <p className="mb-3 text-sm text-zinc-600">
-            About three minutes, within 24 hours of the session.
-          </p>
+        <Card
+          title="Write a session note"
+          description={
+            <>
+              About three minutes, within 24 hours of the session.
+            </>
+          }
+        >
           <SessionNoteForm studentId={id} skills={noteSkills} />
         </Card>
       )}
@@ -242,7 +250,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                   <select
                     name="subject"
                     defaultValue={chosenSubject}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
                   >
                     <option value="" disabled>
                       Choose…

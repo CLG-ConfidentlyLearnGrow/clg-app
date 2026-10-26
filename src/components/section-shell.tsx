@@ -2,16 +2,21 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { PageTitle } from "@/components/ui";
 
 type Section = { id: string; label: string; count?: number };
 
-// Admin layout: a menu of sections that can be hidden to give the page more
-// room. On phones the menu opens from a button at the top.
-export function AdminShell({
+// Dashboard layout: side headings for each section, which can be hidden to
+// give the page more room. On phones the menu opens from a button at the top.
+export function SectionShell({
+  basePath,
+  label,
   section,
   sections,
   children,
 }: {
+  basePath: string;
+  label: string;
   section: string;
   sections: Section[];
   children: ReactNode;
@@ -26,14 +31,14 @@ export function AdminShell({
   const current = sections.find((s) => s.id === section);
 
   const links = (
-    <nav aria-label="Admin sections">
+    <nav aria-label={`${label} sections`}>
       <ul className="space-y-1">
         {sections.map((s) => {
           const active = s.id === section;
           return (
             <li key={s.id}>
               <Link
-                href={`/admin?section=${s.id}`}
+                href={`${basePath}?section=${s.id}`}
                 onClick={() => setPhoneOpen(false)}
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
@@ -53,16 +58,11 @@ export function AdminShell({
           );
         })}
       </ul>
-      <p className="mt-4 border-t border-zinc-200 px-3 pt-3 text-sm">
-        <Link href="/dashboard" className="text-teal-700 underline">
-          Back to dashboard
-        </Link>
-      </p>
     </nav>
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-8">
+    <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:py-8">
       {/* Computers and tablets: side menu that can be hidden */}
       <aside className={`hidden shrink-0 md:block ${open ? "w-60" : "w-10"}`}>
         <div className="sticky top-4">
@@ -77,7 +77,7 @@ export function AdminShell({
             {open && <span>Hide menu</span>}
             {!open && <span className="sr-only">Show menu</span>}
           </button>
-          {open && <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {open && <div className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
         </div>
       </aside>
 
@@ -91,14 +91,14 @@ export function AdminShell({
             className="flex w-full items-center justify-between rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
           >
             <span>
-              Admin menu: <strong>{current?.label}</strong>
+              {label} menu: <strong>{current?.label}</strong>
             </span>
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>
           </button>
-          {phoneOpen && <div className="mt-2 rounded-lg border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {phoneOpen && <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
         </div>
 
-        <h1 className="mb-6 text-2xl font-semibold">{current?.label ?? "Admin"}</h1>
+        <PageTitle title={current?.label ?? label} />
         <div className="space-y-6">{children}</div>
       </div>
     </div>

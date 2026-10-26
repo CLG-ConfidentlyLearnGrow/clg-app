@@ -87,7 +87,7 @@ export function SessionNoteForm({ studentId, skills }: { studentId: string; skil
               <select
                 name={`skill_${s.id}`}
                 defaultValue=""
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
               >
                 <option value="">Not worked on today</option>
                 {nextLevels(s.level).map((l) => (

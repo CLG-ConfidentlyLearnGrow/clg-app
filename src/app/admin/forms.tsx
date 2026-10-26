@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  declineCheck,
   assignTutor,
   eraseStudent,
   inviteStaff,
@@ -183,6 +184,22 @@ export function RetentionPeriodForm({ rules }: { rules: { kind: string; label: s
       </Select>
       <Field label="Keep for (months)" name="months" type="number" min={1} max={600} required />
       <p className="text-xs text-zinc-500">Check with your lawyer before shortening any period.</p>
+    </ActionForm>
+  );
+}
+
+export function DeclineCheckForm({ checkId }: { checkId: string }) {
+  return (
+    <ActionForm action={declineCheck} submitLabel="Send back">
+      <input type="hidden" name="check_id" value={checkId} />
+      <Field
+        label="Reason the tutor will see"
+        name="reason"
+        required
+        minLength={3}
+        maxLength={300}
+        hint="For example: the number doesn't match the official record."
+      />
     </ActionForm>
   );
 }

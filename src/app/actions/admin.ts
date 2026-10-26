@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { CHECK_KINDS, NEEDS_REFERENCE, STATES } from "@/lib/checks";
+import { checkDates } from "@/lib/check-dates";
+import { CHECK_KINDS, STATES } from "@/lib/checks";
 import { siteUrl } from "@/lib/env";
 import type { FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -90,21 +91,9 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
   const parsed = checkSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
-  if (NEEDS_REFERENCE.has(v.kind) && !v.reference) return { error: "Enter the card or registration number." };
-
-  // A police check counts for 5 years from the date it was issued; the
-  // database works out the expiry from that date.
-  let expiresOn = v.expires_on || "";
-  if (v.kind === "police_check") {
-    if (!v.completed_on) return { error: "Enter the date the police check was issued." };
-    const expiry = new Date(v.completed_on);
-    expiry.setFullYear(expiry.getFullYear() + 5);
-    expiresOn = expiry.toISOString().slice(0, 10);
-    if (expiry < new Date()) return { error: "That police check is more than 5 years old. A new one is needed." };
-  } else {
-    if (!expiresOn) return { error: "Enter the expiry date." };
-    if (new Date(expiresOn) < new Date()) return { error: "That check has already expired." };
-  }
+  const dates = checkDates(v.kind, v.reference, v.completed_on || undefined, v.expires_on || undefined);
+  if ("error" in dates) return dates;
+  const expiresOn = dates.expiresOn;
 
   const supabase = await createClient();
   const { error } = await supabase.from("tutor_checks").insert({
@@ -287,4 +276,28 @@ export async function setRetentionPeriod(_prev: FormState, formData: FormData): 
 
   revalidatePath("/admin");
   return { message: "Period saved. It applies from tonight's run." };
+}
+
+// A tutor's own check entry: confirm it after checking the official record,
+// or send it back with a reason the tutor will see.
+export async function confirmCheck(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("check_id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("confirm_tutor_check", { p_check: id.data });
+  revalidatePath("/admin");
+}
+
+export async function declineCheck(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = z
+    .object({ check_id: z.uuid(), reason: z.string().trim().min(3, "Give the tutor a short reason.").max(300) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("decline_tutor_check", { p_check: parsed.data.check_id, p_reason: parsed.data.reason });
+  if (error) return { error: "Couldn't send it back. Please try again." };
+  revalidatePath("/admin");
+  return { message: "Sent back to the tutor with your reason." };
 }

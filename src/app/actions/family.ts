@@ -33,6 +33,6 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
   });
   if (error) return { error: "We couldn't add your child. Please check the details and try again." };
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { message: `${parsed.data.full_name} has been added. CLG will confirm the details before a tutor is assigned.` };
 }
