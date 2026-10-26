@@ -192,61 +192,62 @@ select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;
 -- No checks yet: assignment refused.
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
-  select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Cara One'$$, 'assign uncleared tutor');
+  select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Cara One'$$, 'assign uncleared tutor');
 -- What the tutors teach (see tutor_teaching.test.sql for the rules).
 insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values
-  ('00000000-0000-0000-0000-000000000011', 'Maths', 'Year 3', 'Year 6'),
+  ('00000000-0000-0000-0000-000000000011', 'General Maths', 'Year 3', 'Year 6'),
   ('00000000-0000-0000-0000-000000000011', 'English', 'University or TAFE', 'Adult learner'),
   ('00000000-0000-0000-0000-000000000012', 'Science', 'Year 1', 'Year 6'),
-  ('00000000-0000-0000-0000-000000000012', 'Maths', 'Year 1', 'Year 12');
+  ('00000000-0000-0000-0000-000000000012', 'General Maths', 'Year 1', 'Year 12');
 insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values
   ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'WWCC-123', current_date + 365),
   ('00000000-0000-0000-0000-000000000011', 'rrhan_ec_fundamentals', null, current_date + 365),
   ('00000000-0000-0000-0000-000000000011', 'rrhan_ec_masterclass', null, current_date + 365);
 select tests.eq((select count(*) from public.tutor_checks where verified_by = '00000000-0000-0000-0000-0000000000a0'), 3, 'checks stamped with verifier');
 reset role;
-select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 0, 'not cleared without a police check');
+select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 1, 'cleared without a police check (no longer required)');
 set role authenticated;
--- A police check needs its issue date, and counts for 5 years from it.
+-- A police check is optional. If recorded, it needs its issue date and
+-- counts for 5 years from it.
 select tests.fails($$insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values
   ('00000000-0000-0000-0000-000000000011', 'police_check', 'NPC-1', current_date + 365)$$, 'police check without issue date');
 insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on) values
   ('00000000-0000-0000-0000-000000000011', 'police_check', 'NPC-OLD', current_date - 365 * 6, current_date + 999);
 reset role;
-select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 0, 'police check over 5 years old does not count');
+select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 1, 'an old police check does not block clearance');
 set role authenticated;
 insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on) values
   ('00000000-0000-0000-0000-000000000011', 'police_check', 'NPC-2', current_date - 365 * 4, current_date + 999);
 select tests.eq((select count(*) from public.tutor_checks where reference = 'NPC-2' and expires_on = completed_on + interval '5 years'), 1, 'police check expiry set from issue date');
 reset role;
-select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 1, 'cleared with a recent police check');
+select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 1, 'still cleared with a recent police check');
 set role authenticated;
 -- Cleared, but the parent link is not verified yet.
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
-  select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Cara One'$$, 'assign before parent link verified');
+  select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Cara One'$$, 'assign before parent link verified');
 update public.parent_student_links set verified_at = now()
   where student_id = (select id from public.students where full_name = 'Cara One');
 select tests.eq((select count(*) from public.parent_student_links where verified_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'link verification stamped');
 insert into public.tutor_assignments (tutor_id, student_id, subject)
-  select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Cara One';
+  select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Cara One';
 -- An adult learner needs no parent link.
 insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000011', id, 'English' from public.students where full_name = 'Ada Learner';
 select tests.eq((select count(*) from public.tutor_check_status where status = 'current'), 4, 'check status view');
 -- T2 works from Victoria: the Victorian check is needed and missing.
 update public.tutor_work_settings set work_state = 'VIC' where tutor_id = '00000000-0000-0000-0000-000000000012';
-select tests.eq((select count(*) from public.tutor_check_status where tutor_id = '00000000-0000-0000-0000-000000000012' and status = 'missing'), 2, 'T2 VIC check and police check missing');
+select tests.eq((select count(*) from public.tutor_check_status where tutor_id = '00000000-0000-0000-0000-000000000012' and status = 'missing'), 1, 'T2 VIC check missing (police check not required)');
 -- State matching: T1 holds SA checks only, so cannot take a Victorian student.
 update public.parent_student_links set verified_at = now();
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
-  select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Vic Two'$$, 'SA-only tutor for VIC student');
+  select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Vic Two'$$, 'SA-only tutor for VIC student');
 insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on) values
   ('00000000-0000-0000-0000-000000000012', 'wwc_vic', 'VIC-9', null, current_date + 365),
   ('00000000-0000-0000-0000-000000000012', 'police_check', 'NPC-3', current_date - 30, null);
 insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000012', id, 'Science' from public.students where full_name = 'Vic Two';
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
-  select '00000000-0000-0000-0000-000000000012', id, 'Maths' from public.students where full_name = 'Cal Two'$$, 'VIC-only tutor for SA student');
+  select '00000000-0000-0000-0000-000000000012', id, 'General Maths' from public.students where full_name = 'Cal Two'$$, 'VIC-only tutor for SA student');
 select tests.eq((select count(*) from public.eligible_tutors((select id from public.students where full_name = 'Vic Two'))), 1, 'eligible tutors for VIC student');
 select tests.eq((select count(*) from public.eligible_tutors((select id from public.students where full_name = 'Cara One'))), 1, 'eligible tutors for SA student');
 select tests.eq((select count(*) from public.tutor_cleared_states where tutor_id = '00000000-0000-0000-0000-000000000011'), 1, 'T1 cleared for SA only');

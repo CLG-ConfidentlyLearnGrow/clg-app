@@ -40,8 +40,12 @@ export const YEAR_LEVEL_NAMES: Record<YearLevel, string> = {
 };
 
 // Suggestions for the subject box. Tutors can also type their own.
+// Maths is split three ways because each is taught very differently.
+export const MATHS_SUBJECTS = ["General Maths", "Essential Maths", "Advanced Maths"] as const;
+export const PLAIN_MATHS = new Set(["maths", "math", "mathematics"]);
+
 export const SUBJECT_SUGGESTIONS = [
-  "Mathematics",
+  ...MATHS_SUBJECTS,
   "English",
   "Science",
   "Humanities and Social Sciences",
@@ -51,10 +55,6 @@ export const SUBJECT_SUGGESTIONS = [
   "Digital Technologies",
   "Literacy",
   "Numeracy",
-  "Essential Mathematics",
-  "General Mathematics",
-  "Mathematical Methods",
-  "Specialist Mathematics",
   "Biology",
   "Chemistry",
   "Physics",

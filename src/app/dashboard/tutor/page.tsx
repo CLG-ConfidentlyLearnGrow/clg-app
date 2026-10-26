@@ -190,8 +190,8 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 </Table>
               )}
               <p className="mt-4 text-xs text-zinc-600">
-                Every tutor needs a police check issued in the last 5 years. Each state also needs its own check (South
-                Australia also needs RRHAN-EC Fundamentals and Masterclass). The more states you are cleared for, the
+                Each state needs its own working with children check (South Australia also needs RRHAN-EC Fundamentals
+                and Masterclass). You can also add a first aid certificate or a police check. These are optional. The more states you are cleared for, the
                 more students you can be matched with when a suitable match comes up. No number of students or hours is
                 guaranteed.
               </p>

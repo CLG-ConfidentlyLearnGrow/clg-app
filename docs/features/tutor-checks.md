@@ -19,3 +19,9 @@ Tutors enter each check themselves: the number, the date done and the date it is
 - A tutor can only add checks for themselves, with two-step login, and cannot confirm, edit or delete them.
 - Admin entries and admin confirmations are stamped with who and when.
 - Tests: `supabase/tests/tutor_checks.test.sql`.
+
+## Change, 26 Oct 2026: police check optional, first aid added
+- Carla decided a national police check (Nationally Coordinated Criminal History Check) is no longer required. The law requires a working with children check for child-related work. That check already includes ongoing criminal history screening, and in SA it is the required screening (Child Safety (Prohibited Persons) Act 2016). A police check is not required on top of it.
+- Tutors can still record a police check. It still counts for 5 years from the date it was issued, but it no longer affects who can be matched.
+- First aid certificates can now be recorded, with their renewal date. They are optional. HLTAID011 Provide First Aid is commonly renewed every 3 years, and the CPR part every year.
+- Policy documents that mention a required police check (child safe policy, tutor contract) need the same change.
