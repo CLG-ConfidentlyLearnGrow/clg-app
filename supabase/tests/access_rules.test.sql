@@ -67,11 +67,12 @@ insert into auth.users (id, email, raw_app_meta_data, raw_user_meta_data) values
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-000000000099' and role <> 'parent'), 0, 'role smuggled in metadata is ignored');
 
 -- Adult learners sign up alone; under-18s cannot.
-select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('teen@example.com', json_build_object('signup_as','learner','date_of_birth', (current_date - interval '16 years')::date))$$, 'learner under 18');
+select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('teen@example.com', json_build_object('signup_as','learner','state','SA','date_of_birth', (current_date - interval '16 years')::date))$$, 'learner under 18');
+select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('nostate@example.com', json_build_object('signup_as','learner','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without state');
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('bad@example.com', '{"signup_as":"learner","date_of_birth":"not a date"}')$$, 'learner bad date');
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000021', 'adult@example.com',
-   json_build_object('signup_as', 'learner', 'full_name', 'Ada Learner', 'date_of_birth', (current_date - interval '30 years')::date));
+   json_build_object('signup_as', 'learner', 'full_name', 'Ada Learner', 'state', 'SA', 'date_of_birth', (current_date - interval '30 years')::date));
 select tests.eq((select count(*) from public.students where account_id = '00000000-0000-0000-0000-000000000021'), 1, 'adult learner has a student record');
 
 -- ===========================================================================
@@ -132,7 +133,7 @@ reset role;
 
 select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
-select public.add_my_child('Cara One', (current_date - interval '10 years')::date, 'Year 5', 'Hill PS');
+select public.add_my_child('Cara One', (current_date - interval '10 years')::date, 'SA', 'Year 5', 'Hill PS');
 select tests.eq((select count(*) from public.students), 1, 'P1 sees own child');
 select tests.eq((select count(*) from public.families), 1, 'P1 sees own family');
 -- Escalation attempts
@@ -142,6 +143,7 @@ select tests.fails($$update public.students set account_id = '00000000-0000-0000
 select tests.fails($$update public.students set date_of_birth = current_date - interval '20 years'$$, 'parent changes child date of birth');
 select tests.fails($$insert into public.parent_student_links (parent_id, student_id) select '00000000-0000-0000-0000-000000000001', id from public.students$$, 'parent creates own link');
 select tests.eq((select count(*) from public.audit_log), 0, 'parent sees no audit rows');
+select tests.fails($$update public.students set state = 'VIC'$$, 'parent changes child state');
 update public.students set year_level = 'Year 6';
 select tests.eq((select count(*) from public.students where year_level = 'Year 6'), 1, 'parent edits child details');
 -- Consent for own child only
@@ -152,8 +154,9 @@ reset role;
 
 select tests.claims('00000000-0000-0000-0000-000000000002');
 set role authenticated;
-select public.add_my_child('Cal Two', (current_date - interval '12 years')::date);
-select tests.eq((select count(*) from public.students), 1, 'P2 sees only own child');
+select public.add_my_child('Cal Two', (current_date - interval '12 years')::date, 'SA');
+select public.add_my_child('Vic Two', (current_date - interval '9 years')::date, 'VIC');
+select tests.eq((select count(*) from public.students), 2, 'P2 sees only own children');
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-000000000001'), 0, 'P2 cannot see P1');
 select tests.eq((select count(*) from public.account_private), 1, 'P2 sees only own contact details');
 select tests.fails(format($$insert into public.consent_records (account_id, student_id, kind, document_version)
@@ -163,8 +166,14 @@ reset role;
 
 select tests.eq((select count(*) from public.students where full_name = 'Hacked'), 0, 'P2 cannot edit P1 child');
 
--- Under-15s cannot have their own login.
-select tests.fails($$update public.students set account_id = '00000000-0000-0000-0000-000000000021' where full_name = 'Cara One'$$, 'login for under-15');
+-- Under-16s cannot have their own login; 16 and over can.
+select tests.claims(null);
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-000000000031', 'teen@example.com', '{"signup_as":"parent"}');
+select tests.fails($$update public.students set account_id = '00000000-0000-0000-0000-000000000031', date_of_birth = current_date - interval '15 years 11 months' where full_name = 'Cara One'$$, 'login for a 15-year-old');
+update public.students set account_id = '00000000-0000-0000-0000-000000000031', date_of_birth = current_date - interval '16 years 1 month' where full_name = 'Cal Two';
+update public.students set account_id = null, date_of_birth = current_date - interval '12 years' where full_name = 'Cal Two';
+
 
 -- ===========================================================================
 -- Tutor assignment and clearance
@@ -176,7 +185,7 @@ set role authenticated;
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Cara One'$$, 'assign uncleared tutor');
 insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values
-  ('00000000-0000-0000-0000-000000000011', 'wwcc', 'WWCC-123', current_date + 365),
+  ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'WWCC-123', current_date + 365),
   ('00000000-0000-0000-0000-000000000011', 'rrhan_ec_fundamentals', null, current_date + 365),
   ('00000000-0000-0000-0000-000000000011', 'rrhan_ec_masterclass', null, current_date + 365);
 select tests.eq((select count(*) from public.tutor_checks where verified_by = '00000000-0000-0000-0000-0000000000a0'), 3, 'checks stamped with verifier');
@@ -192,7 +201,22 @@ insert into public.tutor_assignments (tutor_id, student_id, subject)
 insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000011', id, 'English' from public.students where full_name = 'Ada Learner';
 select tests.eq((select count(*) from public.tutor_check_status where status = 'current'), 3, 'check status view');
-select tests.eq((select count(*) from public.tutor_check_status where status = 'missing'), 3, 'T2 checks missing');
+-- T2 works from Victoria: the Victorian check is needed and missing.
+update public.tutor_work_settings set work_state = 'VIC' where tutor_id = '00000000-0000-0000-0000-000000000012';
+select tests.eq((select count(*) from public.tutor_check_status where tutor_id = '00000000-0000-0000-0000-000000000012' and status = 'missing'), 1, 'T2 VIC check missing');
+-- State matching: T1 holds SA checks only, so cannot take a Victorian student.
+update public.parent_student_links set verified_at = now();
+select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
+  select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Vic Two'$$, 'SA-only tutor for VIC student');
+insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values
+  ('00000000-0000-0000-0000-000000000012', 'wwc_vic', 'VIC-9', current_date + 365);
+insert into public.tutor_assignments (tutor_id, student_id, subject)
+  select '00000000-0000-0000-0000-000000000012', id, 'Science' from public.students where full_name = 'Vic Two';
+select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
+  select '00000000-0000-0000-0000-000000000012', id, 'Maths' from public.students where full_name = 'Cal Two'$$, 'VIC-only tutor for SA student');
+select tests.eq((select count(*) from public.eligible_tutors((select id from public.students where full_name = 'Vic Two'))), 1, 'eligible tutors for VIC student');
+select tests.eq((select count(*) from public.eligible_tutors((select id from public.students where full_name = 'Cara One'))), 1, 'eligible tutors for SA student');
+select tests.eq((select count(*) from public.tutor_cleared_states where tutor_id = '00000000-0000-0000-0000-000000000011'), 1, 'T1 cleared for SA only');
 reset role;
 
 -- Tutor without two-step login sees no students.
@@ -211,7 +235,14 @@ select tests.eq((select count(*) from public.account_private), 1, 'tutor sees no
 select tests.eq((select count(*) from public.parent_profiles), 0, 'tutor sees no parent profiles');
 select tests.fails($$update public.tutor_profiles set active = false where account_id = '00000000-0000-0000-0000-000000000011'$$, 'tutor changes own active flag');
 update public.tutor_profiles set bio = 'Maths specialist' where account_id = '00000000-0000-0000-0000-000000000011';
-select tests.fails($$insert into public.tutor_checks (tutor_id, kind, expires_on) values ('00000000-0000-0000-0000-000000000011', 'wwcc', current_date + 999)$$, 'tutor records own check');
+-- Availability and weekly hours are the tutor's own, and separate.
+update public.tutor_work_settings set max_weekly_hours = 12 where tutor_id = '00000000-0000-0000-0000-000000000011';
+insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at)
+  values ('00000000-0000-0000-0000-000000000011', 1, '15:30', '19:00');
+select tests.fails($$update public.tutor_work_settings set work_state = 'NSW' where tutor_id = '00000000-0000-0000-0000-000000000011'$$, 'tutor changes own work state');
+select tests.fails($$insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at) values ('00000000-0000-0000-0000-000000000012', 1, '09:00', '10:00')$$, 'tutor edits another tutor availability');
+select tests.fails($$select public.eligible_tutors(gen_random_uuid())$$, 'tutor lists eligible tutors');
+select tests.fails($$insert into public.tutor_checks (tutor_id, kind, expires_on) values ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', current_date + 999)$$, 'tutor records own check');
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject) select '00000000-0000-0000-0000-000000000011', id, 'x' from public.students limit 1$$, 'tutor assigns self');
 reset role;
 
@@ -222,6 +253,9 @@ select tests.eq((select count(*) from public.accounts where id = '00000000-0000-
 select tests.eq((select count(*) from public.tutor_profiles where bio = 'Maths specialist'), 1, 'P1 sees tutor bio');
 select tests.eq((select count(*) from public.tutor_assignments), 1, 'P1 sees own child assignment only');
 select tests.eq((select count(*) from public.tutor_checks), 0, 'P1 cannot see tutor checks');
+select tests.eq((select count(*) from public.tutor_work_settings), 0, 'P1 cannot see tutor hours');
+select tests.eq((select count(*) from public.tutor_availability), 0, 'P1 cannot see tutor availability');
+select tests.fails($$insert into public.check_requirements values ('SA', 'wwc_vic', 'student_state')$$, 'parent edits check rules');
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-000000000012'), 0, 'P1 cannot see unrelated tutor');
 reset role;
 select tests.claims('00000000-0000-0000-0000-000000000002');
@@ -268,7 +302,7 @@ select tests.claims(null);
 -- ===========================================================================
 
 update public.tutor_checks set expires_on = current_date - 1
-  where tutor_id = '00000000-0000-0000-0000-000000000011' and kind = 'wwcc';
+  where tutor_id = '00000000-0000-0000-0000-000000000011' and kind = 'wwcc_sa';
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
 set role authenticated;
 select tests.eq((select count(*) from public.students), 0, 'expired WWCC removes access');
@@ -279,6 +313,21 @@ select tests.eq((select count(*) from public.accounts where id = '00000000-0000-
 reset role;
 select tests.claims(null);
 
+-- A tutor working from another state also needs that state's check.
+update public.tutor_checks set expires_on = current_date + 365
+  where tutor_id = '00000000-0000-0000-0000-000000000011' and kind = 'wwcc_sa';
+update public.tutor_work_settings set work_state = 'VIC' where tutor_id = '00000000-0000-0000-0000-000000000011';
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
+set role authenticated;
+select tests.eq((select count(*) from public.students), 0, 'interstate tutor needs own state check too');
+reset role;
+insert into public.tutor_checks (tutor_id, kind, reference, expires_on, verified_at) values
+  ('00000000-0000-0000-0000-000000000011', 'wwc_vic', 'VIC-1', current_date + 365, now());
+set role authenticated;
+select tests.eq((select count(*) from public.students), 2, 'access back once both checks held');
+reset role;
+select tests.claims(null);
+
 -- ===========================================================================
 -- Signed-out visitors and account lock
 -- ===========================================================================
@@ -286,7 +335,7 @@ select tests.claims(null);
 set role anon;
 select tests.fails($$select * from public.students$$, 'anon reads students');
 select tests.fails($$select * from public.accounts$$, 'anon reads accounts');
-select tests.fails($$select public.add_my_child('x', current_date)$$, 'anon calls add_my_child');
+select tests.fails($$select public.add_my_child('x', current_date, 'SA')$$, 'anon calls add_my_child');
 select tests.fails($$select public.record_login_attempt('p1@example.com', false)$$, 'anon records attempts');
 reset role;
 

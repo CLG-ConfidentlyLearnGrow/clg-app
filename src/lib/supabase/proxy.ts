@@ -3,7 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/env";
 
 // Paths anyone may open without signing in.
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/forgot-password", "/check-email", "/privacy", "/auth/confirm"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/check-email",
+  "/privacy",
+  "/install",
+  "/manifest.webmanifest",
+  "/auth/confirm",
+];
 
 // Keeps the Supabase session fresh on every request and sends signed-out
 // visitors to the login page.

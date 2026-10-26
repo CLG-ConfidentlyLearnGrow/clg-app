@@ -3,7 +3,8 @@
 -- The rule: you see people you are linked to, admins see everyone.
 --   * Parents see their own children and those children's current tutors.
 --   * Tutors see only students with a current assignment, and only while
---     their WWCC and RRHAN-EC checks are verified and in date.
+--     they hold every check needed for that student's state, verified and
+--     in date (see check_requirements).
 --   * Admins and tutors must have signed in with two-step login (aal2) for
 --     any of their extra access to apply.
 --
@@ -59,21 +60,47 @@ as $$
   )
 $$;
 
--- A tutor is cleared when active and holding a verified, in-date record of
--- every required check.
-create function private.tutor_is_cleared(p_tutor uuid)
+-- A tutor is cleared for a state when active and holding a verified,
+-- in-date record of every check that state requires, plus the check for
+-- the state the tutor works from. A state with no requirements listed
+-- clears nobody, so a missing rule fails safe.
+create function private.tutor_cleared_for_state(p_tutor uuid, p_state public.au_state)
 returns boolean language sql stable security definer
 set search_path = ''
 as $$
   select exists (
       select 1 from public.tutor_profiles where account_id = p_tutor and active
     )
-    and (
-      select count(distinct kind) from public.tutor_checks
-      where tutor_id = p_tutor
-        and verified_at is not null
-        and expires_on >= current_date
-    ) = (select count(*) from unnest(enum_range(null::public.tutor_check_kind)))
+    and exists (
+      select 1 from public.check_requirements
+      where state = p_state and basis = 'student_state'
+    )
+    and not exists (
+      select 1
+      from public.check_requirements r
+      left join public.tutor_work_settings w on w.tutor_id = p_tutor
+      where (
+          (r.basis = 'student_state' and r.state = p_state)
+          or (r.basis = 'tutor_state' and r.state = w.work_state)
+        )
+        and not exists (
+          select 1 from public.tutor_checks c
+          where c.tutor_id = p_tutor
+            and c.kind = r.kind
+            and c.verified_at is not null
+            and c.expires_on >= current_date
+        )
+    )
+$$;
+
+create function private.tutor_cleared_for_student(p_tutor uuid, p_student uuid)
+returns boolean language sql stable security definer
+set search_path = ''
+as $$
+  select coalesce((
+    select private.tutor_cleared_for_state(p_tutor, s.state)
+    from public.students s where s.id = p_student
+  ), false)
 $$;
 
 create function private.assignment_is_current(p_starts date, p_ends date)
@@ -87,7 +114,7 @@ set search_path = ''
 as $$
   select private.has_role('tutor')
     and private.has_aal2()
-    and private.tutor_is_cleared(auth.uid())
+    and private.tutor_cleared_for_student(auth.uid(), p_student)
     and exists (
       select 1 from public.tutor_assignments
       where tutor_id = auth.uid()
@@ -163,7 +190,7 @@ as $$
       select 1 from public.tutor_assignments a
       where a.tutor_id = p_account
         and private.assignment_is_current(a.starts_on, a.ends_on)
-        and private.tutor_is_cleared(a.tutor_id)
+        and private.tutor_cleared_for_student(a.tutor_id, a.student_id)
         and (private.is_parent_of(a.student_id) or private.is_student_self(a.student_id))
     )
 $$;
@@ -225,6 +252,10 @@ create trigger audit after insert or update or delete on public.invitations
   for each row execute function private.audit_change();
 create trigger audit after insert or update or delete on public.tutor_checks
   for each row execute function private.audit_change();
+create trigger audit after insert or update or delete on public.check_requirements
+  for each row execute function private.audit_change();
+create trigger audit after insert or update or delete on public.tutor_work_settings
+  for each row execute function private.audit_change();
 create trigger audit after insert or update or delete on public.tutor_profiles
   for each row execute function private.audit_change();
 create trigger audit after insert or update or delete on public.students
@@ -275,9 +306,28 @@ $$;
 create trigger guard before update on public.tutor_profiles
   for each row execute function private.guard_tutor_profile();
 
+-- The state a tutor works from changes which checks they need, so only an
+-- admin sets it.
+create function private.guard_work_settings()
+returns trigger language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.work_state is distinct from old.work_state
+     and not (private.is_backend() or private.is_admin()) then
+    raise exception 'Only an admin can change the state a tutor works from'
+      using errcode = '42501';
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+create trigger guard before update on public.tutor_work_settings
+  for each row execute function private.guard_work_settings();
+
 -- Parents may edit their child's school, year level and goals. Which family
--- or login the record belongs to, and the date of birth (which decides
--- age-based rules), are changed by an admin.
+-- or login the record belongs to, the date of birth and the state (which
+-- decide age and child safety rules) are changed by an admin.
 create function private.guard_student()
 returns trigger language plpgsql
 set search_path = ''
@@ -286,6 +336,7 @@ begin
   if not (private.is_backend() or private.is_admin()) and (
        new.account_id is distinct from old.account_id
     or new.date_of_birth is distinct from old.date_of_birth
+    or new.state is distinct from old.state
     or new.family_id is distinct from old.family_id
     or new.created_by is distinct from old.created_by
     or new.last_activity_at is distinct from old.last_activity_at
@@ -299,16 +350,17 @@ $$;
 create trigger guard before update on public.students
   for each row execute function private.guard_student();
 
--- Only students aged 15 or over may have their own login (OAIC guidance:
--- under-15s are presumed unable to make their own privacy decisions).
+-- Only students aged 16 or over may have their own login. OAIC guidance
+-- presumes under-15s can't make their own privacy decisions; CLG uses 16 to
+-- also meet the highest EU age of digital consent.
 create function private.check_student_login_age()
 returns trigger language plpgsql
 set search_path = ''
 as $$
 begin
   if new.account_id is not null
-     and new.date_of_birth > (current_date - interval '15 years')::date then
-    raise exception 'Students under 15 use the app through a parent account'
+     and new.date_of_birth > (current_date - interval '16 years')::date then
+    raise exception 'Students under 16 use the app through a parent account'
       using errcode = '23514';
   end if;
   return new;
@@ -367,8 +419,8 @@ begin
     return new; -- recording a past assignment
   end if;
 
-  if not private.tutor_is_cleared(new.tutor_id) then
-    raise exception 'This tutor needs a verified, in-date WWCC and RRHAN-EC (Fundamentals and Masterclass) before being assigned'
+  if not private.tutor_cleared_for_student(new.tutor_id, new.student_id) then
+    raise exception 'This tutor does not hold every verified, in-date check needed for this student''s state'
       using errcode = '23514';
   end if;
 
@@ -418,6 +470,8 @@ begin
   else
     insert into public.tutor_profiles (account_id) values (p_user)
     on conflict do nothing;
+    insert into public.tutor_work_settings (tutor_id) values (p_user)
+    on conflict do nothing;
   end if;
   update public.invitations set accepted_at = now() where id = v_inv.id;
   return true;
@@ -437,6 +491,7 @@ declare
   v_name text := nullif(trim(new.raw_user_meta_data ->> 'full_name'), '');
   v_signup text := new.raw_user_meta_data ->> 'signup_as';
   v_dob date;
+  v_state public.au_state;
 begin
   insert into public.accounts (id, full_name)
   values (new.id, left(coalesce(v_name, split_part(v_email, '@', 1)), 200));
@@ -465,9 +520,17 @@ begin
       raise exception 'Learners under 18 join through a parent account'
         using errcode = '23514';
     end if;
+    begin
+      v_state := (new.raw_user_meta_data ->> 'state')::public.au_state;
+    exception when others then
+      v_state := null;
+    end;
+    if v_state is null then
+      raise exception 'Please choose your state' using errcode = '23514';
+    end if;
     insert into public.account_roles (account_id, role) values (new.id, 'student');
-    insert into public.students (account_id, full_name, date_of_birth, created_by)
-    values (new.id, left(coalesce(v_name, split_part(v_email, '@', 1)), 200), v_dob, new.id);
+    insert into public.students (account_id, full_name, date_of_birth, state, created_by)
+    values (new.id, left(coalesce(v_name, split_part(v_email, '@', 1)), 200), v_dob, v_state, new.id);
   else
     -- Includes admin invites sent without an invitation record.
     raise exception 'Unknown sign-up type, or no current invitation for this email'
@@ -616,6 +679,32 @@ create policy "admins update checks" on public.tutor_checks
 create policy "admins delete checks" on public.tutor_checks
   for delete to authenticated using (private.is_admin());
 
+-- check_requirements: everyone signed in can read the rules; admins change them
+create policy "anyone signed in reads check rules" on public.check_requirements
+  for select to authenticated using (true);
+create policy "admins manage check rules" on public.check_requirements
+  for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
+-- tutor_work_settings: the tutor sets their hours; only admins set work state
+create policy "tutors see own settings, admins see all" on public.tutor_work_settings
+  for select to authenticated using (tutor_id = auth.uid() or private.is_admin());
+create policy "tutors edit own settings, admins edit any" on public.tutor_work_settings
+  for update to authenticated
+  using (tutor_id = auth.uid() or private.is_admin())
+  with check (tutor_id = auth.uid() or private.is_admin());
+create policy "admins create work settings" on public.tutor_work_settings
+  for insert to authenticated with check (private.is_admin());
+
+-- tutor_availability: the tutor manages their own slots
+create policy "tutors see own availability, admins see all" on public.tutor_availability
+  for select to authenticated using (tutor_id = auth.uid() or private.is_admin());
+create policy "tutors manage own availability" on public.tutor_availability
+  for all to authenticated
+  using (tutor_id = auth.uid() or private.is_admin())
+  with check (
+    (tutor_id = auth.uid() and private.has_role('tutor')) or private.is_admin()
+  );
+
 -- parent_profiles
 create policy "own parent profile, admins see all" on public.parent_profiles
   for select to authenticated using (account_id = auth.uid() or private.is_admin());
@@ -708,13 +797,24 @@ create policy "admins read audit log" on public.audit_log
   for select to authenticated using (private.is_admin());
 revoke insert, update, delete, truncate on public.audit_log from authenticated, service_role;
 
--- Admin view of check expiry, respecting the rules above.
+-- Each tutor's latest verified record of each check they hold, with its
+-- status, plus any check their work state needs that is missing. Respects
+-- the rules above (admins see all, tutors see their own).
 create view public.tutor_check_status
 with (security_invoker = true) as
+with needed as (
+  select c.tutor_id, c.kind
+  from public.tutor_checks c
+  where c.verified_at is not null
+  union
+  select w.tutor_id, r.kind
+  from public.tutor_work_settings w
+  join public.check_requirements r on r.state = w.work_state and r.basis = 'tutor_state'
+)
 select
-  t.account_id as tutor_id,
+  n.tutor_id,
   a.full_name,
-  k.kind,
+  n.kind,
   c.reference,
   c.expires_on,
   case
@@ -723,14 +823,24 @@ select
     when c.expires_on < current_date + 60 then 'expiring_soon'
     else 'current'
   end as status
-from public.tutor_profiles t
-join public.accounts a on a.id = t.account_id
-cross join unnest(enum_range(null::public.tutor_check_kind)) as k(kind)
+from needed n
+join public.accounts a on a.id = n.tutor_id
 left join lateral (
   select reference, expires_on from public.tutor_checks
-  where tutor_id = t.account_id and kind = k.kind and verified_at is not null
+  where tutor_id = n.tutor_id and kind = n.kind and verified_at is not null
   order by expires_on desc limit 1
 ) c on true;
+
+-- The states each tutor is currently cleared to teach students in.
+create view public.tutor_cleared_states
+with (security_invoker = true) as
+select t.account_id as tutor_id, a.full_name, st.state
+from public.tutor_profiles t
+join public.accounts a on a.id = t.account_id
+cross join unnest(enum_range(null::public.au_state)) as st(state)
+where private.tutor_cleared_for_state(t.account_id, st.state);
+revoke all on public.tutor_cleared_states from anon;
+
 revoke all on public.tutor_check_status from anon;
 
 -- ---------------------------------------------------------------------------
@@ -742,6 +852,7 @@ revoke all on public.tutor_check_status from anon;
 create function public.add_my_child(
   p_full_name text,
   p_date_of_birth date,
+  p_state public.au_state,
   p_year_level text default null,
   p_school text default null
 )
@@ -772,8 +883,12 @@ begin
     returning id into v_family;
   end if;
 
-  insert into public.students (family_id, full_name, date_of_birth, year_level, school, created_by)
-  values (v_family, trim(p_full_name), p_date_of_birth, nullif(trim(p_year_level), ''), nullif(trim(p_school), ''), auth.uid())
+  if p_state is null then
+    raise exception 'Please choose a state' using errcode = '22023';
+  end if;
+
+  insert into public.students (family_id, full_name, date_of_birth, state, year_level, school, created_by)
+  values (v_family, trim(p_full_name), p_date_of_birth, p_state, nullif(trim(p_year_level), ''), nullif(trim(p_school), ''), auth.uid())
   returning id into v_student;
 
   insert into public.parent_student_links (parent_id, student_id)
@@ -834,18 +949,42 @@ begin
 end;
 $$;
 
+-- Tutors cleared to teach a given student, with their weekly hour limit.
+-- Being listed is not a promise of work: matching also weighs availability,
+-- subjects and fit.
+create function public.eligible_tutors(p_student uuid)
+returns table (tutor_id uuid, full_name text, subjects text[], max_weekly_hours numeric)
+language plpgsql stable security definer
+set search_path = ''
+as $$
+begin
+  if not private.is_admin() then
+    raise exception 'Not allowed' using errcode = '42501';
+  end if;
+  return query
+    select t.account_id, a.full_name, t.subjects, w.max_weekly_hours
+    from public.tutor_profiles t
+    join public.accounts a on a.id = t.account_id
+    left join public.tutor_work_settings w on w.tutor_id = t.account_id
+    where private.tutor_cleared_for_student(t.account_id, p_student)
+    order by a.full_name;
+end;
+$$;
+revoke execute on function public.eligible_tutors(uuid) from public, anon;
+grant execute on function public.eligible_tutors(uuid) to authenticated;
+
 -- The signed-in person's own roles, used by the app to pick their home screen.
 create function public.my_roles()
 returns setof public.app_role language sql stable security definer
 set search_path = ''
 as $$ select role from public.account_roles where account_id = auth.uid() $$;
 
-revoke execute on function public.add_my_child(text, date, text, text) from public, anon;
+revoke execute on function public.add_my_child(text, date, public.au_state, text, text) from public, anon;
 revoke execute on function public.read_student_sensitive(uuid) from public, anon;
 revoke execute on function public.save_student_sensitive(uuid, text, text) from public, anon;
 revoke execute on function public.withdraw_consent(uuid) from public, anon;
 revoke execute on function public.my_roles() from public, anon;
-grant execute on function public.add_my_child(text, date, text, text) to authenticated;
+grant execute on function public.add_my_child(text, date, public.au_state, text, text) to authenticated;
 grant execute on function public.read_student_sensitive(uuid) to authenticated;
 grant execute on function public.save_student_sensitive(uuid, text, text) to authenticated;
 grant execute on function public.withdraw_consent(uuid) to authenticated;

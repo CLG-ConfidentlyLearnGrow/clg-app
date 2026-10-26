@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
+import { CHECK_KINDS, NEEDS_REFERENCE, STATES } from "@/lib/checks";
 import { siteUrl } from "@/lib/env";
 import type { FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -63,7 +64,7 @@ export async function verifyParentLink(formData: FormData) {
 
 const checkSchema = z.object({
   tutor_id: z.uuid("Choose a tutor."),
-  kind: z.enum(["wwcc", "rrhan_ec_fundamentals", "rrhan_ec_masterclass"]),
+  kind: z.enum(CHECK_KINDS),
   reference: z.string().trim().max(100).optional(),
   completed_on: z.union([z.iso.date(), z.literal("")]).optional(),
   expires_on: z.iso.date("Enter the expiry date."),
@@ -74,7 +75,7 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
   const parsed = checkSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
-  if (v.kind === "wwcc" && !v.reference) return { error: "Enter the WWCC number." };
+  if (NEEDS_REFERENCE.has(v.kind) && !v.reference) return { error: "Enter the card or registration number." };
   if (new Date(v.expires_on) < new Date()) return { error: "That check has already expired." };
 
   const supabase = await createClient();
@@ -128,4 +129,26 @@ export async function unlockAccount(_prev: FormState, formData: FormData): Promi
   const { error } = await supabase.rpc("admin_unlock_account", { p_account: account.data.account_id });
   if (error) return { error: "Couldn't unlock the account." };
   return { message: "Account unlocked." };
+}
+
+const workStateSchema = z.object({
+  tutor_id: z.uuid("Choose a tutor."),
+  work_state: z.union([z.enum(STATES), z.literal("")]),
+});
+
+// The state a tutor works from adds that state's check to what they need.
+export async function setTutorWorkState(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = workStateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tutor_work_settings")
+    .update({ work_state: parsed.data.work_state || null })
+    .eq("tutor_id", parsed.data.tutor_id);
+  if (error) return { error: "Couldn't save the tutor's work state." };
+
+  revalidatePath("/admin");
+  return { message: "Work state saved." };
 }

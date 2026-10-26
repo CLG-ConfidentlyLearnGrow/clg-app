@@ -10,6 +10,7 @@ export default function Home() {
         <p className="space-x-4">
           <TextLink href="/login">Sign in</TextLink>
           <TextLink href="/signup">Create an account</TextLink>
+          <TextLink href="/install">Add CLG to your home screen</TextLink>
         </p>
       </Card>
     </Page>

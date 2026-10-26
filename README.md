@@ -17,8 +17,10 @@ This first version is the base: accounts, roles, families, tutor assignments, th
 The database enforces these rules, so a bug in a screen can't leak another family's data.
 
 - **Parents** see their own children and the tutors currently assigned to them.
-- **Tutors** see only students they are currently assigned to, and only while their Working With Children Check and RRHAN-EC Fundamentals and Masterclass are verified and in date. If one expires, their access stops until an admin records a new one.
-- **Students 15 and over** can have their own login. Under-15s use their parent's account (OAIC guidance presumes under-15s can't make their own privacy decisions).
+- **Tutors** see only students they are currently assigned to, and only while they hold every check needed for that student's state, verified and in date. Each state needs its own working with children check, SA students also need RRHAN-EC Fundamentals and Masterclass, and a tutor working from another state also needs that state's check. The rules live in the `check_requirements` table, so admins can update them without code changes. If a check expires, access to students who need it stops until an admin records a new one.
+- **Matching:** admins see which tutors are cleared for a student before assigning. Tutors see which states they're cleared for, with a note that more checks widen possible matches but no number of students is guaranteed.
+- **Tutor hours:** each tutor sets their weekly availability and, separately, the most hours they can work each week. Families can't see either.
+- **Students 16 and over** can have their own login. Under-16s use their parent's account. OAIC guidance presumes under-15s can't make their own privacy decisions; CLG uses 16 to also meet the highest EU age of digital consent.
 - **Admins** see everything, and the owner manages other admins.
 - Admins and tutors must sign in with **two-step login**. Without it, the database gives them no extra access.
 - Contact details are only visible to the person themselves and admins. Tutors and families see each other's names, never emails or phone numbers.
@@ -38,6 +40,10 @@ The database enforces these rules, so a bug in a screen can't leak another famil
 8. Create the owner account. In the SQL editor run:
    `select private.create_owner_invitation('owner@example.com');`
    then invite that email from **Authentication > Users > Invite user**. The owner sets a password, then sets up two-step login.
+
+## Installing on a phone or computer
+
+CLG is an installable web app. People add it to their home screen from the browser, and it then opens like any other app. The step-by-step guide is at `/install`, linked from the home page and dashboard. A store app can come later.
 
 ## Setting up Vercel (once)
 

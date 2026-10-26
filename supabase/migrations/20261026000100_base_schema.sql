@@ -14,12 +14,27 @@ revoke all on schema private from public;
 create type public.app_role as enum ('admin', 'tutor', 'parent', 'student');
 create type public.admin_level as enum ('owner', 'staff');
 
--- Child safety checks tutors must hold (South Australia).
+-- Australian states and territories. Child safety rules differ by state.
+create type public.au_state as enum ('SA', 'NSW', 'VIC', 'QLD', 'WA', 'TAS', 'ACT', 'NT');
+
+-- Child safety checks and training a tutor can hold. Which ones a tutor
+-- needs depends on where the student is (see check_requirements).
 create type public.tutor_check_kind as enum (
-  'wwcc',                    -- Working With Children Check
-  'rrhan_ec_fundamentals',   -- Responding to Risks of Harm, Abuse and Neglect: Fundamentals
-  'rrhan_ec_masterclass'     -- RRHAN-EC Masterclass
+  'wwcc_sa',                 -- SA Working With Children Check
+  'wwcc_nsw',                -- NSW Working With Children Check
+  'wwc_vic',                 -- VIC Working with Children Check
+  'blue_card_qld',           -- QLD blue card
+  'wwc_wa',                  -- WA Working with Children Check
+  'rwvp_tas',                -- TAS Registration to Work with Vulnerable People
+  'wwvp_act',                -- ACT Working with Vulnerable People registration
+  'ochre_card_nt',           -- NT Working with Children Clearance (Ochre Card)
+  'rrhan_ec_fundamentals',   -- SA RRHAN-EC Fundamentals
+  'rrhan_ec_masterclass'     -- SA RRHAN-EC Masterclass
 );
+
+-- Whose location a requirement follows: the student's state, or the state
+-- the tutor works from.
+create type public.requirement_basis as enum ('student_state', 'tutor_state');
 
 create type public.enrolment_status as enum ('pending_payment', 'active', 'ended');
 
@@ -90,7 +105,29 @@ create table public.tutor_profiles (
   active boolean not null default true
 );
 
--- WWCC and RRHAN-EC records. Entered and verified by an admin.
+-- Where a tutor works from and how many hours a week they can work. Kept
+-- apart from the public profile, so families never see it.
+create table public.tutor_work_settings (
+  tutor_id uuid primary key references public.tutor_profiles (account_id) on delete cascade,
+  work_state public.au_state,
+  max_weekly_hours numeric(4, 1) check (max_weekly_hours is null or max_weekly_hours between 0 and 60),
+  updated_at timestamptz not null default now()
+);
+
+-- When a tutor is available, as weekly time slots. Separate from their
+-- maximum weekly hours: a tutor may be available for more hours than they
+-- can work.
+create table public.tutor_availability (
+  id uuid primary key default gen_random_uuid(),
+  tutor_id uuid not null references public.tutor_profiles (account_id) on delete cascade,
+  weekday smallint not null check (weekday between 1 and 7), -- 1 = Monday
+  starts_at time not null,
+  ends_at time not null,
+  check (ends_at > starts_at)
+);
+create index tutor_availability_tutor on public.tutor_availability (tutor_id, weekday);
+
+-- Child safety checks and training records. Entered and verified by an admin.
 create table public.tutor_checks (
   id uuid primary key default gen_random_uuid(),
   tutor_id uuid not null references public.tutor_profiles (account_id) on delete cascade,
@@ -103,6 +140,39 @@ create table public.tutor_checks (
   created_at timestamptz not null default now()
 );
 create index tutor_checks_tutor on public.tutor_checks (tutor_id, kind, expires_on);
+
+-- Which checks are needed for each state. Admins can change these rows as
+-- rules change, without a code change.
+create table public.check_requirements (
+  state public.au_state not null,
+  kind public.tutor_check_kind not null,
+  basis public.requirement_basis not null,
+  primary key (state, kind, basis)
+);
+
+insert into public.check_requirements (state, kind, basis) values
+  -- A tutor needs the check for the state where the student is...
+  ('SA', 'wwcc_sa', 'student_state'),
+  ('NSW', 'wwcc_nsw', 'student_state'),
+  ('VIC', 'wwc_vic', 'student_state'),
+  ('QLD', 'blue_card_qld', 'student_state'),
+  ('WA', 'wwc_wa', 'student_state'),
+  ('TAS', 'rwvp_tas', 'student_state'),
+  ('ACT', 'wwvp_act', 'student_state'),
+  ('NT', 'ochre_card_nt', 'student_state'),
+  -- ...plus CLG's SA training for SA students...
+  ('SA', 'rrhan_ec_fundamentals', 'student_state'),
+  ('SA', 'rrhan_ec_masterclass', 'student_state'),
+  -- ...and, per CLG's child safe policy, the check for the state the tutor
+  -- works from (for example, a tutor in Victoria teaching online).
+  ('SA', 'wwcc_sa', 'tutor_state'),
+  ('NSW', 'wwcc_nsw', 'tutor_state'),
+  ('VIC', 'wwc_vic', 'tutor_state'),
+  ('QLD', 'blue_card_qld', 'tutor_state'),
+  ('WA', 'wwc_wa', 'tutor_state'),
+  ('TAS', 'rwvp_tas', 'tutor_state'),
+  ('ACT', 'wwvp_act', 'tutor_state'),
+  ('NT', 'ochre_card_nt', 'tutor_state');
 
 create table public.parent_profiles (
   account_id uuid primary key references public.accounts (id) on delete cascade,
@@ -122,7 +192,7 @@ create table public.families (
   created_at timestamptz not null default now()
 );
 
--- A student is a record, not necessarily a login. Under-15s have no login
+-- A student is a record, not necessarily a login. Under-16s have no login
 -- and are managed through a parent's account.
 create table public.students (
   id uuid primary key default gen_random_uuid(),
@@ -130,6 +200,8 @@ create table public.students (
   account_id uuid unique references public.accounts (id) on delete set null,
   full_name text not null check (char_length(full_name) between 1 and 200),
   date_of_birth date not null check (date_of_birth > date '1900-01-01'),
+  -- Where the student lives: decides which tutor checks apply.
+  state public.au_state not null,
   year_level text check (char_length(year_level) <= 40),
   school text check (char_length(school) <= 200),
   goals text check (char_length(goals) <= 4000),
@@ -256,6 +328,9 @@ alter table public.invitations enable row level security;
 alter table public.admin_profiles enable row level security;
 alter table public.tutor_profiles enable row level security;
 alter table public.tutor_checks enable row level security;
+alter table public.tutor_work_settings enable row level security;
+alter table public.tutor_availability enable row level security;
+alter table public.check_requirements enable row level security;
 alter table public.parent_profiles enable row level security;
 alter table public.families enable row level security;
 alter table public.students enable row level security;

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { siteUrl } from "@/lib/env";
+import { STATES } from "@/lib/checks";
 import { POLICY_VERSION, type FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -33,6 +34,7 @@ const signUpSchema = z
     email,
     password: newPassword,
     date_of_birth: z.string().optional(),
+    state: z.enum(STATES).optional(),
     accept: z.literal("on", { message: "Please agree to the privacy policy and terms." }),
   })
   .refine(
@@ -43,7 +45,11 @@ const signUpSchema = z
       message: "Learners under 18 join through a parent's account. Ask a parent to sign up.",
       path: ["date_of_birth"],
     },
-  );
+  )
+  .refine((v) => v.signup_as !== "learner" || !!v.state, {
+    message: "Choose the state you live in.",
+    path: ["state"],
+  });
 
 export async function signUp(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
@@ -60,6 +66,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
         signup_as: v.signup_as,
         full_name: v.full_name,
         date_of_birth: v.signup_as === "learner" ? v.date_of_birth : undefined,
+        state: v.signup_as === "learner" ? v.state : undefined,
         accepted_policies_version: POLICY_VERSION,
       },
     },

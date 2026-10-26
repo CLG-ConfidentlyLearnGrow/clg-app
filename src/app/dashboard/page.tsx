@@ -3,7 +3,10 @@ import { signOut } from "@/app/actions/auth";
 import { Button, Card, Page, TextLink } from "@/components/ui";
 import { needsTwoStep, requireViewer, type Viewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { removeAvailability } from "@/app/actions/tutor";
+import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { AddChildForm } from "./add-child-form";
+import { AvailabilityForm, MaxHoursForm } from "./tutor-forms";
 
 type Student = { id: string; full_name: string; year_level: string | null; school: string | null };
 type Assignment = {
@@ -14,11 +17,6 @@ type Assignment = {
 };
 type CheckStatus = { kind: string; expires_on: string | null; status: string };
 
-const CHECK_NAMES: Record<string, string> = {
-  wwcc: "Working With Children Check",
-  rrhan_ec_fundamentals: "RRHAN-EC Fundamentals",
-  rrhan_ec_masterclass: "RRHAN-EC Masterclass",
-};
 
 export default async function DashboardPage() {
   const viewer = await requireViewer();
@@ -34,6 +32,9 @@ export default async function DashboardPage() {
       {viewer.roles.includes("tutor") && <TutorSection viewer={viewer} />}
       {viewer.roles.includes("parent") && <ParentSection />}
       {viewer.roles.includes("student") && <StudentSection />}
+      <p className="text-sm">
+        <TextLink href="/install">Add CLG to your phone&apos;s home screen</TextLink>
+      </p>
       <form action={signOut}>
         <Button type="submit">Sign out</Button>
       </form>
@@ -111,20 +112,28 @@ function TutorList({ assignments }: { assignments: Assignment[] }) {
 async function TutorSection({ viewer }: { viewer: Viewer }) {
   const supabase = await createClient();
   const { students } = await loadStudentsAndTutors();
-  const checks = await supabase
-    .from("tutor_check_status")
-    .select("kind, expires_on, status")
-    .eq("tutor_id", viewer.id);
+  const [checks, states, settings, slots] = await Promise.all([
+    supabase.from("tutor_check_status").select("kind, expires_on, status").eq("tutor_id", viewer.id),
+    supabase.from("tutor_cleared_states").select("state").eq("tutor_id", viewer.id),
+    supabase.from("tutor_work_settings").select("max_weekly_hours").eq("tutor_id", viewer.id).maybeSingle(),
+    supabase
+      .from("tutor_availability")
+      .select("id, weekday, starts_at, ends_at")
+      .eq("tutor_id", viewer.id)
+      .order("weekday")
+      .order("starts_at"),
+  ]);
 
   const rows = (checks.data ?? []) as CheckStatus[];
-  const cleared = rows.length > 0 && rows.every((c) => c.status === "current" || c.status === "expiring_soon");
+  const clearedStates = (states.data ?? []).map((s) => STATE_NAMES[s.state as AuState] ?? s.state);
+  const problems = rows.filter((c) => c.status === "expired" || c.status === "missing");
 
   return (
     <>
       <Card title="Your students">
-        {!cleared && (
+        {problems.length > 0 && (
           <p className="mb-3 text-sm text-red-700">
-            Your students are hidden until all your checks below are current. Please contact CLG.
+            Some of your checks are missing or expired, so students who need them are hidden. Please contact CLG.
           </p>
         )}
         {students.length === 0 ? (
@@ -142,13 +151,48 @@ async function TutorSection({ viewer }: { viewer: Viewer }) {
       </Card>
       <Card title="Your child safety checks">
         <ul className="space-y-1 text-sm">
+          {rows.length === 0 && <li>No checks recorded yet. Send CLG your check details to get started.</li>}
           {rows.map((c) => (
-            <li key={c.kind}>
-              {CHECK_NAMES[c.kind] ?? c.kind}: {c.status.replace("_", " ")}
+            <li key={c.kind} className={c.status === "current" ? "" : "text-red-700"}>
+              {checkName(c.kind)}: {c.status.replace("_", " ")}
               {c.expires_on && ` (expires ${c.expires_on})`}
             </li>
           ))}
         </ul>
+        <p className="mt-3 text-sm">
+          You can currently be matched with students in:{" "}
+          <strong>{clearedStates.length ? clearedStates.join(", ") : "no states yet"}</strong>.
+        </p>
+        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+          Each state needs its own check (South Australia also needs RRHAN-EC Fundamentals and Masterclass). The more
+          states you are cleared for, the more students you can be matched with when a suitable match comes up. No
+          number of students or hours is guaranteed, whatever checks or availability you have.
+        </p>
+      </Card>
+      <Card title="Your hours and availability">
+        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          These are separate: your availability is when you could teach, and your weekly limit is the most hours you
+          can work in total.
+        </p>
+        <MaxHoursForm current={settings.data?.max_weekly_hours ?? null} />
+        <h3 className="mt-6 mb-2 text-sm font-semibold">Times you are available</h3>
+        <ul className="mb-4 space-y-1 text-sm">
+          {(slots.data ?? []).length === 0 && <li>None added yet.</li>}
+          {(slots.data ?? []).map((slot) => (
+            <li key={slot.id} className="flex items-center gap-3">
+              <span>
+                {WEEKDAYS[slot.weekday - 1]} {slot.starts_at.slice(0, 5)} to {slot.ends_at.slice(0, 5)}
+              </span>
+              <form action={removeAvailability}>
+                <input type="hidden" name="id" value={slot.id} />
+                <button type="submit" className="text-xs text-red-700 underline">
+                  Remove
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+        <AvailabilityForm />
       </Card>
     </>
   );
