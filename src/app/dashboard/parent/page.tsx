@@ -5,6 +5,7 @@ import { SectionShell } from "@/components/section-shell";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "../add-child-form";
+import { EditChildForm } from "../edit-child-form";
 import { TutorList, loadStudentsAndTutors } from "../shared";
 
 const SECTIONS = [
@@ -20,7 +21,14 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
 
   const supabase = await createClient();
   const { students, assignments } = await loadStudentsAndTutors();
-  const links = await supabase.from("parent_student_links").select("student_id, verified_at");
+  const [links, subjectRows] = await Promise.all([
+    supabase.from("parent_student_links").select("student_id, verified_at"),
+    supabase.from("student_subjects").select("student_id, subject, working_level").order("added_at"),
+  ]);
+  const subjectsOf = (id: string) =>
+    (subjectRows.data ?? [])
+      .filter((r) => r.student_id === id)
+      .map((r) => ({ subject: r.subject, level: r.working_level as string | null }));
   const verified = new Set((links.data ?? []).filter((l) => l.verified_at).map((l) => l.student_id));
   const waiting = students.some((s) => !verified.has(s.id));
 
@@ -62,14 +70,28 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                           </span>
                         </span>
                         {verified.has(s.id) ? (
-                          <TextLink href={`/students/${s.id}/progress`}>Progress</TextLink>
+                          <TextLink href={`/students/${s.id}/progress?view=family`}>Progress</TextLink>
                         ) : (
                           <span className="rounded-full bg-zinc-100 px-3 py-0.5 text-xs text-zinc-600">
                             CLG is checking the details
                           </span>
                         )}
                       </div>
+                      <p className="mt-1 text-zinc-600">
+                        {subjectsOf(s.id).length > 0 ? `Help with: ${subjectsOf(s.id)
+                              .map((x) => (x.level ? `${x.subject} (working at ${x.level})` : x.subject))
+                              .join(", ")}` : "No subjects chosen yet"}
+                      </p>
                       <TutorList assignments={assignments.filter((a) => a.student_id === s.id)} />
+                      <details className="group mt-2">
+                        <summary className="text-sm text-teal-800 underline hover:font-bold">
+                          <span className="group-open:hidden">See or change details</span>
+                          <span className="hidden group-open:inline">Close details</span>
+                        </summary>
+                        <div className="mt-3 rounded-xl border border-zinc-200 p-4">
+                          <EditChildForm child={s} subjects={subjectsOf(s.id)} />
+                        </div>
+                      </details>
                     </li>
                   ))}
                 </ul>

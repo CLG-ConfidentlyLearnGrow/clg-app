@@ -111,7 +111,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"),
       supabase
         .from("students")
-        .select("id, full_name, state, year_level")
+        .select("id, full_name, state, year_level, goals, extra_info, student_subjects(subject, working_level)")
         .order("full_name"),
       supabase
         .from("tutor_profiles")
@@ -221,6 +221,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     full_name: string;
     state: AuState;
     year_level: string | null;
+    goals: string | null;
+    extra_info: string | null;
+    student_subjects: { subject: string; working_level: string | null }[];
   }[];
   const chosen = studentRows.find((s) => s.id === studentId);
   const pendingLinks = (
@@ -316,6 +319,28 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               </form>
               {chosen && (
                 <>
+                  <div className="mb-4 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
+                    <p>
+                      <strong>Wants help with:</strong>{" "}
+                      {chosen.student_subjects.length > 0
+                        ? chosen.student_subjects
+                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "level unsure"})`)
+                            .join(", ")
+                        : "No subjects given"}
+                    </p>
+                    <p>
+                      <strong>End goal:</strong> {chosen.goals || "None given"}
+                    </p>
+                    {chosen.extra_info && (
+                      <p>
+                        <strong>Other information:</strong> {chosen.extra_info}
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-500">
+                      When you assign a tutor, the curriculum for that subject and year level is attached automatically
+                      (if one is loaded and confirmed).
+                    </p>
+                  </div>
                   <p className="mb-2 text-sm">
                     Tutors cleared for {STATE_NAMES[chosen.state]} who teach {chosen.year_level ?? "this year level"}:
                   </p>

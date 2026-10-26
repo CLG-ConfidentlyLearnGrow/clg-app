@@ -3,7 +3,8 @@
 import { addChild } from "@/app/actions/family";
 import { ActionForm } from "@/components/action-form";
 import { StateSelect } from "@/components/state-select";
-import { Field } from "@/components/ui";
+import { SubjectPicker } from "@/components/subject-picker";
+import { Field, TextArea } from "@/components/ui";
 import { YearLevelSelect } from "@/components/year-level-select";
 
 export function AddChildForm() {
@@ -12,7 +13,7 @@ export function AddChildForm() {
       <Field label="Child's full name" name="full_name" required maxLength={200} />
       <Field label="Date of birth" name="date_of_birth" type="date" required />
       <StateSelect label="State your child lives in" />
-      <YearLevelSelect label="Year level this year" />
+      <YearLevelSelect label="Year level at school this year" />
       <Field
         label="School"
         name="school"
@@ -20,6 +21,33 @@ export function AddChildForm() {
         maxLength={200}
         hint='If your child is home-schooled, write "Home schooled".'
       />
+      <SubjectPicker />
+      <GoalFields />
     </ActionForm>
+  );
+}
+
+// The end goal and anything else the family wants CLG to know.
+export function GoalFields({ goals = "", extraInfo = "" }: { goals?: string; extraInfo?: string }) {
+  return (
+    <>
+      <TextArea
+        label="What would you like CLG's support to achieve?"
+        name="goals"
+        required
+        rows={3}
+        maxLength={4000}
+        defaultValue={goals}
+        hint="For example: feel confident in maths before high school, or reach a B in Year 12 Chemistry."
+      />
+      <TextArea
+        label="Anything else you'd like us to know? (optional)"
+        name="extra_info"
+        rows={3}
+        maxLength={2000}
+        defaultValue={extraInfo}
+        hint="For example, interests, how your child learns best, or times that suit. Please don't include medical details here; CLG will ask privately if needed."
+      />
+    </>
   );
 }
