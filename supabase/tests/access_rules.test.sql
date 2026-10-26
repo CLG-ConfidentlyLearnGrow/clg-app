@@ -193,6 +193,12 @@ set role authenticated;
 -- No checks yet: assignment refused.
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000011', id, 'Maths' from public.students where full_name = 'Cara One'$$, 'assign uncleared tutor');
+-- What the tutors teach (see tutor_teaching.test.sql for the rules).
+insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values
+  ('00000000-0000-0000-0000-000000000011', 'Maths', 'Year 3', 'Year 6'),
+  ('00000000-0000-0000-0000-000000000011', 'English', 'University or TAFE', 'Adult learner'),
+  ('00000000-0000-0000-0000-000000000012', 'Science', 'Year 1', 'Year 6'),
+  ('00000000-0000-0000-0000-000000000012', 'Maths', 'Year 1', 'Year 12');
 insert into public.tutor_checks (tutor_id, kind, reference, expires_on) values
   ('00000000-0000-0000-0000-000000000011', 'wwcc_sa', 'WWCC-123', current_date + 365),
   ('00000000-0000-0000-0000-000000000011', 'rrhan_ec_fundamentals', null, current_date + 365),

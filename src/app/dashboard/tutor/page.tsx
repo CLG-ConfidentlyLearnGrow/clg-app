@@ -1,15 +1,16 @@
 import { redirect } from "next/navigation";
-import { removeAvailability } from "@/app/actions/tutor";
+import { removeAvailability, removeTeaching } from "@/app/actions/tutor";
 import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
-import { AvailabilityForm, MaxHoursForm, MyCheckForm } from "../tutor-forms";
+import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
 
 const SECTIONS = [
   { id: "students", label: "Your students" },
+  { id: "teaching", label: "What you teach" },
   { id: "checks", label: "Child safety checks" },
   { id: "hours", label: "Hours and availability" },
 ] as const;
@@ -42,9 +43,19 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   if (!viewer.roles.includes("tutor")) redirect("/dashboard");
   if (needsTwoStep(viewer)) redirect("/mfa");
   const params = await searchParams;
-  const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "students";
+  const requested = SECTIONS.find((s) => s.id === params.section)?.id ?? "students";
 
   const supabase = await createClient();
+  const teaching = await supabase
+    .from("tutor_teaching")
+    .select("id, subject, from_level, to_level")
+    .eq("tutor_id", viewer.id)
+    .order("subject");
+  const teachingRows = (teaching.data ?? []) as { id: string; subject: string; from_level: string; to_level: string }[];
+  // New tutors are asked what they teach before anything else.
+  const firstTime = teachingRows.length === 0;
+  const section = firstTime ? "teaching" : requested;
+
   const [assigned, checks, mine, states, settings, slots] = await Promise.all([
     supabase
       .from("tutor_assignments")
@@ -111,6 +122,47 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
               </ul>
             )}
           </Card>
+        )}
+
+        {section === "teaching" && (
+          <>
+            {firstTime && (
+              <p className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+                Welcome! Before anything else, add each subject you can tutor and the year levels you teach it for.
+                CLG uses this to match you with students.
+              </p>
+            )}
+            <Card
+              title="What you teach"
+              description="Add each subject with its own year levels, for example Maths from Year 3 to Year 10 and English from Year 7 to Year 12."
+            >
+              {teachingRows.length === 0 ? (
+                <Empty>No subjects added yet.</Empty>
+              ) : (
+                <ul className="divide-y divide-zinc-100 text-sm">
+                  {teachingRows.map((t) => (
+                    <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+                      <span>
+                        <span className="font-medium">{t.subject}</span>
+                        <span className="text-zinc-600">
+                          {" "}
+                          · {t.from_level === t.to_level ? t.from_level : `${t.from_level} to ${t.to_level}`}
+                        </span>
+                      </span>
+                      <form action={removeTeaching}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button type="submit" className="text-xs text-red-700 underline">
+                          Remove
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <SubHeading>Add a subject</SubHeading>
+              <TeachingForm />
+            </Card>
+          </>
         )}
 
         {section === "checks" && (

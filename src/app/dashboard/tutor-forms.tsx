@@ -1,9 +1,10 @@
 "use client";
 
-import { addAvailability, saveMaxHours, submitMyCheck } from "@/app/actions/tutor";
+import { addAvailability, addTeaching, saveMaxHours, submitMyCheck } from "@/app/actions/tutor";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select } from "@/components/ui";
 import { CHECK_KINDS, CHECK_NAMES, WEEKDAYS } from "@/lib/checks";
+import { SUBJECT_SUGGESTIONS, YEAR_LEVELS, YEAR_LEVEL_NAMES } from "@/lib/students";
 
 export function MaxHoursForm({ current }: { current: number | null }) {
   return (
@@ -75,6 +76,48 @@ export function MyCheckForm() {
         Please have your card or certificate ready to show CLG. CLG confirms each check against the official record
         before it counts. No copies are stored in the app.
       </p>
+    </ActionForm>
+  );
+}
+
+export function TeachingForm() {
+  return (
+    <ActionForm action={addTeaching} submitLabel="Add subject">
+      <Field
+        label="Subject"
+        name="subject"
+        list="subject-suggestions"
+        required
+        maxLength={100}
+        hint="Pick from the list or type your own."
+      />
+      <datalist id="subject-suggestions">
+        {SUBJECT_SUGGESTIONS.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Select label="From" name="from_level" defaultValue="" required>
+          <option value="" disabled>
+            Choose…
+          </option>
+          {YEAR_LEVELS.map((y) => (
+            <option key={y} value={y}>
+              {y === "Foundation" ? "Foundation (Reception)" : YEAR_LEVEL_NAMES[y]}
+            </option>
+          ))}
+        </Select>
+        <Select label="To" name="to_level" defaultValue="" required>
+          <option value="" disabled>
+            Choose…
+          </option>
+          {YEAR_LEVELS.map((y) => (
+            <option key={y} value={y}>
+              {y === "Foundation" ? "Foundation (Reception)" : YEAR_LEVEL_NAMES[y]}
+            </option>
+          ))}
+        </Select>
+      </div>
     </ActionForm>
   );
 }
