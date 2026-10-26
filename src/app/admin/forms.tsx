@@ -97,12 +97,31 @@ export function WorkStateForm({ tutors }: { tutors: Option[] }) {
   );
 }
 
-export function AssignForm({ studentId, tutors }: { studentId: string; tutors: Option[] }) {
+// Only subjects the tutor teaches at this student's year level are offered.
+export function AssignForm({
+  studentId,
+  tutors,
+}: {
+  studentId: string;
+  tutors: { id: string; name: string; subjects: string[] }[];
+}) {
   return (
     <ActionForm action={assignTutor} submitLabel="Assign tutor">
       <input type="hidden" name="student_id" value={studentId} />
-      <TutorSelect tutors={tutors} />
-      <Field label="Subject" name="subject" required maxLength={100} />
+      <Select label="Tutor and subject" name="pick" required defaultValue="">
+        <option value="" disabled>
+          Choose…
+        </option>
+        {tutors.map((t) => (
+          <optgroup key={t.id} label={t.name}>
+            {t.subjects.map((s) => (
+              <option key={s} value={`${t.id}|${s}`}>
+                {t.name}: {s}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </Select>
     </ActionForm>
   );
 }

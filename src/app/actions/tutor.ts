@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { checkDates } from "@/lib/check-dates";
 import { CHECK_KINDS } from "@/lib/checks";
+import { YEAR_LEVELS } from "@/lib/students";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 
@@ -98,4 +99,43 @@ export async function submitMyCheck(_prev: FormState, formData: FormData): Promi
   revalidatePath("/dashboard", "layout");
   revalidatePath("/admin");
   return { message: "Saved. CLG will confirm it against the official record." };
+}
+
+const teachingSchema = z
+  .object({
+    subject: z.string().trim().min(2, "Enter the subject.").max(100),
+    from_level: z.enum(YEAR_LEVELS, "Choose the lowest year level."),
+    to_level: z.enum(YEAR_LEVELS, "Choose the highest year level."),
+  })
+  .refine((v) => YEAR_LEVELS.indexOf(v.from_level) <= YEAR_LEVELS.indexOf(v.to_level), {
+    message: "The first year level needs to be the same as or below the second.",
+  });
+
+// A subject the tutor teaches, and the year levels they teach it for.
+export async function addTeaching(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireTutor();
+  const parsed = teachingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("tutor_teaching").insert({ tutor_id: viewer.id, ...parsed.data });
+  if (error) {
+    return {
+      error:
+        error.code === "23505"
+          ? "You've already added that subject. Remove it first to change its year levels."
+          : "Couldn't save. Please try again.",
+    };
+  }
+  revalidatePath("/dashboard", "layout");
+  return { message: `${parsed.data.subject} added.` };
+}
+
+export async function removeTeaching(formData: FormData) {
+  await requireTutor();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.from("tutor_teaching").delete().eq("id", id.data);
+  revalidatePath("/dashboard", "layout");
 }

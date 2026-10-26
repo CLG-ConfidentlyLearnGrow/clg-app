@@ -38,3 +38,29 @@ export const YEAR_LEVEL_NAMES: Record<YearLevel, string> = {
   "University or TAFE": "University or TAFE",
   "Adult learner": "Adult learner (not currently studying)",
 };
+
+// Suggestions for the subject box. Tutors can also type their own.
+export const SUBJECT_SUGGESTIONS = [
+  "Mathematics",
+  "English",
+  "Science",
+  "Humanities and Social Sciences",
+  "History",
+  "Geography",
+  "Economics and Business",
+  "Digital Technologies",
+  "Literacy",
+  "Numeracy",
+  "Essential Mathematics",
+  "General Mathematics",
+  "Mathematical Methods",
+  "Specialist Mathematics",
+  "Biology",
+  "Chemistry",
+  "Physics",
+  "Psychology",
+  "English Literary Studies",
+  "Essential English",
+  "Research Project",
+  "Study skills",
+] as const;

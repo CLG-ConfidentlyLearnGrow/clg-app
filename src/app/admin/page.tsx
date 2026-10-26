@@ -108,7 +108,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"),
       supabase
         .from("students")
-        .select("id, full_name, state")
+        .select("id, full_name, state, year_level")
         .order("full_name"),
       supabase
         .from("tutor_profiles")
@@ -127,6 +127,15 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .select("kind, keep_for, description")
         .order("kind"),
     ]);
+  const teachingList = await supabase
+    .from("tutor_teaching")
+    .select("tutor_id, subject, from_level, to_level")
+    .order("subject");
+  const teachingByTutor = new Map<string, string[]>();
+  for (const t of teachingList.data ?? []) {
+    const range = t.from_level === t.to_level ? t.from_level : `${t.from_level} to ${t.to_level}`;
+    teachingByTutor.set(t.tutor_id, [...(teachingByTutor.get(t.tutor_id) ?? []), `${t.subject} (${range})`]);
+  }
   const pendingChecks = await supabase
     .from("tutor_checks")
     .select(
@@ -183,6 +192,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     id: string;
     full_name: string;
     state: AuState;
+    year_level: string | null;
   }[];
   const chosen = studentRows.find((s) => s.id === studentId);
   const pendingLinks = (
@@ -277,11 +287,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               {chosen && (
                 <>
                   <p className="mb-2 text-sm">
-                    Tutors cleared for students in {STATE_NAMES[chosen.state]}:
+                    Tutors cleared for {STATE_NAMES[chosen.state]} who teach {chosen.year_level ?? "this year level"}:
                   </p>
                   {eligibleRows.length === 0 ? (
                     <p className="text-sm text-red-700">
-                      No tutor currently holds every check this student needs.
+                      No tutor is both cleared for this student and has added a subject they teach at this year level.
+                      Tutors add their subjects under &quot;What you teach&quot; in their dashboard.
                     </p>
                   ) : (
                     <>
@@ -301,6 +312,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                         tutors={eligibleRows.map((t) => ({
                           id: t.tutor_id,
                           name: t.full_name,
+                          subjects: t.subjects,
                         }))}
                       />
                     </>
@@ -389,6 +401,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   <li key={t.id}>
                     {t.name}:{" "}
                     {(statesByTutor.get(t.id) ?? []).join(", ") || "none yet"}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card title="What each tutor teaches" description="Tutors add these themselves in their dashboard.">
+              <ul className="space-y-1 text-sm">
+                {tutors.map((t) => (
+                  <li key={t.id}>
+                    {t.name}: {(teachingByTutor.get(t.id) ?? []).join(", ") || "not added yet"}
                   </li>
                 ))}
               </ul>

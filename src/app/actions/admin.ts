@@ -110,14 +110,19 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
 }
 
 const assignSchema = z.object({
-  tutor_id: z.uuid("Choose a tutor."),
+  tutor_id: z.uuid("Choose a tutor and subject."),
   student_id: z.uuid("Choose a student."),
   subject: z.string().trim().min(1, "Enter the subject.").max(100),
 });
 
 export async function assignTutor(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  const parsed = assignSchema.safeParse(Object.fromEntries(formData));
+  const [tutor_id, ...rest] = String(formData.get("pick") ?? "").split("|");
+  const parsed = assignSchema.safeParse({
+    tutor_id,
+    subject: rest.join("|"),
+    student_id: formData.get("student_id"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
