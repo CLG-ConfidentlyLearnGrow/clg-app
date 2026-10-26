@@ -154,7 +154,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                 {latest.homework_due && ` (by ${latest.homework_due})`}
               </p>
             )}
-            <p className="text-zinc-600 dark:text-zinc-400">
+            <p className="text-zinc-600">
               <strong>Went well on {latest.session_date}:</strong> {latest.went_well}
             </p>
           </div>
@@ -165,7 +165,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
       {isFamily && latest && !reflectionOf(latest) && (
         <Card title="How did it go?">
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mb-3 text-sm text-zinc-600">
             A few seconds of thinking back helps learning stick. Younger students can answer with a parent.
           </p>
           <ReflectionForm studentId={id} noteId={latest.id} />
@@ -223,7 +223,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
       {isStaff && (
         <Card title="Write a session note">
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mb-3 text-sm text-zinc-600">
             About three minutes, within 24 hours of the session.
           </p>
           <SessionNoteForm studentId={id} skills={noteSkills} />
@@ -242,7 +242,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                   <select
                     name="subject"
                     defaultValue={chosenSubject}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
                   >
                     <option value="" disabled>
                       Choose…
@@ -277,7 +277,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
               const reflection = reflectionOf(n);
               const staff = staffByNote.get(n.id);
               return (
-                <li key={n.id} className="border-t border-zinc-200 pt-3 first:border-0 first:pt-0 dark:border-zinc-800">
+                <li key={n.id} className="border-t border-zinc-200 pt-3 first:border-0 first:pt-0">
                   <p className="font-medium">
                     {n.session_date}: {ATTENDANCE_NAMES[n.attendance]}
                     {n.minutes ? `, ${n.minutes} min` : ""}
@@ -287,7 +287,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                   {n.next_step && <p>Next step: {n.next_step}</p>}
                   {n.homework && <p>Practice: {n.homework}</p>}
                   {n.session_note_skills.length > 0 && (
-                    <ul className="mt-1 list-disc pl-5 text-zinc-600 dark:text-zinc-400">
+                    <ul className="mt-1 list-disc pl-5 text-zinc-600">
                       {n.session_note_skills.map((s) => (
                         <li key={s.skill_id}>
                           {s.skill ? skillLabel(s.skill) : "Skill"}:{" "}
@@ -299,14 +299,14 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                     </ul>
                   )}
                   {reflection && (
-                    <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-zinc-600">
                       Student&apos;s reflection: {CONFIDENCE_NAMES[reflection.confidence]}
                       {reflection.what_was_hard && `. Hard: ${reflection.what_was_hard}`}
                       {reflection.what_i_will_try && `. Will try: ${reflection.what_i_will_try}`}
                     </p>
                   )}
                   {staff && (
-                    <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                    <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-amber-900">
                       Staff only: {staff}
                     </p>
                   )}
@@ -329,11 +329,11 @@ function LevelBar({ level }: { level: SkillLevel }) {
         {SKILL_LEVELS.slice(1).map((l, i) => (
           <span
             key={l}
-            className={`h-2 w-8 rounded-full ${i < reached ? "bg-teal-600" : "bg-zinc-200 dark:bg-zinc-800"}`}
+            className={`h-2 w-8 rounded-full ${i < reached ? "bg-teal-600" : "bg-zinc-200"}`}
           />
         ))}
       </div>
-      <span className="text-xs text-zinc-600 dark:text-zinc-400">{levelName(level)}</span>
+      <span className="text-xs text-zinc-600">{levelName(level)}</span>
     </div>
   );
 }

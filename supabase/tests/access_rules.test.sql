@@ -70,9 +70,12 @@ select tests.eq((select count(*) from public.account_roles where account_id = '0
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('teen@example.com', json_build_object('signup_as','learner','state','SA','date_of_birth', (current_date - interval '16 years')::date))$$, 'learner under 18');
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('nostate@example.com', json_build_object('signup_as','learner','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without state');
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('bad@example.com', '{"signup_as":"learner","date_of_birth":"not a date"}')$$, 'learner bad date');
+select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('noyear@example.com', json_build_object('signup_as','learner','state','SA','school','Uni SA','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without year level');
+select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('noschool@example.com', json_build_object('signup_as','learner','state','SA','year_level','Adult learner','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without school');
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000021', 'adult@example.com',
-   json_build_object('signup_as', 'learner', 'full_name', 'Ada Learner', 'state', 'SA', 'date_of_birth', (current_date - interval '30 years')::date));
+   json_build_object('signup_as', 'learner', 'full_name', 'Ada Learner', 'state', 'SA', 'year_level', 'University or TAFE', 'school', 'TAFE SA',
+                     'date_of_birth', (current_date - interval '30 years')::date));
 select tests.eq((select count(*) from public.students where account_id = '00000000-0000-0000-0000-000000000021'), 1, 'adult learner has a student record');
 
 -- ===========================================================================
@@ -145,6 +148,9 @@ select tests.fails($$insert into public.parent_student_links (parent_id, student
 select tests.eq((select count(*) from public.audit_log), 0, 'parent sees no audit rows');
 select tests.fails($$update public.students set state = 'VIC'$$, 'parent changes child state');
 update public.students set year_level = 'Year 6';
+select tests.fails($$update public.students set year_level = null$$, 'parent clears year level');
+select tests.fails($$update public.students set school = ''$$, 'parent clears school');
+select tests.fails($$update public.students set year_level = 'Grade 6'$$, 'parent sets unknown year level');
 select tests.eq((select count(*) from public.students where year_level = 'Year 6'), 1, 'parent edits child details');
 -- Consent for own child only
 select id as cara from public.students where full_name = 'Cara One' \gset
@@ -154,8 +160,11 @@ reset role;
 
 select tests.claims('00000000-0000-0000-0000-000000000002');
 set role authenticated;
-select public.add_my_child('Cal Two', (current_date - interval '12 years')::date, 'SA');
-select public.add_my_child('Vic Two', (current_date - interval '9 years')::date, 'VIC');
+select tests.fails($$select public.add_my_child('No Year', (current_date - interval '12 years')::date, 'SA')$$, 'child without year level');
+select tests.fails($$select public.add_my_child('Bad Year', (current_date - interval '12 years')::date, 'SA', 'Grade 7', 'Hill PS')$$, 'child with unknown year level');
+select tests.fails($$select public.add_my_child('No School', (current_date - interval '12 years')::date, 'SA', 'Year 7', '  ')$$, 'child without school');
+select public.add_my_child('Cal Two', (current_date - interval '12 years')::date, 'SA', 'Year 7', 'Hill PS');
+select public.add_my_child('Vic Two', (current_date - interval '9 years')::date, 'VIC', 'Year 4', 'Bay PS');
 select tests.eq((select count(*) from public.students), 2, 'P2 sees only own children');
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-000000000001'), 0, 'P2 cannot see P1');
 select tests.eq((select count(*) from public.account_private), 1, 'P2 sees only own contact details');

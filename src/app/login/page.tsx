@@ -8,7 +8,15 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <Page title="Sign in">
       <Card>
         {link === "expired" && (
-          <p className="mb-4 text-sm text-red-700">That link has expired or was already used. Please request a new one.</p>
+          <p className="mb-4 text-sm text-red-700">
+            That link has expired or was already used. Please request a new one. Links work once, for one hour.
+          </p>
+        )}
+        {link === "other-device" && (
+          <p className="mb-4 text-sm text-red-700">
+            That link didn&apos;t work. Please open it on the same device and in the same browser you used to ask for
+            it, or request a new one. Links work once, for one hour.
+          </p>
         )}
         <ActionForm action={signIn} submitLabel="Sign in">
           <Field label="Email" name="email" type="email" autoComplete="email" required />

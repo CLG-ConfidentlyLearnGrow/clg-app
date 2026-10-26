@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/install",
   "/manifest.webmanifest",
   "/auth/confirm",
+  "/auth/continue",
 ];
 
 // Keeps the Supabase session fresh on every request and sends signed-out
@@ -44,6 +45,17 @@ export async function updateSession(request: NextRequest) {
   const signedIn = Boolean(data?.claims?.sub);
 
   const path = request.nextUrl.pathname;
+
+  // If Supabase sends an email link back to the wrong page (for example the
+  // home page, when the address isn't in its Redirect URLs list), pass it on
+  // to the page that handles email links.
+  const params = request.nextUrl.searchParams;
+  if (path !== "/auth/confirm" && (params.has("code") || params.has("error_code"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm";
+    return NextResponse.redirect(url);
+  }
+
   if (!signedIn && !PUBLIC_PATHS.includes(path)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

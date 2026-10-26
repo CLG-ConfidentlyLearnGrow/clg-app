@@ -5,7 +5,9 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { siteUrl } from "@/lib/env";
 import { STATES } from "@/lib/checks";
-import { POLICY_VERSION, type FormState } from "@/lib/forms";
+import { YEAR_LEVELS } from "@/lib/students";
+import { isEmailLinkType } from "@/lib/email-links";
+import { POLICY_VERSION, safeNextPath, type FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,6 +37,8 @@ const signUpSchema = z
     password: newPassword,
     date_of_birth: z.string().optional(),
     state: z.enum(STATES).optional(),
+    year_level: z.enum(YEAR_LEVELS).optional(),
+    school: z.string().trim().max(200).optional(),
     accept: z.literal("on", { message: "Please agree to the privacy policy and terms." }),
   })
   .refine(
@@ -49,6 +53,14 @@ const signUpSchema = z
   .refine((v) => v.signup_as !== "learner" || !!v.state, {
     message: "Choose the state you live in.",
     path: ["state"],
+  })
+  .refine((v) => v.signup_as !== "learner" || !!v.year_level, {
+    message: "Choose your year level or stage of study. CLG uses it to match the right tutor.",
+    path: ["year_level"],
+  })
+  .refine((v) => v.signup_as !== "learner" || !!v.school, {
+    message: "Enter your school, university or TAFE.",
+    path: ["school"],
   });
 
 export async function signUp(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -67,6 +79,8 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
         full_name: v.full_name,
         date_of_birth: v.signup_as === "learner" ? v.date_of_birth : undefined,
         state: v.signup_as === "learner" ? v.state : undefined,
+        year_level: v.signup_as === "learner" ? v.year_level : undefined,
+        school: v.signup_as === "learner" ? v.school : undefined,
         accepted_policies_version: POLICY_VERSION,
       },
     },
@@ -156,4 +170,17 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+// The button on /auth/continue: uses the one-time link from an email.
+export async function continueEmailLink(formData: FormData) {
+  const tokenHash = String(formData.get("token_hash") ?? "");
+  const type = formData.get("type");
+  const next = safeNextPath(String(formData.get("next") ?? ""));
+  if (!tokenHash || !isEmailLinkType(type)) redirect("/login?link=expired");
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+  if (error) redirect("/login?link=expired");
+  redirect(type === "recovery" || type === "invite" ? "/set-password" : next);
 }

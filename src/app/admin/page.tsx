@@ -118,7 +118,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       </p>
 
       <Card title="Parent links to confirm">
-        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-3 text-sm text-zinc-600">
           Confirm each parent and child before a tutor can be assigned.
         </p>
         {pendingLinks.length === 0 ? (
@@ -190,7 +190,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             <select
               name="student"
               defaultValue={studentId ?? ""}
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
             >
               <option value="" disabled>
                 Choose…
@@ -233,7 +233,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       </Card>
 
       <Card title="Curriculum and skills">
-        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-3 text-sm text-zinc-600">
           Goals are built from these skills. Load each curriculum once, then set which one applies to each student.
         </p>
         {frameworkOptions.length > 0 && (
@@ -267,7 +267,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       </Card>
 
       <Card title="Records due for deletion">
-        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-3 text-sm text-zinc-600">
           The app deletes records automatically each night once CLG no longer needs them. These are due in the next 30
           days. Place a hold to keep any of them, for example while a complaint or concern is open.
         </p>
@@ -342,7 +342,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
       {isOwner && (
         <Card title="Delete a student on request">
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mb-3 text-sm text-zinc-600">
             When a family asks for their child&apos;s information to be deleted. Billing and child safety records kept
             elsewhere are not affected.
           </p>
