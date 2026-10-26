@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { ACARA_VERSION, acaraSource } from "@/lib/acara";
+import { splitCsvLine } from "@/lib/csv";
 import { createClient } from "@/lib/supabase/server";
 
 // Loading curricula into the shared skill library. Admins only; the
@@ -33,35 +34,6 @@ export async function createFramework(_prev: FormState, formData: FormData): Pro
 
   revalidatePath("/admin");
   return { message: "Curriculum added as a draft. Load its skills, then check the summary and confirm it." };
-}
-
-// Splits one CSV line, allowing "quoted, text" with commas inside.
-function splitCsvLine(line: string): string[] {
-  const cells: string[] = [];
-  let cell = "";
-  let quoted = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (quoted) {
-      if (ch === '"' && line[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else if (ch === '"') {
-        quoted = false;
-      } else {
-        cell += ch;
-      }
-    } else if (ch === '"') {
-      quoted = true;
-    } else if (ch === "," || ch === "\t") {
-      cells.push(cell.trim());
-      cell = "";
-    } else {
-      cell += ch;
-    }
-  }
-  cells.push(cell.trim());
-  return cells;
 }
 
 // Rows: code, subject, year or level, official wording, plain wording.
@@ -238,4 +210,88 @@ export async function confirmAllCurricula() {
     await supabase.rpc("confirm_curriculum", { p_framework: f.id });
   }
   revalidatePath("/admin");
+}
+
+// Loads a whole curriculum from a spreadsheet in CLG's own layout (see
+// src/lib/curriculum-file.ts). The file is read in the admin's browser; the
+// rows arrive here and are saved as one draft for an admin to confirm.
+const fileCurriculum = z.object({
+  code: z.string().trim().regex(/^[A-Za-z0-9_.-]{1,30}$/, "Use a short code with no spaces, such as SACE-S1."),
+  name: z.string().trim().min(1, "Enter the curriculum's name.").max(200),
+  version: z.string().trim().min(1, "Enter the version or year, for example 2026.").max(40),
+  source: z
+    .string()
+    .trim()
+    .min(5, "Say where this curriculum comes from and that CLG may use it.")
+    .max(1000),
+  skills: z
+    .array(
+      z.object({
+        code: z.string().max(40),
+        subject: z.string().min(1).max(100),
+        level_band: z.string().min(1).max(60),
+        description: z.string().min(1).max(2000),
+        plain_description: z.string().max(500),
+      }),
+    )
+    .min(1, "Choose a file with at least one skill.")
+    .max(5000, "That's too many skills at once. Split the file into smaller ones."),
+});
+
+export async function importCurriculumFile(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  let skills: unknown;
+  try {
+    skills = JSON.parse(String(formData.get("payload") ?? "[]"));
+  } catch {
+    return { error: "Couldn't read the skills. Please choose the file again." };
+  }
+  const parsed = fileCurriculum.safeParse({
+    code: formData.get("code"),
+    name: formData.get("name"),
+    version: formData.get("version"),
+    source: formData.get("source"),
+    skills,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const cur = parsed.data;
+
+  const supabase = await createClient();
+  const { data: fw, error } = await supabase
+    .from("curriculum_frameworks")
+    .insert({ code: cur.code, name: cur.name, version: cur.version, source: cur.source })
+    .select("id")
+    .single();
+  if (error || !fw) {
+    return {
+      error:
+        error?.code === "23505"
+          ? "A curriculum with that code and version is already loaded. Use a different code or version."
+          : "Couldn't add the curriculum. Please try again.",
+    };
+  }
+
+  const rows = cur.skills.map((s, i) => ({
+    framework_id: fw.id,
+    code: s.code || null,
+    subject: s.subject,
+    level_band: s.level_band,
+    description: s.description,
+    plain_description: s.plain_description || null,
+    sort_order: i,
+  }));
+  const { error: skillError } = await supabase.from("curriculum_skills").insert(rows);
+  if (skillError) {
+    // Don't leave a half-loaded draft behind.
+    await supabase.rpc("discard_curriculum", { p_framework: fw.id });
+    return {
+      error:
+        skillError.code === "23505"
+          ? "Two rows share the same skill code. Make each code different (or leave codes blank) and try again."
+          : "Couldn't load the skills. Check the file and try again.",
+    };
+  }
+
+  revalidatePath("/admin");
+  return { message: `${rows.length} skills loaded as a draft. Check the summary above, then confirm it.` };
 }

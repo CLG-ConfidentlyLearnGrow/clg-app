@@ -5,7 +5,8 @@ import {
 } from "@/app/actions/admin";
 import { confirmAllCurricula, confirmCurriculum, discardCurriculum } from "@/app/actions/curriculum";
 import { AcaraImportForm } from "./acara-import";
-import { Button, Card, Empty, SubHeading, Table } from "@/components/ui";
+import { CurriculumFileForm } from "./curriculum-file-import";
+import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
@@ -533,10 +534,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             )}
 
             <Card
-              title="Load the Australian Curriculum"
-              description="Load many subjects at once from ACARA's curriculum file."
+              title="Upload a curriculum"
+              description="Load a whole curriculum at once. Each one arrives as a draft for you to check and confirm."
             >
+              <SubHeading>Australian Curriculum (Reception to Year 10)</SubHeading>
               <AcaraImportForm loadedCodes={frameworks.map((f) => f.code)} />
+              <SubHeading>Any other curriculum, such as SACE for Years 11 and 12</SubHeading>
+              <CurriculumFileForm />
             </Card>
 
             <Card
@@ -566,7 +570,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   ))}
                 </ul>
               )}
-              <SubHeading>Set a student&apos;s curriculum</SubHeading>
+              <SubHeading>Load skills by pasting rows</SubHeading>
+              <ImportSkillsForm frameworks={frameworkOptions} />
+              <SubHeading>Add a curriculum</SubHeading>
+              <FrameworkForm />
+            </Card>
+
+            <Card
+              title="Set a student's curriculum"
+              description="Choose which confirmed curriculum each student follows. A student can have more than one."
+            >
               <StudentFrameworkForm
                 students={studentRows.map((s) => ({
                   id: s.id,
@@ -574,10 +587,26 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 }))}
                 frameworks={confirmedOptions}
               />
-              <SubHeading>Load skills by pasting rows</SubHeading>
-              <ImportSkillsForm frameworks={frameworkOptions} />
-              <SubHeading>Add a curriculum</SubHeading>
-              <FrameworkForm />
+            </Card>
+
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Link skills to a student"
+              description="Open a student's progress page and use Add a goal to choose the skills they're working on. Set their curriculum first."
+            >
+              {studentRows.length === 0 ? (
+                <Empty>No students yet.</Empty>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {studentRows.map((s) => (
+                    <li key={s.id}>
+                      <TextLink href={`/students/${s.id}/progress`}>{s.full_name}</TextLink>{" "}
+                      <span className="text-zinc-500">({s.state})</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           </>
         )}
