@@ -64,6 +64,10 @@ npm run test:db              # migrations + access-rule tests on a throwaway loc
 
 `npm run test:db` needs Postgres 15 or later installed locally (`initdb`, `pg_ctl`, `psql`). The tests sign in as each kind of person and check exactly what they can and can't see or change. Run it for every database change.
 
+## Features
+
+- **Progress tracking** (`docs/features/progress-tracking.md`): goals made of curriculum skills, a four-step skill scale, a three-minute session note ending in one next step, and student reflections. Admins load curricula (Admin > Curriculum and skills) and set each student's curriculum. Each student's page is at `/students/<id>/progress`.
+
 ## Adding a feature module
 
 Each feature (lessons, homework, assessments, progress, programs) gets:

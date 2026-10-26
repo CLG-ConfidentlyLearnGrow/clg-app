@@ -37,6 +37,24 @@ export function Field({
   );
 }
 
+export function TextArea({
+  label,
+  hint,
+  ...input
+}: { label: string; hint?: string } & ComponentProps<"textarea">) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-sm font-medium">{label}</span>
+      <textarea
+        rows={3}
+        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        {...input}
+      />
+      {hint && <span className="block text-xs text-zinc-500">{hint}</span>}
+    </label>
+  );
+}
+
 export function Select({
   label,
   children,

@@ -73,6 +73,12 @@ async function ParentSection() {
               <li key={s.id} className="text-sm">
                 <span className="font-medium">{s.full_name}</span>
                 {s.year_level && `, ${s.year_level}`}
+                {verified.has(s.id) && (
+                  <>
+                    {" · "}
+                    <TextLink href={`/students/${s.id}/progress`}>Progress</TextLink>
+                  </>
+                )}
                 {!verified.has(s.id) && <span className="ml-2 text-zinc-500">(CLG is confirming the details)</span>}
                 <TutorList assignments={assignments.filter((a) => a.student_id === s.id)} />
               </li>
@@ -88,10 +94,16 @@ async function ParentSection() {
 }
 
 async function StudentSection() {
-  const { assignments } = await loadStudentsAndTutors();
+  const { students, assignments } = await loadStudentsAndTutors();
+  const me = students[0];
   return (
     <Card title="Your tutors">
       {assignments.length === 0 ? <p className="text-sm">No tutor yet.</p> : <TutorList assignments={assignments} />}
+      {me && (
+        <p className="mt-3 text-sm">
+          <TextLink href={`/students/${me.id}/progress`}>Your next step and progress</TextLink>
+        </p>
+      )}
     </Card>
   );
 }
@@ -142,7 +154,7 @@ async function TutorSection({ viewer }: { viewer: Viewer }) {
           <ul className="list-disc pl-5 text-sm">
             {students.map((s) => (
               <li key={s.id}>
-                {s.full_name}
+                <TextLink href={`/students/${s.id}/progress`}>{s.full_name}</TextLink>
                 {s.year_level && `, ${s.year_level}`}
               </li>
             ))}
