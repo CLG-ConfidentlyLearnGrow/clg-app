@@ -354,6 +354,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {section === "tutors" && (
           <>
             <Card
+              collapsible
               title={`Checks to confirm (${pendingCheckRows.length})`}
               description="Checks tutors have added themselves. Confirm each one against the official screening or training record before it counts."
             >
@@ -397,7 +398,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}
             </Card>
 
-            <Card defaultOpen={false} title="Tutor child safety checks">
+            <Card collapsible defaultOpen={false} title="Tutor child safety checks">
               {checkRows.length === 0 ? (
                 <Empty>
                   No tutors yet. Checks appear here once tutors are added.
@@ -419,11 +420,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}
             </Card>
 
-            <Card defaultOpen={false} title="Record a check">
+            <Card collapsible defaultOpen={false} title="Record a check">
               <CheckForm tutors={tutors} />
             </Card>
 
-            <Card defaultOpen={false} title="States each tutor is cleared for">
+            <Card collapsible defaultOpen={false} title="States each tutor is cleared for">
               <ul className="space-y-1 text-sm">
                 {tutors.map((t) => (
                   <li key={t.id}>
@@ -434,7 +435,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               </ul>
             </Card>
 
-            <Card defaultOpen={false} title="What each tutor teaches" description="Tutors add these themselves in their dashboard.">
+            <Card collapsible defaultOpen={false} title="What each tutor teaches" description="Tutors add these themselves in their dashboard.">
               <ul className="space-y-1 text-sm">
                 {tutors.map((t) => (
                   <li key={t.id}>
@@ -444,11 +445,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               </ul>
             </Card>
 
-            <Card defaultOpen={false} title="Tutor work state">
+            <Card collapsible defaultOpen={false} title="Tutor work state">
               <WorkStateForm tutors={tutors} />
             </Card>
 
-            <Card defaultOpen={false} title="Tutor finished with CLG">
+            <Card collapsible defaultOpen={false} title="Tutor finished with CLG">
               <TutorLeftForm tutors={tutors} />
             </Card>
           </>
@@ -519,14 +520,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             )}
 
             <Card
-              defaultOpen={false} title="Load the Australian Curriculum"
+              title="Load the Australian Curriculum"
               description="Load many subjects at once from ACARA's curriculum file."
             >
               <AcaraImportForm loadedCodes={frameworks.map((f) => f.code)} />
             </Card>
 
             <Card
-              defaultOpen={false} title="Curriculum and skills"
+              collapsible defaultOpen={false} title="Curriculum and skills"
               description="Goals are built from these skills. Load each curriculum once, confirm it, then set which one applies to each student."
             >
               {frameworks.length === 0 ? (
@@ -570,11 +571,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
         {section === "staff" && (
           <>
-            <Card defaultOpen={false} title="Add staff">
+            <Card title="Add staff">
               <InviteForm canInviteAdmins={isOwner} />
             </Card>
 
-            <Card defaultOpen={false} title="Unlock an account">
+            <Card title="Unlock an account">
               <UnlockForm />
             </Card>
           </>
@@ -644,7 +645,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}
             </Card>
 
-            <Card defaultOpen={false} title="How long records are kept">
+            <Card collapsible defaultOpen={false} title="How long records are kept">
               <ul className="mb-4 space-y-1 text-sm">
                 {ruleRows.map((r) => (
                   <li key={r.kind}>
@@ -668,7 +669,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
             {isOwner && (
               <Card
-                defaultOpen={false} title="Delete a student on request"
+                title="Delete a student on request"
                 description={
                   <>
                     When a family asks for their child&apos;s information to be

@@ -197,11 +197,11 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
               </p>
             </Card>
 
-            <Card defaultOpen={false} title="Add or renew a check">
+            <Card title="Add or renew a check">
               <MyCheckForm />
             </Card>
 
-            <Card defaultOpen={false} title="What you've sent" description="Every check you add is logged here with its dates.">
+            <Card collapsible defaultOpen={false} title="What you've sent" description="Every check you add is logged here with its dates.">
               {myChecks.length === 0 ? (
                 <Empty>Nothing sent yet.</Empty>
               ) : (
@@ -237,7 +237,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
 
         {section === "hours" && (
           <Card
-            defaultOpen={false} title="Your hours and availability"
+            collapsible defaultOpen={false} title="Your hours and availability"
             description={
               <>
                 These are separate: your availability is when you could teach, and your weekly limit is the most hours
