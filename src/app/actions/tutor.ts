@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { checkDates } from "@/lib/check-dates";
 import { CHECK_KINDS } from "@/lib/checks";
-import { YEAR_LEVELS } from "@/lib/students";
+import { PLAIN_MATHS, YEAR_LEVELS } from "@/lib/students";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 
@@ -106,6 +106,9 @@ const teachingSchema = z
     subject: z.string().trim().min(2, "Enter the subject.").max(100),
     from_level: z.enum(YEAR_LEVELS, "Choose the lowest year level."),
     to_level: z.enum(YEAR_LEVELS, "Choose the highest year level."),
+  })
+  .refine((v) => !PLAIN_MATHS.has(v.subject.toLowerCase()), {
+    message: "Choose General Maths, Essential Maths or Advanced Maths. Add each one you teach separately.",
   })
   .refine((v) => YEAR_LEVELS.indexOf(v.from_level) <= YEAR_LEVELS.indexOf(v.to_level), {
     message: "The first year level needs to be the same as or below the second.",

@@ -26,6 +26,7 @@ export const CHECK_KINDS = [
   "rrhan_ec_fundamentals",
   "rrhan_ec_masterclass",
   "police_check",
+  "first_aid",
 ] as const;
 export type CheckKind = (typeof CHECK_KINDS)[number];
 
@@ -40,12 +41,14 @@ export const CHECK_NAMES: Record<CheckKind, string> = {
   ochre_card_nt: "NT Working with Children Clearance (Ochre Card)",
   rrhan_ec_fundamentals: "RRHAN-EC Fundamentals (SA)",
   rrhan_ec_masterclass: "RRHAN-EC Masterclass (SA)",
-  police_check: "National police check (valid 5 years from issue)",
+  police_check: "National police check (optional, valid 5 years from issue)",
+  first_aid: "First aid certificate (optional)",
 };
 
-// Screening checks carry a card or registration number; training does not.
+// Screening checks carry a card or registration number; training and
+// first aid certificates do not need one.
 export const NEEDS_REFERENCE: ReadonlySet<CheckKind> = new Set(
-  CHECK_KINDS.filter((k) => !k.startsWith("rrhan")),
+  CHECK_KINDS.filter((k) => !k.startsWith("rrhan") && k !== "first_aid"),
 );
 
 export const checkName = (kind: string) => CHECK_NAMES[kind as CheckKind] ?? kind;

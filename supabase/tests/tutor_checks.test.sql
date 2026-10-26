@@ -25,6 +25,10 @@ select tests.fails($$select public.confirm_tutor_check((select id from public.tu
 insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on)
 values ('00000000-0000-0000-0000-000000000011', 'police_check', 'PC-T1', current_date - 30, current_date);
 select tests.eq((select count(*) from public.tutor_checks where reference = 'PC-T1' and expires_on = (current_date - 30 + interval '5 years')::date), 1, 'police check expiry from issue date');
+-- First aid certificate: optional, no number needed.
+insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on)
+values ('00000000-0000-0000-0000-000000000011', 'first_aid', null, current_date - 30, current_date + 1000);
+select tests.eq((select count(*) from public.tutor_checks where kind = 'first_aid'), 1, 'tutor adds a first aid certificate');
 -- Unconfirmed entries don't count.
 select tests.eq((select count(*) from public.tutor_check_status where kind = 'wwcc_nsw' and expires_on = current_date + 1000), 0, 'unconfirmed check not counted');
 reset role;
@@ -58,5 +62,8 @@ set role authenticated;
 select tests.eq((select count(*) from public.tutor_checks where tutor_id = '00000000-0000-0000-0000-000000000011'), 0, 'tutors see only their own checks');
 reset role;
 select tests.claims(null);
+
+-- Neither a police check nor first aid is needed to be cleared.
+select tests.eq((select count(*) from public.check_requirements where kind in ('police_check', 'first_aid')), 0, 'police check and first aid not required');
 
 \echo '  tutor checks: all checks passed'
