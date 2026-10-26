@@ -6,10 +6,10 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-12 text-center sm:py-20">
       <Image
-        src="/brand/clg-logo-transparent.png"
+        src="/brand/clg-logo-book.png"
         alt="CLG Tutoring"
-        width={477}
-        height={280}
+        width={453}
+        height={256}
         priority
         className="h-auto w-72 sm:w-96"
       />
