@@ -14,6 +14,7 @@ import {
   UnlockForm,
   WorkStateForm,
 } from "./forms";
+import { FrameworkForm, ImportSkillsForm, StudentFrameworkForm } from "./curriculum-forms";
 
 type PendingLink = {
   parent_id: string;
@@ -79,6 +80,15 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       .order("placed_at"),
     supabase.from("retention_rules").select("kind, keep_for, description").order("kind"),
   ]);
+  const frameworkList = await supabase
+    .from("curriculum_frameworks")
+    .select("id, code, name, version")
+    .eq("active", true)
+    .order("code");
+  const frameworkOptions = (frameworkList.data ?? []).map((f) => ({
+    id: f.id,
+    name: `${f.code}: ${f.name} (v${f.version})`,
+  }));
   const isOwner = me.data?.level === "owner";
   const dueRows = (due.data ?? []) as Due[];
   const holdRows = (holds.data ?? []) as unknown as Hold[];
@@ -220,6 +230,28 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             )}
           </>
         )}
+      </Card>
+
+      <Card title="Curriculum and skills">
+        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+          Goals are built from these skills. Load each curriculum once, then set which one applies to each student.
+        </p>
+        {frameworkOptions.length > 0 && (
+          <ul className="mb-4 list-disc pl-5 text-sm">
+            {frameworkOptions.map((f) => (
+              <li key={f.id}>{f.name}</li>
+            ))}
+          </ul>
+        )}
+        <h3 className="mb-2 text-sm font-semibold">Set a student&apos;s curriculum</h3>
+        <StudentFrameworkForm
+          students={studentRows.map((s) => ({ id: s.id, name: `${s.full_name} (${s.state})` }))}
+          frameworks={frameworkOptions}
+        />
+        <h3 className="mt-6 mb-2 text-sm font-semibold">Load skills</h3>
+        <ImportSkillsForm frameworks={frameworkOptions} />
+        <h3 className="mt-6 mb-2 text-sm font-semibold">Add a curriculum</h3>
+        <FrameworkForm />
       </Card>
 
       <Card title="Invite staff">
