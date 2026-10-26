@@ -1,5 +1,5 @@
 import { releaseHold, verifyParentLink } from "@/app/actions/admin";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Empty, SubHeading, Table } from "@/components/ui";
 import { AdminShell } from "./admin-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
 import { requireAdmin } from "@/lib/auth";
@@ -124,12 +124,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     >
       {section === "families" && (
         <>
-          <Card title="Parent links to confirm">
-            <p className="mb-3 text-sm text-zinc-600">
-              Confirm each parent and child before a tutor can be assigned.
-            </p>
+          <Card
+            title="Parent links to confirm"
+            description={
+              <>
+                Confirm each parent and child before a tutor can be assigned.
+              </>
+            }
+          >
             {pendingLinks.length === 0 ? (
-              <p className="text-sm">Nothing waiting.</p>
+              <Empty>Nothing waiting.</Empty>
             ) : (
               <ul className="space-y-2 text-sm">
                 {pendingLinks.map((l) => (
@@ -157,7 +161,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 <select
                   name="student"
                   defaultValue={studentId ?? ""}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
                 >
                   <option value="" disabled>
                     Choose…
@@ -204,26 +208,20 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       {section === "tutors" && (
         <>
           <Card title="Tutor child safety checks">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr>
-                  <th className="py-1">Tutor</th>
-                  <th>Check</th>
-                  <th>Expires</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
+            {checkRows.length === 0 ? (
+              <Empty>No tutors yet. Checks appear here once tutors are added.</Empty>
+            ) : (
+              <Table headings={["Tutor", "Check", "Expires", "Status"]}>
                 {checkRows.map((c) => (
                   <tr key={`${c.tutor_id}-${c.kind}`} className={c.status === "current" ? "" : "text-red-700"}>
-                    <td className="py-1">{c.full_name}</td>
+                    <td className="font-medium">{c.full_name}</td>
                     <td>{checkName(c.kind)}</td>
                     <td>{c.expires_on ?? "-"}</td>
                     <td>{c.status.replace("_", " ")}</td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+              </Table>
+            )}
           </Card>
 
           <Card title="Record a check">
@@ -252,10 +250,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
       {section === "curriculum" && (
         <>
-          <Card title="Curriculum and skills">
-            <p className="mb-3 text-sm text-zinc-600">
-              Goals are built from these skills. Load each curriculum once, then set which one applies to each student.
-            </p>
+          <Card
+            title="Curriculum and skills"
+            description={
+              <>
+                Goals are built from these skills. Load each curriculum once, then set which one applies to each student.
+              </>
+            }
+          >
             {frameworkOptions.length > 0 && (
               <ul className="mb-4 list-disc pl-5 text-sm">
                 {frameworkOptions.map((f) => (
@@ -263,14 +265,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 ))}
               </ul>
             )}
-            <h3 className="mb-2 text-sm font-semibold">Set a student&apos;s curriculum</h3>
+            <SubHeading>Set a student&apos;s curriculum</SubHeading>
             <StudentFrameworkForm
               students={studentRows.map((s) => ({ id: s.id, name: `${s.full_name} (${s.state})` }))}
               frameworks={frameworkOptions}
             />
-            <h3 className="mt-6 mb-2 text-sm font-semibold">Load skills</h3>
+            <SubHeading>Load skills</SubHeading>
             <ImportSkillsForm frameworks={frameworkOptions} />
-            <h3 className="mt-6 mb-2 text-sm font-semibold">Add a curriculum</h3>
+            <SubHeading>Add a curriculum</SubHeading>
             <FrameworkForm />
           </Card>
         </>
@@ -290,33 +292,30 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
       {section === "records" && (
         <>
-          <Card title="Records due for deletion">
-            <p className="mb-3 text-sm text-zinc-600">
-              The app deletes records automatically each night once CLG no longer needs them. These are due in the next 30
-              days. Place a hold to keep any of them, for example while a complaint or concern is open.
-            </p>
+          <Card
+            title="Records due for deletion"
+            description={
+              <>
+                The app deletes records automatically each night once CLG no longer needs them. These are due in the next 30
+                days. Place a hold to keep any of them, for example while a complaint or concern is open.
+              </>
+            }
+          >
             {dueRows.length === 0 ? (
-              <p className="text-sm">Nothing due in the next 30 days.</p>
+              <Empty>Nothing due in the next 30 days.</Empty>
             ) : (
               <>
-                <table className="mb-4 w-full text-left text-sm">
-                  <thead>
-                    <tr>
-                      <th className="py-1">Name</th>
-                      <th>Type</th>
-                      <th>Deleted on</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <div className="mb-6">
+                  <Table headings={["Name", "Type", "Deleted on"]}>
                     {dueRows.map((d) => (
                       <tr key={`${d.kind}-${d.record_id}`}>
-                        <td className="py-1">{d.full_name}</td>
+                        <td className="font-medium">{d.full_name}</td>
                         <td>{DUE_LABELS[d.kind]}</td>
                         <td>{d.due_on}</td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
+                  </Table>
+                </div>
                 <HoldForm
                   due={dueRows.map((d) => ({
                     value: `${d.kind === "student" ? "student" : "account"}:${d.record_id}`,
@@ -329,7 +328,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
           <Card title="Holds">
             {holdRows.length === 0 ? (
-              <p className="text-sm">No holds in place.</p>
+              <Empty>No holds in place.</Empty>
             ) : (
               <ul className="space-y-2 text-sm">
                 {holdRows.map((h) => (
@@ -365,11 +364,15 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           </Card>
 
           {isOwner && (
-            <Card title="Delete a student on request">
-              <p className="mb-3 text-sm text-zinc-600">
-                When a family asks for their child&apos;s information to be deleted. Billing and child safety records kept
-                elsewhere are not affected.
-              </p>
+            <Card
+              title="Delete a student on request"
+              description={
+                <>
+                  When a family asks for their child&apos;s information to be deleted. Billing and child safety records kept
+                  elsewhere are not affected.
+                </>
+              }
+            >
               <EraseStudentForm students={studentRows.map((s) => ({ id: s.id, name: s.full_name }))} />
             </Card>
           )}

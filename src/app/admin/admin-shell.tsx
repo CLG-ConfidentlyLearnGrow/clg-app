@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { PageTitle } from "@/components/ui";
 
 type Section = { id: string; label: string; count?: number };
 
@@ -77,7 +78,7 @@ export function AdminShell({
             {open && <span>Hide menu</span>}
             {!open && <span className="sr-only">Show menu</span>}
           </button>
-          {open && <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {open && <div className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
         </div>
       </aside>
 
@@ -95,10 +96,10 @@ export function AdminShell({
             </span>
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>
           </button>
-          {phoneOpen && <div className="mt-2 rounded-lg border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {phoneOpen && <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
         </div>
 
-        <h1 className="mb-6 text-2xl font-semibold">{current?.label ?? "Admin"}</h1>
+        <PageTitle title={current?.label ?? "Admin"} />
         <div className="space-y-6">{children}</div>
       </div>
     </div>

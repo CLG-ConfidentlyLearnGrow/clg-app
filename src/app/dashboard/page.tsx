@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
-import { Button, Card, Page, TextLink } from "@/components/ui";
+import { Button, Card, Page, TextLink, SubHeading } from "@/components/ui";
 import { needsTwoStep, requireViewer, type Viewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { removeAvailability } from "@/app/actions/tutor";
@@ -197,13 +197,17 @@ async function TutorSection({ viewer }: { viewer: Viewer }) {
           number of students or hours is guaranteed, whatever checks or availability you have.
         </p>
       </Card>
-      <Card title="Your hours and availability">
-        <p className="mb-3 text-sm text-zinc-600">
-          These are separate: your availability is when you could teach, and your weekly limit is the most hours you
-          can work in total.
-        </p>
+      <Card
+        title="Your hours and availability"
+        description={
+          <>
+            These are separate: your availability is when you could teach, and your weekly limit is the most hours you
+            can work in total.
+          </>
+        }
+      >
         <MaxHoursForm current={settings.data?.max_weekly_hours ?? null} />
-        <h3 className="mt-6 mb-2 text-sm font-semibold">Times you are available</h3>
+        <SubHeading>Times you are available</SubHeading>
         <ul className="mb-4 space-y-1 text-sm">
           {(slots.data ?? []).length === 0 && <li>None added yet.</li>}
           {(slots.data ?? []).map((slot) => (
