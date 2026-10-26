@@ -26,6 +26,7 @@ type MyCheck = {
   verified_at: string | null;
   declined_at: string | null;
   declined_reason: string | null;
+  document_path: string | null;
 };
 
 const STATUS_NAMES: Record<string, string> = {
@@ -64,7 +65,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
     supabase.from("tutor_check_status").select("kind, expires_on, status").eq("tutor_id", viewer.id),
     supabase
       .from("tutor_checks")
-      .select("id, kind, reference, completed_on, expires_on, submitted_at, verified_at, declined_at, declined_reason")
+      .select("id, kind, reference, completed_on, expires_on, submitted_at, verified_at, declined_at, declined_reason, document_path")
       .eq("tutor_id", viewer.id)
       .order("submitted_at", { ascending: false }),
     supabase.from("tutor_cleared_states").select("state").eq("tutor_id", viewer.id),
@@ -211,6 +212,16 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                       <td className="font-medium">
                         {checkName(c.kind)}
                         {c.reference && <span className="block text-xs text-zinc-500">{c.reference}</span>}
+                        {c.document_path && (
+                          <a
+                            href={`/checks/${c.id}/document`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-xs text-teal-800 underline"
+                          >
+                            Your copy
+                          </a>
+                        )}
                       </td>
                       <td>{day(c.completed_on)}</td>
                       <td>{day(c.expires_on)}</td>

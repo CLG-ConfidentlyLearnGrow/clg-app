@@ -1,8 +1,10 @@
 "use client";
 
 import { addAvailability, addTeaching, saveMaxHours, submitMyCheck } from "@/app/actions/tutor";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Field, Select } from "@/components/ui";
+import { Button, Field, FormMessage, Select } from "@/components/ui";
+import { initialFormState } from "@/lib/forms";
 import { CHECK_KINDS, CHECK_NAMES, WEEKDAYS } from "@/lib/checks";
 import { SUBJECT_SUGGESTIONS, YEAR_LEVELS, YEAR_LEVEL_NAMES } from "@/lib/students";
 
@@ -39,9 +41,45 @@ export function AvailabilityForm() {
   );
 }
 
+// Phone photos can be large. Shrink big images before sending so the upload
+// is quick and stays under the size limit. PDFs are sent as they are.
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.size < 1_500_000) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    return blob ? new File([blob], "certificate.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
+
 export function MyCheckForm() {
+  const [state, formAction, pending] = useActionState(submitMyCheck, initialFormState);
+  const [preparing, setPreparing] = useState(false);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const file = data.get("document");
+    if (file instanceof File && file.size > 0) {
+      setPreparing(true);
+      data.set("document", await shrinkImage(file));
+      setPreparing(false);
+    }
+    startTransition(() => formAction(data));
+  }
+
+  const busy = pending || preparing;
   return (
-    <ActionForm action={submitMyCheck} submitLabel="Send to CLG">
+    <form onSubmit={onSubmit} className="space-y-4">
+      <FormMessage state={state} />
       <Select label="Check" name="kind" defaultValue="" required>
         <option value="" disabled>
           Choose…
@@ -56,7 +94,7 @@ export function MyCheckForm() {
         label="Card, registration or certificate number"
         name="reference"
         maxLength={100}
-        hint="Not needed for RRHAN-EC training."
+        hint="Not needed for RRHAN-EC training or first aid."
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
@@ -72,11 +110,18 @@ export function MyCheckForm() {
           hint="Leave blank for a police check. The app works it out."
         />
       </div>
-      <p className="text-xs text-zinc-500">
-        Please have your card or certificate ready to show CLG. CLG confirms each check against the official record
-        before it counts. No copies are stored in the app.
-      </p>
-    </ActionForm>
+      <Field
+        label="Copy of the certificate or card"
+        name="document"
+        type="file"
+        required
+        accept="application/pdf,image/jpeg,image/png,image/webp"
+        hint="A PDF, or a clear photo of the whole card or certificate. Only you and CLG admins can open it."
+      />
+      <Button type="submit" disabled={busy}>
+        {busy ? "Sending…" : "Send to CLG"}
+      </Button>
+    </form>
   );
 }
 

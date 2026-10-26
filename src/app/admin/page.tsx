@@ -141,7 +141,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const pendingChecks = await supabase
     .from("tutor_checks")
     .select(
-      "id, kind, reference, completed_on, expires_on, submitted_at, tutor:tutor_profiles(account:accounts(full_name))",
+      "id, kind, reference, completed_on, expires_on, submitted_at, document_path, tutor:tutor_profiles(account:accounts(full_name))",
     )
     .is("verified_at", null)
     .is("declined_at", null)
@@ -153,6 +153,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     completed_on: string | null;
     expires_on: string;
     submitted_at: string | null;
+    document_path: string | null;
     tutor: { account: { full_name: string } | null } | null;
   }[];
   const frameworkList = await supabase
@@ -356,7 +357,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             <Card
               collapsible
               title={`Checks to confirm (${pendingCheckRows.length})`}
-              description="Checks tutors have added themselves. Confirm each one against the official screening or training record before it counts."
+              description="Checks tutors have added, each with a copy of the certificate. Open the copy, check it against the official record (for a WWCC, the state's online check), then confirm it."
             >
               {pendingCheckRows.length === 0 ? (
                 <Empty>Nothing waiting.</Empty>
@@ -378,6 +379,18 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                             {c.completed_on && `Done ${c.completed_on} · `}
                             Due again {c.expires_on}
                           </p>
+                          {c.document_path ? (
+                            <a
+                              href={`/checks/${c.id}/document`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-block font-medium text-teal-800 underline"
+                            >
+                              Open their copy
+                            </a>
+                          ) : (
+                            <p className="mt-1 text-xs text-zinc-500">No copy attached.</p>
+                          )}
                         </div>
                         <form action={confirmCheck}>
                           <input type="hidden" name="check_id" value={c.id} />
