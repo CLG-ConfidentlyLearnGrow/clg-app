@@ -5,6 +5,7 @@ import { signUp } from "@/app/actions/auth";
 import { ActionForm } from "@/components/action-form";
 import { StateSelect } from "@/components/state-select";
 import { Field, TextLink } from "@/components/ui";
+import { YearLevelSelect } from "@/components/year-level-select";
 
 export function SignupForm() {
   const [kind, setKind] = useState<"parent" | "learner">("parent");
@@ -36,6 +37,14 @@ export function SignupForm() {
         <>
           <Field label="Date of birth" name="date_of_birth" type="date" required />
           <StateSelect label="State you live in" />
+          <YearLevelSelect label="Year level or stage of study" />
+          <Field
+            label="School, university or TAFE"
+            name="school"
+            required
+            maxLength={200}
+            hint='If you are not studying at the moment, write "Not studying".'
+          />
         </>
       )}
       <label className="flex items-start gap-2 text-sm">

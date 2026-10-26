@@ -13,7 +13,7 @@ export function Page({ title, children }: { title: string; children: ReactNode }
 
 export function Card({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       {title && <h2 className="mb-3 text-lg font-semibold">{title}</h2>}
       {children}
     </section>
@@ -29,7 +29,7 @@ export function Field({
     <label className="block space-y-1">
       <span className="text-sm font-medium">{label}</span>
       <input
-        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
         {...input}
       />
       {hint && <span className="block text-xs text-zinc-500">{hint}</span>}
@@ -47,7 +47,7 @@ export function TextArea({
       <span className="text-sm font-medium">{label}</span>
       <textarea
         rows={3}
-        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
         {...input}
       />
       {hint && <span className="block text-xs text-zinc-500">{hint}</span>}
@@ -64,7 +64,7 @@ export function Select({
     <label className="block space-y-1">
       <span className="text-sm font-medium">{label}</span>
       <select
-        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
         {...select}
       >
         {children}
@@ -87,14 +87,14 @@ export function Button({ children, ...props }: ComponentProps<"button">) {
 export function FormMessage({ state }: { state: FormState }) {
   if (state.error) {
     return (
-      <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+      <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
         {state.error}
       </p>
     );
   }
   if (state.message) {
     return (
-      <p role="status" className="rounded-md bg-teal-50 px-3 py-2 text-sm text-teal-900 dark:bg-teal-950 dark:text-teal-100">
+      <p role="status" className="rounded-md bg-teal-50 px-3 py-2 text-sm text-teal-900">
         {state.message}
       </p>
     );
@@ -103,5 +103,5 @@ export function FormMessage({ state }: { state: FormState }) {
 }
 
 export function TextLink(props: ComponentProps<typeof Link>) {
-  return <Link className="text-teal-700 underline dark:text-teal-400" {...props} />;
+  return <Link className="text-teal-700 underline" {...props} />;
 }

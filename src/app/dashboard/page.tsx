@@ -62,8 +62,23 @@ async function ParentSection() {
   const links = await supabase.from("parent_student_links").select("student_id, verified_at");
   const verified = new Set((links.data ?? []).filter((l) => l.verified_at).map((l) => l.student_id));
 
+  const waiting = students.some((s) => !verified.has(s.id));
+
   return (
     <>
+      {waiting && (
+        <Card title="What happens next">
+          <ol className="list-decimal space-y-2 pl-5 text-sm">
+            <li>CLG checks your child&apos;s details. We may contact you to confirm them.</li>
+            <li>We match your child with a tutor who suits their year level, subject and location.</li>
+            <li>
+              Once that&apos;s done, you&apos;ll see your child&apos;s tutor here, plus a <strong>Progress</strong>{" "}
+              page with their goals and a next step after each session.
+            </li>
+          </ol>
+          <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>
+        </Card>
+      )}
       <Card title="Your children">
         {students.length === 0 ? (
           <p className="text-sm">Add your child below to get started.</p>
@@ -73,13 +88,14 @@ async function ParentSection() {
               <li key={s.id} className="text-sm">
                 <span className="font-medium">{s.full_name}</span>
                 {s.year_level && `, ${s.year_level}`}
+                {s.school && `, ${s.school}`}
                 {verified.has(s.id) && (
                   <>
                     {" · "}
                     <TextLink href={`/students/${s.id}/progress`}>Progress</TextLink>
                   </>
                 )}
-                {!verified.has(s.id) && <span className="ml-2 text-zinc-500">(CLG is confirming the details)</span>}
+                {!verified.has(s.id) && <span className="ml-2 text-zinc-500">(CLG is checking the details)</span>}
                 <TutorList assignments={assignments.filter((a) => a.student_id === s.id)} />
               </li>
             ))}
@@ -111,7 +127,7 @@ async function StudentSection() {
 function TutorList({ assignments }: { assignments: Assignment[] }) {
   if (assignments.length === 0) return null;
   return (
-    <ul className="mt-1 list-disc pl-5 text-zinc-700 dark:text-zinc-300">
+    <ul className="mt-1 list-disc pl-5 text-zinc-700">
       {assignments.map((a) => (
         <li key={a.id}>
           {a.subject} with {a.tutor?.account?.full_name ?? "your tutor"}
@@ -175,14 +191,14 @@ async function TutorSection({ viewer }: { viewer: Viewer }) {
           You can currently be matched with students in:{" "}
           <strong>{clearedStates.length ? clearedStates.join(", ") : "no states yet"}</strong>.
         </p>
-        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-xs text-zinc-600">
           Every tutor needs a police check issued in the last 5 years. Each state also needs its own check (South Australia also needs RRHAN-EC Fundamentals and Masterclass). The more
           states you are cleared for, the more students you can be matched with when a suitable match comes up. No
           number of students or hours is guaranteed, whatever checks or availability you have.
         </p>
       </Card>
       <Card title="Your hours and availability">
-        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-3 text-sm text-zinc-600">
           These are separate: your availability is when you could teach, and your weekly limit is the most hours you
           can work in total.
         </p>

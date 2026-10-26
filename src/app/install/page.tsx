@@ -36,7 +36,8 @@ export default function InstallPage() {
             Tap the <strong>three dots</strong> in the top-right corner.
           </li>
           <li>
-            Tap <strong>Add to home screen</strong> (it may say <strong>Install app</strong>).
+            Tap <strong>Add to home screen</strong> (it may say <strong>Install</strong> and{" "}
+            <strong>Create shortcut</strong>: choose <strong>Install</strong>).
           </li>
           <li>
             Tap <strong>Install</strong> or <strong>Add</strong>. The CLG icon appears on your home screen.

@@ -41,7 +41,7 @@ export function AddGoalForm({
         <p className="text-xs text-zinc-500">
           Pick by what the student is ready for, not their year level. The year is shown for context only.
         </p>
-        <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2">
           {skills.map((s) => (
             <label key={s.id} className="flex items-start gap-2 text-sm">
               <input type="checkbox" name="skill_id" value={s.id} className="mt-1" />
@@ -87,7 +87,7 @@ export function SessionNoteForm({ studentId, skills }: { studentId: string; skil
               <select
                 name={`skill_${s.id}`}
                 defaultValue=""
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="">Not worked on today</option>
                 {nextLevels(s.level).map((l) => (

@@ -35,7 +35,7 @@ The database enforces these rules, so a bug in a screen can't leak another famil
 2. Apply the database: install the [Supabase CLI](https://supabase.com/docs/guides/cli), run `supabase link`, then `supabase db push`.
 3. In **Authentication > Sign In / Providers > Email**: turn on "Confirm email" and "Secure password change". Set the minimum password length to 12 with lower, upper case and digits. Turn on leaked password protection if your plan includes it.
 4. In **Authentication > Multi-Factor**: turn on TOTP (authenticator app).
-5. In **Authentication > URL Configuration**: set the Site URL to the app's address, and add `<site>/auth/confirm` as a redirect URL.
+5. In **Authentication > URL Configuration**: set the Site URL to the app's address, and add `<site>/**` as a redirect URL (for example `https://clg-app-chi.vercel.app/**`).
 6. In **Authentication > Emails**: copy the three templates from `supabase/templates` into Confirm signup, Invite user and Reset password.
 7. In **Authentication > Sessions** (paid plans): set an inactivity timeout of 8 hours.
 8. In **Database > Extensions**, check that `pg_cron` is on. The migrations then schedule the nightly deletion job, which you can see under **Integrations > Cron**.

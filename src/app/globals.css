@@ -1,25 +1,53 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  CLG brand.
+    Bronze   #a8815b  accents, borders, progress bars
+    Cream    #ede8e4  page background
+    Charcoal #414042  text
+  #a8815b is too light for small text or white button labels (contrast 3.5:1,
+  below the 4.5:1 accessibility minimum), so text and buttons use deeper
+  shades of the same bronze. The existing "teal" and "zinc" class names are
+  mapped to bronze and warm greys here, so the whole app follows the brand.
+*/
+@theme {
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-teal-50: #f7f3ef;
+  --color-teal-100: #efe6dc;
+  --color-teal-200: #e0cdb8;
+  --color-teal-300: #cdb193;
+  --color-teal-400: #ba9876;
+  --color-teal-500: #a8815b;
+  --color-teal-600: #8f6b48;
+  --color-teal-700: #76573a;
+  --color-teal-800: #5e452e;
+  --color-teal-900: #463423;
+  --color-teal-950: #2e2217;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-zinc-50: #f6f3f1;
+  --color-zinc-100: #ede8e4;
+  --color-zinc-200: #ddd6d0;
+  --color-zinc-300: #c9c0b8;
+  --color-zinc-400: #9d9592;
+  --color-zinc-500: #6b6466;
+  --color-zinc-600: #5c5759;
+  --color-zinc-700: #4b4a4c;
+  --color-zinc-800: #414042;
+  --color-zinc-900: #414042;
+  --color-zinc-950: #2f2e30;
+
+  --color-brand: #a8815b;
+  --color-cream: #ede8e4;
+  --color-charcoal: #414042;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
