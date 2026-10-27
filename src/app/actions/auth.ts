@@ -151,8 +151,28 @@ export async function setNewPassword(_prev: FormState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
+
+  // Two-step login users confirm their code first (see the set-password page).
+  const factorId = formData.get("factorId");
+  if (typeof factorId === "string" && factorId) {
+    const code = String(formData.get("code") ?? "").trim();
+    if (!/^\d{6}$/.test(code)) return { error: "Enter the 6-digit code from your authenticator app." };
+    const verified = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
+    if (verified.error) {
+      return { error: "That code didn't work. Codes change every 30 seconds, so try the newest one." };
+    }
+  }
+
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
+    // The code shows in the Vercel logs, so we can see what went wrong.
+    console.error("Password update failed:", error.code ?? error.name, error.message);
+    if (error.code === "insufficient_aal") {
+      return { error: "Please enter the 6-digit code from your authenticator app, then save again." };
+    }
+    if (error.code === "session_not_found" || error.code === "session_expired" || error.name === "AuthSessionMissingError") {
+      return { error: "Your reset link has run out. Please request a new one." };
+    }
     if (error.code === "weak_password") {
       return { error: "That password is too easy to guess or has appeared in a data breach. Please choose another." };
     }
