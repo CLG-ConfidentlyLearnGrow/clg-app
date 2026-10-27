@@ -14,6 +14,11 @@ const PUBLIC_PATHS = [
   "/manifest.webmanifest",
   "/auth/confirm",
   "/auth/continue",
+  // Billing messages from Stripe and Xero, and the daily run. Each checks
+  // its own signature or secret instead of a login.
+  "/api/billing/stripe",
+  "/api/billing/xero/webhook",
+  "/api/billing/cron",
 ];
 
 // Keeps the Supabase session fresh on every request and sends signed-out

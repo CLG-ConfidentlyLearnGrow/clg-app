@@ -253,6 +253,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     : undefined,
         }))}
       >
+        <p className="text-sm">
+          <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>
+        </p>
         {section === "families" && (
           <>
             <Card
