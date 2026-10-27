@@ -54,8 +54,29 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
     redirectTo: `${siteUrl()}/auth/confirm?next=/set-password`,
   });
   if (sent.error) {
-    await supabase.from("invitations").delete().eq("id", invitation.data.id);
-    return { error: "The invitation email couldn't be sent. They may already have an account." };
+    console.error("Invitation email failed:", sent.error.code ?? sent.error.name, sent.error.message);
+    if (sent.error.code === "email_exists") {
+      await supabase.from("invitations").delete().eq("id", invitation.data.id);
+      return { error: "That email already has a CLG account that isn't confirmed yet. Ask them to confirm it, then try again." };
+    }
+
+    // Usually Supabase's built-in email can't send yet (it only emails the
+    // Supabase team, a few an hour, until CLG's own sender is set up). Make
+    // the invitation link instead, for the admin to send in Teams or email.
+    const link = await createAdminClient().auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: { redirectTo: `${siteUrl()}/login` },
+    });
+    if (link.error || !link.data.properties?.action_link) {
+      console.error("Invitation link failed:", link.error?.code, link.error?.message);
+      await supabase.from("invitations").delete().eq("id", invitation.data.id);
+      return { error: "We couldn't send the invitation or make a link for it. Please try again later." };
+    }
+    revalidatePath("/admin");
+    return {
+      message: `The email couldn't be sent, because CLG's own email sender isn't set up yet. Instead, copy this link and send it to ${email} yourself. It works once, and only for a short time (usually one hour): ${link.data.properties.action_link}`,
+    };
   }
 
   revalidatePath("/admin");

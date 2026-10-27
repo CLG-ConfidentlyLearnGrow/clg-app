@@ -66,8 +66,14 @@ insert into auth.users (id, email, raw_app_meta_data, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000099', 'sneaky@example.com', '{"role":"admin","invited_role":"admin"}', '{"signup_as":"parent","role":"admin","invited_role":"admin"}');
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-000000000099' and role <> 'parent'), 0, 'role smuggled in metadata is ignored');
 
--- Adult learners sign up alone; under-18s cannot.
-select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('teen@example.com', json_build_object('signup_as','learner','state','SA','date_of_birth', (current_date - interval '16 years')::date))$$, 'learner under 18');
+-- Students 16 or over sign up alone; under-16s cannot.
+select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('teen@example.com', json_build_object('signup_as','learner','state','SA','year_level','Year 10','school','Unley High','date_of_birth', (current_date - interval '16 years' + interval '1 day')::date))$$, 'learner under 16');
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-000000000022', 'sixteen@example.com',
+   json_build_object('signup_as', 'learner', 'full_name', 'Sam Sixteen', 'state', 'SA', 'year_level', 'Year 11', 'school', 'Unley High',
+                     'date_of_birth', (current_date - interval '16 years')::date));
+select tests.eq((select count(*) from public.students where account_id = '00000000-0000-0000-0000-000000000022'), 1, 'student aged 16 can sign up alone');
+delete from public.students where account_id = '00000000-0000-0000-0000-000000000022';
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('nostate@example.com', json_build_object('signup_as','learner','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without state');
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('bad@example.com', '{"signup_as":"learner","date_of_birth":"not a date"}')$$, 'learner bad date');
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('noyear@example.com', json_build_object('signup_as','learner','state','SA','school','Uni SA','date_of_birth', (current_date - interval '30 years')::date))$$, 'learner without year level');
