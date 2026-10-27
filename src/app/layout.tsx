@@ -36,6 +36,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
             {viewer && (
               <div className="ml-auto flex items-center gap-3">
+                <Link href="/schedule" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                  Sessions
+                </Link>
                 <span className="hidden text-sm text-zinc-600 sm:inline">{viewer.fullName}</span>
                 <form action={signOut}>
                   <button
