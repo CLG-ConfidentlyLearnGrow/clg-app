@@ -72,3 +72,19 @@ export function addDays(isoDate: string, days: number): string {
 export function currentTime(): number {
   return Date.now();
 }
+
+// A moment's local date (YYYY-MM-DD) and 24-hour time (HH:MM), for forms.
+export function localDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: LOCAL_TIME_ZONE });
+}
+
+export function localClock(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: LOCAL_TIME_ZONE });
+}
+
+export const TIME_CHECK_REASONS: Record<string, string> = {
+  different_end: "Tutor recorded a different end time",
+  not_signed_on: "Tutor didn't sign on",
+  not_at_library: "Sign-on check didn't place the tutor at the library",
+  no_location: "Signed on without a location check",
+};

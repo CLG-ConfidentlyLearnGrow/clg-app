@@ -191,6 +191,8 @@ const librarySchema = z.object({
   name: z.string().trim().min(1, "Enter the library's name.").max(200),
   suburb: z.string().trim().max(100).optional(),
   address: z.string().trim().max(300).optional(),
+  latitude: z.union([z.coerce.number().min(-90).max(90), z.literal("")]).optional(),
+  longitude: z.union([z.coerce.number().min(-180).max(180), z.literal("")]).optional(),
 });
 
 export async function addLibrary(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -204,6 +206,8 @@ export async function addLibrary(_prev: FormState, formData: FormData): Promise<
     name: parsed.data.name,
     suburb: parsed.data.suburb || null,
     address: parsed.data.address || null,
+    latitude: parsed.data.latitude === "" ? null : (parsed.data.latitude ?? null),
+    longitude: parsed.data.longitude === "" ? null : (parsed.data.longitude ?? null),
   });
   if (error) return { error: error.code === "23505" ? "That library is already listed." : "Couldn't add the library." };
   return done("Library added.");
@@ -313,4 +317,85 @@ export async function leaveWaitlist(formData: FormData) {
   const supabase = await createClient();
   await supabase.rpc("leave_waitlist", { p_id: id.data, p_reason: "withdrawn" });
   revalidatePath("/schedule");
+}
+
+// ---------------------------------------------------------------------------
+// Tutor sign on and off
+// ---------------------------------------------------------------------------
+const signOnSchema = z.object({
+  id: z.uuid(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+});
+
+// The position (library sessions only) is checked against the library and
+// not stored.
+export async function signOn(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const raw = Object.fromEntries([...formData.entries()].filter(([, v]) => v !== ""));
+  const parsed = signOnSchema.safeParse(raw);
+  if (!parsed.success) return { error: "Couldn't read that request." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("sign_on", {
+    p_session: parsed.data.id,
+    p_latitude: parsed.data.latitude ?? null,
+    p_longitude: parsed.data.longitude ?? null,
+  });
+  if (error) return { error: plainError(error, "Couldn't sign you on.") };
+  const messages: Record<string, string> = {
+    online: "Signed on.",
+    at_library: "Signed on at the library.",
+    not_at_library: "Signed on. The check didn't place you at the library, so CLG will take a look.",
+    no_location: "Signed on without a location check. CLG will take a look.",
+  };
+  return done(messages[String(data)] ?? "Signed on.");
+}
+
+const endTimeSchema = z.object({
+  id: z.uuid(),
+  date: z.iso.date(),
+  end_time: z.iso.time("Enter the time you finished."),
+  note: z.string().trim().min(1, "Please say why the time was different.").max(500),
+});
+
+export async function recordEndTime(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = endTimeSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("record_end_time", {
+    p_session: v.id,
+    // Postgres reads the date and time in Adelaide time.
+    p_end: `${v.date} ${v.end_time} Australia/Adelaide`,
+    p_note: v.note,
+  });
+  if (error) return { error: plainError(error, "Couldn't save the time.") };
+  return done("Saved. CLG will confirm the time.");
+}
+
+const confirmSchema = z.object({
+  id: z.uuid(),
+  date: z.iso.date(),
+  from_time: z.iso.time("Enter the start time."),
+  to_time: z.iso.time("Enter the end time."),
+});
+
+export async function confirmTimes(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  if (!viewer.roles.includes("admin")) return { error: "Only admins can confirm times." };
+  const parsed = confirmSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("confirm_session_times", {
+    p_session: v.id,
+    p_from: `${v.date} ${v.from_time} Australia/Adelaide`,
+    p_to: `${v.date} ${v.to_time} Australia/Adelaide`,
+  });
+  if (error) return { error: plainError(error, "Couldn't confirm the times.") };
+  return done("Times confirmed.");
 }
