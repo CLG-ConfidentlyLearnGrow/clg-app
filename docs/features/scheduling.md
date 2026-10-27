@@ -3,10 +3,10 @@
 Requested by Carla, 2026-10-26. Full brief with Carla's decisions:
 https://claude.ai/artifact/VKHnZFR36UFzbxvFi5jezV
 
-This is the first part of the module: finding a time, booking, the tutor
-confirming, the weekly sessions, cancelling and recording what happened.
-Later parts: away dates, waitlist, reminders, Teams links, tutor sign on and
-off, renewal each term.
+Part 1: finding a time, booking, the tutor confirming, the weekly sessions,
+cancelling and recording what happened. Part 2: away dates and the
+waitlist. Later parts: reminders, Teams links, tutor sign on and off,
+renewal each term.
 
 ## What it's for
 
@@ -35,6 +35,15 @@ automatic, like booking a doctor:
    cancelled and when. Billing uses that for credits and pay.
 6. After a session starts, the tutor records "completed" or "no-show". An
    admin can correct it.
+
+7. **Away dates.** A tutor, or a family for their child, adds dates they
+   can't make. Booked sessions on those dates are cancelled (recorded as
+   cancelled by the tutor or the family, at the time the dates were added,
+   so early notice gets the full credit). New bookings skip away dates.
+8. **Waitlist.** When no tutor is free, the family can join the waitlist
+   with what they searched for. Admins see everyone waiting, oldest first,
+   how many times would now suit, and who has waited 4 weeks or more (time
+   to check in). Booking that subject takes the child off the waitlist.
 
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the

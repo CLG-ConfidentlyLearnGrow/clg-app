@@ -221,3 +221,96 @@ export async function setLibraryActive(formData: FormData) {
     .eq("id", id.data);
   revalidatePath("/schedule");
 }
+
+// ---------------------------------------------------------------------------
+// Away dates
+// ---------------------------------------------------------------------------
+const awaySchema = z
+  .object({
+    who: z.string().min(1, "Choose who will be away."),
+    from_date: z.iso.date("Choose the first day away."),
+    to_date: z.iso.date("Choose the last day away."),
+    reason: z.string().trim().max(300).optional(),
+  })
+  .refine((v) => v.to_date >= v.from_date, { message: "The last day must be on or after the first day." });
+
+// "who" is "me" for a tutor's own dates, or "student:<id>" for a child.
+export async function addAwayDates(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  const parsed = awaySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const studentId = v.who.startsWith("student:") ? v.who.slice(8) : null;
+  if (studentId && !z.uuid().safeParse(studentId).success) return { error: "Choose who will be away." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("add_away_dates", {
+    p_tutor: studentId ? null : viewer.id,
+    p_student: studentId,
+    p_from: v.from_date,
+    p_to: v.to_date,
+    p_reason: v.reason || null,
+  });
+  if (error) return { error: plainError(error, "Couldn't save the away dates.") };
+  const n = Number(data ?? 0);
+  return done(n ? `Saved. ${n} booked session${n === 1 ? " was" : "s were"} cancelled.` : "Saved. No booked sessions were affected.");
+}
+
+export async function removeAwayDates(formData: FormData) {
+  await requireViewer();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("remove_away_dates", { p_id: id.data });
+  revalidatePath("/schedule");
+}
+
+// ---------------------------------------------------------------------------
+// Waitlist
+// ---------------------------------------------------------------------------
+const waitSchema = z.object({
+  student_id: z.uuid(),
+  subject: z.string().trim().min(1).max(100),
+  minutes: z.coerce.number().int().min(60).max(240),
+  online: z.enum(["0", "1"]),
+  libraries: z.string().optional(),
+  weekdays: z.string().optional(),
+  earliest: z.union([z.iso.time(), z.literal("")]).optional(),
+  latest: z.union([z.iso.time(), z.literal("")]).optional(),
+  note: z.string().trim().max(1000).optional(),
+});
+
+export async function joinWaitlist(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = waitSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Couldn't read that request." };
+  const v = parsed.data;
+  const libraries = (v.libraries ?? "").split(",").filter(Boolean);
+  if (!z.array(z.uuid()).safeParse(libraries).success) return { error: "Couldn't read the libraries." };
+  const weekdays = (v.weekdays ?? "").split(",").filter(Boolean).map(Number);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("join_waitlist", {
+    p_student: v.student_id,
+    p_subject: v.subject,
+    p_minutes: v.minutes,
+    p_online: v.online === "1",
+    p_libraries: libraries,
+    p_weekdays: weekdays.length ? weekdays : null,
+    p_earliest: v.earliest || null,
+    p_latest: v.latest || null,
+    p_tutor: null,
+    p_note: v.note || null,
+  });
+  if (error) return { error: plainError(error, "Couldn't add to the waitlist.") };
+  return done("Added to the waitlist. CLG will be in touch when a suitable tutor is free.");
+}
+
+export async function leaveWaitlist(formData: FormData) {
+  await requireViewer();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("leave_waitlist", { p_id: id.data, p_reason: "withdrawn" });
+  revalidatePath("/schedule");
+}

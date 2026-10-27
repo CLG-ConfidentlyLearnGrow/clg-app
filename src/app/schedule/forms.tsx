@@ -2,7 +2,9 @@
 
 import { useActionState, useState, type ReactNode } from "react";
 import {
+  addAwayDates,
   addLibrary,
+  joinWaitlist,
   answerBooking,
   cancelSession,
   recordOutcome,
@@ -217,6 +219,36 @@ export function LibraryForm() {
         <Field label="Suburb" name="suburb" maxLength={100} />
       </div>
       <Field label="Address (optional)" name="address" maxLength={300} />
+    </ActionForm>
+  );
+}
+
+export function AwayForm({ choices, today }: { choices: { value: string; label: string }[]; today: string }) {
+  return (
+    <ActionForm action={addAwayDates} submitLabel="Save away dates">
+      <Select label="Who will be away?" name="who" defaultValue={choices[0]?.value}>
+        {choices.map((c) => (
+          <option key={c.value} value={c.value}>
+            {c.label}
+          </option>
+        ))}
+      </Select>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="First day away" name="from_date" type="date" min={today} required />
+        <Field label="Last day away" name="to_date" type="date" min={today} required />
+      </div>
+      <Field label="Reason (optional)" name="reason" maxLength={300} hint="For example: family holiday, school camp." />
+    </ActionForm>
+  );
+}
+
+export function WaitlistForm({ request }: { request: Record<string, string | number> }) {
+  return (
+    <ActionForm action={joinWaitlist} submitLabel="Join the waitlist">
+      {Object.entries(request).map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
+      <TextArea label="Anything CLG should know? (optional)" name="note" maxLength={1000} rows={2} />
     </ActionForm>
   );
 }
