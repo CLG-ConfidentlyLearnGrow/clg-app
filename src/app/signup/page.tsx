@@ -6,7 +6,7 @@ export default function SignupPage() {
     <Page title="Create an account">
       <Card>
         <p className="mb-4 text-sm text-zinc-600">
-          Students under 18 use CLG through a parent&apos;s account. Tutors join by invitation from CLG.
+          Students under 16 use CLG through a parent&apos;s account. Tutors join by invitation from CLG.
         </p>
         <SignupForm />
         <p className="mt-4 text-sm">
