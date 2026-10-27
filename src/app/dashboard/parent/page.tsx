@@ -51,6 +51,9 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                 <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>
               </Card>
             )}
+            <p className="text-sm">
+              <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>
+            </p>
             <Card title="Your children">
               {students.length === 0 ? (
                 <Empty>

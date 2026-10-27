@@ -16,6 +16,7 @@ export default async function StudentDashboard() {
     loadStudentsAndTutors(),
     supabase.from("students").select("id").eq("account_id", viewer.id).maybeSingle(),
   ]);
+  const onHold = await supabase.rpc("my_support_on_hold");
   // Only this person's own learning, even if they are also a parent or tutor.
   const me = own.data;
   const assignments = all.filter((a) => a.student_id === me?.id);
@@ -24,6 +25,14 @@ export default async function StudentDashboard() {
     <>
       <RoleTabs roles={viewer.roles} active="student" />
       <SectionShell basePath="/dashboard/student" label="Student" section="learning" sections={[...SECTIONS]}>
+        {onHold.data === true && (
+          <Card title="Sessions on hold">
+            <p className="text-sm">
+              Your sessions are on hold for now. Please check with your parent or carer, or see{" "}
+              <TextLink href="/billing">Billing</TextLink>.
+            </p>
+          </Card>
+        )}
         <Card title="Your tutors">
           {assignments.length === 0 ? <Empty>No tutor yet.</Empty> : <TutorList assignments={assignments} />}
         </Card>
