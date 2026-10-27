@@ -14,8 +14,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         )}
         {link === "other-device" && (
           <p className="mb-4 text-sm text-red-700">
-            That link didn&apos;t work. Please open it on the same device and in the same browser you used to ask for
-            it, or request a new one. Links work once, for one hour.
+            That link didn&apos;t work. Please request a new one with &quot;Forgot your password?&quot; below. Links
+            work once, for one hour.
           </p>
         )}
         <ActionForm action={signIn} submitLabel="Sign in">
