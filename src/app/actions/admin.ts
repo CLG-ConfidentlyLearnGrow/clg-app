@@ -47,7 +47,21 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
     .select("id")
     .single();
   if (invitation.error) {
-    return { error: "Couldn't create the invitation. They may already be invited, or only the owner can invite admins." };
+    if (invitation.error.code === "23505") {
+      // One open invitation per email. Extra roles are added once they join.
+      const open = await supabase
+        .from("invitations")
+        .select("role")
+        .eq("email", email)
+        .is("accepted_at", null)
+        .maybeSingle();
+      const as = open.data?.role ? ` as ${open.data.role}` : "";
+      return {
+        error: `${email} already has an invitation waiting${as}. Once they've accepted it and signed in, invite them again as ${role} and the role is added straight away.`,
+      };
+    }
+    if (invitation.error.code === "42501") return { error: "Only the owner can invite admins." };
+    return { error: "Couldn't create the invitation. Please try again." };
   }
 
   const sent = await createAdminClient().auth.admin.inviteUserByEmail(email, {
