@@ -3,13 +3,14 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
-import { siteUrl } from "@/lib/env";
+import { siteUrl, supabasePublishableKey, supabaseUrl } from "@/lib/env";
 import { STATES } from "@/lib/checks";
 import { YEAR_LEVELS } from "@/lib/students";
 import { isEmailLinkType } from "@/lib/email-links";
 import { POLICY_VERSION, safeNextPath, type FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createPlainClient } from "@supabase/supabase-js";
 
 const LOCKED =
   "This account is locked for 30 minutes after too many attempts. Reset your password to unlock it now, or contact CLG.";
@@ -131,9 +132,16 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
   const parsed = email.safeParse(formData.get("email"));
   if (!parsed.success) return { error: "Enter a valid email address." };
 
-  const supabase = await createClient();
+  // The reset link must work on any device or browser, including when it
+  // was asked for in the installed app and opens in a browser. So it carries
+  // its own sign-in in the address (after the "#"), which EmailLinkCatcher
+  // picks up, instead of needing a secret saved in the asking browser.
+  // (Our own email templates, once set up in Supabase, use /auth/continue.)
+  const supabase = createPlainClient(supabaseUrl(), supabasePublishableKey(), {
+    auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
   await supabase.auth.resetPasswordForEmail(parsed.data, {
-    redirectTo: `${siteUrl()}/auth/confirm?next=/set-password`,
+    redirectTo: `${siteUrl()}/login`,
   });
 
   // Same answer whether or not the account exists, so the form can't be
@@ -203,4 +211,15 @@ export async function continueEmailLink(formData: FormData) {
   const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
   if (error) redirect("/login?link=expired");
   redirect(type === "recovery" || type === "invite" ? "/set-password" : next);
+}
+
+// Signs in from a reset or invitation link that carries its sign-in after
+// the "#" in the address (see requestPasswordReset). The tokens are checked
+// with Supabase before they are used.
+export async function signInFromEmailLink(accessToken: string, refreshToken: string, type: string) {
+  if (!accessToken || !refreshToken) redirect("/login?link=expired");
+  const supabase = await createClient();
+  const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  if (error) redirect("/login?link=expired");
+  redirect(type === "recovery" || type === "invite" ? "/set-password" : "/dashboard");
 }
