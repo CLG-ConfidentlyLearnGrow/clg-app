@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { signOut } from "@/app/actions/auth";
 import { getViewer } from "@/lib/auth";
+import { EmailLinkCatcher } from "@/components/email-link-catcher";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">
+        <EmailLinkCatcher />
         <header className="border-b border-zinc-200 bg-white/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">
             <Link href="/dashboard" className="flex items-center gap-3" aria-label="CLG Tutoring home">
