@@ -5,8 +5,8 @@ https://claude.ai/artifact/VKHnZFR36UFzbxvFi5jezV
 
 Part 1: finding a time, booking, the tutor confirming, the weekly sessions,
 cancelling and recording what happened. Part 2: away dates and the
-waitlist. Later parts: reminders, Teams links, tutor sign on and off,
-renewal each term.
+waitlist. Part 3: tutor sign on and off. Later parts: reminders, Teams
+links, renewal each term.
 
 ## What it's for
 
@@ -44,6 +44,18 @@ automatic, like booking a doctor:
    with what they searched for. Admins see everyone waiting, oldest first,
    how many times would now suit, and who has waited 4 weeks or more (time
    to check in). Booking that subject takes the child off the waitlist.
+
+9. **Sign on and off.** From 30 minutes before a session, the tutor taps
+   "Sign on". For a library session the phone asks once to share their
+   location; the app checks it is within 300 m of the library and keeps
+   only the result (at the library or not), never the location. Online,
+   the time counts from the later of signing on and the booked start (a
+   late tutor is paid for time worked). Sign-off is automatic at the booked
+   end, every 15 minutes. If a session ran over or finished early, the
+   tutor records the end time with a reason within a week, and an admin
+   confirms it under "Times to check", which also lists sessions with no
+   sign-on or a location check that didn't pass. Families are still charged
+   the booked time.
 
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
@@ -112,6 +124,11 @@ quoting externally.)
 - **Children's Online Privacy Code (draft)**: no tracking of children's
   location. The family picks libraries; the app doesn't ask where they
   live.
+- **Tutor location (APP 3, data minimisation; Surveillance Devices Act
+  2016 (SA))**: one check at sign-on, only with the tutor's permission in
+  the browser, compared on the server and thrown away. Only "at the
+  library" or "not" is stored. Tutors can decline and still sign on; an
+  admin then checks the time.
 - **Records**: bookings and sessions are deleted with the student under the
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't

@@ -1,15 +1,18 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { startTransition, useActionState, useState, type ReactNode } from "react";
 import {
   addAwayDates,
   addLibrary,
   joinWaitlist,
   answerBooking,
   cancelSession,
+  confirmTimes,
+  recordEndTime,
   recordOutcome,
   requestBooking,
   saveTutorPlaces,
+  signOn,
   stopBooking,
 } from "@/app/actions/scheduling";
 import { ActionForm } from "@/components/action-form";
@@ -219,6 +222,13 @@ export function LibraryForm() {
         <Field label="Suburb" name="suburb" maxLength={100} />
       </div>
       <Field label="Address (optional)" name="address" maxLength={300} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Latitude" name="latitude" inputMode="decimal" placeholder="-34.9285" />
+        <Field label="Longitude" name="longitude" inputMode="decimal" placeholder="138.6007" />
+      </div>
+      <p className="text-xs text-zinc-600">
+        Used for the tutor&apos;s sign-on check (within 300 m). Find them by right-clicking the library in Google Maps.
+      </p>
     </ActionForm>
   );
 }
@@ -249,6 +259,87 @@ export function WaitlistForm({ request }: { request: Record<string, string | num
         <input key={k} type="hidden" name={k} value={v} />
       ))}
       <TextArea label="Anything CLG should know? (optional)" name="note" maxLength={1000} rows={2} />
+    </ActionForm>
+  );
+}
+
+// Sign on to a session. For a library session the app asks the browser for
+// the tutor's position once, with their permission; it's compared with the
+// library and not kept.
+export function SignOnForm({ id, atLibrary }: { id: string; atLibrary: boolean }) {
+  const [state, formAction, pending] = useActionState(signOn, initialFormState);
+  const [locating, setLocating] = useState(false);
+
+  function withPosition(event: React.FormEvent<HTMLFormElement>) {
+    if (!atLibrary) return;
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const send = () => startTransition(() => formAction(data));
+    if (!("geolocation" in navigator)) return send();
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        data.set("latitude", String(pos.coords.latitude));
+        data.set("longitude", String(pos.coords.longitude));
+        setLocating(false);
+        send();
+      },
+      () => {
+        setLocating(false);
+        send();
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  }
+
+  if (state.message) return <FormMessage state={state} />;
+  return (
+    <form action={formAction} onSubmit={withPosition} className="space-y-2">
+      <FormMessage state={state} />
+      <input type="hidden" name="id" value={id} />
+      <Button type="submit" disabled={pending || locating}>
+        {locating ? "Checking location…" : pending ? "Signing on…" : "Sign on"}
+      </Button>
+      {atLibrary && (
+        <p className="text-xs text-zinc-600">
+          Your phone will ask to share your location once. CLG only keeps whether you were at the library.
+        </p>
+      )}
+    </form>
+  );
+}
+
+export function EndTimeForm({ id, date, bookedEnd }: { id: string; date: string; bookedEnd: string }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button type="button" className="text-xs text-teal-800 underline" onClick={() => setOpen(true)}>
+        Finished at a different time?
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 w-full rounded-xl bg-zinc-50 p-4">
+      <ActionForm action={recordEndTime} submitLabel="Send to CLG">
+        <input type="hidden" name="id" value={id} />
+        <input type="hidden" name="date" value={date} />
+        <Field label="Time you finished" name="end_time" type="time" defaultValue={bookedEnd} required />
+        <Field label="Why was it different?" name="note" maxLength={500} required />
+      </ActionForm>
+    </div>
+  );
+}
+
+export function ConfirmTimesForm({ id, date, from, to }: { id: string; date: string; from: string; to: string }) {
+  return (
+    <ActionForm action={confirmTimes} submitLabel="Confirm times">
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="date" value={date} />
+      <div className="grid grid-cols-2 gap-4 sm:w-2/3">
+        <Field label="From" name="from_time" type="time" defaultValue={from} required />
+        <Field label="To" name="to_time" type="time" defaultValue={to} required />
+      </div>
     </ActionForm>
   );
 }

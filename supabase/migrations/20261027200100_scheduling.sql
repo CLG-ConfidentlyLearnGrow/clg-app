@@ -525,7 +525,14 @@ grant execute on function public.request_booking(uuid, text, uuid, smallint, tim
 -- ---------------------------------------------------------------------------
 -- Making the weekly sessions
 -- ---------------------------------------------------------------------------
-create or replace function private.make_sessions(p_booking uuid, p_from date default null)
+-- Makes a booking's weekly sessions.
+-- Later migrations replace this function, so it's only created here when
+-- missing. Running this file again won't undo their changes.
+do $guard$
+begin
+  if to_regprocedure('private.make_sessions(uuid, date)') is null then
+    execute $fn$
+create function private.make_sessions(p_booking uuid, p_from date default null)
 returns integer language plpgsql security definer
 set search_path = ''
 as $$
@@ -556,6 +563,10 @@ begin
   return v_count;
 end;
 $$;
+    $fn$;
+  end if;
+end;
+$guard$;
 revoke all on function private.make_sessions(uuid, date) from public;
 
 -- ---------------------------------------------------------------------------
@@ -724,7 +735,14 @@ grant execute on function public.cancel_booking(uuid, text, text) to authenticat
 -- ---------------------------------------------------------------------------
 -- After a session: did it happen?
 -- ---------------------------------------------------------------------------
-create or replace function public.record_session_outcome(p_session uuid, p_status public.session_status)
+-- Records whether a session happened.
+-- Later migrations replace this function, so it's only created here when
+-- missing. Running this file again won't undo their changes.
+do $guard$
+begin
+  if to_regprocedure('public.record_session_outcome(uuid, public.session_status)') is null then
+    execute $fn$
+create function public.record_session_outcome(p_session uuid, p_status public.session_status)
 returns void language plpgsql security definer
 set search_path = ''
 as $$
@@ -755,6 +773,10 @@ begin
   -- with the booking already keeps the record from automatic deletion.
 end;
 $$;
+    $fn$;
+  end if;
+end;
+$guard$;
 revoke all on function public.record_session_outcome(uuid, public.session_status) from public, anon;
 grant execute on function public.record_session_outcome(uuid, public.session_status) to authenticated;
 

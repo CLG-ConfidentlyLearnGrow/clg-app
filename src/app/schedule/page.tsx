@@ -9,8 +9,11 @@ import {
   SESSION_STATUS_NAMES,
   WEEKDAY_NAMES,
   addDays,
+  TIME_CHECK_REASONS,
   clockTime,
   currentTime,
+  localClock,
+  localDate,
   lengthLabel,
   localToday,
   placeLabel,
@@ -18,7 +21,19 @@ import {
   shortDate,
 } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
-import { AnswerForm, AwayForm, BookForm, CancelForm, LibraryForm, OutcomeForm, PlacesForm, WaitlistForm } from "./forms";
+import {
+  AnswerForm,
+  AwayForm,
+  BookForm,
+  CancelForm,
+  ConfirmTimesForm,
+  EndTimeForm,
+  LibraryForm,
+  OutcomeForm,
+  PlacesForm,
+  SignOnForm,
+  WaitlistForm,
+} from "./forms";
 
 // The scheduling module's one page. Each person sees the sections that fit
 // their roles; the database decides which bookings and sessions they see.
@@ -93,6 +108,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     { id: "away", label: "Away dates" },
     ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
+    ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
     ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []),
   ];
   const section = sections.find((s) => s.id === params.section)?.id ?? "sessions";
@@ -104,10 +120,29 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   ]);
   const bookings = (bookingsRes.data ?? []) as Booking[];
   const sessions = (sessionsRes.data ?? []) as Session[];
+  // Sign-on details for the tutor's own sessions.
+  const mySessionIds = sessions.filter((s) => s.tutor_id === viewer.id).map((s) => s.id);
+  const signRes = mySessionIds.length
+    ? await supabase.from("sessions").select("id, signed_on_at, tutor_end_at, times_confirmed_at").in("id", mySessionIds)
+    : null;
+  const signOf = new Map(
+    (signRes?.data ?? []).map((r) => [
+      r.id as string,
+      r as { signed_on_at: string | null; tutor_end_at: string | null; times_confirmed_at: string | null },
+    ]),
+  );
   const waitingForMe = bookings.filter((b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id);
 
   const now = currentTime();
   const upcoming = sessions.filter((s) => new Date(s.ends_at).getTime() >= now);
+  const weekAgo = now - 7 * 24 * 3600 * 1000;
+  const recentMine = sessions.filter(
+    (s) =>
+      s.tutor_id === viewer.id &&
+      s.status === "completed" &&
+      new Date(s.ends_at).getTime() < now &&
+      new Date(s.ends_at).getTime() > weekAgo,
+  );
   const toRecord = sessions.filter(
     (s) => s.status === "scheduled" && new Date(s.starts_at).getTime() <= now && (isAdmin || s.tutor_id === viewer.id),
   );
@@ -148,6 +183,40 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               </ul>
             </Card>
           )}
+          {recentMine.length > 0 && (
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Your recent sessions"
+              description="You're signed off at the booked end time. If you finished at a different time, tell CLG here within a week."
+            >
+              <ul className="divide-y divide-zinc-100 text-sm">
+                {recentMine.map((s) => {
+                  const sign = signOf.get(s.id);
+                  return (
+                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0">
+                      <span>
+                        <span className="font-medium">{sessionWhen(s.starts_at)}</span>
+                        <span className="text-zinc-600">
+                          {" "}
+                          · {s.student_name} · {s.subject}
+                        </span>
+                      </span>
+                      {sign?.times_confirmed_at ? (
+                        <span className="text-xs text-zinc-600">Times confirmed</span>
+                      ) : sign?.tutor_end_at ? (
+                        <span className="text-xs text-zinc-600">
+                          Finished {clockTime(localClock(sign.tutor_end_at))}: waiting for CLG
+                        </span>
+                      ) : (
+                        <EndTimeForm id={s.id} date={localDate(s.starts_at)} bookedEnd={localClock(s.ends_at)} />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
           <Card title="Upcoming sessions" description="Times are Adelaide time.">
             {upcoming.length === 0 ? (
               <Empty>
@@ -176,7 +245,18 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                       )}
                     </span>
                     {s.status === "scheduled" ? (
-                      new Date(s.starts_at).getTime() > now && <CancelForm id={s.id} kind="session" isAdmin={isAdmin} />
+                      <span className="flex flex-wrap items-center gap-3">
+                        {s.tutor_id === viewer.id &&
+                          new Date(s.starts_at).getTime() - 30 * 60 * 1000 <= now &&
+                          (signOf.get(s.id)?.signed_on_at ? (
+                            <span className="rounded-full bg-teal-50 px-3 py-0.5 text-xs text-teal-900">Signed on</span>
+                          ) : (
+                            <SignOnForm id={s.id} atLibrary={s.delivery === "library"} />
+                          ))}
+                        {new Date(s.starts_at).getTime() > now && (
+                          <CancelForm id={s.id} kind="session" isAdmin={isAdmin} />
+                        )}
+                      </span>
                     ) : (
                       <span className="rounded-full bg-zinc-100 px-3 py-0.5 text-xs text-zinc-600">
                         {SESSION_STATUS_NAMES[s.status] ?? s.status}
@@ -251,6 +331,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
       {section === "libraries" && isAdmin && <LibrariesSection />}
+
+      {section === "times" && isAdmin && <TimesSection />}
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
@@ -713,6 +795,70 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
                   Take off the waitlist
                 </button>
               </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Admins: session times that need a look before pay
+// ---------------------------------------------------------------------------
+type TimeCheck = {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  student_name: string;
+  tutor_name: string;
+  subject: string;
+  delivery: string;
+  library_name: string | null;
+  status: string;
+  signed_on_at: string | null;
+  tutor_end_at: string | null;
+  tutor_time_note: string | null;
+  reason: string;
+};
+
+async function TimesSection() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("list_times_to_check");
+  const rows = (data ?? []) as TimeCheck[];
+  return (
+    <Card
+      title="Times to check"
+      description="Sessions whose times need a look before pay: a different end time, no sign-on, or a location check that didn't pass."
+    >
+      {rows.length === 0 ? (
+        <Empty>Nothing to check.</Empty>
+      ) : (
+        <ul className="divide-y divide-zinc-100 text-sm">
+          {rows.map((r) => (
+            <li key={r.id} className="space-y-2 py-4 first:pt-0">
+              <p>
+                <span className="font-medium">{sessionWhen(r.starts_at)}</span>
+                <span className="text-zinc-600">
+                  {" "}
+                  · {r.tutor_name} with {r.student_name} · {r.subject} · {placeLabel(r.delivery, r.library_name)}
+                </span>
+              </p>
+              <p className="text-amber-900">{TIME_CHECK_REASONS[r.reason] ?? r.reason}</p>
+              <p className="text-zinc-600">
+                Booked {clockTime(localClock(r.starts_at))} to {clockTime(localClock(r.ends_at))}
+                {r.signed_on_at && ` · signed on ${clockTime(localClock(r.signed_on_at))}`}
+                {r.tutor_end_at && ` · tutor says finished ${clockTime(localClock(r.tutor_end_at))}`}
+              </p>
+              {r.tutor_time_note && <p className="text-zinc-600">Tutor&apos;s note: {r.tutor_time_note}</p>}
+              <ConfirmTimesForm
+                id={r.id}
+                date={localDate(r.starts_at)}
+                from={localClock(
+                  r.signed_on_at && new Date(r.signed_on_at) > new Date(r.starts_at) ? r.signed_on_at : r.starts_at,
+                )}
+                to={localClock(r.tutor_end_at ?? r.ends_at)}
+              />
             </li>
           ))}
         </ul>
