@@ -1,0 +1,544 @@
+import { redirect } from "next/navigation";
+import { setLibraryActive } from "@/app/actions/scheduling";
+import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
+import { SectionShell } from "@/components/section-shell";
+import { needsTwoStep, requireViewer } from "@/lib/auth";
+import {
+  BOOKING_STATUS_NAMES,
+  SESSION_LENGTHS,
+  SESSION_STATUS_NAMES,
+  WEEKDAY_NAMES,
+  addDays,
+  clockTime,
+  currentTime,
+  lengthLabel,
+  localToday,
+  placeLabel,
+  sessionWhen,
+  shortDate,
+} from "@/lib/scheduling";
+import { createClient } from "@/lib/supabase/server";
+import { AnswerForm, BookForm, CancelForm, LibraryForm, OutcomeForm, PlacesForm } from "./forms";
+
+// The scheduling module's one page. Each person sees the sections that fit
+// their roles; the database decides which bookings and sessions they see.
+
+type Booking = {
+  id: string;
+  status: string;
+  expired: boolean;
+  student_id: string;
+  student_name: string;
+  year_level: string | null;
+  tutor_id: string;
+  tutor_name: string;
+  subject: string;
+  weekday: number;
+  start_time: string;
+  minutes: number;
+  delivery: string;
+  library_name: string | null;
+  first_date: string;
+  last_date: string;
+  family_note: string | null;
+  tutor_note: string | null;
+  tutor_reply_by: string;
+  sessions_left: number;
+};
+
+type Session = {
+  id: string;
+  status: string;
+  student_name: string;
+  tutor_id: string;
+  tutor_name: string;
+  subject: string;
+  delivery: string;
+  library_name: string | null;
+  starts_at: string;
+  ends_at: string;
+  cancelled_by_role: string | null;
+  meeting_url: string | null;
+};
+
+type TimeOption = {
+  tutor_id: string;
+  tutor_name: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  delivery: string;
+  library_id: string | null;
+  library_name: string | null;
+  joins_other_sessions: boolean;
+  learning_support: boolean;
+};
+
+const list = (v: string | string[] | undefined) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+export default async function SchedulePage({ searchParams }: PageProps<"/schedule">) {
+  const viewer = await requireViewer();
+  if (needsTwoStep(viewer)) redirect("/mfa");
+  const params = await searchParams;
+
+  const isAdmin = viewer.roles.includes("admin");
+  const isTutor = viewer.roles.includes("tutor");
+  const canBook = isAdmin || viewer.roles.includes("parent") || viewer.roles.includes("student");
+
+  const sections = [
+    { id: "sessions", label: "Sessions" },
+    { id: "bookings", label: "Bookings" },
+    ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
+    ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
+    ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []),
+  ];
+  const section = sections.find((s) => s.id === params.section)?.id ?? "sessions";
+
+  const supabase = await createClient();
+  const [bookingsRes, sessionsRes] = await Promise.all([
+    supabase.rpc("list_bookings"),
+    supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }),
+  ]);
+  const bookings = (bookingsRes.data ?? []) as Booking[];
+  const sessions = (sessionsRes.data ?? []) as Session[];
+  const waitingForMe = bookings.filter((b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id);
+
+  const now = currentTime();
+  const upcoming = sessions.filter((s) => new Date(s.ends_at).getTime() >= now);
+  const toRecord = sessions.filter(
+    (s) => s.status === "scheduled" && new Date(s.starts_at).getTime() <= now && (isAdmin || s.tutor_id === viewer.id),
+  );
+
+  return (
+    <SectionShell
+      basePath="/schedule"
+      label="Scheduling"
+      section={section}
+      sections={sections.map((s) => ({
+        ...s,
+        count: s.id === "bookings" && waitingForMe.length ? waitingForMe.length : undefined,
+      }))}
+    >
+      {section === "sessions" && (
+        <>
+          {waitingForMe.length > 0 && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              You have {waitingForMe.length} booking request{waitingForMe.length > 1 ? "s" : ""} to answer.{" "}
+              <TextLink href="/schedule?section=bookings">See requests</TextLink>
+            </p>
+          )}
+          {toRecord.length > 0 && (
+            <Card title="Did these sessions happen?" description="Mark each one done or a no-show.">
+              <ul className="divide-y divide-zinc-100 text-sm">
+                {toRecord.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
+                    <span>
+                      <span className="font-medium">{sessionWhen(s.starts_at)}</span>
+                      <span className="text-zinc-600">
+                        {" "}
+                        · {s.student_name} · {s.subject}
+                      </span>
+                    </span>
+                    <OutcomeForm id={s.id} />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          <Card title="Upcoming sessions" description="Times are Adelaide time.">
+            {upcoming.length === 0 ? (
+              <Empty>
+                No sessions booked yet.
+                {canBook && (
+                  <>
+                    {" "}
+                    <TextLink href="/schedule?section=book">Book a session</TextLink>
+                  </>
+                )}
+              </Empty>
+            ) : (
+              <ul className="divide-y divide-zinc-100 text-sm">
+                {upcoming.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3 first:pt-0">
+                    <span>
+                      <span className="font-medium">{sessionWhen(s.starts_at)}</span>
+                      <span className="text-zinc-600">
+                        {" "}
+                        · {s.student_name} with {s.tutor_name} · {s.subject} · {placeLabel(s.delivery, s.library_name)}
+                      </span>
+                      {s.meeting_url && s.status === "scheduled" && (
+                        <a href={s.meeting_url} className="ml-2 text-teal-800 underline" target="_blank" rel="noreferrer">
+                          Join
+                        </a>
+                      )}
+                    </span>
+                    {s.status === "scheduled" ? (
+                      new Date(s.starts_at).getTime() > now && <CancelForm id={s.id} kind="session" isAdmin={isAdmin} />
+                    ) : (
+                      <span className="rounded-full bg-zinc-100 px-3 py-0.5 text-xs text-zinc-600">
+                        {SESSION_STATUS_NAMES[s.status] ?? s.status}
+                        {s.cancelled_by_role && ` by ${s.cancelled_by_role === "admin" ? "CLG" : s.cancelled_by_role}`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </>
+      )}
+
+      {section === "bookings" && (
+        <Card title="Bookings" description="Each booking is the same time every week, up to its last date.">
+          {bookings.length === 0 ? (
+            <Empty>No bookings yet.</Empty>
+          ) : (
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {bookings.map((b) => {
+                const live = b.status === "confirmed" || (b.status === "requested" && !b.expired);
+                const forMe = b.status === "requested" && !b.expired && b.tutor_id === viewer.id;
+                return (
+                  <li key={b.id} className="space-y-2 py-4 first:pt-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span>
+                        <span className="font-medium">
+                          {WEEKDAY_NAMES[b.weekday - 1]}s, {clockTime(b.start_time)} ({lengthLabel(b.minutes)})
+                        </span>
+                        <span className="text-zinc-600">
+                          {" "}
+                          · {b.student_name}
+                          {b.year_level && ` (${b.year_level})`} with {b.tutor_name} · {b.subject} ·{" "}
+                          {placeLabel(b.delivery, b.library_name)}
+                        </span>
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-0.5 text-xs ${
+                          b.status === "confirmed" ? "bg-teal-50 text-teal-900" : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        {b.expired ? "Expired" : (BOOKING_STATUS_NAMES[b.status] ?? b.status)}
+                      </span>
+                    </div>
+                    <p className="text-zinc-600">
+                      {shortDate(b.first_date)} to {shortDate(b.last_date)}
+                      {b.status === "confirmed" && ` · ${b.sessions_left} session${b.sessions_left === 1 ? "" : "s"} to come`}
+                      {b.status === "requested" &&
+                        !b.expired &&
+                        ` · tutor to answer by ${new Date(b.tutor_reply_by).toLocaleString("en-AU", {
+                          weekday: "short",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          timeZone: "Australia/Adelaide",
+                        })}`}
+                    </p>
+                    {b.family_note && <p className="text-zinc-600">Family note: {b.family_note}</p>}
+                    {b.tutor_note && <p className="text-zinc-600">Tutor note: {b.tutor_note}</p>}
+                    {forMe && <AnswerForm bookingId={b.id} />}
+                    {live && !forMe && <CancelForm id={b.id} kind="booking" isAdmin={isAdmin} />}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      {section === "book" && canBook && <BookSection params={params} viewerId={viewer.id} isAdmin={isAdmin} />}
+
+      {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
+
+      {section === "libraries" && isAdmin && <LibrariesSection />}
+    </SectionShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Book a session: choose the child, subject, length and places, then a time.
+// ---------------------------------------------------------------------------
+async function BookSection({
+  params,
+  viewerId,
+  isAdmin,
+}: {
+  params: Record<string, string | string[] | undefined>;
+  viewerId: string;
+  isAdmin: boolean;
+}) {
+  const supabase = await createClient();
+  const [studentsRes, linksRes, librariesRes] = await Promise.all([
+    supabase.from("students").select("id, full_name, year_level, account_id").order("full_name"),
+    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
+    supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
+  ]);
+  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
+  // Admins can book for anyone; families only for their own children.
+  const students = (studentsRes.data ?? []).filter((s) => isAdmin || mine.has(s.id) || s.account_id === viewerId);
+  const libraries = librariesRes.data ?? [];
+
+  const studentId = one(params.student) || (students.length === 1 ? students[0].id : "");
+  const student = students.find((s) => s.id === studentId);
+  const subjectsRes = student
+    ? await supabase.from("student_subjects").select("subject").eq("student_id", student.id).order("added_at")
+    : null;
+  const subjects = (subjectsRes?.data ?? []).map((r) => r.subject as string);
+
+  const subject = one(params.subject) || subjects[0] || "";
+  const minutes = Number(one(params.minutes)) || 60;
+  const searched = one(params.go) === "1";
+  const online = searched ? one(params.online) === "1" : true;
+  const chosenLibs = list(params.lib);
+  const days = list(params.day).map(Number).filter((d) => d >= 1 && d <= 7);
+  const earliest = one(params.from);
+  const latest = one(params.to);
+  const tomorrow = addDays(localToday(), 1);
+  const start = one(params.start) >= tomorrow ? one(params.start) : tomorrow;
+
+  let options: TimeOption[] = [];
+  let searchError = "";
+  if (searched && student && subject) {
+    const { data, error } = await supabase.rpc("find_session_times", {
+      p_student: student.id,
+      p_subject: subject,
+      p_minutes: minutes,
+      p_online: online,
+      p_libraries: chosenLibs,
+      p_first_date: start,
+      p_weekdays: days.length ? days : null,
+      p_earliest: earliest || null,
+      p_latest: latest || null,
+    });
+    if (error) searchError = /violates|syntax|relation|column|function/i.test(error.message) ? "Couldn't search. Please try again." : error.message;
+    options = (data ?? []) as TimeOption[];
+  }
+
+  const box = "flex items-start gap-2 text-sm";
+  return (
+    <>
+      <Card
+        title="Book a session"
+        description="Choose what's needed and where. You'll see only tutors who suit and are free, then pick a time."
+      >
+        {students.length === 0 ? (
+          <Empty>
+            Add your child first. <TextLink href="/dashboard/parent?section=add">Add a child</TextLink>
+          </Empty>
+        ) : (
+          <form method="get" action="/schedule" className="space-y-5">
+            <input type="hidden" name="section" value="book" />
+            <input type="hidden" name="go" value="1" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select label="Who is it for?" name="student" defaultValue={studentId} required>
+                <option value="" disabled>
+                  Choose…
+                </option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name}
+                    {s.year_level ? ` (${s.year_level})` : ""}
+                  </option>
+                ))}
+              </Select>
+              {student && subjects.length > 0 ? (
+                <Select label="Subject" name="subject" defaultValue={subject} required>
+                  {subjects.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              ) : student ? (
+                <p className="self-end text-sm text-zinc-600">
+                  No subjects asked for yet. Add them under &quot;See or change details&quot; on your dashboard.
+                </p>
+              ) : (
+                <p className="self-end text-sm text-zinc-600">Choose who it&apos;s for, then press Find times.</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Select label="How long" name="minutes" defaultValue={String(minutes)}>
+                {SESSION_LENGTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {lengthLabel(m)}
+                  </option>
+                ))}
+              </Select>
+              <Field label="Starting from" name="start" type="date" defaultValue={start} min={tomorrow} />
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium text-zinc-800">Where</legend>
+              <label className={box}>
+                <input type="checkbox" name="online" value="1" defaultChecked={online} className="mt-1" /> Online
+              </label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {libraries.map((l) => (
+                  <label key={l.id} className={box}>
+                    <input
+                      type="checkbox"
+                      name="lib"
+                      value={l.id}
+                      defaultChecked={chosenLibs.includes(l.id)}
+                      className="mt-1"
+                    />
+                    <span>
+                      {l.name}
+                      {l.suburb && <span className="text-zinc-500"> · {l.suburb}</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-zinc-600">
+                In-person sessions are at public libraries. Ticking more places and times means more tutors can be
+                offered, but no match is guaranteed.
+              </p>
+            </fieldset>
+
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium text-zinc-800">When suits (optional)</legend>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {WEEKDAY_NAMES.map((d, i) => (
+                  <label key={d} className={box}>
+                    <input type="checkbox" name="day" value={i + 1} defaultChecked={days.includes(i + 1)} className="mt-1" />{" "}
+                    {d.slice(0, 3)}
+                  </label>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-4 sm:w-2/3">
+                <Field label="No earlier than" name="from" type="time" defaultValue={earliest} />
+                <Field label="Finished by" name="to" type="time" defaultValue={latest} />
+              </div>
+            </fieldset>
+
+            <Button type="submit">Find times</Button>
+          </form>
+        )}
+      </Card>
+
+      {searched && student && subject && (
+        <Card title="Free times" description={`${subject} for ${student.full_name}, ${lengthLabel(minutes)} each week.`}>
+          {searchError ? (
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {searchError}
+            </p>
+          ) : options.length === 0 ? (
+            <Empty>
+              No free times match. Try more days, a wider time, online, or more libraries. CLG can also add you to the
+              waitlist: please get in touch.
+            </Empty>
+          ) : (
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {options.slice(0, 40).map((o) => (
+                <li
+                  key={`${o.tutor_id}-${o.weekday}-${o.start_time}-${o.delivery}-${o.library_id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0"
+                >
+                  <span>
+                    <span className="font-medium">
+                      {WEEKDAY_NAMES[o.weekday - 1]} {clockTime(o.start_time)} to {clockTime(o.end_time)}
+                    </span>
+                    <span className="text-zinc-600">
+                      {" "}
+                      · {o.tutor_name} · {placeLabel(o.delivery, o.library_name)}
+                    </span>
+                    {o.learning_support && (
+                      <span className="ml-2 rounded-full bg-teal-50 px-2 text-xs text-teal-900">
+                        Learning support experience
+                      </span>
+                    )}
+                    {isAdmin && o.joins_other_sessions && (
+                      <span className="ml-2 rounded-full bg-amber-50 px-2 text-xs text-amber-900">Joins tutor&apos;s block</span>
+                    )}
+                  </span>
+                  <BookForm
+                    option={{
+                      student_id: student.id,
+                      subject,
+                      tutor_id: o.tutor_id,
+                      weekday: o.weekday,
+                      start_time: o.start_time,
+                      minutes,
+                      delivery: o.delivery,
+                      library_id: o.library_id,
+                    }}
+                    defaultFirst={start}
+                    defaultLast={addDays(start, 70)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          {options.length > 40 && (
+            <p className="mt-3 text-xs text-zinc-600">Showing the first 40. Narrow the days or times to see others.</p>
+          )}
+        </Card>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tutors: online or in person, and which libraries
+// ---------------------------------------------------------------------------
+async function PlacesSection({ viewerId }: { viewerId: string }) {
+  const supabase = await createClient();
+  const [librariesRes, placesRes, settingsRes] = await Promise.all([
+    supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
+    supabase.from("tutor_places").select("library_id").eq("tutor_id", viewerId),
+    supabase.from("tutor_session_settings").select("online, in_person, learning_support").eq("tutor_id", viewerId).maybeSingle(),
+  ]);
+  return (
+    <Card
+      title="Where you teach"
+      description={
+        <>
+          Families only see times inside your availability and weekly hours (set in your{" "}
+          <TextLink href="/dashboard/tutor?section=hours">tutor dashboard</TextLink>).
+        </>
+      }
+    >
+      <PlacesForm
+        libraries={librariesRes.data ?? []}
+        chosen={(placesRes.data ?? []).map((p) => p.library_id as string)}
+        settings={settingsRes.data ?? { online: true, in_person: true, learning_support: false }}
+      />
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Admins: libraries families and tutors can choose
+// ---------------------------------------------------------------------------
+async function LibrariesSection() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("libraries").select("id, name, suburb, active").order("name");
+  const libraries = data ?? [];
+  return (
+    <Card title="Libraries" description="Public libraries families and tutors can choose for in-person sessions.">
+      {libraries.length === 0 ? (
+        <Empty>No libraries yet.</Empty>
+      ) : (
+        <ul className="divide-y divide-zinc-100 text-sm">
+          {libraries.map((l) => (
+            <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <span className={l.active ? "" : "text-zinc-400"}>
+                <span className="font-medium">{l.name}</span>
+                {l.suburb && ` · ${l.suburb}`}
+                {!l.active && " (hidden)"}
+              </span>
+              <form action={setLibraryActive}>
+                <input type="hidden" name="id" value={l.id} />
+                <input type="hidden" name="active" value={l.active ? "false" : "true"} />
+                <button type="submit" className="text-xs text-teal-800 underline">
+                  {l.active ? "Hide" : "Show"}
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+      <SubHeading>Add a library</SubHeading>
+      <LibraryForm />
+    </Card>
+  );
+}
