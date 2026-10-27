@@ -109,12 +109,27 @@ select tests.claims(null);
 update public.parent_student_links set verified_at = now() where student_id = :'sam';
 
 -- A family paused for an overdue payment can't book (billing's function).
+-- If billing's real function is installed, move it aside for this check.
+do $$
+begin
+  if to_regprocedure('private.billing_family_paused(uuid)') is not null then
+    alter function private.billing_family_paused(uuid) rename to billing_family_paused_set_aside;
+  end if;
+end;
+$$;
 create function private.billing_family_paused(p_family uuid) returns boolean language sql stable as $$ select true $$;
 select tests.claims('00000000-0000-0000-0000-000000000003');
 set role authenticated;
 select tests.fails(format($$select public.request_booking(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'library', %L, %L::date, %L::date + 28)$$, :'sam', :'lib_a', :'first_day', :'first_day'), 'family paused');
 reset role;
 drop function private.billing_family_paused(uuid);
+do $$
+begin
+  if to_regprocedure('private.billing_family_paused_set_aside(uuid)') is not null then
+    alter function private.billing_family_paused_set_aside(uuid) rename to billing_family_paused;
+  end if;
+end;
+$$;
 
 select tests.claims('00000000-0000-0000-0000-000000000003');
 set role authenticated;
