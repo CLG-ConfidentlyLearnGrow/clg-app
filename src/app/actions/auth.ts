@@ -45,9 +45,9 @@ const signUpSchema = z
   .refine(
     (v) =>
       v.signup_as !== "learner" ||
-      (!!v.date_of_birth && new Date(v.date_of_birth) <= yearsAgo(18)),
+      (!!v.date_of_birth && new Date(v.date_of_birth) <= yearsAgo(16)),
     {
-      message: "Learners under 18 join through a parent's account. Ask a parent to sign up.",
+      message: "Students under 16 join through a parent's account. Ask a parent to sign up.",
       path: ["date_of_birth"],
     },
   )

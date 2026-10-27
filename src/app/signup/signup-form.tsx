@@ -19,7 +19,7 @@ export function SignupForm() {
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="signup_as" value="learner" checked={kind === "learner"} onChange={() => setKind("learner")} />
-          An adult learner (18 or over)
+          A student aged 16 or over, or an adult learner
         </label>
       </fieldset>
       <Field label="Full name" name="full_name" autoComplete="name" required maxLength={200} />
