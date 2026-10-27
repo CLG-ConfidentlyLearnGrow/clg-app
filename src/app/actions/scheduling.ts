@@ -399,3 +399,33 @@ export async function confirmTimes(_prev: FormState, formData: FormData): Promis
   if (error) return { error: plainError(error, "Couldn't confirm the times.") };
   return done("Times confirmed.");
 }
+
+// ---------------------------------------------------------------------------
+// Notices
+// ---------------------------------------------------------------------------
+export async function markNoticesRead() {
+  await requireViewer();
+  const supabase = await createClient();
+  await supabase.rpc("mark_notices_read");
+  revalidatePath("/schedule");
+}
+
+const noticeSettingsSchema = z.object({
+  first_reminder_hours: z.coerce.number().int().min(2).max(168),
+});
+
+export async function saveNoticeSettings(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  const parsed = noticeSettingsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Choose when the first reminder comes." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("notice_settings").upsert({
+    account_id: viewer.id,
+    first_reminder_hours: parsed.data.first_reminder_hours,
+    by_email: formData.get("by_email") === "on",
+    by_text: formData.get("by_text") === "on",
+  });
+  if (error) return { error: "Couldn't save your settings." };
+  return done("Saved. New reminders will use these settings.");
+}

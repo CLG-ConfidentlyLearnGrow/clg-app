@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { leaveWaitlist, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
+import { leaveWaitlist, markNoticesRead, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
 import { SectionShell } from "@/components/section-shell";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
@@ -29,6 +29,7 @@ import {
   ConfirmTimesForm,
   EndTimeForm,
   LibraryForm,
+  NoticeSettingsForm,
   OutcomeForm,
   PlacesForm,
   SignOnForm,
@@ -106,6 +107,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     { id: "bookings", label: "Bookings" },
     ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
     { id: "away", label: "Away dates" },
+    { id: "notices", label: "Notices" },
     ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
@@ -114,6 +116,11 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const section = sections.find((s) => s.id === params.section)?.id ?? "sessions";
 
   const supabase = await createClient();
+  const unreadRes = await supabase
+    .from("session_notices")
+    .select("id", { count: "exact", head: true })
+    .is("read_at", null);
+  const unread = unreadRes.count ?? 0;
   const [bookingsRes, sessionsRes] = await Promise.all([
     supabase.rpc("list_bookings"),
     supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }),
@@ -154,7 +161,12 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       section={section}
       sections={sections.map((s) => ({
         ...s,
-        count: s.id === "bookings" && waitingForMe.length ? waitingForMe.length : undefined,
+        count:
+          s.id === "bookings" && waitingForMe.length
+            ? waitingForMe.length
+            : s.id === "notices" && unread
+              ? unread
+              : undefined,
       }))}
     >
       {section === "sessions" && (
@@ -333,6 +345,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       {section === "libraries" && isAdmin && <LibrariesSection />}
 
       {section === "times" && isAdmin && <TimesSection />}
+
+      {section === "notices" && <NoticesSection viewerId={viewer.id} unread={unread} />}
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
@@ -864,5 +878,63 @@ async function TimesSection() {
         </ul>
       )}
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Notices: reminders and booking news, and how each person wants them
+// ---------------------------------------------------------------------------
+async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: number }) {
+  const supabase = await createClient();
+  const [noticesRes, settingsRes] = await Promise.all([
+    supabase
+      .from("session_notices")
+      .select("id, title, body, deliver_at, read_at")
+      .order("deliver_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("notice_settings")
+      .select("first_reminder_hours, by_email, by_text")
+      .eq("account_id", viewerId)
+      .maybeSingle(),
+  ]);
+  const notices = noticesRes.data ?? [];
+  return (
+    <>
+      <Card title="Notices" description="Reminders before each session, and news about your bookings.">
+        {notices.length === 0 ? (
+          <Empty>No notices yet.</Empty>
+        ) : (
+          <>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {notices.map((n) => (
+                <li key={n.id} className="py-3 first:pt-0">
+                  <p className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className={n.read_at ? "font-medium text-zinc-700" : "font-semibold"}>
+                      {!n.read_at && <span className="mr-2 inline-block h-2 w-2 rounded-full bg-teal-600" aria-label="New" />}
+                      {n.title}
+                    </span>
+                    <span className="text-xs text-zinc-500">{sessionWhen(n.deliver_at)}</span>
+                  </p>
+                  <p className="mt-1 text-zinc-600">{n.body}</p>
+                </li>
+              ))}
+            </ul>
+            {unread > 0 && (
+              <form action={markNoticesRead} className="mt-4">
+                <button type="submit" className="text-sm text-teal-800 underline">
+                  Mark all as read
+                </button>
+              </form>
+            )}
+          </>
+        )}
+      </Card>
+      <Card collapsible defaultOpen={false} title="Reminder settings">
+        <NoticeSettingsForm
+          settings={settingsRes.data ?? { first_reminder_hours: 48, by_email: true, by_text: false }}
+        />
+      </Card>
+    </>
   );
 }
