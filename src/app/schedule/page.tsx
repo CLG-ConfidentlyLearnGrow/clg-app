@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { setLibraryActive } from "@/app/actions/scheduling";
+import { leaveWaitlist, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
 import { SectionShell } from "@/components/section-shell";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
@@ -18,7 +18,7 @@ import {
   shortDate,
 } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
-import { AnswerForm, BookForm, CancelForm, LibraryForm, OutcomeForm, PlacesForm } from "./forms";
+import { AnswerForm, AwayForm, BookForm, CancelForm, LibraryForm, OutcomeForm, PlacesForm, WaitlistForm } from "./forms";
 
 // The scheduling module's one page. Each person sees the sections that fit
 // their roles; the database decides which bookings and sessions they see.
@@ -90,6 +90,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     { id: "sessions", label: "Sessions" },
     { id: "bookings", label: "Bookings" },
     ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
+    { id: "away", label: "Away dates" },
+    ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []),
   ];
@@ -249,6 +251,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
       {section === "libraries" && isAdmin && <LibrariesSection />}
+
+      {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
+
+      {section === "waitlist" && canBook && <WaitlistSection isAdmin={isAdmin} />}
     </SectionShell>
   );
 }
@@ -422,10 +428,26 @@ async function BookSection({
               {searchError}
             </p>
           ) : options.length === 0 ? (
-            <Empty>
-              No free times match. Try more days, a wider time, online, or more libraries. CLG can also add you to the
-              waitlist: please get in touch.
-            </Empty>
+            <>
+              <Empty>
+                No free times match. Try more days, a wider time, online, or more libraries, or join the waitlist and
+                CLG will be in touch when a suitable tutor is free.
+              </Empty>
+              <div className="mt-4">
+                <WaitlistForm
+                  request={{
+                    student_id: student.id,
+                    subject,
+                    minutes,
+                    online: online ? "1" : "0",
+                    libraries: chosenLibs.join(","),
+                    weekdays: days.join(","),
+                    earliest,
+                    latest,
+                  }}
+                />
+              </div>
+            </>
           ) : (
             <ul className="divide-y divide-zinc-100 text-sm">
               {options.slice(0, 40).map((o) => (
@@ -539,6 +561,162 @@ async function LibrariesSection() {
       )}
       <SubHeading>Add a library</SubHeading>
       <LibraryForm />
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Away dates: tutors for themselves, families for their children
+// ---------------------------------------------------------------------------
+async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; isAdmin: boolean; isTutor: boolean }) {
+  const supabase = await createClient();
+  const [awayRes, studentsRes, linksRes, tutorsRes] = await Promise.all([
+    supabase
+      .from("away_dates")
+      .select("id, tutor_id, student_id, from_date, to_date, reason")
+      .gte("to_date", localToday())
+      .order("from_date"),
+    supabase.from("students").select("id, full_name, account_id").order("full_name"),
+    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
+    isAdmin ? supabase.from("accounts").select("id, full_name") : Promise.resolve({ data: [] as { id: string; full_name: string }[] }),
+  ]);
+  const students = studentsRes.data ?? [];
+  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
+  const myChildren = students.filter((s) => mine.has(s.id) || s.account_id === viewerId);
+  const nameOf = new Map<string, string>([
+    ...students.map((s) => [s.id, s.full_name] as [string, string]),
+    ...(tutorsRes.data ?? []).map((a) => [a.id, a.full_name] as [string, string]),
+  ]);
+  const choices = [
+    ...(isTutor ? [{ value: "me", label: "Me (as a tutor)" }] : []),
+    ...myChildren.map((s) => ({ value: `student:${s.id}`, label: s.full_name })),
+  ];
+  const away = awayRes.data ?? [];
+
+  return (
+    <>
+      <Card
+        title="Away dates"
+        description="Holidays, camps or exams. Sessions already booked on these dates are cancelled, and new bookings skip them."
+      >
+        {away.length === 0 ? (
+          <Empty>No away dates coming up.</Empty>
+        ) : (
+          <ul className="divide-y divide-zinc-100 text-sm">
+            {away.map((a) => {
+              const who = a.tutor_id === viewerId ? "You" : (nameOf.get((a.tutor_id ?? a.student_id) as string) ?? "Tutor");
+              const canRemove = isAdmin || a.tutor_id === viewerId || (a.student_id && myChildren.some((c) => c.id === a.student_id));
+              return (
+                <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0">
+                  <span>
+                    <span className="font-medium">{who}</span>
+                    <span className="text-zinc-600">
+                      {" "}
+                      · {a.from_date === a.to_date ? shortDate(a.from_date) : `${shortDate(a.from_date)} to ${shortDate(a.to_date)}`}
+                      {a.reason && ` · ${a.reason}`}
+                    </span>
+                  </span>
+                  {canRemove && (
+                    <form action={removeAwayDates}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-xs text-red-700 underline">
+                        Remove
+                      </button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {choices.length > 0 && (
+          <>
+            <SubHeading>Add away dates</SubHeading>
+            <AwayForm choices={choices} today={localToday()} />
+          </>
+        )}
+      </Card>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Waitlist: families see their places; admins see everyone waiting
+// ---------------------------------------------------------------------------
+type WaitPlace = {
+  id: string;
+  student_name: string;
+  year_level: string | null;
+  subject: string;
+  minutes: number;
+  online: boolean;
+  library_names: string[];
+  weekdays: number[] | null;
+  earliest: string | null;
+  latest: string | null;
+  tutor_name: string | null;
+  note: string | null;
+  created_at: string;
+  waited_4_weeks: boolean;
+  times_now_free: number;
+};
+
+async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("list_waitlist");
+  const places = (data ?? []) as WaitPlace[];
+  return (
+    <Card
+      title="Waitlist"
+      description={
+        isAdmin
+          ? "Everyone waiting for a tutor, oldest first. Check in with families who have waited 4 weeks."
+          : "Your children waiting for a suitable tutor. CLG will be in touch when one is free."
+      }
+    >
+      {places.length === 0 ? (
+        <Empty>Nobody is on the waitlist.</Empty>
+      ) : (
+        <ul className="divide-y divide-zinc-100 text-sm">
+          {places.map((w) => (
+            <li key={w.id} className="space-y-1 py-3 first:pt-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  <span className="font-medium">{w.student_name}</span>
+                  <span className="text-zinc-600">
+                    {w.year_level && ` (${w.year_level})`} · {w.subject} · {lengthLabel(w.minutes)}
+                  </span>
+                </span>
+                <span className="flex items-center gap-2">
+                  {w.waited_4_weeks && (
+                    <span className="rounded-full bg-amber-50 px-2 text-xs text-amber-900">Waiting 4+ weeks</span>
+                  )}
+                  {w.times_now_free > 0 && (
+                    <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">
+                      {w.times_now_free} time{w.times_now_free === 1 ? "" : "s"} free now
+                    </span>
+                  )}
+                </span>
+              </div>
+              <p className="text-zinc-600">
+                {[w.online ? "Online" : null, ...w.library_names].filter(Boolean).join(", ")}
+                {w.weekdays?.length ? ` · ${w.weekdays.map((d) => WEEKDAY_NAMES[d - 1].slice(0, 3)).join(", ")}` : ""}
+                {w.earliest && ` · from ${clockTime(w.earliest)}`}
+                {w.latest && ` · finished by ${clockTime(w.latest)}`}
+                {w.tutor_name && ` · waiting for ${w.tutor_name}`}
+                {` · since ${shortDate(w.created_at)}`}
+              </p>
+              {w.note && <p className="text-zinc-600">Note: {w.note}</p>}
+              <form action={leaveWaitlist}>
+                <input type="hidden" name="id" value={w.id} />
+                <button type="submit" className="text-xs text-red-700 underline">
+                  Take off the waitlist
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
