@@ -179,7 +179,7 @@ export function FormMessage({ state }: { state: FormState }) {
   }
   if (state.message) {
     return (
-      <p role="status" className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+      <p role="status" className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 [overflow-wrap:anywhere]">
         {state.message}
       </p>
     );
