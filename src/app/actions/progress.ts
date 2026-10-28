@@ -72,6 +72,10 @@ const noteSchema = z.object({
   homework: z.string().trim().max(1000).optional(),
   homework_due: z.union([z.iso.date(), z.literal("")]).optional(),
   staff_note: z.string().trim().max(4000).optional(),
+  home_tip: z.string().trim().max(300, "Keep the tip under 300 characters.").optional(),
+  session_id: z.union([z.uuid(), z.literal("")]).optional(),
+  // How long the form was being filled in, measured in the browser.
+  writing_seconds: z.union([z.coerce.number().int().min(0).max(7200), z.literal("")]).optional(),
 });
 
 export async function saveSessionNote(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -105,6 +109,9 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
     p_homework_due: v.homework_due || null,
     p_staff_note: v.staff_note ?? "",
     p_skills: skills,
+    p_session: v.session_id || null,
+    p_home_tip: v.home_tip ?? "",
+    p_writing_seconds: typeof v.writing_seconds === "number" ? v.writing_seconds : null,
   });
   if (error) {
     // The database explains rule breaks in plain words.
@@ -113,7 +120,8 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
   }
 
   revalidatePath(progressPath(v.student_id));
-  return { message: "Session note saved. The family can see what went well and the next step." };
+  revalidatePath("/dashboard/tutor");
+  return { message: "Session note saved. The family can see what went well, the next step and the tip for home." };
 }
 
 const reflectionSchema = z.object({

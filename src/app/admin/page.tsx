@@ -12,6 +12,7 @@ import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
 import { FamilySetupForm } from "./family-setup-form";
 import { StudentLoginForm } from "./student-login-form";
+import { ProgressSection } from "./progress-section";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -666,6 +667,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             </Card>
           </>
         )}
+
+        {section === "progress" && <ProgressSection from={params.from} to={params.to} />}
 
         {section === "staff" && (
           <>

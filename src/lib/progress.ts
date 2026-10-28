@@ -34,3 +34,24 @@ export function nextLevels(current: SkillLevel): SkillLevel[] {
 }
 
 export const levelName = (level: string) => SKILL_LEVEL_NAMES[level as SkillLevel] ?? level;
+
+// A session is due a note within 24 hr; after 48 hr admins are told.
+export const NOTE_DUE_HOURS = 24;
+export const NOTE_OVERDUE_HOURS = 48;
+
+// Sessions in a row with no skill moving before the plan needs a look.
+export const STALLED_AFTER_SESSIONS = 4;
+
+// "2 min 20 sec" from seconds.
+export function minutesAndSeconds(total: number | null): string {
+  if (total === null || total === undefined) return "-";
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m > 0 ? `${m} min${s ? ` ${s} sec` : ""}` : `${s} sec`;
+}
+
+// "5 hr ago", "2 days ago".
+export function hoursAgo(hours: number): string {
+  if (hours < 48) return `${hours} hr ago`;
+  return `${Math.floor(hours / 24)} days ago`;
+}

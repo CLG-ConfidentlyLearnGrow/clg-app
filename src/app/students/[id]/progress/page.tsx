@@ -4,8 +4,9 @@ import { Button, Card, Page, TextLink } from "@/components/ui";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Attendance, type SkillLevel } from "@/lib/progress";
 import { levelFits, subjectFits } from "@/lib/students";
+import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
-import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill } from "./forms";
+import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 
 type Skill = {
   id: string;
@@ -30,6 +31,13 @@ type FamilyNote = {
   writer: { full_name: string } | null;
 };
 const FAMILY_NOTE_NAMES = { feedback: "Feedback", home_progress: "Progress at home" } as const;
+type DueSession = {
+  session_id: string;
+  student_id: string;
+  subject: string;
+  starts_at: string;
+  minutes: number;
+};
 type Reflection = { confidence: number; what_was_hard: string | null; what_i_will_try: string | null };
 type Note = {
   id: string;
@@ -40,6 +48,7 @@ type Note = {
   next_step: string | null;
   homework: string | null;
   homework_due: string | null;
+  home_tip: string | null;
   tutor: { account: { full_name: string } | null } | null;
   session_note_skills: { skill_id: string; level_before: SkillLevel; level_after: SkillLevel; skill: Skill | null }[];
   student_reflections: Reflection | Reflection[] | null;
@@ -56,7 +65,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const viewer = await requireViewer();
   if (needsTwoStep(viewer)) redirect("/mfa");
   const { id } = await params;
-  const { subject, view } = await searchParams;
+  const { subject, view, session } = await searchParams;
   const supabase = await createClient();
 
   const student = await supabase
@@ -98,7 +107,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
     supabase
       .from("session_notes")
       .select(
-        "id, session_date, minutes, attendance, went_well, next_step, homework, homework_due, tutor:tutor_profiles(account:accounts(full_name)), session_note_skills(skill_id, level_before, level_after, skill:curriculum_skills(id, subject, level_band, description, plain_description)), student_reflections(confidence, what_was_hard, what_i_will_try)",
+        "id, session_date, minutes, attendance, went_well, next_step, homework, homework_due, home_tip, tutor:tutor_profiles(account:accounts(full_name)), session_note_skills(skill_id, level_before, level_after, skill:curriculum_skills(id, subject, level_band, description, plain_description)), student_reflections(confidence, what_was_hard, what_i_will_try)",
       )
       .eq("student_id", id)
       .order("session_date", { ascending: false })
@@ -108,6 +117,24 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
   const isStaff = isStudentStaff && !familyView;
   const isFamily = familyView;
+
+  // Reading this page counts as seeing its updates and reminders.
+  await supabase.rpc("mark_progress_notices_read", { p_student: id });
+
+  // Booked sessions with this student still waiting for a note. The note
+  // form starts on the oldest one; "?session=none" writes a note without one.
+  const dueRes = isStaff ? await supabase.rpc("list_notes_due") : null;
+  const dueSessions = ((dueRes?.data ?? []) as DueSession[]).filter((d) => d.student_id === id);
+  const chosenDue =
+    session === "none" ? null : (dueSessions.find((d) => d.session_id === session) ?? dueSessions[0] ?? null);
+  const noteSession: NoteSession | null = chosenDue
+    ? {
+        id: chosenDue.session_id,
+        date: localDate(chosenDue.starts_at),
+        minutes: chosenDue.minutes,
+        label: `${sessionWhen(chosenDue.starts_at)} (${chosenDue.subject})`,
+      }
+    : null;
   const goalRows = (goals.data ?? []) as unknown as Goal[];
   const activeGoals = goalRows.filter((g) => g.status === "active");
   const closedGoals = goalRows.filter((g) => g.status !== "active");
@@ -186,6 +213,11 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         {latest ? (
           <div className="space-y-2 text-sm">
             <p className="text-base font-medium">{latest.next_step}</p>
+            {latest.home_tip && (
+              <p>
+                <strong>Try at home:</strong> {latest.home_tip}
+              </p>
+            )}
             {latest.homework && (
               <p>
                 <strong>Practice:</strong> {latest.homework}
@@ -308,7 +340,38 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
             </>
           }
         >
-          <SessionNoteForm studentId={id} skills={noteSkills} />
+          {dueSessions.length > 0 && (
+            <div className="mb-5 text-sm">
+              <p className="font-medium">Sessions waiting for a note</p>
+              <ul className="mt-1 space-y-1">
+                {dueSessions.map((d) => (
+                  <li key={d.session_id}>
+                    {d.session_id === chosenDue?.session_id ? (
+                      <strong>{sessionWhen(d.starts_at)} (writing now)</strong>
+                    ) : (
+                      <TextLink href={`/students/${id}/progress?session=${d.session_id}`}>
+                        {sessionWhen(d.starts_at)}
+                      </TextLink>
+                    )}
+                  </li>
+                ))}
+                <li>
+                  {chosenDue ? (
+                    <TextLink href={`/students/${id}/progress?session=none`}>A session that wasn&apos;t booked in the app</TextLink>
+                  ) : (
+                    <strong>A session that wasn&apos;t booked in the app (writing now)</strong>
+                  )}
+                </li>
+              </ul>
+            </div>
+          )}
+          <SessionNoteForm
+            key={noteSession?.id ?? "none"}
+            studentId={id}
+            skills={noteSkills}
+            session={noteSession}
+            today={localToday()}
+          />
         </Card>
       )}
 
@@ -390,6 +453,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                   {n.went_well && <p>Went well: {n.went_well}</p>}
                   {n.next_step && <p>Next step: {n.next_step}</p>}
                   {n.homework && <p>Practice: {n.homework}</p>}
+                  {n.home_tip && <p>Try at home: {n.home_tip}</p>}
                   {n.session_note_skills.length > 0 && (
                     <ul className="mt-1 list-disc pl-5 text-zinc-600">
                       {n.session_note_skills.map((s) => (
