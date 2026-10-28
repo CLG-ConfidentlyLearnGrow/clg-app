@@ -50,15 +50,16 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
 
 type Update = { id: string; student_id: string; title: string; body: string; deliver_at: string };
 
-// New session notes since the family last looked: what went well is on the
-// progress page; here is the next step and the tip for home. Opening the
-// progress page marks them as seen. Shows nothing when there is nothing new.
+// What's new since the family last looked: session notes (next step and the
+// tip for home), steps due tomorrow, the monthly summary and term reviews.
+// Opening the progress page marks them as seen. Shows nothing when there is
+// nothing new.
 export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {
   const supabase = await createClient();
   const res = await supabase
     .from("progress_notices")
     .select("id, student_id, title, body, deliver_at")
-    .eq("kind", "session_update")
+    .in("kind", ["session_update", "review_ready", "monthly_summary", "step_due"])
     .is("read_at", null)
     .order("deliver_at", { ascending: false })
     .limit(10);
@@ -75,7 +76,7 @@ export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {
             </p>
             <p className="mt-1 whitespace-pre-line text-zinc-700">{u.body}</p>
             <p className="mt-1">
-              <TextLink href={`/students/${u.student_id}/progress?view=family`}>See the full note</TextLink>
+              <TextLink href={`/students/${u.student_id}/progress?view=family`}>Open the progress page</TextLink>
             </p>
           </li>
         ))}

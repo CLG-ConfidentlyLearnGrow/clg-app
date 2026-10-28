@@ -7,6 +7,7 @@ import { levelFits, subjectFits } from "@/lib/students";
 import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { Roadmap } from "./roadmap";
+import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 
 type Skill = {
@@ -243,6 +244,8 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         viewerId={viewer.id}
         isStudentSelf={student.data.account_id === viewer.id}
       />
+
+      <TermReviewCard studentId={id} viewerId={viewer.id} isStaff={isStaff} isFamily={isFamily} />
 
       {isFamily && latest && !reflectionOf(latest) && (
         <Card

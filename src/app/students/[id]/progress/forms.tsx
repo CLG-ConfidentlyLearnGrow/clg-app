@@ -5,6 +5,9 @@ import {
   addGoal,
   addRoadmapStep,
   addRoadmapTarget,
+  checkTermReview,
+  replyTermReview,
+  saveTermReview,
   saveFamilyNote,
   saveReflection,
   saveSessionNote,
@@ -15,6 +18,7 @@ import {
   ATTENDANCE,
   ATTENDANCE_NAMES,
   CONFIDENCE_NAMES,
+  RECOMMENDATION_NAMES,
   SKILL_LEVEL_NAMES,
   nextLevels,
   type SkillLevel,
@@ -283,6 +287,88 @@ export function AddStepForm({ studentId, targetId }: { studentId: string; target
         </div>
         <Field label="By (optional)" name="due_on" type="date" />
       </div>
+    </ActionForm>
+  );
+}
+
+export type ReviewDraft = {
+  id: string;
+  summary: string | null;
+  next_focus: string | null;
+  recommendation: string | null;
+  recommendation_note: string | null;
+};
+
+// The tutor's term review. Written to the family, checked by CLG first.
+export function TermReviewForm({ studentId, review }: { studentId: string; review: ReviewDraft }) {
+  return (
+    <ActionForm action={saveTermReview} submitLabel="Save">
+      <input type="hidden" name="student_id" value={studentId} />
+      <input type="hidden" name="review_id" value={review.id} />
+      <TextArea
+        label="How the term went"
+        name="summary"
+        rows={4}
+        maxLength={2000}
+        defaultValue={review.summary ?? ""}
+        hint="Against the goals above: what they can do now that they couldn't, and what's still building. The family reads this as written."
+      />
+      <TextArea
+        label="Focus for next term"
+        name="next_focus"
+        rows={3}
+        maxLength={1000}
+        defaultValue={review.next_focus ?? ""}
+        hint="The goals you suggest next, and one thing to keep practising over the holidays."
+      />
+      <Select label="Your recommendation" name="recommendation" defaultValue={review.recommendation ?? ""}>
+        <option value="">Choose…</option>
+        {Object.entries(RECOMMENDATION_NAMES).map(([k, label]) => (
+          <option key={k} value={k}>
+            {label}
+          </option>
+        ))}
+      </Select>
+      <Field
+        label="Why (optional)"
+        name="recommendation_note"
+        maxLength={500}
+        defaultValue={review.recommendation_note ?? ""}
+      />
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="submit" className="mt-1" />
+        <span>Send to CLG to check now (leave unticked to save a draft)</span>
+      </label>
+    </ActionForm>
+  );
+}
+
+export function TermReviewReplyForm({ studentId, reviewId }: { studentId: string; reviewId: string }) {
+  return (
+    <ActionForm action={replyTermReview} submitLabel="Send">
+      <input type="hidden" name="student_id" value={studentId} />
+      <input type="hidden" name="review_id" value={reviewId} />
+      <TextArea label="Your reply (optional)" name="reply" rows={3} maxLength={2000} />
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="wants_call" className="mt-1" />
+        <span>I&apos;d like a call to talk about next term</span>
+      </label>
+    </ActionForm>
+  );
+}
+
+export function CheckTermReviewForm({ reviewId }: { reviewId: string }) {
+  return (
+    <ActionForm action={checkTermReview} submitLabel="Save">
+      <input type="hidden" name="review_id" value={reviewId} />
+      <Select label="Decision" name="decision" defaultValue="" required>
+        <option value="" disabled>
+          Choose…
+        </option>
+        <option value="approve">Approve: the family can see it</option>
+        <option value="return">Send back to the tutor</option>
+      </Select>
+      <Field label="What needs changing (when sending back)" name="reason" maxLength={500} />
     </ActionForm>
   );
 }

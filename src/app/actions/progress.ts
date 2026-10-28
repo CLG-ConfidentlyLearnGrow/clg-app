@@ -281,3 +281,81 @@ export async function closeRoadmapTarget(formData: FormData) {
   await supabase.from("roadmap_targets").update({ status: parsed.data.status }).eq("id", parsed.data.id);
   revalidatePath(progressPath(parsed.data.student_id));
 }
+
+// ---------------------------------------------------------------------------
+// Term reviews: the tutor writes, an admin checks, the family reads and replies.
+// ---------------------------------------------------------------------------
+
+const RECOMMENDATIONS = ["continue", "change_focus", "more_sessions", "fewer_sessions", "break"] as const;
+
+const reviewSchema = z.object({
+  student_id: z.uuid(),
+  review_id: z.uuid(),
+  summary: z.string().trim().max(2000, "Keep how the term went under 2,000 characters.").optional(),
+  next_focus: z.string().trim().max(1000, "Keep the focus for next term under 1,000 characters.").optional(),
+  recommendation: z.union([z.enum(RECOMMENDATIONS), z.literal("")]).optional(),
+  recommendation_note: z.string().trim().max(500).optional(),
+});
+
+export async function saveTermReview(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = reviewSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const submit = formData.get("submit") === "on";
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("save_term_review", {
+    p_review: v.review_id,
+    p_summary: v.summary ?? "",
+    p_next_focus: v.next_focus ?? "",
+    p_recommendation: v.recommendation || null,
+    p_recommendation_note: v.recommendation_note ?? "",
+    p_submit: submit,
+  });
+  if (error) {
+    const plain = ["23514", "22023"].includes(error.code ?? "");
+    return { error: plain ? error.message : "Couldn't save the review. Please try again." };
+  }
+  revalidatePath(progressPath(v.student_id));
+  revalidatePath("/dashboard/tutor");
+  return { message: submit ? "Sent to CLG to check. The family sees it once it's checked." : "Draft saved." };
+}
+
+export async function checkTermReview(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({ review_id: z.uuid(), decision: z.enum(["approve", "return"], "Choose approve or send back."), reason: z.string().trim().max(500).optional() })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("check_term_review", {
+    p_review: v.review_id,
+    p_approve: v.decision === "approve",
+    p_reason: v.reason ?? "",
+  });
+  if (error) {
+    const plain = ["23514", "22023", "42501"].includes(error.code ?? "");
+    return { error: plain ? error.message : "Couldn't save that. Please try again." };
+  }
+  revalidatePath("/admin");
+  return { message: v.decision === "approve" ? "Approved. The family can see it now." : "Sent back to the tutor." };
+}
+
+export async function replyTermReview(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({ student_id: z.uuid(), review_id: z.uuid(), reply: z.string().trim().max(2000, "Please keep it under 2,000 characters.").optional() })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reply_term_review", {
+    p_review: v.review_id,
+    p_reply: v.reply ?? "",
+    p_wants_call: formData.get("wants_call") === "on",
+  });
+  if (error) return { error: error.code === "23514" ? error.message : "Couldn't send it. Please try again." };
+  revalidatePath(progressPath(v.student_id));
+  return { message: "Thanks! CLG and the tutor will see this." };
+}

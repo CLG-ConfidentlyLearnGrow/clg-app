@@ -2,6 +2,10 @@ import { Button, Card, Empty, Field, SubHeading, Table, TextLink } from "@/compo
 import { NOTE_OVERDUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo, minutesAndSeconds } from "@/lib/progress";
 import { addDays, localToday, sessionWhen, shortDate } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
+import { CheckTermReviewForm } from "@/app/students/[id]/progress/forms";
+import { REVIEW_FIELDS, ReviewGoals, ReviewText, type Review } from "@/app/students/[id]/progress/term-review";
+
+type AdminReview = Review & { student_id: string; student: { full_name: string } | null; tutor: { account: { full_name: string } | null } | null };
 
 type Measure = {
   tutor_id: string;
@@ -54,7 +58,7 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
   const from = isDate(fromParam) ? fromParam : addDays(to, -27);
 
   const supabase = await createClient();
-  const [measuresRes, dueRes, checkRes, recentRes] = await Promise.all([
+  const [measuresRes, dueRes, checkRes, recentRes, reviewsRes] = await Promise.all([
     supabase.rpc("progress_measures", { p_from: from, p_to: to }),
     supabase.rpc("list_notes_due"),
     supabase.rpc("progress_students_to_check"),
@@ -66,7 +70,16 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
       .neq("attendance", "absent")
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("term_reviews")
+      .select(`${REVIEW_FIELDS}, student_id, student:students(full_name), tutor:tutor_profiles(account:accounts(full_name))`)
+      .or("status.eq.submitted,family_replied_at.not.is.null")
+      .order("term_ends_on", { ascending: false })
+      .limit(50),
   ]);
+  const reviews = (reviewsRes.data ?? []) as unknown as AdminReview[];
+  const toCheckReviews = reviews.filter((r) => r.status === "submitted");
+  const replies = reviews.filter((r) => r.family_replied_at);
   const measures = (measuresRes.data ?? []) as Measure[];
   const overdue = ((dueRes.data ?? []) as DueNote[]).filter((d) => d.hours_since_end >= NOTE_OVERDUE_HOURS);
   const toCheck = ((checkRes.data ?? []) as ToCheck[]).filter(
@@ -132,6 +145,52 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
           </>
         )}
       </Card>
+
+      <Card
+        title="Term reviews to check"
+        description="Check each review before the family sees it: is it written to the family, honest about progress, and clear about next term?"
+      >
+        {toCheckReviews.length === 0 ? (
+          <Empty>None waiting.</Empty>
+        ) : (
+          <ul className="space-y-8">
+            {toCheckReviews.map((r) => (
+              <li key={r.id}>
+                <p className="mb-3 font-medium">
+                  <TextLink href={`/students/${r.student_id}/progress`}>{r.student?.full_name ?? "Student"}</TextLink>
+                  <span className="font-normal text-zinc-600">
+                    {" "}
+                    · {r.term_label}
+                    {r.tutor?.account?.full_name && ` · ${r.tutor.account.full_name}`}
+                  </span>
+                </p>
+                <ReviewGoals reviewId={r.id} />
+                <div className="my-4">
+                  <ReviewText review={r} />
+                </div>
+                <CheckTermReviewForm reviewId={r.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {replies.length > 0 && (
+        <Card collapsible title="Replies to term reviews">
+          <ul className="divide-y divide-zinc-100 text-sm">
+            {replies.map((r) => (
+              <li key={r.id} className="py-3 first:pt-0">
+                <p className="font-medium">
+                  <TextLink href={`/students/${r.student_id}/progress`}>{r.student?.full_name ?? "Student"}</TextLink>
+                  <span className="font-normal text-zinc-600"> · {r.term_label}</span>
+                  {r.wants_call && <span className="ml-2 text-xs font-semibold text-red-700">Wants a call</span>}
+                </p>
+                {r.family_reply && <p className="mt-1 whitespace-pre-line">{r.family_reply}</p>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title={`Notes overdue (${NOTE_OVERDUE_HOURS} hr or more)`}>
         {overdue.length === 0 ? (

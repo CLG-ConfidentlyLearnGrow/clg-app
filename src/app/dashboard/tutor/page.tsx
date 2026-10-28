@@ -7,7 +7,7 @@ import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress";
-import { sessionWhen, shortDate } from "@/lib/scheduling";
+import { addDays, sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
 
 const SECTIONS = [
@@ -67,7 +67,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0;
   const section = firstTime ? "teaching" : requested;
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes] = await Promise.all([
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes] = await Promise.all([
     supabase
       .from("tutor_assignments")
       .select("id, subject, student:students(id, full_name, year_level)")
@@ -88,7 +88,21 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .order("starts_at"),
     supabase.rpc("list_notes_due"),
     supabase.rpc("progress_students_to_check"),
+    supabase
+      .from("term_reviews")
+      .select("id, student_id, term_label, term_ends_on, status, student:students(full_name)")
+      .eq("tutor_id", viewer.id)
+      .in("status", ["draft", "returned"])
+      .order("term_ends_on"),
   ]);
+  const reviewsToWrite = (reviewsRes.data ?? []) as unknown as {
+    id: string;
+    student_id: string;
+    term_label: string;
+    term_ends_on: string;
+    status: string;
+    student: { full_name: string } | null;
+  }[];
   // Admins get everyone's; this list is only the tutor's own.
   const notesDue = ((dueRes.data ?? []) as DueNote[]).filter((d) => d.tutor_id === viewer.id);
   const caseload = new Map(((caseRes.data ?? []) as Caseload[]).map((c) => [c.student_id, c]));
@@ -131,6 +145,25 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                     )}
                   </span>
                   <TextLink href={`/students/${d.student_id}/progress?session=${d.session_id}`}>Write note</TextLink>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        {section === "students" && reviewsToWrite.length > 0 && (
+          <Card title="Term reviews to write" description="CLG checks each one before the family sees it.">
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {reviewsToWrite.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-0">
+                  <span>
+                    <span className="font-medium">{r.student?.full_name ?? "Student"}</span>
+                    <span className="text-zinc-600">
+                      {" "}
+                      · {r.term_label} · send by {shortDate(addDays(r.term_ends_on, -14))}
+                    </span>
+                    {r.status === "returned" && <span className="ml-2 text-xs text-amber-800">sent back for a change</span>}
+                  </span>
+                  <TextLink href={`/students/${r.student_id}/progress`}>Write review</TextLink>
                 </li>
               ))}
             </ul>

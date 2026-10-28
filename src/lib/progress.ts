@@ -55,3 +55,11 @@ export function hoursAgo(hours: number): string {
   if (hours < 48) return `${hours} hr ago`;
   return `${Math.floor(hours / 24)} days ago`;
 }
+
+export const RECOMMENDATION_NAMES: Record<string, string> = {
+  continue: "Continue as we are",
+  change_focus: "Change the focus",
+  more_sessions: "Add more sessions",
+  fewer_sessions: "Fewer sessions",
+  break: "Take a break",
+};
