@@ -6,6 +6,7 @@ import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Atten
 import { levelFits, subjectFits } from "@/lib/students";
 import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
+import { Roadmap } from "./roadmap";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 
 type Skill = {
@@ -80,7 +81,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   // came in on, and staff tools only show to this student's own tutors and
   // admins.
   const [familyLink, myAssignment, requested, familyNotes] = await Promise.all([
-    supabase.from("parent_student_links").select("student_id").eq("student_id", id).eq("parent_id", viewer.id).maybeSingle(),
+    supabase.from("parent_student_links").select("student_id, can_manage").eq("student_id", id).eq("parent_id", viewer.id).maybeSingle(),
     supabase.from("tutor_assignments").select("id").eq("student_id", id).eq("tutor_id", viewer.id).limit(1),
     supabase.from("student_subjects").select("subject, working_level").eq("student_id", id).order("added_at"),
     supabase
@@ -117,6 +118,8 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
   const isStaff = isStudentStaff && !familyView;
   const isFamily = familyView;
+  // Planning the roadmap: the student, a parent who manages them, or staff.
+  const canPlan = isStaff || student.data.account_id === viewer.id || Boolean(familyLink.data?.can_manage);
 
   // Reading this page counts as seeing its updates and reminders.
   await supabase.rpc("mark_progress_notices_read", { p_student: id });
@@ -232,6 +235,14 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
           <p className="text-sm">The next step appears here after the first session note.</p>
         )}
       </Card>
+
+      <Roadmap
+        studentId={id}
+        canPlan={canPlan}
+        canRemoveAny={isStaff}
+        viewerId={viewer.id}
+        isStudentSelf={student.data.account_id === viewer.id}
+      />
 
       {isFamily && latest && !reflectionOf(latest) && (
         <Card

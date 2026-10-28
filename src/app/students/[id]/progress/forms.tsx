@@ -1,7 +1,14 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { addGoal, saveFamilyNote, saveReflection, saveSessionNote } from "@/app/actions/progress";
+import {
+  addGoal,
+  addRoadmapStep,
+  addRoadmapTarget,
+  saveFamilyNote,
+  saveReflection,
+  saveSessionNote,
+} from "@/app/actions/progress";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
 import {
@@ -232,6 +239,50 @@ export function FamilyNoteForm({ studentId }: { studentId: string }) {
         maxLength={2000}
         hint="For example, practice done this week, something that clicked, or how sessions are going. For a worry about safety, contact CLG directly."
       />
+    </ActionForm>
+  );
+}
+
+// Something to work towards: a school assessment (with grades) or a goal.
+export function AddTargetForm({ studentId, today }: { studentId: string; today: string }) {
+  return (
+    <ActionForm action={addRoadmapTarget} submitLabel="Add to roadmap">
+      <input type="hidden" name="student_id" value={studentId} />
+      <Select label="What is it?" name="kind" defaultValue="assessment">
+        <option value="assessment">A school test, assignment or exam</option>
+        <option value="goal">Something to learn or get better at</option>
+      </Select>
+      <Field label="Name" name="title" required maxLength={200} hint='For example "Term 4 algebra test" or "Read a chapter book on my own".' />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Subject (optional)" name="subject" maxLength={100} />
+        <Field label="Date (needed for an assessment)" name="due_on" type="date" min={today} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Grade now (optional)" name="current_grade" maxLength={20} hint="As the school writes it, e.g. C or 62%." />
+        <Field label="Grade aiming for (optional)" name="target_grade" maxLength={20} />
+      </div>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="plan" defaultChecked className="mt-1" />
+        <span>
+          For an assessment, plan the steps for me: short practice spread over the days before, testing yourself
+          rather than re-reading. You can change them after.
+        </span>
+      </label>
+    </ActionForm>
+  );
+}
+
+export function AddStepForm({ studentId, targetId }: { studentId: string; targetId?: string }) {
+  return (
+    <ActionForm action={addRoadmapStep} submitLabel="Add step">
+      <input type="hidden" name="student_id" value={studentId} />
+      {targetId && <input type="hidden" name="target_id" value={targetId} />}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Field label="Step" name="title" required maxLength={300} hint="Small and specific, for example “Do 10 practice questions on area”." />
+        </div>
+        <Field label="By (optional)" name="due_on" type="date" />
+      </div>
     </ActionForm>
   );
 }

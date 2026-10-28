@@ -171,3 +171,113 @@ export async function saveFamilyNote(_prev: FormState, formData: FormData): Prom
   revalidatePath(progressPath(parsed.data.student_id));
   return { message: "Thanks! The tutor and CLG will see this." };
 }
+
+// ---------------------------------------------------------------------------
+// Learning roadmaps. The database decides who may plan: the student's own
+// login, a parent who manages them, their tutor, or an admin.
+// ---------------------------------------------------------------------------
+
+const targetSchema = z.object({
+  student_id: z.uuid(),
+  kind: z.enum(["assessment", "goal"], "Choose an assessment or a goal."),
+  subject: z.string().trim().max(100).optional(),
+  title: z.string().trim().min(3, "Say what it is in a few words.").max(200),
+  due_on: z.union([z.iso.date(), z.literal("")]).optional(),
+  current_grade: z.string().trim().max(20, "Keep the grade short, for example C or 62%.").optional(),
+  target_grade: z.string().trim().max(20, "Keep the grade short, for example B or 75%.").optional(),
+});
+
+export async function addRoadmapTarget(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = targetSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  if (v.kind === "assessment" && !v.due_on) return { error: "Add the date of the assessment." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("roadmap_targets")
+    .insert({
+      student_id: v.student_id,
+      kind: v.kind,
+      subject: v.subject || null,
+      title: v.title,
+      due_on: v.due_on || null,
+      current_grade: v.current_grade || null,
+      target_grade: v.target_grade || null,
+    })
+    .select("id")
+    .single();
+  if (error) return { error: error.code === "23514" ? error.message : "Couldn't save it. Please try again." };
+
+  // Assessments get a study plan straight away; it can be edited after.
+  if (v.kind === "assessment" && formData.get("plan") === "on") {
+    await supabase.rpc("plan_assessment_steps", { p_target: data.id });
+  }
+  revalidatePath(progressPath(v.student_id));
+  return { message: v.kind === "assessment" ? "Added, with steps planned up to the date." : "Added to the roadmap." };
+}
+
+const stepSchema = z.object({
+  student_id: z.uuid(),
+  target_id: z.union([z.uuid(), z.literal("")]).optional(),
+  title: z.string().trim().min(2, "Write the step in a few words.").max(300),
+  due_on: z.union([z.iso.date(), z.literal("")]).optional(),
+});
+
+export async function addRoadmapStep(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = stepSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.from("roadmap_steps").insert({
+    student_id: v.student_id,
+    target_id: v.target_id || null,
+    title: v.title,
+    due_on: v.due_on || null,
+  });
+  if (error) return { error: "Couldn't add the step. Please try again." };
+  revalidatePath(progressPath(v.student_id));
+  revalidatePath("/dashboard/student");
+  return { message: "Step added." };
+}
+
+const ids = z.object({ student_id: z.uuid(), id: z.uuid() });
+
+export async function tickRoadmapStep(formData: FormData) {
+  await requireViewer();
+  const parsed = ids.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("tick_roadmap_step", { p_step: parsed.data.id, p_done: formData.get("done") !== "false" });
+  revalidatePath(progressPath(parsed.data.student_id));
+  revalidatePath("/dashboard/student");
+}
+
+export async function removeRoadmapStep(formData: FormData) {
+  await requireViewer();
+  const parsed = ids.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.from("roadmap_steps").delete().eq("id", parsed.data.id);
+  revalidatePath(progressPath(parsed.data.student_id));
+}
+
+export async function planRoadmapSteps(formData: FormData) {
+  await requireViewer();
+  const parsed = ids.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("plan_assessment_steps", { p_target: parsed.data.id });
+  revalidatePath(progressPath(parsed.data.student_id));
+}
+
+export async function closeRoadmapTarget(formData: FormData) {
+  await requireViewer();
+  const parsed = ids.extend({ status: z.enum(["done", "dropped"]) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.from("roadmap_targets").update({ status: parsed.data.status }).eq("id", parsed.data.id);
+  revalidatePath(progressPath(parsed.data.student_id));
+}

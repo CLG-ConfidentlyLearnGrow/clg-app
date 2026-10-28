@@ -5,6 +5,8 @@ import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { addDays, localToday } from "@/lib/scheduling";
+import { StepRow, type Step } from "@/app/students/[id]/progress/roadmap";
 import { NewUpdates, TutorList, loadStudentsAndTutors } from "../shared";
 
 const SECTIONS = [{ id: "learning", label: "Your learning" }] as const;
@@ -22,6 +24,19 @@ export default async function StudentDashboard() {
   // Only this person's own learning, even if they are also a parent or tutor.
   const me = own.data;
   const assignments = all.filter((a) => a.student_id === me?.id);
+  // Steps due in the next week (or overdue), from the student's roadmap.
+  const today = localToday();
+  const stepsRes = me
+    ? await supabase
+        .from("roadmap_steps")
+        .select("id, target_id, title, due_on, source, done_at, created_by")
+        .eq("student_id", me.id)
+        .is("done_at", null)
+        .lte("due_on", addDays(today, 7))
+        .order("due_on")
+        .limit(10)
+    : null;
+  const steps = (stepsRes?.data ?? []) as Step[];
 
   return (
     <>
@@ -36,6 +51,15 @@ export default async function StudentDashboard() {
           </Card>
         )}
         {me && <NewUpdates studentIds={[me.id]} />}
+        {me && steps.length > 0 && (
+          <Card title="Your steps this week">
+            <ul className="space-y-1.5">
+              {steps.map((s) => (
+                <StepRow key={s.id} step={s} studentId={me.id} today={today} canPlan canRemove={false} />
+              ))}
+            </ul>
+          </Card>
+        )}
         <Card title="Your tutors">
           {assignments.length === 0 ? <Empty>No tutor yet.</Empty> : <TutorList assignments={assignments} />}
         </Card>
