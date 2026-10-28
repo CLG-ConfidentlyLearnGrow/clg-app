@@ -493,3 +493,17 @@ export async function addTerm(_prev: FormState, formData: FormData): Promise<For
   if (error) return { error: "Couldn't save the term. Only CLG admins can change term dates." };
   return done("Term saved.");
 }
+
+// ---------------------------------------------------------------------------
+// Tutors confirm their availability each term
+// ---------------------------------------------------------------------------
+export async function confirmAvailability(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return { error: "Couldn't read that check." };
+  const changed = formData.get("answer") === "changed";
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("confirm_availability", { p_check: id.data, p_changed: changed });
+  if (error) return { error: plainError(error, "Couldn't save your answer.") };
+  return done("Thanks. Your availability is confirmed for next term.");
+}

@@ -140,12 +140,24 @@ create policy "family and admins see renewals" on public.term_renewals
   for select to authenticated using (private.is_admin() or private.can_book_for(student_id));
 
 -- Two new notice kinds: the renewal question, for the family.
-alter table public.session_notices drop constraint if exists session_notices_kind_check;
-alter table public.session_notices add constraint session_notices_kind_check check (kind in (
-  'reminder_first', 'reminder_final',
-  'booking_requested', 'booking_confirmed', 'booking_declined',
-  'session_cancelled', 'renewal_due'
-));
+-- Only widened when this kind isn't allowed yet, so running this file again
+-- never narrows a list a later file has widened.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'session_notices_kind_check'
+      and pg_get_constraintdef(oid) like '%renewal_due%'
+  ) then
+    alter table public.session_notices drop constraint if exists session_notices_kind_check;
+    alter table public.session_notices add constraint session_notices_kind_check check (kind in (
+      'reminder_first', 'reminder_final',
+      'booking_requested', 'booking_confirmed', 'booking_declined',
+      'session_cancelled', 'renewal_due'
+    ));
+  end if;
+end;
+$$;
 
 -- The term a date falls in, or the term just before it (if it is in the
 -- holidays).
