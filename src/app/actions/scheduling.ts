@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { runTeamsSyncQuietly } from "@/lib/teams/sync";
 
 // The database explains most refusals in plain words (see the scheduling
 // migration). Pass those on; hide anything technical.
@@ -16,6 +18,8 @@ function plainError(error: { message: string; code?: string } | null, fallback: 
 
 function done(message: string): FormState {
   revalidatePath("/schedule");
+  // Sessions may have been added or cancelled: update Teams links after replying.
+  after(runTeamsSyncQuietly);
   return { message };
 }
 

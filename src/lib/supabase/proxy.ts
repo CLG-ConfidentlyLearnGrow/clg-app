@@ -19,6 +19,8 @@ const PUBLIC_PATHS = [
   "/api/billing/stripe",
   "/api/billing/xero/webhook",
   "/api/billing/cron",
+  // The daily Teams links run (checks the same secret).
+  "/api/teams/cron",
 ];
 
 // Keeps the Supabase session fresh on every request and sends signed-out
