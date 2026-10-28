@@ -4,6 +4,7 @@
 
 \set QUIET on
 \ir ../migrations/20261028230100_billing_tutor_pay.sql
+\ir ../migrations/20261028230300_billing_casual_min_off.sql
 
 select id as cara from public.students where full_name = 'Cara One' \gset
 

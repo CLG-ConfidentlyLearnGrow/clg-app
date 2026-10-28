@@ -15,8 +15,7 @@
 --   * Tutor cancels: no pay for that session.
 --   * Casual staff: at least 2 hr pay for each day they attend work, online
 --     too (Miscellaneous Award cl 11.2, Post-Secondary Award cl 11.4). The
---     app can top up a short day; paid admin time counts towards it. This
---     top-up is a setting, switched off for now at Carla's request.
+--     app tops up a short day; paid admin time counts towards it.
 --   * Award minimum rates are settings, updated each 1 July; any rate under
 --     them is flagged for the owner. Seeded from the 1 July 2026 figures; an
 --     employment adviser should confirm the levels.
@@ -64,10 +63,6 @@ on conflict do nothing;
 
 -- Pay rules that may change.
 alter table public.billing_settings add column if not exists casual_min_minutes int not null default 120;
--- The casual 2 hr top-up is switched off for now (Carla, 2026-10-28), to be
--- turned back on next year. While it is off, short casual days are paid
--- only for the time worked, and the pay screen warns about the award rule.
-alter table public.billing_settings add column if not exists casual_min_enabled boolean not null default false;
 alter table public.billing_settings add column if not exists late_cancel_pay_share numeric(4, 3) not null default 0.5;
 alter table public.billing_settings add column if not exists late_cancel_pay_cap_minutes int not null default 60;
 -- CLG's pay period in Xero Payroll: its length and any day it starts on.
@@ -293,8 +288,8 @@ begin
     end if;
   end loop;
 
-  -- Casual 2 hr minimum for each day worked (sessions and admin hours),
-  -- when switched on. Late-cancel pay alone isn't a day at work.
+  -- Casual 2 hr minimum for each day worked (sessions and admin hours).
+  -- Late-cancel pay alone isn't a day at work.
   for r in
     select l.account_id, l.work_date, sum(l.minutes)::int as worked,
            (array_agg(l.work_kind order by l.minutes desc))[1] as main_kind
@@ -307,7 +302,7 @@ begin
         where t.account_id = l.account_id and t.work_date = l.work_date and t.kind = 'min_topup'
       )
     group by l.account_id, l.work_date
-    having s.casual_min_enabled and sum(l.minutes) < s.casual_min_minutes
+    having sum(l.minutes) < s.casual_min_minutes
   loop
     perform private.billing_add_pay_line(r.account_id, r.work_date, 'min_topup', r.main_kind, null,
       s.casual_min_minutes - r.worked, 'Top-up to the 2 hr minimum for a casual day');
@@ -392,12 +387,3 @@ grant execute on function public.billing_build_pay(date, date) to authenticated,
 grant execute on function public.billing_add_admin_time(uuid, date, int, text) to authenticated;
 grant execute on function public.billing_remove_pay_line(uuid) to authenticated;
 grant execute on function public.billing_mark_pay_sent(uuid[], text) to service_role;
-
--- Whether the casual 2 hr top-up is on, for staff to see on their pay page
--- (they can't read billing settings).
-create or replace function public.billing_casual_min_on()
-returns boolean language sql stable security definer
-set search_path = ''
-as $$ select casual_min_enabled from public.billing_settings $$;
-revoke all on function public.billing_casual_min_on() from public, anon;
-grant execute on function public.billing_casual_min_on() to authenticated;
