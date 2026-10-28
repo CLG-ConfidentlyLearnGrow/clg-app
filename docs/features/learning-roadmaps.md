@@ -21,7 +21,8 @@ Sources opened: AERO "Tried and tested: spacing and retrieval practice" listing 
 - **Targets**: a school assessment (date, grade now, grade aiming for) or a learning goal, optionally linked to one of the tutor's goals.
 - **Steps**: small and dated. Anyone who plans can add, edit and tick them: the student (own login), a parent who manages them, the tutor, an admin. Steps show who added them.
 - **Next steps join automatically**: each session note's next step becomes a step due by the next booked session (or a week later). No extra tutor time.
-- **"Plan the steps for me"**: for an assessment, six steps spread from today to the day before (list the topics, self-test on hard parts, mixed practice, a timed practice test, fix mistakes, a last self-test). Under a week away, three steps. Everything can be changed.
+- **Task sheet and rubric** (added 2026-10-28, Carla): when adding an assessment, the family can attach the task sheet and the rubric (marking guide). They are kept with the assessment, in the private upload store with the same access rules (migration `20261029500500_progress_assessment_files.sql`). Rubrics let the tutor and student plan against the marking criteria; EEF feedback guidance stresses clear success criteria.
+- **"Plan study steps for me"**: for an assessment, six steps spread from today to the day before (list the topics, self-test on hard parts, mixed practice, a timed practice test, fix mistakes, a last self-test). Under a week away, three steps. Everything can be changed.
 - **Who drives it**: high school and tertiary students plan their own; for primary and middle school the steps mostly come from the tutor's next steps, with parents ticking off (brief, "Learning roadmaps").
 - **One reminder** the afternoon before steps are due: to the student if they have their own login, otherwise to the parents who manage them. Never to the tutor. Nothing between 8pm and 8am.
 

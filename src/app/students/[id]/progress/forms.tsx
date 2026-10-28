@@ -25,6 +25,7 @@ import {
   CONFIDENCE_NAMES,
   EVIDENCE_KINDS,
   EVIDENCE_KIND_NAMES,
+  PARENT_ONLY_KINDS,
   SENIOR_AREA_NAMES,
   RECOMMENDATION_NAMES,
   SKILL_LEVEL_NAMES,
@@ -273,11 +274,17 @@ export function AddTargetForm({ studentId, today }: { studentId: string; today: 
         <Field label="Grade now (optional)" name="current_grade" maxLength={20} hint="As the school writes it, e.g. C or 62%." />
         <Field label="Grade aiming for (optional)" name="target_grade" maxLength={20} />
       </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Task sheet (optional)" name="task_sheet" type="file" accept={DOCUMENT_ACCEPT} hint="A PDF or photo." />
+        <Field label="Rubric or marking guide (optional)" name="rubric" type="file" accept={DOCUMENT_ACCEPT} />
+      </div>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="plan" defaultChecked className="mt-1" />
         <span>
-          For an assessment, plan the steps for me: short practice spread over the days before, testing yourself
-          rather than re-reading. You can change them after.
+          Plan study steps for me
+          <span className="block text-xs text-zinc-500">
+            Adds short practice sessions in the days before the date. You can change them.
+          </span>
         </span>
       </label>
     </ActionForm>
@@ -383,7 +390,17 @@ export function CheckTermReviewForm({ reviewId }: { reviewId: string }) {
 
 // Upload a school report, NAPLAN results, marked work or a work sample. On a
 // phone, the file picker offers the camera.
-export function EvidenceUploadForm({ studentId, today, isStaff }: { studentId: string; today: string; isStaff: boolean }) {
+export function EvidenceUploadForm({
+  studentId,
+  today,
+  isStaff,
+  canAddReports,
+}: {
+  studentId: string;
+  today: string;
+  isStaff: boolean;
+  canAddReports: boolean;
+}) {
   return (
     <ActionForm action={addEvidence} submitLabel="Upload">
       <input type="hidden" name="student_id" value={studentId} />
@@ -397,7 +414,7 @@ export function EvidenceUploadForm({ studentId, today, isStaff }: { studentId: s
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Select label="What is it?" name="kind" defaultValue={isStaff ? "work_sample" : "graded_work"}>
-          {EVIDENCE_KINDS.map((k) => (
+          {EVIDENCE_KINDS.filter((k) => canAddReports || !PARENT_ONLY_KINDS.includes(k)).map((k) => (
             <option key={k} value={k}>
               {EVIDENCE_KIND_NAMES[k]}
             </option>

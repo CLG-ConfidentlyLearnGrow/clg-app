@@ -49,7 +49,7 @@ export async function Roadmap({
   isStudentSelf?: boolean;
 }) {
   const supabase = await createClient();
-  const [targetsRes, stepsRes] = await Promise.all([
+  const [targetsRes, stepsRes, filesRes] = await Promise.all([
     supabase
       .from("roadmap_targets")
       .select("id, kind, subject, title, due_on, current_grade, target_grade")
@@ -63,7 +63,15 @@ export async function Roadmap({
       .order("due_on", { ascending: true, nullsFirst: false })
       .order("created_at")
       .limit(300),
+    // Task sheets and rubrics attached to assessments.
+    supabase
+      .from("learning_evidence")
+      .select("id, target_id, kind")
+      .eq("student_id", studentId)
+      .not("target_id", "is", null)
+      .order("uploaded_at"),
   ]);
+  const files = (filesRes.data ?? []) as { id: string; target_id: string; kind: string }[];
   const targets = (targetsRes.data ?? []) as Target[];
   const steps = (stepsRes.data ?? []) as Step[];
   const today = localToday();
@@ -139,12 +147,29 @@ export async function Roadmap({
                 </form>
               )}
             </div>
+            {files.some((f) => f.target_id === t.id) && (
+              <p className="mt-1 flex flex-wrap gap-3 text-sm">
+                {files
+                  .filter((f) => f.target_id === t.id)
+                  .map((f) => (
+                    <a
+                      key={f.id}
+                      href={`/evidence/${f.id}/file`}
+                      target="_blank"
+                      rel="noopener"
+                      className="text-teal-700 underline decoration-teal-300 underline-offset-4 hover:decoration-teal-700"
+                    >
+                      {f.kind === "rubric" ? "Rubric" : "Task sheet"}
+                    </a>
+                  ))}
+              </p>
+            )}
             <div className="mt-2">{list.length > 0 ? stepList(list) : null}</div>
             {canPlan && t.kind === "assessment" && list.length === 0 && t.due_on && t.due_on > today && (
               <form action={planRoadmapSteps} className="mt-2">
                 <input type="hidden" name="student_id" value={studentId} />
                 <input type="hidden" name="id" value={t.id} />
-                <button className="text-sm text-teal-800 underline">Plan the steps for me</button>
+                <button className="text-sm text-teal-800 underline">Plan study steps for me</button>
               </form>
             )}
             {canPlan && (

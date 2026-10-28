@@ -255,6 +255,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         today={localToday()}
         canUpload={canPlan}
         canRemoveAny={viewer.roles.includes("admin") || student.data.account_id === viewer.id || Boolean(familyLink.data?.can_manage)}
+        canAddReports={viewer.roles.includes("admin") || Boolean(familyLink.data?.can_manage) || student.data.account_id === viewer.id}
         isStaff={isStaff}
         goalSkills={noteSkills}
       />
