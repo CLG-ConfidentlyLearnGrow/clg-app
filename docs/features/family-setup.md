@@ -20,6 +20,15 @@ Requested by Carla, 2026-10-28.
 - **Already checked.** A parent link made by an admin is already confirmed, so a tutor can be assigned straight away. Links that parents make themselves still wait for an admin.
 - **Existing parent accounts.** If the email already belongs to a parent, the child is added to that account. No second account or email is made.
 
+## Sending a new link (added 2026-10-28)
+
+- **When:** a family's or student's link ran out before they used it.
+- **Where:** Admin, "Families and matching", "Send a new login link". The admin enters the email and the app emails a new link, or shows it for the admin to send while CLG's email sender isn't set up. The old link stops working.
+- **Limits, for safety:**
+  - Only for family and student accounts that have never signed in. Anyone who has signed in uses "Forgot password" themselves, so an admin can never take over an account that's in use.
+  - Not for staff accounts; staff are invited again under Staff.
+  - For a student's own login, the admin uses "Give a student their own login" again with the same email. The database now allows this when the account made the first time was never used (`20261029100400_send_new_login_link.sql`, tests in `supabase/tests/student_own_login.test.sql`).
+
 ## Why (research)
 
 - **Removing barriers to engagement.** The EEF guidance report *Working with Parents to Support Children's Learning* (2021) recommends:
@@ -51,4 +60,3 @@ Requested by Carla, 2026-10-28.
 ## Not built yet
 
 - Bulk import of current families from a spreadsheet.
-- Re-sending a link if it expires before the family uses it.
