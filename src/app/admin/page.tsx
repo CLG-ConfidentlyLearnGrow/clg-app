@@ -10,6 +10,7 @@ import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/u
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
+import { FamilySetupForm } from "./family-setup-form";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -258,6 +259,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         </p>
         {section === "families" && (
           <>
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Set up a family"
+              description="Fill in a family's details for them, for example during a call, and they get a link to choose a password. Add one child at a time; use the same parent email for each child."
+            >
+              <FamilySetupForm />
+            </Card>
             <Card
               title="Parent links to confirm"
               description={

@@ -1,3 +1,4 @@
+import { requireFamilyAgreement } from "@/lib/consent";
 import { redirect } from "next/navigation";
 import { Card, Empty, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
@@ -10,6 +11,7 @@ const SECTIONS = [{ id: "learning", label: "Your learning" }] as const;
 
 export default async function StudentDashboard() {
   const viewer = await requireViewer();
+  await requireFamilyAgreement(viewer);
   if (!viewer.roles.includes("student")) redirect("/dashboard");
   const supabase = await createClient();
   const [{ assignments: all }, own] = await Promise.all([

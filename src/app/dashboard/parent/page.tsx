@@ -1,3 +1,4 @@
+import { requireFamilyAgreement } from "@/lib/consent";
 import { redirect } from "next/navigation";
 import { Card, Empty, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
@@ -15,6 +16,7 @@ const SECTIONS = [
 
 export default async function ParentDashboard({ searchParams }: PageProps<"/dashboard/parent">) {
   const viewer = await requireViewer();
+  await requireFamilyAgreement(viewer);
   if (!viewer.roles.includes("parent")) redirect("/dashboard");
   const params = await searchParams;
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "children";
