@@ -429,3 +429,63 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
   if (error) return { error: "Couldn't save your settings." };
   return done("Saved. New reminders will use these settings.");
 }
+
+// ---------------------------------------------------------------------------
+// Next term: the family's answer, and school term dates (admins)
+// ---------------------------------------------------------------------------
+const renewalSchema = z.object({
+  id: z.uuid(),
+  same_again: z.enum(["yes", "no"], "Please say whether you'd like the same again."),
+  holidays: z.enum(["yes", "no"], "Please say whether you'd like holiday sessions."),
+  change_what: z.enum(["time", "tutor", "both"]).optional(),
+  change_reason: z.string().trim().max(1000).optional(),
+  feedback: z.string().trim().max(2000).optional(),
+});
+
+export async function answerRenewal(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = renewalSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  if (v.same_again === "no" && !v.change_what) return { error: "Please say what you'd like to change." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("answer_renewal", {
+    p_renewal: v.id,
+    p_same_again: v.same_again === "yes",
+    p_holidays: v.holidays === "yes",
+    p_change_what: v.same_again === "no" ? (v.change_what ?? null) : null,
+    p_change_reason: v.change_reason || null,
+    p_feedback: v.feedback || null,
+    p_testimonial_ok: formData.get("testimonial_ok") === "on",
+  });
+  if (error) return { error: plainError(error, "Couldn't save your answer.") };
+  return done(
+    v.same_again === "yes"
+      ? "Thank you. Your tutor has been asked to confirm next term."
+      : "Thank you. CLG will be in touch to arrange the change.",
+  );
+}
+
+const termSchema = z
+  .object({
+    state: z.enum(["SA", "NSW", "VIC", "QLD", "WA", "TAS", "ACT", "NT"]),
+    term: z.coerce.number().int().min(1).max(4),
+    starts_on: z.iso.date("Enter the first day of term."),
+    ends_on: z.iso.date("Enter the last day of term."),
+  })
+  .refine((v) => v.ends_on > v.starts_on, { message: "The last day must be after the first day." });
+
+export async function addTerm(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = termSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.from("school_terms").upsert(
+    { state: v.state, year: Number(v.starts_on.slice(0, 4)), term: v.term, starts_on: v.starts_on, ends_on: v.ends_on },
+    { onConflict: "state,year,term" },
+  );
+  if (error) return { error: "Couldn't save the term. Only CLG admins can change term dates." };
+  return done("Term saved.");
+}

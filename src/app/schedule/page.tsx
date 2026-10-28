@@ -32,7 +32,9 @@ import {
   NoticeSettingsForm,
   OutcomeForm,
   PlacesForm,
+  RenewalForm,
   SignOnForm,
+  TermForm,
   WaitlistForm,
 } from "./forms";
 
@@ -108,6 +110,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
     { id: "away", label: "Away dates" },
     { id: "notices", label: "Notices" },
+    ...(canBook ? [{ id: "next-term", label: "Next term" }] : []),
     ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
@@ -121,6 +124,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     .select("id", { count: "exact", head: true })
     .is("read_at", null);
   const unread = unreadRes.count ?? 0;
+  const renewalsRes = canBook
+    ? await supabase.from("term_renewals").select("id", { count: "exact", head: true }).is("answered_at", null)
+    : null;
+  const renewalsToAnswer = renewalsRes?.count ?? 0;
   const [bookingsRes, sessionsRes] = await Promise.all([
     supabase.rpc("list_bookings"),
     supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }),
@@ -166,7 +173,9 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
             ? waitingForMe.length
             : s.id === "notices" && unread
               ? unread
-              : undefined,
+              : s.id === "next-term" && renewalsToAnswer
+                ? renewalsToAnswer
+                : undefined,
       }))}
     >
       {section === "sessions" && (
@@ -351,6 +360,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
       {section === "waitlist" && canBook && <WaitlistSection isAdmin={isAdmin} />}
+
+      {section === "next-term" && canBook && <NextTermSection isAdmin={isAdmin} />}
     </SectionShell>
   );
 }
@@ -814,6 +825,149 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
         </ul>
       )}
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Next term: the renewal question for each booking ending this term, and
+// school term dates (admins)
+// ---------------------------------------------------------------------------
+type Renewal = {
+  id: string;
+  booking_id: string;
+  student_name: string;
+  subject: string;
+  tutor_name: string | null;
+  weekday: number;
+  start_time: string;
+  minutes: number;
+  last_date: string;
+  term_label: string;
+  term_ends_on: string;
+  asked_at: string;
+  answered_at: string | null;
+  same_again: boolean | null;
+  holidays: boolean | null;
+  change_what: string | null;
+  change_reason: string | null;
+  feedback: string | null;
+  testimonial_ok: boolean;
+  next_status: string | null;
+};
+
+const CHANGE_NAMES: Record<string, string> = { time: "day and time", tutor: "tutor", both: "day, time and tutor" };
+
+async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
+  const supabase = await createClient();
+  const [renewalsRes, termsRes] = await Promise.all([
+    supabase.rpc("list_renewals"),
+    isAdmin
+      ? supabase
+          .from("school_terms")
+          .select("id, state, year, term, starts_on, ends_on")
+          .gte("ends_on", addDays(localToday(), -120))
+          .order("state")
+          .order("starts_on")
+      : Promise.resolve({ data: [] }),
+  ]);
+  const renewals = (renewalsRes.data ?? []) as Renewal[];
+  const open = renewals.filter((r) => !r.answered_at);
+  const answered = renewals.filter((r) => r.answered_at);
+  const terms = (termsRes.data ?? []) as {
+    id: string;
+    state: string;
+    year: number;
+    term: number;
+    starts_on: string;
+    ends_on: string;
+  }[];
+
+  const bookingLine = (r: Renewal) =>
+    `${r.student_name} · ${r.subject}${r.tutor_name ? ` with ${r.tutor_name}` : ""} · ${WEEKDAY_NAMES[r.weekday - 1]}s at ${clockTime(r.start_time)} · ${lengthLabel(r.minutes)}`;
+
+  return (
+    <>
+      <Card
+        title="Next term"
+        description={
+          isAdmin
+            ? "Families are asked 2 weeks before term ends (4 weeks before the end of terms 1 and 3). Unanswered questions are listed first."
+            : "Before each term ends, tell us whether you'd like the same again next term, and whether you'd like sessions in the holidays."
+        }
+      >
+        {open.length === 0 ? (
+          <Empty>Nothing to answer right now.</Empty>
+        ) : (
+          <ul className="divide-y divide-zinc-100 text-sm">
+            {open.map((r) => (
+              <li key={r.id} className="space-y-3 py-4 first:pt-0">
+                <p>
+                  <span className="font-medium">{bookingLine(r)}</span>
+                  <span className="block text-zinc-600">
+                    Last session {shortDate(r.last_date)} · {r.term_label} ends {shortDate(r.term_ends_on)}
+                  </span>
+                </p>
+                <RenewalForm id={r.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {answered.length > 0 && (
+        <Card collapsible defaultOpen={isAdmin} title="Answers">
+          <ul className="divide-y divide-zinc-100 text-sm">
+            {answered.map((r) => (
+              <li key={r.id} className="space-y-1 py-3 first:pt-0">
+                <p className="font-medium">{bookingLine(r)}</p>
+                <p className="text-zinc-700">
+                  {r.same_again
+                    ? `Same again next term${r.next_status ? ` (${(BOOKING_STATUS_NAMES[r.next_status] ?? r.next_status).toLowerCase()})` : ""}`
+                    : `Wants a different ${CHANGE_NAMES[r.change_what ?? ""] ?? "arrangement"}`}
+                  {r.holidays ? " · with holiday sessions" : " · no holiday sessions"}
+                </p>
+                {r.change_reason && <p className="text-zinc-600">Why: {r.change_reason}</p>}
+                {r.feedback && (
+                  <p className="text-zinc-600">
+                    Feedback: {r.feedback}
+                    {isAdmin && (r.testimonial_ok ? " (may be used as a testimonial)" : " (not for sharing)")}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <>
+          <Card title="School terms" description="Used for renewal questions and for skipping the holidays.">
+            {terms.length === 0 ? (
+              <Empty>No terms yet.</Empty>
+            ) : (
+              <ul className="divide-y divide-zinc-100 text-sm">
+                {terms.map((t) => (
+                  <li key={t.id} className="py-2">
+                    <span>
+                      <span className="font-medium">
+                        {t.state} Term {t.term} {t.year}
+                      </span>
+                      <span className="text-zinc-600">
+                        {" "}
+                        · {shortDate(t.starts_on)} to {shortDate(t.ends_on)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card collapsible defaultOpen={false} title="Add or correct a term">
+            <TermForm />
+          </Card>
+        </>
+      )}
+    </>
   );
 }
 

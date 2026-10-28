@@ -4,6 +4,8 @@ import { startTransition, useActionState, useState, type ReactNode } from "react
 import {
   addAwayDates,
   addLibrary,
+  addTerm,
+  answerRenewal,
   joinWaitlist,
   answerBooking,
   cancelSession,
@@ -370,6 +372,79 @@ export function NoticeSettingsForm({
         </label>
         <p className="text-xs text-zinc-600">Email and text reminders start once CLG switches them on.</p>
       </fieldset>
+    </ActionForm>
+  );
+}
+
+// Next term: same again, holidays, and what to change if not.
+export function RenewalForm({ id }: { id: string }) {
+  const [sameAgain, setSameAgain] = useState("");
+  return (
+    <ActionForm action={answerRenewal} submitLabel="Send answer">
+      <input type="hidden" name="id" value={id} />
+      <fieldset className="space-y-2">
+        <legend className="mb-1 text-sm font-medium text-zinc-800">Same time and tutor next term?</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="radio" name="same_again" value="yes" required onChange={() => setSameAgain("yes")} className="mt-1" />{" "}
+          Yes, the same again
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="radio" name="same_again" value="no" onChange={() => setSameAgain("no")} className="mt-1" />{" "}
+          No, something different
+        </label>
+      </fieldset>
+      {sameAgain === "no" && (
+        <>
+          <Select label="What would you like to change?" name="change_what" defaultValue="time">
+            <option value="time">Day and time</option>
+            <option value="tutor">Tutor</option>
+            <option value="both">Both</option>
+          </Select>
+          <TextArea label="Why? (helps us find a better fit)" name="change_reason" maxLength={1000} rows={2} />
+        </>
+      )}
+      <fieldset className="space-y-2">
+        <legend className="mb-1 text-sm font-medium text-zinc-800">Sessions in the school holidays?</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="radio" name="holidays" value="yes" required className="mt-1" /> Yes, keep going in the holidays
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="radio" name="holidays" value="no" className="mt-1" /> No, pause for the holidays
+        </label>
+      </fieldset>
+      <TextArea label="How is it going? (optional)" name="feedback" maxLength={2000} rows={3} />
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="testimonial_ok" className="mt-1" /> CLG may share my feedback as a testimonial
+        (first name only)
+      </label>
+    </ActionForm>
+  );
+}
+
+export function TermForm() {
+  return (
+    <ActionForm action={addTerm} submitLabel="Save term">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Select label="State" name="state" defaultValue="SA">
+          {["SA", "NSW", "VIC", "QLD", "WA", "TAS", "ACT", "NT"].map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </Select>
+        <Select label="Term" name="term" defaultValue="1">
+          {[1, 2, 3, 4].map((t) => (
+            <option key={t} value={t}>
+              Term {t}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="First day" name="starts_on" type="date" required />
+        <Field label="Last day" name="ends_on" type="date" required />
+      </div>
+      <p className="text-xs text-zinc-600">Saving a term that already exists replaces its dates.</p>
     </ActionForm>
   );
 }
