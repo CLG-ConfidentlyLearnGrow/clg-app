@@ -269,6 +269,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>
           {" · "}
           <TextLink href="/admin/teams">Teams links for online sessions</TextLink>
+          {" · "}
+          <TextLink href="/admin/materials">Materials library</TextLink>
         </p>
         {section === "families" && (
           <>
