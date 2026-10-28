@@ -123,6 +123,11 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
             <AddChildForm />
           </Card>
         )}
+        {!viewer.roles.includes("student") && (
+          <p className="text-sm text-zinc-600">
+            Want to learn with CLG yourself? <TextLink href="/dashboard/learn">Add a student profile</TextLink>
+          </p>
+        )}
       </SectionShell>
     </>
   );

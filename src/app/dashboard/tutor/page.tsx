@@ -317,6 +317,11 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
             <AvailabilityForm />
           </Card>
         )}
+        {!viewer.roles.includes("student") && (
+          <p className="text-sm text-zinc-600">
+            Want to learn with CLG yourself? <TextLink href="/dashboard/learn">Add a student profile</TextLink>
+          </p>
+        )}
       </SectionShell>
     </>
   );
