@@ -7,6 +7,7 @@ import { AcceptTermsForm } from "./terms-form";
 
 type Account = {
   family_id: string;
+  bill_payer_id: string | null;
   plan: BillingPlan;
   method: BillingMethod;
   payment_ready: boolean;
@@ -40,15 +41,15 @@ const NOTES: Record<string, string> = {
 // Billing for families: plan, invoices, credit, and setting up automatic
 // payment. Students under 18 only see whether support is on hold.
 export default async function BillingPage({ searchParams }: PageProps<"/billing">) {
-  await requireViewer();
+  const viewer = await requireViewer();
   const params = await searchParams;
   const note = Object.entries(params)
     .map(([k, v]) => NOTES[`${k}=${v}`] ?? (k === "paid" ? `Thanks for paying invoice ${v}. It can take a minute to show here.` : null))
     .find(Boolean);
   const supabase = await createClient();
 
-  const [accounts, families, invoices, onHold] = await Promise.all([
-    supabase.from("billing_accounts").select("family_id, plan, method, payment_ready, terms_accepted_at, paused"),
+  const [accounts, families, invoices, onHold, splits] = await Promise.all([
+    supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused"),
     supabase.from("families").select("id, name"),
     supabase
       .from("billing_invoices")
@@ -59,7 +60,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       .order("due_on", { ascending: false })
       .limit(24),
     supabase.rpc("my_support_on_hold"),
+    // Split payments: a payer sees their own row; the main payer sees the split.
+    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready"),
   ]);
+  const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[];
   const accountRows = (accounts.data ?? []) as Account[];
   const nameOf = new Map((families.data ?? []).map((f) => [f.id, f.name]));
   const invoiceRows = (invoices.data ?? []) as unknown as Invoice[];
@@ -69,6 +73,19 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       const { data } = await supabase.rpc("billing_credit_balance", { p_family: a.family_id });
       credit.set(a.family_id, data ?? 0);
     }),
+  );
+  // What this person still owes on each unpaid invoice: the whole invoice,
+  // or their own share when the family splits its invoices.
+  const owed = new Map<string, number>();
+  await Promise.all(
+    invoiceRows
+      .filter((i) => i.status === "open")
+      .map(async (i) => {
+        const { data } = await supabase.rpc("billing_invoice_payers", { p_invoice: i.id });
+        const rows = (data ?? []) as { payer_id: string | null; amount_cents: number; paid_cents: number; pending_cents: number }[];
+        const mine = rows.length === 1 ? rows[0] : rows.find((r) => r.payer_id === viewer.id);
+        if (mine) owed.set(i.id, Math.max(0, mine.amount_cents - mine.paid_cents - mine.pending_cents));
+      }),
   );
 
   return (
@@ -87,6 +104,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
 
       {accountRows.map((a) => {
         const open = invoiceRows.filter((i) => i.family_id === a.family_id && i.status === "open");
+        const familySplits = splitRows.filter((r) => r.family_id === a.family_id);
+        const myShare = familySplits.find((r) => r.account_id === viewer.id);
+        const mainShare = 100 - familySplits.reduce((t, r) => t + r.share_percent, 0);
+        const ready = myShare ? myShare.payment_ready : a.payment_ready;
+        const method = myShare ? myShare.method : a.method;
         return (
           <div key={a.family_id} className="space-y-6">
             {a.paused && (
@@ -106,7 +128,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                 </div>
                 <div>
                   <dt className="text-zinc-500">Automatic payment</dt>
-                  <dd>{a.payment_ready ? METHOD_LABELS[a.method] : "Not set up yet"}</dd>
+                  <dd>{ready ? METHOD_LABELS[method] : "Not set up yet"}</dd>
                 </div>
                 <div>
                   <dt className="text-zinc-500">Credit</dt>
@@ -115,8 +137,20 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
               </dl>
               <form action={setUpAutomaticPayment} className="mt-4">
                 <input type="hidden" name="family_id" value={a.family_id} />
-                <Button type="submit">{a.payment_ready ? "Change card or bank account" : "Set up automatic payment"}</Button>
+                <Button type="submit">{ready ? "Change card or bank account" : "Set up automatic payment"}</Button>
               </form>
+              {myShare && (
+                <p className="mt-3 text-sm">
+                  Your family&apos;s invoices are shared. You pay {myShare.share_percent}% of each one from your own card or
+                  bank account, and another payer pays the rest.
+                </p>
+              )}
+              {!myShare && familySplits.length > 0 && a.bill_payer_id === viewer.id && (
+                <p className="mt-3 text-sm">
+                  Your family&apos;s invoices are shared. You pay {mainShare}% of each one, and the other payer pays the rest
+                  from their own card or bank account.
+                </p>
+              )}
               <p className="mt-2 text-xs text-zinc-500">
                 You enter your card or bank details on Stripe&apos;s secure page. CLG never sees or stores them.
                 {a.plan === "weekly"
@@ -153,10 +187,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                             <span>
                               <strong>{i.number}</strong> · due {plainDate(i.due_on)} · {pending ? "Payment on its way" : STATUS_LABELS[i.status]}
                             </span>
-                            {open.includes(i) && !pending && (
+                            {open.includes(i) && (owed.get(i.id) ?? 0) > 0 && (
                               <form action={payInvoiceNow}>
                                 <input type="hidden" name="id" value={i.id} />
-                                <Button type="submit">Pay {dollars(i.total_cents)} now</Button>
+                                <Button type="submit">
+                                  Pay {dollars(owed.get(i.id))} now{(owed.get(i.id) ?? 0) < i.total_cents ? " (your share)" : ""}
+                                </Button>
                               </form>
                             )}
                           </div>

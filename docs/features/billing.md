@@ -31,7 +31,26 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 - **Xero Payroll.** Each pay period (weekly by default; must match Xero's pay calendar), admins send each person's lines to Xero Payroll as a draft timesheet, one earnings rate per kind of work. Carla checks and approves in Xero, which handles super (Payday Super from 1 July 2026) and Single Touch Payroll. Part-time staff paid a fixed weekly pattern still need their pattern hours entered in Xero.
 - **Privacy.** Staff see only their own rates and pay (with two-step login); only admins see everyone's. Families never see pay.
 
-Not built yet (next steps): email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), split payments between parents, NDIS and school funding.
+## Split payments between payers (added 2026-10-28)
+
+- **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.
+- **Paying.** Each payer saves their own card or bank debit in the app and is charged only their share on the charge date. A payer who hasn't set up automatic payment pays their share by link. If any payer uses bank debit, the charge date allows for it to clear in time. The bank-debit discount still depends on the bill payer's saved method, as before, and is shared in the same proportion.
+- **One invoice.** The invoice stays one invoice, with one set of session lines and one Xero invoice addressed to the bill payer. Each payer's payment is recorded against it in Xero. The invoice is paid when the shares add up to the total.
+- **Pauses.** CLG's rule is unchanged: an overdue invoice puts the whole family on hold, even if one payer has paid their share. A failed payment pauses the family until that payer pays.
+
+### Why (research and practice)
+
+- Regular sessions are what make tuition work (EEF Toolkit: one-to-one tuition, small group tuition; Evidence for Learning). A family where one parent pays for everything and the other is meant to pay them back is a common cause of late payment and gaps. Letting each payer pay their own share directly keeps sessions regular.
+- Parental engagement works best when it is easy and specific for each parent (EEF guidance report, *Working with Parents to Support Children's Learning*). Each payer sees their own share and their own action, and nothing more.
+
+### Privacy and legal notes
+
+- **Separated parents.** Each payer sees only their own share, their own saved method and their own payments. They never see the other payer's card or bank details, contact details or payment history (Privacy Act APP 6 and APP 11). This matters where there are family violence concerns or parenting orders. The bill payer sees the split percentages; the second payer sees only that "another payer" pays the rest. Admins see both.
+- **Who may share.** Only a parent linked to a child in the family, or an adult (18+) learner in it, can be added. The database checks this (`billing_set_split`), and writes to the split tables are admin or server only. Tested in `supabase/tests/billing_split.test.sql`.
+- **Tax invoice.** The Xero tax invoice is addressed to the bill payer. A second payer who needs a tax invoice in their own name (for example for a claim) needs a separate invoice, done by hand for now.
+- **Terms.** The family terms are accepted once per family. A second payer should also read them; the terms should say that each payer is responsible for their own share and that an overdue share pauses the family's sessions. The lawyer review should cover this.
+
+Not built yet (next steps): email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), NDIS and school funding.
 
 ## Why (education research)
 

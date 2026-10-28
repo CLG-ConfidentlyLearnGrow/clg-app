@@ -257,23 +257,47 @@ export async function setUpAutomaticPayment(formData: FormData) {
   if (!account) redirect("/billing?setup=missing");
   if (!stripeKey()) redirect("/billing?setup=not-connected");
 
-  // Stripe's references are kept away from the browser, so they are read
-  // and saved with the server's own access, after the check above.
-  const db = createAdminClient();
-  const { data: full } = await db
-    .from("billing_accounts")
-    .select("stripe_customer_id")
+  // A second payer sharing the invoices saves their own card or bank debit.
+  const supabase = await createClient();
+  const { data: share } = await supabase
+    .from("billing_payers")
+    .select("account_id")
     .eq("family_id", familyId.data)
-    .single();
-  let customer = full?.stripe_customer_id as string | null;
-  if (!customer) {
-    const made = await createCustomer(viewer.fullName || "CLG family", viewer.email, familyId.data);
-    customer = made.id;
-    await db.from("billing_accounts").update({ stripe_customer_id: customer }).eq("family_id", familyId.data);
+    .eq("account_id", viewer.id)
+    .maybeSingle();
+
+  // Stripe's references are kept away from the browser, so they are read
+  // and saved with the server's own access, after the checks above.
+  const db = createAdminClient();
+  let customer: string | null;
+  if (share) {
+    const { data: full } = await db
+      .from("billing_payers")
+      .select("stripe_customer_id")
+      .eq("family_id", familyId.data)
+      .eq("account_id", viewer.id)
+      .single();
+    customer = (full?.stripe_customer_id as string | null) ?? null;
+    if (!customer) {
+      customer = (await createCustomer(viewer.fullName || "CLG family", viewer.email, familyId.data, viewer.id)).id;
+      await db.from("billing_payers").update({ stripe_customer_id: customer }).eq("family_id", familyId.data).eq("account_id", viewer.id);
+    }
+  } else {
+    const { data: full } = await db
+      .from("billing_accounts")
+      .select("stripe_customer_id")
+      .eq("family_id", familyId.data)
+      .single();
+    customer = (full?.stripe_customer_id as string | null) ?? null;
+    if (!customer) {
+      customer = (await createCustomer(viewer.fullName || "CLG family", viewer.email, familyId.data)).id;
+      await db.from("billing_accounts").update({ stripe_customer_id: customer }).eq("family_id", familyId.data);
+    }
   }
   const page = await createSetupPage({
     customer,
     familyId: familyId.data,
+    payerId: share ? viewer.id : undefined,
     allowBankDebit: account.plan !== "weekly",
     returnUrl: `${siteUrl()}/billing`,
   });
@@ -281,7 +305,7 @@ export async function setUpAutomaticPayment(formData: FormData) {
 }
 
 export async function payInvoiceNow(formData: FormData) {
-  await requireViewer();
+  const viewer = await requireViewer();
   const id = uuid.safeParse(formData.get("id"));
   if (!id.success) return;
   if (!stripeKey()) redirect("/billing?setup=not-connected");
@@ -294,21 +318,74 @@ export async function payInvoiceNow(formData: FormData) {
     .eq("status", "open")
     .maybeSingle();
   if (!inv?.family_id) redirect("/billing");
-  const { data: pending } = await supabase
-    .from("billing_payments")
-    .select("id")
-    .eq("invoice_id", inv.id)
-    .in("status", ["processing", "succeeded"]);
-  if (pending?.length) redirect("/billing?paid=processing");
+  // What this person owes: the whole invoice, or their share of a split
+  // one. The database only returns what they may see.
+  const { data: owed } = await supabase.rpc("billing_invoice_payers", { p_invoice: inv.id });
+  const { data: shareRows } = await supabase.from("billing_invoice_shares").select("payer_id").eq("invoice_id", inv.id).limit(1);
+  const split = Boolean(shareRows?.length);
+  const mine = (owed ?? []).find((o: { payer_id: string | null }) => !split || o.payer_id === viewer.id) as
+    | { amount_cents: number; paid_cents: number; pending_cents: number }
+    | undefined;
+  if (!mine) redirect("/billing");
+  const left = mine.amount_cents - mine.paid_cents - mine.pending_cents;
+  if (left <= 0) redirect("/billing?paid=processing");
+
   const db = createAdminClient();
-  const { data: acct } = await db.from("billing_accounts").select("stripe_customer_id").eq("family_id", inv.family_id).single();
+  let customer: string | null = null;
+  if (split) {
+    const { data: p } = await db
+      .from("billing_payers")
+      .select("stripe_customer_id")
+      .eq("family_id", inv.family_id)
+      .eq("account_id", viewer.id)
+      .maybeSingle();
+    customer = (p?.stripe_customer_id as string | null) ?? null;
+  }
+  if (!customer) {
+    const { data: acct } = await db.from("billing_accounts").select("stripe_customer_id, bill_payer_id").eq("family_id", inv.family_id).single();
+    if (!split || acct?.bill_payer_id === viewer.id) customer = (acct?.stripe_customer_id as string | null) ?? null;
+  }
   const page = await createPayNowPage({
-    customer: (acct?.stripe_customer_id as string | null) ?? null,
+    customer,
     invoiceId: inv.id,
     invoiceNumber: inv.number,
     familyId: inv.family_id,
-    amountCents: inv.total_cents,
+    payerId: split ? viewer.id : undefined,
+    amountCents: left,
     returnUrl: `${siteUrl()}/billing`,
   });
   redirect(page.url);
+}
+
+// ---------------------------------------------------------------------------
+// Admin: split payments
+// ---------------------------------------------------------------------------
+
+export async function saveSplit(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = z
+    .object({ family_id: uuid, payer_id: uuid, share: z.string() })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Choose who shares the payments and their share." };
+  const share = Number(parsed.data.share.replace("%", "").trim());
+  if (!Number.isInteger(share) || share < 1 || share > 99) return { error: "Enter the share as a whole number from 1 to 99, for example 50." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("billing_set_split", {
+    p_family: parsed.data.family_id,
+    p_payer: parsed.data.payer_id,
+    p_share: share,
+  });
+  if (error) return plain(error, "Couldn't save the split.");
+  revalidatePath(ADMIN_PAGE);
+  return { message: "Split saved. It applies to invoices made from now on. Ask the other parent to set up their own automatic payment in the app." };
+}
+
+export async function removeSplit(formData: FormData) {
+  await requireAdmin();
+  const family = uuid.safeParse(formData.get("family_id"));
+  const payer = uuid.safeParse(formData.get("payer_id"));
+  if (!family.success || !payer.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("billing_remove_split", { p_family: family.data, p_payer: payer.data });
+  revalidatePath(ADMIN_PAGE);
 }

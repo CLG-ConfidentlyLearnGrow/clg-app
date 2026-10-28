@@ -74,9 +74,15 @@ export type PaymentIntent = {
   metadata?: Record<string, string>;
 };
 
-// The family's Stripe customer: the bill payer's name and email only.
-export function createCustomer(name: string, email: string, familyId: string) {
-  return call<StripeCustomer>("POST", "customers", { name, email, metadata: { family_id: familyId } }, `customer-${familyId}`);
+// The family's Stripe customer: the bill payer's name and email only. A
+// second payer sharing the invoices gets their own customer.
+export function createCustomer(name: string, email: string, familyId: string, payerId?: string) {
+  return call<StripeCustomer>(
+    "POST",
+    "customers",
+    { name, email, metadata: payerId ? { family_id: familyId, payer_id: payerId } : { family_id: familyId } },
+    payerId ? `customer-${familyId}-${payerId}` : `customer-${familyId}`,
+  );
 }
 
 // Stripe's page where a family saves a card or signs a bank debit
@@ -84,6 +90,7 @@ export function createCustomer(name: string, email: string, familyId: string) {
 export function createSetupPage(opts: {
   customer: string;
   familyId: string;
+  payerId?: string;
   allowBankDebit: boolean;
   returnUrl: string;
 }) {
@@ -96,6 +103,7 @@ export function createSetupPage(opts: {
     cancel_url: `${opts.returnUrl}?setup=cancelled`,
     metadata: { family_id: opts.familyId },
     "setup_intent_data[metadata][family_id]": opts.familyId,
+    "setup_intent_data[metadata][payer_id]": opts.payerId,
   });
 }
 
@@ -106,6 +114,7 @@ export function createPayNowPage(opts: {
   invoiceId: string;
   invoiceNumber: string;
   familyId: string;
+  payerId?: string;
   amountCents: number;
   returnUrl: string;
 }) {
@@ -119,6 +128,7 @@ export function createPayNowPage(opts: {
     "line_items[0][price_data][product_data][name]": `CLG invoice ${opts.invoiceNumber}`,
     "payment_intent_data[metadata][invoice_id]": opts.invoiceId,
     "payment_intent_data[metadata][family_id]": opts.familyId,
+    "payment_intent_data[metadata][payer_id]": opts.payerId,
     success_url: `${opts.returnUrl}?paid=${opts.invoiceNumber}`,
     cancel_url: opts.returnUrl,
   });
@@ -138,6 +148,7 @@ export function chargeSaved(opts: {
   amountCents: number;
   invoiceId: string;
   familyId: string;
+  payerId?: string;
   invoiceNumber: string;
   idempotencyKey: string;
 }) {
@@ -154,9 +165,11 @@ export function chargeSaved(opts: {
       off_session: opts.bankDebit ? undefined : true,
       confirm: true,
       description: `CLG invoice ${opts.invoiceNumber}`,
-      metadata: { invoice_id: opts.invoiceId, family_id: opts.familyId },
+      metadata: opts.payerId
+        ? { invoice_id: opts.invoiceId, family_id: opts.familyId, payer_id: opts.payerId }
+        : { invoice_id: opts.invoiceId, family_id: opts.familyId },
     },
-    `charge-${opts.idempotencyKey}`,
+    opts.payerId ? `charge-${opts.idempotencyKey}-${opts.payerId}` : `charge-${opts.idempotencyKey}`,
   );
 }
 

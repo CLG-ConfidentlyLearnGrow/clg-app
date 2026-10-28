@@ -145,7 +145,16 @@ async function familyContact(familyId: string): Promise<string> {
 }
 
 // Charges saved cards and bank debits on their charge date. One automatic
-// try per invoice; after a failure the family pays by link.
+// try per invoice; after a failure the family pays by link. When the
+// family splits its invoices, each payer is charged their own share from
+// their own saved card or bank debit.
+type SavedMethod = {
+  method: "none" | "card" | "bank_debit";
+  stripe_customer_id: string | null;
+  stripe_payment_method_id: string | null;
+  stripe_mandate_id: string | null;
+};
+
 async function chargeDueInvoices(today: string, summary: Summary) {
   if (!stripeKey()) return;
   const db = createAdminClient();
@@ -159,10 +168,29 @@ async function chargeDueInvoices(today: string, summary: Summary) {
   for (const inv of due ?? []) {
     const { data: acct } = await db
       .from("billing_accounts")
-      .select("method, stripe_customer_id, stripe_payment_method_id, stripe_mandate_id")
+      .select("bill_payer_id, method, stripe_customer_id, stripe_payment_method_id, stripe_mandate_id")
       .eq("family_id", inv.family_id)
       .single();
-    if (!acct?.stripe_payment_method_id || !acct.stripe_customer_id || acct.method === "none") continue;
+    const { data: shares } = await db.from("billing_invoice_shares").select("payer_id, amount_cents").eq("invoice_id", inv.id);
+
+    // Who to charge: the family's saved method for the whole invoice, or
+    // each payer's own saved method for their share.
+    const charges: { payerId?: string; amountCents: number; saved: SavedMethod }[] = [];
+    if (!shares?.length) {
+      if (acct) charges.push({ amountCents: inv.total_cents, saved: acct as SavedMethod });
+    } else {
+      const { data: others } = await db
+        .from("billing_payers")
+        .select("account_id, method, stripe_customer_id, stripe_payment_method_id, stripe_mandate_id")
+        .eq("family_id", inv.family_id);
+      for (const sh of shares) {
+        if (!sh.payer_id || sh.amount_cents <= 0) continue;
+        const saved = sh.payer_id === acct?.bill_payer_id ? acct : others?.find((o) => o.account_id === sh.payer_id);
+        if (saved) charges.push({ payerId: sh.payer_id, amountCents: sh.amount_cents, saved: saved as SavedMethod });
+      }
+    }
+    const ready = charges.filter((c) => c.saved.stripe_payment_method_id && c.saved.stripe_customer_id && c.saved.method !== "none");
+    if (!ready.length) continue;
 
     // Mark the try first, so two runs at once can't both charge.
     const claimed = await db
@@ -173,32 +201,37 @@ async function chargeDueInvoices(today: string, summary: Summary) {
       .select("id");
     if (!claimed.data?.length) continue;
 
-    try {
-      const pi = await chargeSaved({
-        customer: acct.stripe_customer_id,
-        paymentMethod: acct.stripe_payment_method_id,
-        mandate: acct.stripe_mandate_id,
-        bankDebit: acct.method === "bank_debit",
-        amountCents: inv.total_cents,
-        invoiceId: inv.id,
-        familyId: inv.family_id,
-        invoiceNumber: inv.number,
-        idempotencyKey: inv.idempotency_key,
-      });
-      await recordPaymentIntent(pi, inv.id);
-      summary.charged++;
-    } catch (e) {
-      const pi = e instanceof StripeError ? e.body.error?.payment_intent : undefined;
-      await db.rpc("billing_record_payment", {
-        p_invoice: inv.id,
-        p_provider: "stripe",
-        p_ref: pi?.id ?? `failed-${inv.idempotency_key}`,
-        p_method: acct.method,
-        p_amount_cents: inv.total_cents,
-        p_status: "failed",
-        p_message: (e as Error).message,
-      });
-      summary.problems.push(`Payment for ${inv.number} failed: ${(e as Error).message}`);
+    for (const c of ready) {
+      try {
+        const pi = await chargeSaved({
+          customer: c.saved.stripe_customer_id!,
+          paymentMethod: c.saved.stripe_payment_method_id!,
+          mandate: c.saved.stripe_mandate_id,
+          bankDebit: c.saved.method === "bank_debit",
+          amountCents: c.amountCents,
+          invoiceId: inv.id,
+          familyId: inv.family_id,
+          payerId: c.payerId,
+          invoiceNumber: inv.number,
+          idempotencyKey: inv.idempotency_key,
+        });
+        await recordPaymentIntent(pi, inv.id);
+        summary.charged++;
+      } catch (e) {
+        const pi = e instanceof StripeError ? e.body.error?.payment_intent : undefined;
+        const suffix = c.payerId ? `-${c.payerId}` : "";
+        await db.rpc("billing_record_payer_payment", {
+          p_invoice: inv.id,
+          p_payer: c.payerId ?? null,
+          p_provider: "stripe",
+          p_ref: pi?.id ?? `failed-${inv.idempotency_key}${suffix}`,
+          p_method: c.saved.method,
+          p_amount_cents: c.amountCents,
+          p_status: "failed",
+          p_message: (e as Error).message,
+        });
+        summary.problems.push(`Payment for ${inv.number} failed: ${(e as Error).message}`);
+      }
     }
   }
 }
@@ -210,8 +243,9 @@ export async function recordPaymentIntent(pi: PaymentIntent, invoiceId = pi.meta
     pi.status === "succeeded" ? "succeeded" : pi.status === "processing" ? "processing" : pi.status === "requires_payment_method" || pi.status === "canceled" ? "failed" : null;
   if (!status) return;
   const db = createAdminClient();
-  const { error } = await db.rpc("billing_record_payment", {
+  const { error } = await db.rpc("billing_record_payer_payment", {
     p_invoice: invoiceId,
+    p_payer: pi.metadata?.payer_id ?? null,
     p_provider: "stripe",
     p_ref: pi.id,
     p_method: pi.payment_method_types.includes("au_becs_debit") ? "bank_debit" : "card",
@@ -228,6 +262,20 @@ export async function recordSavedPaymentMethod(setupIntentId: string) {
   const familyId = si.metadata?.family_id;
   if (!familyId || !si.payment_method) return;
   const db = createAdminClient();
+  const method = si.payment_method.type === "au_becs_debit" ? "bank_debit" : "card";
+  // A second payer sharing the family's invoices saves their own method.
+  if (si.metadata?.payer_id) {
+    const { error } = await db.rpc("billing_save_payer_method", {
+      p_family: familyId,
+      p_payer: si.metadata.payer_id,
+      p_customer: si.customer,
+      p_payment_method: si.payment_method.id,
+      p_method: method,
+      p_mandate: si.mandate,
+    });
+    if (error) throw new Error(`Couldn't save the payment method: ${error.message}`);
+    return;
+  }
   const { error } = await db.rpc("billing_save_payment_method", {
     p_family: familyId,
     p_customer: si.customer,
