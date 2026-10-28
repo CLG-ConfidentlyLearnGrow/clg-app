@@ -90,6 +90,17 @@ automatic, like booking a doctor:
     missed answer doesn't hide a tutor from bookings, and changing
     availability never changes booked sessions.
 
+13. **Matching.** Tutors are matched on the level the student is working at
+    in each subject (the family's "working level"), or their school year if
+    none is given. This applies to finding times and to assigning a tutor.
+    Families save **session places** for each child (online, and the
+    libraries that suit), and searches start from them. Admins see a
+    **Matching** tab: every subject a student asked for, by stage (needs a
+    tutor, waitlist, tutor to confirm, assigned with no time, active), with
+    days in that stage, oldest first, searchable and paged so it works for
+    hundreds of students. Stages come from the records, so nobody moves
+    cards by hand.
+
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
 note.
@@ -151,6 +162,12 @@ the regular, stable sessions the evidence favours. Casual tutors may change
 what they offer under the Miscellaneous and Post-Secondary Awards, so the
 app shows changes to admins for a conversation rather than blocking them.
 
+Matching on working level follows the evidence that tutoring works best
+when it targets what the learner is ready for (EEF, one to one tuition;
+AERO on explicit teaching and checking prior knowledge). A student a few
+years behind in maths needs a tutor who teaches that level, whatever their
+school year.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -159,6 +176,7 @@ app shows changes to admins for a conversation rather than blocking them.
 - Cancellations by who cancelled, and no-shows.
 - Tutor hours in blocks of 2 hours or more.
 - No-show rate before and after reminders.
+- Days from a subject being asked for to its first session (Matching tab).
 - Share of tutors confirming availability before families are asked.
 - Share of bookings renewed each term, and the reasons families give for a
   change.
@@ -191,6 +209,9 @@ app shows changes to admins for a conversation rather than blocking them.
   a separate, unticked-by-default yes, and the app records that yes. Shared
   testimonials use a first name only and are never edited to change their
   meaning. Tutors don't see renewal answers.
+- **Session places (APP 3)**: families pick libraries from a list; the app
+  never asks for or stores a home address or phone location for matching.
+  Only the family and admins see a child's places.
 - **Records**: bookings and sessions are deleted with the student under the
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't

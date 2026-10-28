@@ -15,6 +15,7 @@ import {
   saveNoticeSettings,
   recordOutcome,
   requestBooking,
+  saveStudentPlaces,
   saveTutorPlaces,
   signOn,
   stopBooking,
@@ -468,5 +469,40 @@ export function AvailabilityCheckForm({ id }: { id: string }) {
         </>
       )}
     </ButtonsForm>
+  );
+}
+
+// Where a child can have sessions: online, and the libraries that suit.
+export function StudentPlacesForm({
+  studentId,
+  libraries,
+  online,
+  chosen,
+}: {
+  studentId: string;
+  libraries: { id: string; name: string; suburb: string | null }[];
+  online: boolean;
+  chosen: string[];
+}) {
+  const box = "flex items-start gap-2 text-sm";
+  return (
+    <ActionForm action={saveStudentPlaces} submitLabel="Save places">
+      <input type="hidden" name="student_id" value={studentId} />
+      <label className={box}>
+        <input type="checkbox" name="online" defaultChecked={online} className="mt-1" /> Online
+      </label>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {libraries.map((l) => (
+          <label key={l.id} className={box}>
+            <input type="checkbox" name="library" value={l.id} defaultChecked={chosen.includes(l.id)} className="mt-1" />
+            <span>
+              {l.name}
+              {l.suburb && <span className="text-zinc-500"> · {l.suburb}</span>}
+            </span>
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match isn&apos;t guaranteed.</p>
+    </ActionForm>
   );
 }

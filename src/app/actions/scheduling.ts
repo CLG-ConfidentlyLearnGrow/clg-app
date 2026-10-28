@@ -507,3 +507,23 @@ export async function confirmAvailability(_prev: FormState, formData: FormData):
   if (error) return { error: plainError(error, "Couldn't save your answer.") };
   return done("Thanks. Your availability is confirmed for next term.");
 }
+
+// ---------------------------------------------------------------------------
+// Where a child can have sessions (families and admins)
+// ---------------------------------------------------------------------------
+export async function saveStudentPlaces(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const student = z.uuid().safeParse(formData.get("student_id"));
+  if (!student.success) return { error: "Couldn't read which child this is for." };
+  const libraries = z.array(z.uuid()).safeParse(formData.getAll("library"));
+  if (!libraries.success) return { error: "Couldn't read the libraries you chose." };
+  const online = formData.get("online") === "on";
+  if (!online && libraries.data.length === 0) return { error: "Choose online, at least one library, or both." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("student_places")
+    .upsert({ student_id: student.data, online, library_ids: libraries.data });
+  if (error) return { error: "Couldn't save the places." };
+  return done("Saved. Searches for times will start from these places.");
+}
