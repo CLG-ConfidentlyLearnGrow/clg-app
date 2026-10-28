@@ -98,3 +98,7 @@ export function levelFits(level: string | null, band: string) {
   const b = band.trim().toLowerCase();
   return b === l || b.startsWith(`${l} (`);
 }
+
+// Shown under every date of birth field.
+export const DOB_HINT =
+  "We ask for date of birth so we can apply the privacy and child safety protections that suit each age group.";

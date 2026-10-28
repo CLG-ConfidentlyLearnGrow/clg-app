@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DOB_HINT } from "@/lib/students";
 import { setUpFamily } from "@/app/actions/family-setup";
 import { GoalFields } from "@/app/dashboard/add-child-form";
 import { ActionForm } from "@/components/action-form";
@@ -41,21 +42,25 @@ export function FamilySetupForm() {
       {who === "parent" ? (
         <>
           <Field label="Child's full name" name="full_name" required maxLength={200} />
-          <Field label="Child's date of birth" name="date_of_birth" type="date" required />
-          <StateSelect label="State the child lives in" />
-          <YearLevelSelect label="Year level at school this year" />
-          <Field label="School" name="school" required maxLength={200} />
+          <p className="text-sm text-zinc-600">
+            Fill in what you know. Anything left blank, the family is asked to finish when they first sign in. A tutor
+            can&apos;t be assigned until the date of birth, state, year level and school are in.
+          </p>
+          <Field label="Child's date of birth (optional)" name="date_of_birth" type="date" hint={DOB_HINT} />
+          <StateSelect label="State the child lives in (optional)" optional />
+          <YearLevelSelect label="Year level at school this year (optional)" optional />
+          <Field label="School (optional)" name="school" maxLength={200} />
         </>
       ) : (
         <>
-          <Field label="Date of birth" name="date_of_birth" type="date" required />
+          <Field label="Date of birth" name="date_of_birth" type="date" required hint={DOB_HINT} />
           <StateSelect label="State they live in" />
           <YearLevelSelect label="Year level or stage of study" />
           <Field label="School, university or TAFE" name="school" required maxLength={200} />
         </>
       )}
       <SubjectPicker />
-      <GoalFields />
+      <GoalFields optional />
     </ActionForm>
   );
 }

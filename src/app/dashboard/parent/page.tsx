@@ -7,7 +7,7 @@ import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "../add-child-form";
 import { EditChildForm } from "../edit-child-form";
-import { NewUpdates, TutorList, loadStudentsAndTutors } from "../shared";
+import { NewUpdates, TutorList, loadStudentsAndTutors, missingDetails } from "../shared";
 
 const SECTIONS = [
   { id: "children", label: "Your children" },
@@ -33,6 +33,10 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
       .map((r) => ({ subject: r.subject, level: r.working_level as string | null }));
   const verified = new Set((links.data ?? []).filter((l) => l.verified_at).map((l) => l.student_id));
   const waiting = students.some((s) => !verified.has(s.id));
+  // Children CLG set up for the family, with details still to give.
+  const unfinished = students
+    .map((s) => ({ child: s, missing: missingDetails(s, subjectsOf(s.id).length) }))
+    .filter((u) => u.missing.length > 0);
 
   return (
     <>
@@ -40,6 +44,15 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
       <SectionShell basePath="/dashboard/parent" label="Parent" section={section} sections={[...SECTIONS]}>
         {section === "children" && (
           <>
+            {unfinished.map(({ child, missing }) => (
+              <Card
+                key={child.id}
+                title={`Please finish ${child.full_name}'s details`}
+                description={`CLG has started ${child.full_name}'s profile. Please add the ${missing.join(", ")}, so we can match the right tutor.`}
+              >
+                <EditChildForm child={child} subjects={subjectsOf(child.id)} />
+              </Card>
+            ))}
             {waiting && (
               <Card title="What happens next">
                 <ol className="list-decimal space-y-2 pl-5 text-sm">

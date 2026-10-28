@@ -21,6 +21,19 @@ const contactSchema = z.object({
   email: z.email("Enter a valid email address.").trim().toLowerCase(),
 });
 
+// For a parent's child, an admin only needs the name. Anything else given
+// must still be valid; blanks are left for the family.
+const blank = z.literal("");
+const partialChildSchema = z.object({
+  full_name: childSchema.shape.full_name,
+  date_of_birth: z.union([blank, childSchema.shape.date_of_birth]).optional(),
+  state: z.union([blank, childSchema.shape.state]).optional(),
+  year_level: z.union([blank, childSchema.shape.year_level]).optional(),
+  school: z.string().trim().max(200).optional(),
+  goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
+  extra_info: childSchema.shape.extra_info,
+});
+
 type Found = { account_id: string; full_name: string; is_parent: boolean; is_student: boolean };
 type Made = { userId: string; link: string | null } | { error: string };
 
@@ -54,8 +67,11 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
   if (!contact.success) return { error: contact.error.issues[0].message };
   const { who, contact_name, email } = contact.data;
 
-  const subjects = readSubjects(formData);
-  if ("error" in subjects) return subjects;
+  // Families set up by an admin may have no subjects yet; they add them later.
+  const picked = readSubjects(formData);
+  const noneChosen = "error" in picked && picked.error.startsWith("Choose at least one subject");
+  if ("error" in picked && !noneChosen) return picked;
+  const subjects: Wanted[] = "error" in picked ? [] : picked;
 
   const supabase = await createClient();
   const lookup = await supabase.rpc("admin_find_account", { p_email: email });
@@ -64,7 +80,7 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
 
   if (who === "learner") return setUpLearner(formData, contact_name, email, subjects, found);
 
-  const child = childSchema.safeParse(Object.fromEntries(formData));
+  const child = partialChildSchema.safeParse(Object.fromEntries(formData));
   if (!child.success) return { error: child.error.issues[0].message.replace("your child", "the child") };
 
   let parentId: string;
@@ -88,13 +104,13 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
   const added = await supabase.rpc("admin_add_child", {
     p_parent: parentId,
     p_full_name: child.data.full_name,
-    p_date_of_birth: child.data.date_of_birth,
-    p_state: child.data.state,
-    p_year_level: child.data.year_level,
-    p_school: child.data.school,
+    p_date_of_birth: child.data.date_of_birth || null,
+    p_state: child.data.state || null,
+    p_year_level: child.data.year_level || null,
+    p_school: child.data.school || null,
     p_subjects: subjects,
-    p_goals: child.data.goals,
-    p_extra_info: child.data.extra_info || undefined,
+    p_goals: child.data.goals || null,
+    p_extra_info: child.data.extra_info || null,
   });
   if (added.error) {
     console.error("Admin add child failed:", added.error.code, added.error.message);
@@ -118,7 +134,7 @@ const learnerSchema = z.object({
   state: childSchema.shape.state,
   year_level: childSchema.shape.year_level,
   school: z.string().trim().min(1, "Enter the student's school, university or TAFE.").max(200),
-  goals: childSchema.shape.goals,
+  goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
   extra_info: childSchema.shape.extra_info,
 });
 
@@ -153,18 +169,19 @@ async function setUpLearner(
   const supabase = await createClient();
   const student = await supabase
     .from("students")
-    .update({ goals: v.goals, extra_info: v.extra_info || null })
+    .update({ goals: v.goals || null, extra_info: v.extra_info || null })
     .eq("account_id", made.userId)
     .select("id")
     .maybeSingle();
   const saved =
     !student.error &&
     student.data &&
-    !(
-      await supabase
-        .from("student_subjects")
-        .insert(subjects.map((s) => ({ student_id: student.data!.id, subject: s.subject, working_level: s.level })))
-    ).error;
+    (subjects.length === 0 ||
+      !(
+        await supabase
+          .from("student_subjects")
+          .insert(subjects.map((s) => ({ student_id: student.data!.id, subject: s.subject, working_level: s.level })))
+      ).error);
 
   revalidatePath("/admin");
   const note = saved ? "" : " Their subjects or goal didn't save, so please add them from the student's details.";

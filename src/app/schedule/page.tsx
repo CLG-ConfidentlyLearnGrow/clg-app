@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { leaveWaitlist, markNoticesRead, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
 import { SectionShell } from "@/components/section-shell";
@@ -21,6 +22,7 @@ import {
   shortDate,
 } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
+import { runTeamsSyncQuietly } from "@/lib/teams/sync";
 import {
   AnswerForm,
   AwayForm,
@@ -99,6 +101,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const viewer = await requireViewer();
   if (needsTwoStep(viewer)) redirect("/mfa");
   const params = await searchParams;
+  // Keep Teams links up to date (at most every few minutes; never slows the page).
+  after(runTeamsSyncQuietly);
 
   const isAdmin = viewer.roles.includes("admin");
   const isTutor = viewer.roles.includes("tutor");

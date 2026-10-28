@@ -7,7 +7,7 @@ Part 1: finding a time, booking, the tutor confirming, the weekly sessions,
 cancelling and recording what happened. Part 2: away dates and the
 waitlist. Part 3: tutor sign on and off. Part 4: reminders and notices in
 the app. Part 5: school terms and renewing each term. Later parts: email
-and text sending, Teams links.
+and text sending. Teams links are their own module (teams-links.md).
 
 ## What it's for
 

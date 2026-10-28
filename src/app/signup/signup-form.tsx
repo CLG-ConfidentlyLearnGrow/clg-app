@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DOB_HINT } from "@/lib/students";
 import { signUp } from "@/app/actions/auth";
 import { ActionForm } from "@/components/action-form";
 import { StateSelect } from "@/components/state-select";
@@ -35,7 +36,7 @@ export function SignupForm() {
       />
       {kind === "learner" && (
         <>
-          <Field label="Date of birth" name="date_of_birth" type="date" required />
+          <Field label="Date of birth" name="date_of_birth" type="date" required hint={DOB_HINT} />
           <StateSelect label="State you live in" />
           <YearLevelSelect label="Year level or stage of study" />
           <Field
