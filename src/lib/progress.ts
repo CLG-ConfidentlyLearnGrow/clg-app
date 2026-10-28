@@ -55,3 +55,35 @@ export function hoursAgo(hours: number): string {
   if (hours < 48) return `${hours} hr ago`;
   return `${Math.floor(hours / 24)} days ago`;
 }
+
+export const RECOMMENDATION_NAMES: Record<string, string> = {
+  continue: "Continue as we are",
+  change_focus: "Change the focus",
+  more_sessions: "Add more sessions",
+  fewer_sessions: "Fewer sessions",
+  break: "Take a break",
+};
+
+// Evidence of learning: what families, students and tutors can upload.
+export const EVIDENCE_KINDS = ["graded_work", "school_report", "naplan", "other_assessment", "work_sample"] as const;
+export const EVIDENCE_KIND_NAMES: Record<(typeof EVIDENCE_KINDS)[number], string> = {
+  graded_work: "Marked school work or test",
+  school_report: "School report",
+  naplan: "NAPLAN results",
+  other_assessment: "Other assessment",
+  work_sample: "Sample of work",
+};
+
+// The compulsory parts of a senior certificate a subject can count towards (SACE).
+export const SENIOR_AREA_NAMES: Record<string, string> = {
+  eif: "Exploring Identities and Futures",
+  literacy: "Literacy (an English subject)",
+  numeracy: "Numeracy (a Maths subject)",
+  aif: "Activating Identities and Futures (or Research Project)",
+};
+
+export const SENIOR_STATUS_NAMES: Record<string, string> = {
+  planned: "Planning to take",
+  studying: "Studying now",
+  finished: "Finished",
+};
