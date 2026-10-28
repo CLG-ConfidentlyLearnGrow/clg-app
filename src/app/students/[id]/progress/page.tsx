@@ -3,7 +3,8 @@ import { closeGoal } from "@/app/actions/progress";
 import { Button, Card, Page, TextLink } from "@/components/ui";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Attendance, type SkillLevel } from "@/lib/progress";
-import { levelFits, subjectFits } from "@/lib/students";
+import { YEAR_LEVELS, levelFits, subjectFits } from "@/lib/students";
+import { bandCoversYear } from "@/lib/materials";
 import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { Roadmap } from "./roadmap";
@@ -11,6 +12,7 @@ import { EvidenceCard } from "./evidence";
 import { SeniorCertificateCard } from "./senior-certificate";
 import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
+import { StudentMaterialsCard, type StudentMaterial } from "./materials";
 
 type Skill = {
   id: string;
@@ -69,7 +71,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const viewer = await requireViewer();
   if (needsTwoStep(viewer)) redirect("/mfa");
   const { id } = await params;
-  const { subject, view, session } = await searchParams;
+  const { subject, view, session, year } = await searchParams;
   const supabase = await createClient();
 
   const student = await supabase
@@ -141,6 +143,10 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         label: `${sessionWhen(chosenDue.starts_at)} (${chosenDue.subject})`,
       }
     : null;
+  // Materials that fit this student (staff only): tagged with their goal
+  // skills, or for their subjects at the level they work at.
+  const materialsRes = isStaff ? await supabase.rpc("materials_for_student", { p_student: id }) : null;
+  const studentMaterials = (materialsRes?.data ?? []) as StudentMaterial[];
   const goalRows = (goals.data ?? []) as unknown as Goal[];
   const activeGoals = goalRows.filter((g) => g.status === "active");
   const closedGoals = goalRows.filter((g) => g.status !== "active");
@@ -159,6 +165,14 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       : null;
   const staffByNote = new Map((staffNotes?.data ?? []).map((s) => [s.note_id, s.body]));
   const latest = noteRows.find((n) => n.attendance !== "absent");
+  // Skills being worked on now: those in the latest session note, or else
+  // those on their way (Learning or Secure with help).
+  const currentSkillIds = new Set<string>(latest?.session_note_skills.map((k) => k.skill_id) ?? []);
+  if (currentSkillIds.size === 0) {
+    for (const [skillId, level] of levelBySkill) {
+      if (level === "learning" || level === "secure_with_help") currentSkillIds.add(skillId);
+    }
+  }
   const frameworkIds = (frameworks.data ?? []).map((f) => f.framework_id);
 
   // For adding a goal: subjects in the student's curriculum, then that
@@ -193,6 +207,22 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const startLevel =
     (requested.data ?? []).find((r) => r.working_level && subjectFits(r.subject, chosenSubject))?.working_level ??
     student.data.year_level;
+
+  // Skills to choose from when adding a goal, narrowed to one year level
+  // (the level given for this subject unless the tutor picks another).
+  const chosenYear =
+    year === "all"
+      ? "all"
+      : typeof year === "string" && (YEAR_LEVELS as readonly string[]).includes(year)
+        ? year
+        : (startLevel ?? "all");
+  const yearIndex = (YEAR_LEVELS as readonly string[]).indexOf(chosenYear);
+  const goalSkillChoices =
+    yearIndex < 0 ? subjectSkills : subjectSkills.filter((s) => bandCoversYear(s.level_band, yearIndex));
+
+  const skillNameById = Object.fromEntries(
+    activeGoals.flatMap((g) => g.goal_skills.flatMap(({ skill }) => (skill ? [[skill.id, skillLabel(skill)]] : []))),
+  ) as Record<string, string>;
 
   const noteSkills: GoalSkill[] = [];
   const seen = new Set<string>();
@@ -339,16 +369,35 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                     </form>
                   )}
                 </div>
-                <ul className="mt-2 space-y-2">
-                  {g.goal_skills.map(({ skill }) =>
-                    skill ? (
-                      <li key={skill.id} className="text-sm">
-                        <p>{skillLabel(skill)}</p>
-                        <LevelBar level={levelBySkill.get(skill.id) ?? "not_started"} />
-                      </li>
-                    ) : null,
-                  )}
-                </ul>
+                {(() => {
+                  // Show the skills being worked on now; the rest open on a tap.
+                  const all = g.goal_skills.flatMap(({ skill }) => (skill ? [skill] : []));
+                  let now = all.filter((k) => currentSkillIds.has(k.id));
+                  if (now.length === 0) {
+                    const next = all.find((k) => levelBySkill.get(k.id) !== "secure_on_own");
+                    now = next ? [next] : [];
+                  }
+                  const rest = all.filter((k) => !now.includes(k));
+                  const item = (k: Skill) => (
+                    <li key={k.id} className="text-sm">
+                      <p>{skillLabel(k)}</p>
+                      <LevelBar level={levelBySkill.get(k.id) ?? "not_started"} />
+                    </li>
+                  );
+                  return (
+                    <>
+                      <ul className="mt-2 space-y-2">{now.map(item)}</ul>
+                      {rest.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs text-teal-800">
+                            {now.length === 0 ? `Show all ${rest.length} skills` : `Show the other ${rest.length} skill${rest.length === 1 ? "" : "s"} in this goal`}
+                          </summary>
+                          <ul className="mt-2 space-y-2">{rest.map(item)}</ul>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()}
               </li>
             ))}
           </ul>
@@ -363,6 +412,8 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
           </p>
         )}
       </Card>
+
+      {isStaff && <StudentMaterialsCard materials={studentMaterials} skillNames={skillNameById} />}
 
       {isStaff && (
         <Card
@@ -402,6 +453,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
             key={noteSession?.id ?? "none"}
             studentId={id}
             skills={noteSkills}
+            materials={studentMaterials.map((m) => ({ id: m.material_id, title: m.title, kind: m.kind, skillIds: m.goal_skill_ids }))}
             session={noteSession}
             today={localToday()}
           />
@@ -432,13 +484,28 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                     ))}
                   </select>
                 </label>
+                <label className="block space-y-1">
+                  <span className="text-sm font-medium">Year level</span>
+                  <select
+                    name="year"
+                    defaultValue={chosenYear}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
+                  >
+                    <option value="all">All years</option>
+                    {YEAR_LEVELS.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Button type="submit">Show skills</Button>
               </form>
               {chosenSubject && (
                 <AddGoalForm
                   studentId={id}
                   subject={chosenSubject}
-                  skills={subjectSkills.map((s) => ({
+                  skills={goalSkillChoices.map((s) => ({
                     id: s.id,
                     label: skillLabel(s),
                     levelBand: s.level_band,

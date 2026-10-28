@@ -103,17 +103,71 @@ export function AddGoalForm({
   );
 }
 
+// A material that fits the student; skillIds are its skills that are in
+// the student's goals.
+export type NoteMaterial = { id: string; title: string; kind: string; skillIds: string[] };
+
+// Ticking a booklet marks its skills as worked on today (at their current
+// level), so the tutor only changes the ones that moved.
+function MaterialsUsed({ materials, levels }: { materials: NoteMaterial[]; levels: Map<string, SkillLevel> }) {
+  const box = useRef<HTMLFieldSetElement>(null);
+  const sorted = [...materials].sort(
+    (a, b) => Number(b.kind === "booklet") - Number(a.kind === "booklet") || b.skillIds.length - a.skillIds.length,
+  );
+  function picked(m: NoteMaterial, on: boolean) {
+    if (!on) return;
+    const form = box.current?.form;
+    for (const id of m.skillIds) {
+      const select = form?.elements.namedItem(`skill_${id}`);
+      if (select instanceof HTMLSelectElement && select.value === "") {
+        select.value = levels.get(id) ?? "not_started";
+      }
+    }
+  }
+  return (
+    <fieldset ref={box} className="space-y-1">
+      <legend className="mb-1 text-sm font-medium">Booklet or materials used (optional)</legend>
+      <p className="text-xs text-zinc-500">Tick what you worked through. Its skills below fill in by themselves.</p>
+      <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2">
+        {sorted.map((m) => (
+          <label key={m.id} className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="material_id"
+              value={m.id}
+              className="mt-1"
+              onChange={(e) => picked(m, e.target.checked)}
+            />
+            <span>
+              {m.title}
+              {m.skillIds.length > 0 && (
+                <span className="text-zinc-500">
+                  {" "}
+                  ({m.skillIds.length} goal skill{m.skillIds.length === 1 ? "" : "s"})
+                </span>
+              )}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 export function SessionNoteForm({
   studentId,
   skills,
+  materials = [],
   session,
   today,
 }: {
   studentId: string;
   skills: GoalSkill[];
+  materials?: NoteMaterial[];
   session?: NoteSession | null;
   today: string;
 }) {
+  const levels = new Map(skills.map((s) => [s.id, s.level]));
   return (
     <ActionForm action={saveSessionNote} submitLabel="Save note">
       <WritingTimer>
@@ -148,6 +202,8 @@ export function SessionNoteForm({
           ))}
         </Select>
       </div>
+
+      {materials.length > 0 && <MaterialsUsed materials={materials} levels={levels} />}
 
       {skills.length > 0 && (
         <fieldset className="space-y-2">
