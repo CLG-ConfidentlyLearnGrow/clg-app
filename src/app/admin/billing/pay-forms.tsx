@@ -50,7 +50,7 @@ export function StaffPayForm({
     <ActionForm action={saveStaffPay} submitLabel="Save pay details">
       <input type="hidden" name="account_id" value={accountId} />
       <Select label="Employment" name="employment" defaultValue={pay?.employment ?? "casual"}>
-        <option value="casual">Casual (2 hr minimum each day)</option>
+        <option value="casual">Casual</option>
         <option value="part_time">Part-time</option>
         <option value="full_time">Full-time</option>
       </Select>
@@ -118,7 +118,7 @@ export function SendTimesheetsForm({ periodStart }: { periodStart: string }) {
   );
 }
 
-export function PayPeriodForm({ days, anchor }: { days: number; anchor: string }) {
+export function PayPeriodForm({ days, anchor, casualMin }: { days: number; anchor: string; casualMin: boolean }) {
   return (
     <ActionForm action={savePayPeriod} submitLabel="Save pay period">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -129,6 +129,10 @@ export function PayPeriodForm({ days, anchor }: { days: number; anchor: string }
         <Field label="A day a pay period starts" name="pay_period_anchor" type="date" defaultValue={anchor} required />
       </div>
       <p className="text-xs text-zinc-500">This must match the pay calendar set up in Xero Payroll.</p>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="casual_min_enabled" defaultChecked={casualMin} className="mt-1" />
+        <span>Top up casual staff to the 2 hr minimum on each day they work (award rule; off for now)</span>
+      </label>
     </ActionForm>
   );
 }

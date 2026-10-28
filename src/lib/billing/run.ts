@@ -2,7 +2,16 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripeKey, xeroConfig } from "./config";
 import { StripeError, chargeSaved, getSetupIntent, type PaymentIntent } from "./stripe";
-import { findOrCreateContact, recordXeroPayment, sendInvoiceToXero, xeroConnection } from "./xero";
+import {
+  allocateCreditNote,
+  createCreditNote,
+  findOrCreateContact,
+  getXeroInvoice,
+  openCreditNotes,
+  recordXeroPayment,
+  sendInvoiceToXero,
+  xeroConnection,
+} from "./xero";
 
 // The daily billing run and the handling of Stripe's messages. Uses the
 // server's own database access, so it is only ever called from the server
@@ -37,6 +46,8 @@ export async function runBilling(): Promise<Summary> {
   else summary.creditsGiven = credits.data ?? 0;
 
   await sendDraftsToXero(today, summary);
+  await sendCreditNotesToXero(today, summary);
+  await applyCreditsInXero(today, summary);
   await chargeDueInvoices(today, summary);
   await syncPaymentsToXero(summary);
 
@@ -99,7 +110,6 @@ async function sendDraftsToXero(today: string, summary: Summary) {
           gst: l.gst_cents > 0,
         })),
         discountCents: inv.discount_cents,
-        creditCents: inv.credit_applied_cents,
         idempotencyKey: inv.idempotency_key,
       });
       await db
@@ -252,6 +262,92 @@ async function syncPaymentsToXero(summary: Summary) {
       await db.from("billing_payments").update({ xero_payment_id: xeroPayment }).eq("id", p.id);
     } catch (e) {
       summary.problems.push(`Payment ${p.provider_ref} to Xero: ${(e as Error).message}`);
+    }
+  }
+}
+
+// Credits given in the app become credit notes on the family's Xero
+// contact. Credit put back by a cancelled invoice isn't a new credit note.
+async function sendCreditNotesToXero(today: string, summary: Summary) {
+  if (!xeroConfig() || !(await xeroConnection())) return;
+  const db = createAdminClient();
+  const { data: credits } = await db
+    .from("billing_credits")
+    .select("id, family_id, kind, amount_cents, note, created_at, session_id")
+    .gt("amount_cents", 0)
+    .in("kind", ["cancellation", "missed_in_pause", "tutor_day_off", "goodwill"])
+    .is("xero_credit_note_id", null)
+    .limit(50);
+  for (const c of credits ?? []) {
+    if (!c.family_id) continue;
+    const { data: acct } = await db.from("billing_accounts").select("xero_contact_id").eq("family_id", c.family_id).maybeSingle();
+    // Families get a Xero contact with their first invoice; until then the
+    // credit waits.
+    if (!acct?.xero_contact_id) continue;
+    let gst = false;
+    if (c.session_id) {
+      const { data: line } = await db
+        .from("billing_invoice_lines")
+        .select("gst_cents")
+        .eq("session_id", c.session_id)
+        .eq("active", true)
+        .maybeSingle();
+      gst = (line?.gst_cents ?? 0) > 0;
+    }
+    try {
+      const id = await createCreditNote({
+        contactId: acct.xero_contact_id,
+        date: c.created_at.slice(0, 10) <= today ? c.created_at.slice(0, 10) : today,
+        description: c.note ?? "Credit",
+        amountCents: c.amount_cents,
+        gst,
+        reference: c.id,
+      });
+      await db.from("billing_credits").update({ xero_credit_note_id: id }).eq("id", c.id);
+    } catch (e) {
+      summary.problems.push(`Credit note to Xero: ${(e as Error).message}`);
+    }
+  }
+}
+
+// An invoice that used credit gets that credit applied in Xero once the
+// invoice is approved there.
+async function applyCreditsInXero(today: string, summary: Summary) {
+  if (!xeroConfig() || !(await xeroConnection())) return;
+  const db = createAdminClient();
+  const { data: invoices } = await db
+    .from("billing_invoices")
+    .select("id, number, family_id, xero_invoice_id, credit_applied_cents")
+    .in("status", ["open", "paid"])
+    .gt("credit_applied_cents", 0)
+    .not("xero_invoice_id", "is", null)
+    .is("xero_credit_allocated_at", null)
+    .limit(50);
+  for (const inv of invoices ?? []) {
+    if (!inv.family_id || !inv.xero_invoice_id) continue;
+    const { data: acct } = await db.from("billing_accounts").select("xero_contact_id").eq("family_id", inv.family_id).maybeSingle();
+    if (!acct?.xero_contact_id) continue;
+    try {
+      // Only what isn't applied yet, so a run that stopped part way never
+      // applies credit twice.
+      const xinv = await getXeroInvoice(inv.xero_invoice_id);
+      if (!["AUTHORISED", "PAID"].includes(xinv.Status)) continue;
+      let left = inv.credit_applied_cents - Math.round((xinv.AmountCredited ?? 0) * 100);
+      const notes = left > 0 ? await openCreditNotes(acct.xero_contact_id) : [];
+      const available = Math.round(notes.reduce((t, n) => t + n.RemainingCredit, 0) * 100);
+      if (left > 0 && available < left) {
+        // The credit notes haven't all reached Xero yet; try again tomorrow.
+        continue;
+      }
+      for (const n of notes) {
+        if (left <= 0) break;
+        const take = Math.min(left, Math.round(n.RemainingCredit * 100));
+        await allocateCreditNote(n.CreditNoteID, inv.xero_invoice_id, take, today);
+        left -= take;
+      }
+      await db.from("billing_invoices").update({ xero_credit_allocated_at: new Date().toISOString() }).eq("id", inv.id);
+    } catch (e) {
+      summary.problems.push(`Applying credit to ${inv.number} in Xero: ${(e as Error).message}`);
     }
   }
 }
