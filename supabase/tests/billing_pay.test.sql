@@ -95,6 +95,11 @@ select public.billing_build_pay('2026-09-07', '2026-09-13');
 reset role;
 select tests.claims(null);
 
+-- The casual top-up is off by default (Carla, 2026-10-28).
+select tests.eq((select count(*) from public.billing_pay_lines where kind = 'min_topup'), 0, 'no top-ups while switched off');
+update public.billing_settings set casual_min_enabled = true;
+select public.billing_build_pay('2026-09-07', '2026-09-13');
+
 create function tests.pay(p_kind text, p_day date, p_tutor text default '11') returns bigint language sql as $$
   select coalesce(sum(minutes), 0) from public.billing_pay_lines
   where kind = p_kind and work_date = p_day and account_id = ('00000000-0000-0000-0000-0000000000' || p_tutor)::uuid
@@ -155,6 +160,11 @@ set role anon;
 select tests.fails($$select * from public.billing_pay_lines$$, 'anon reads pay');
 select tests.fails($$select * from public.billing_staff_pay$$, 'anon reads rates');
 reset role;
+
+-- Switching it off again removes top-ups not yet sent.
+update public.billing_settings set casual_min_enabled = false;
+select public.billing_build_pay('2026-09-07', '2026-09-13');
+select tests.eq((select count(*) from public.billing_pay_lines where kind = 'min_topup' and status = 'pending'), 0, 'top-ups removed when switched off');
 
 -- Clean up for later tests.
 delete from public.billing_pay_lines;

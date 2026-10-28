@@ -131,16 +131,20 @@ export async function sendTimesheetsNow(_prev: FormState, formData: FormData): P
 export async function savePayPeriod(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
   const parsed = z
-    .object({ pay_period_days: z.enum(["7", "14"]), pay_period_anchor: day })
+    .object({ pay_period_days: z.enum(["7", "14"]), pay_period_anchor: day, casual_min_enabled: z.string().optional() })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose weekly or fortnightly, and a day a pay period starts." };
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("billing_settings")
-    .update({ pay_period_days: Number(parsed.data.pay_period_days), pay_period_anchor: parsed.data.pay_period_anchor })
+    .update({
+      pay_period_days: Number(parsed.data.pay_period_days),
+      pay_period_anchor: parsed.data.pay_period_anchor,
+      casual_min_enabled: parsed.data.casual_min_enabled === "on",
+    })
     .eq("id", true)
     .select("id");
   if (error || !data?.length) return { error: "Only the owner can change the pay period." };
   revalidatePath(PAGE);
-  return { message: "Pay period saved. It must match the pay calendar in Xero." };
+  return { message: "Pay settings saved. The pay period must match the pay calendar in Xero. Use \"Work out pay again\" to apply a change to this period." };
 }

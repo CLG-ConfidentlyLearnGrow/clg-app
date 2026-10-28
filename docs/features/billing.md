@@ -19,7 +19,19 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 - **Override.** Only the owner can lift a pause without payment (a setting can extend this to admins later, for example Lauren). An override needs a reason and a date: the new due date, or the next payment of an agreed plan. If that date passes unpaid, the pause comes back.
 - **Built for later.** Prices can be marked for self-signup and carry a trial (days, sessions, trial price), and can be tied to a program. Those are switched off until pricing is decided.
 
-Not in this first version (next steps): tutor pay to Xero Payroll timesheets, credits as Xero credit notes (credits show as a line on the Xero invoice for now), email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), split payments between parents, NDIS and school funding.
+- **Credits in Xero.** Each credit (cancellation, tutor's day off, goodwill) becomes a credit note on the family's Xero contact. When an invoice uses credit, the app applies those credit notes to it in Xero once it is approved, so the invoice shows the full sessions and the credit sits beside it for the accountant.
+
+## Tutor and staff pay (added 2026-10-28)
+
+- **Rates.** Admins enter up to three hourly rates per person (school tutoring, tertiary and other tutoring, admin) and their employment type (casual, part-time, full-time).
+- **Pay lines.** Pay comes from the confirmed worked time on each session (scheduling's sign on and sign off). A tutor who starts late is paid the time worked; a student who is late doesn't change the tutor's pay.
+- **Late cancels and no-shows.** Before the tutor has signed on: 50% of the session or 1 hr, whichever is less (CLG's own rule). After the tutor has signed on: the time they had to be there. A tutor's own cancellation is unpaid.
+- **Casual minimum (switched off for now).** Carla asked on 2026-10-28 to turn this off for now and back on next year; it is a setting (Pay period and casual minimum, owner only), and the pay screen warns while it is off. When on: casual staff get at least 2 hr pay for each day they attend work, online included (Miscellaneous Award MA000104 cl 11.2; Post-Secondary Award MA000075 cl 11.4). The app adds a top-up line for a short day. Admin hours count towards the 2 hr. Late-cancel pay alone isn't a day at work.
+- **Award check.** Award minimum rates (from 1 July 2026) are settings, updated each 1 July. Any line paying under the minimum for that person's employment type is flagged in red. The seeded levels (Miscellaneous L1, MA000075 tutor/instructor, Clerks L1 Y1) need an employment adviser's confirmation.
+- **Xero Payroll.** Each pay period (weekly by default; must match Xero's pay calendar), admins send each person's lines to Xero Payroll as a draft timesheet, one earnings rate per kind of work. Carla checks and approves in Xero, which handles super (Payday Super from 1 July 2026) and Single Touch Payroll. Part-time staff paid a fixed weekly pattern still need their pattern hours entered in Xero.
+- **Privacy.** Staff see only their own rates and pay (with two-step login); only admins see everyone's. Families never see pay.
+
+Not built yet (next steps): email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), split payments between parents, NDIS and school funding.
 
 ## Why (education research)
 

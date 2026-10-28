@@ -23,7 +23,7 @@ export default async function MyPayPage() {
   const supabase = await createClient();
   const today = adelaideToday();
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10);
-  const [pay, lines] = await Promise.all([
+  const [pay, lines, settings] = await Promise.all([
     supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("billing_pay_lines")
@@ -31,6 +31,7 @@ export default async function MyPayPage() {
       .eq("account_id", viewer.id)
       .gte("work_date", since)
       .order("work_date", { ascending: false }),
+    supabase.rpc("billing_casual_min_on"),
   ]);
   const rows = lines.data ?? [];
   const p = pay.data;
@@ -44,7 +45,7 @@ export default async function MyPayPage() {
             {p.school_rate_cents != null && <li>School tutoring: {dollars(p.school_rate_cents)}/hr</li>}
             {p.tertiary_rate_cents != null && <li>Tertiary and other tutoring: {dollars(p.tertiary_rate_cents)}/hr</li>}
             {p.admin_rate_cents != null && <li>Admin: {dollars(p.admin_rate_cents)}/hr</li>}
-            {p.employment === "casual" && <li>As a casual, you&apos;re paid at least 2 hr for each day you work.</li>}
+            {p.employment === "casual" && settings.data === true && <li>As a casual, you&apos;re paid at least 2 hr for each day you work.</li>}
           </ul>
         ) : (
           <Empty>CLG hasn&apos;t entered your pay rates yet.</Empty>

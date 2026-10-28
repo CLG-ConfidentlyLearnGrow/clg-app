@@ -170,7 +170,6 @@ export type InvoiceForXero = {
   awaitingApproval: boolean;
   lines: { description: string; hours: number; hourlyCents: number; gst: boolean }[];
   discountCents: number;
-  creditCents: number;
   idempotencyKey: string;
 };
 
@@ -187,9 +186,6 @@ export async function sendInvoiceToXero(inv: InvoiceForXero): Promise<string> {
   }));
   if (inv.discountCents > 0) {
     lineItems.push({ Description: "Bank debit discount", Quantity: 1, UnitAmount: -inv.discountCents / 100, AccountCode: cfg.salesAccount, TaxType: "EXEMPTOUTPUT" });
-  }
-  if (inv.creditCents > 0) {
-    lineItems.push({ Description: "Credit used from your account", Quantity: 1, UnitAmount: -inv.creditCents / 100, AccountCode: cfg.salesAccount, TaxType: "EXEMPTOUTPUT" });
   }
   const res = await xero<{ Invoices: { InvoiceID: string }[] }>(
     "PUT",
@@ -215,7 +211,7 @@ export async function sendInvoiceToXero(inv: InvoiceForXero): Promise<string> {
 }
 
 export async function getXeroInvoice(id: string) {
-  const res = await xero<{ Invoices: { InvoiceID: string; Status: string; AmountPaid: number; Payments?: { PaymentID: string; Amount: number }[] }[] }>(
+  const res = await xero<{ Invoices: { InvoiceID: string; Status: string; AmountPaid: number; AmountCredited?: number; Payments?: { PaymentID: string; Amount: number }[] }[] }>(
     "GET",
     `Invoices/${id}`,
   );
@@ -254,4 +250,61 @@ const PAYROLL_BASE = process.env.XERO_PAYROLL_BASE ?? "payroll.xro/1.0";
 
 export function xeroPayroll<T>(method: "GET" | "POST", path: string, body?: unknown, idempotencyKey?: string) {
   return xero<T>(method, path, body, idempotencyKey, PAYROLL_BASE);
+}
+
+// A family's credit (for example a cancellation) as a credit note on their
+// Xero contact, ready to apply to a later invoice.
+export async function createCreditNote(opts: {
+  contactId: string;
+  date: string;
+  description: string;
+  amountCents: number;
+  gst: boolean;
+  reference: string;
+}): Promise<string> {
+  const cfg = xeroConfig()!;
+  const res = await xero<{ CreditNotes: { CreditNoteID: string }[] }>(
+    "PUT",
+    "CreditNotes",
+    {
+      CreditNotes: [
+        {
+          Type: "ACCRECCREDIT",
+          Contact: { ContactID: opts.contactId },
+          Date: opts.date,
+          Status: "AUTHORISED",
+          LineAmountTypes: "Inclusive",
+          Reference: opts.reference,
+          LineItems: [
+            {
+              Description: opts.description,
+              Quantity: 1,
+              UnitAmount: opts.amountCents / 100,
+              AccountCode: cfg.salesAccount,
+              TaxType: opts.gst ? "OUTPUT" : "EXEMPTOUTPUT",
+            },
+          ],
+        },
+      ],
+    },
+    `credit-${opts.reference}`,
+  );
+  return res.CreditNotes[0].CreditNoteID;
+}
+
+// The contact's credit notes that still have credit left, oldest first.
+export async function openCreditNotes(contactId: string) {
+  const where = encodeURIComponent(`Contact.ContactID==guid("${contactId}") AND Status=="AUTHORISED" AND Type=="ACCRECCREDIT"`);
+  const res = await xero<{ CreditNotes: { CreditNoteID: string; RemainingCredit: number; Date: string }[] }>(
+    "GET",
+    `CreditNotes?where=${where}&order=Date`,
+  );
+  return (res.CreditNotes ?? []).filter((c) => c.RemainingCredit > 0);
+}
+
+// Applies part of a credit note to an invoice.
+export async function allocateCreditNote(creditNoteId: string, invoiceId: string, amountCents: number, date: string) {
+  await xero("PUT", `CreditNotes/${creditNoteId}/Allocations`, {
+    Allocations: [{ Invoice: { InvoiceID: invoiceId }, Amount: amountCents / 100, Date: date }],
+  });
 }
