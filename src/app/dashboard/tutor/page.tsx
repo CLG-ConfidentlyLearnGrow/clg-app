@@ -97,6 +97,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "checks" && problems ? problems : undefined }))}
       >
+        <p className="text-sm">
+          <TextLink href="/pay">My pay</TextLink>
+        </p>
         {section === "students" && (
           <Card title="Your students">
             {problems > 0 && (

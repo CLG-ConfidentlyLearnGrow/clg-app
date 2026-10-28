@@ -5,6 +5,7 @@ import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/u
 import { requireAdmin } from "@/lib/auth";
 import { stripeIsTestMode, stripeKey, xeroConfig } from "@/lib/billing/config";
 import { METHOD_LABELS, PLAN_LABELS, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money";
+import { adelaideToday } from "@/lib/billing/run";
 import { xeroConnection } from "@/lib/billing/xero";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -19,10 +20,12 @@ import {
   SettingsForm,
   VoidInvoiceForm,
 } from "./forms";
+import { PaySection } from "./pay-section";
 
 const SECTIONS = [
   { id: "families", label: "Family billing" },
   { id: "invoices", label: "Invoices" },
+  { id: "pay", label: "Tutor pay" },
   { id: "prices", label: "Prices and settings" },
   { id: "connections", label: "Stripe and Xero" },
 ] as const;
@@ -268,6 +271,14 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
               <BuildInvoiceForm families={familyRows.filter((f) => accountOf.has(f.id)).map((f) => ({ id: f.id, name: f.name }))} />
             </Card>
           </>
+        )}
+
+        {section === "pay" && (
+          <PaySection
+            periodParam={typeof params.period === "string" ? params.period : null}
+            isOwner={isOwner}
+            today={adelaideToday()}
+          />
         )}
 
         {section === "prices" && (
