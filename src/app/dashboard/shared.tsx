@@ -1,3 +1,5 @@
+import { Card, TextLink } from "@/components/ui";
+import { sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 
 export type Student = {
@@ -41,5 +43,41 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+type Update = { id: string; student_id: string; title: string; body: string; deliver_at: string };
+
+// New session notes since the family last looked: what went well is on the
+// progress page; here is the next step and the tip for home. Opening the
+// progress page marks them as seen. Shows nothing when there is nothing new.
+export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {
+  const supabase = await createClient();
+  const res = await supabase
+    .from("progress_notices")
+    .select("id, student_id, title, body, deliver_at")
+    .eq("kind", "session_update")
+    .is("read_at", null)
+    .order("deliver_at", { ascending: false })
+    .limit(10);
+  const updates = ((res.data ?? []) as Update[]).filter((u) => !studentIds || studentIds.includes(u.student_id));
+  if (updates.length === 0) return null;
+  return (
+    <Card title="New from your tutor">
+      <ul className="divide-y divide-zinc-100 text-sm">
+        {updates.map((u) => (
+          <li key={u.id} className="py-3 first:pt-0 last:pb-0">
+            <p className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="font-medium">{u.title}</span>
+              <span className="text-xs text-zinc-500">{sessionWhen(u.deliver_at)}</span>
+            </p>
+            <p className="mt-1 whitespace-pre-line text-zinc-700">{u.body}</p>
+            <p className="mt-1">
+              <TextLink href={`/students/${u.student_id}/progress?view=family`}>See the full note</TextLink>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

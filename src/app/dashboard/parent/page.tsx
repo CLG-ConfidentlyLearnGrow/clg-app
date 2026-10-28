@@ -7,7 +7,7 @@ import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "../add-child-form";
 import { EditChildForm } from "../edit-child-form";
-import { TutorList, loadStudentsAndTutors } from "../shared";
+import { NewUpdates, TutorList, loadStudentsAndTutors } from "../shared";
 
 const SECTIONS = [
   { id: "children", label: "Your children" },
@@ -53,6 +53,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                 <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>
               </Card>
             )}
+            <NewUpdates />
             <p className="text-sm">
               <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>
             </p>

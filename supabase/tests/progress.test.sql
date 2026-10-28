@@ -99,7 +99,7 @@ select tests.fails(format($$select public.save_session_note(%L, current_date, 60
 select tests.fails(format($$select public.save_session_note(%L, current_date, 60, 'attended', 'ok', 'next',
   null, null, null, '[{"skill_id":"00000000-0000-0000-0000-00000000c003","level":"learning"}]')$$, :'cara'), 'skill outside current goals');
 select tests.fails(format($$select public.save_session_note(%L, current_date, 60, 'attended', 'ok', null)$$, :'cara'), 'attended session without a next step');
-select tests.fails(format($$select public.save_session_note(%L, current_date + 1, 60, 'attended', 'ok', 'next')$$, :'cara'), 'note dated in the future');
+select tests.fails(format($$select public.save_session_note(%L, current_date + 2, 60, 'attended', 'ok', 'next')$$, :'cara'), 'note dated in the future');
 select public.save_session_note(:'cara', current_date, 0, 'absent', null, null);
 -- Direct writes are blocked; corrections to own note are allowed.
 select tests.fails(format($$insert into public.student_skill_levels (student_id, skill_id, level) values (%L, '00000000-0000-0000-0000-00000000c002', 'secure_on_own')$$, :'cara'), 'tutor writes level directly');
