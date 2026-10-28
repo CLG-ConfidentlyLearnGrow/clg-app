@@ -65,6 +65,21 @@ on conflict do nothing;
 alter table public.billing_settings add column if not exists casual_min_minutes int not null default 120;
 alter table public.billing_settings add column if not exists late_cancel_pay_share numeric(4, 3) not null default 0.5;
 alter table public.billing_settings add column if not exists late_cancel_pay_cap_minutes int not null default 60;
+-- CLG's pay period in Xero Payroll: its length and any day it starts on.
+-- Must match the payroll calendar in Xero (weekly from a Monday by default).
+alter table public.billing_settings add column if not exists pay_period_days int not null default 7
+  check (pay_period_days in (7, 14));
+alter table public.billing_settings add column if not exists pay_period_anchor date not null default '2026-09-07';
+
+-- The pay period a day falls in.
+create or replace function public.billing_pay_period(p_day date, out period_start date, out period_end date)
+language sql stable
+set search_path = ''
+as $$
+  select p_day - (((p_day - s.pay_period_anchor) % s.pay_period_days + s.pay_period_days) % s.pay_period_days),
+         p_day - (((p_day - s.pay_period_anchor) % s.pay_period_days + s.pay_period_days) % s.pay_period_days) + s.pay_period_days - 1
+  from public.billing_settings s
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Pay lines

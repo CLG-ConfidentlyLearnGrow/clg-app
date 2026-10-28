@@ -19,13 +19,14 @@ type Summary = {
   sentToXero: number;
   charged: number;
   pausesChanged: number;
+  payLines: number;
   problems: string[];
 };
 
 export async function runBilling(): Promise<Summary> {
   const db = createAdminClient();
   const today = adelaideToday();
-  const summary: Summary = { invoicesBuilt: 0, creditsGiven: 0, sentToXero: 0, charged: 0, pausesChanged: 0, problems: [] };
+  const summary: Summary = { invoicesBuilt: 0, creditsGiven: 0, sentToXero: 0, charged: 0, pausesChanged: 0, payLines: 0, problems: [] };
 
   const built = await db.rpc("billing_build_due_invoices", { p_today: today });
   if (built.error) summary.problems.push(`Building invoices: ${built.error.message}`);
@@ -42,6 +43,14 @@ export async function runBilling(): Promise<Summary> {
   const pauses = await db.rpc("billing_refresh_all_pauses", { p_today: today });
   if (pauses.error) summary.problems.push(`Pauses: ${pauses.error.message}`);
   else summary.pausesChanged = pauses.data ?? 0;
+
+  // Tutor pay for the last two weeks, from confirmed worked times. Lines
+  // already sent to Xero stay as they are.
+  const from = new Date(Date.parse(`${today}T00:00:00Z`) - 14 * 86400000).toISOString().slice(0, 10);
+  const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+  const pay = await db.rpc("billing_build_pay", { p_from: from, p_to: yesterday });
+  if (pay.error) summary.problems.push(`Tutor pay: ${pay.error.message}`);
+  else summary.payLines = pay.data ?? 0;
 
   return summary;
 }

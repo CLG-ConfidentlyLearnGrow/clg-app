@@ -118,6 +118,9 @@ select tests.eq(tests.pay('min_topup', '2026-09-07', '12'), 0, 'part-time: no ca
 select tests.eq((select count(*) from public.billing_pay_lines where session_id = :'t2' and under_award), 1, 'rate under the award is flagged');
 select tests.eq((select count(*) from public.billing_pay_lines where account_id = '00000000-0000-0000-0000-000000000011' and under_award), 0, 'award rates met');
 
+select tests.eq(((select period_start from public.billing_pay_period('2026-09-10')) = '2026-09-07')::int, 1, 'pay week starts Monday');
+select tests.eq(((select period_end from public.billing_pay_period('2026-09-06')) = '2026-09-06')::int, 1, 'day before the anchor ends the earlier week');
+
 -- Running again gives the same lines.
 select count(*) as before_count from public.billing_pay_lines \gset
 select public.billing_build_pay('2026-09-07', '2026-09-13');

@@ -146,7 +146,7 @@ export async function runBillingNow(): Promise<FormState> {
   await requireAdmin();
   const s = await runBilling();
   revalidatePath(ADMIN_PAGE);
-  const done = `Built ${s.invoicesBuilt} invoice(s), gave ${s.creditsGiven} cancellation credit(s), sent ${s.sentToXero} to Xero, charged ${s.charged}, ${s.pausesChanged} pause change(s).`;
+  const done = `Built ${s.invoicesBuilt} invoice(s), ${s.payLines} pay line(s) waiting to send, gave ${s.creditsGiven} cancellation credit(s), sent ${s.sentToXero} to Xero, charged ${s.charged}, ${s.pausesChanged} pause change(s).`;
   return s.problems.length ? { error: `${done} Problems: ${s.problems.join(" ")}` } : { message: done };
 }
 

@@ -107,11 +107,17 @@ async function accessToken(): Promise<{ token: string; tenant: string } | null> 
 
 // One call to Xero's accounting API. Waits and retries once when Xero says
 // "too many requests" (it allows 60 a minute).
-async function xero<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown, idempotencyKey?: string): Promise<T> {
+async function xero<T>(
+  method: "GET" | "POST" | "PUT",
+  path: string,
+  body?: unknown,
+  idempotencyKey?: string,
+  base = "api.xro/2.0",
+): Promise<T> {
   const auth = await accessToken();
   if (!auth) throw new Error("Xero isn't connected.");
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(`${API}/api.xro/2.0/${path}`, {
+    const res = await fetch(`${API}/${base}/${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${auth.token}`,
@@ -130,7 +136,11 @@ async function xero<T>(method: "GET" | "POST" | "PUT", path: string, body?: unkn
     }
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const detail = json?.Elements?.[0]?.ValidationErrors?.[0]?.Message ?? json?.Message ?? res.status;
+      const detail =
+        json?.Elements?.[0]?.ValidationErrors?.[0]?.Message ??
+        json?.[0]?.ValidationErrors?.[0]?.Message ??
+        json?.Message ??
+        res.status;
       throw new Error(`Xero said: ${detail}`);
     }
     return json as T;
@@ -236,4 +246,12 @@ export function verifyXeroSignature(rawBody: string, header: string | null, key:
   const expected = createHmac("sha256", key).update(rawBody).digest();
   const given = Buffer.from(header, "base64");
   return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
+// Xero Payroll (Australia). Kept in one place so the version can change
+// without touching the rest of the app.
+const PAYROLL_BASE = process.env.XERO_PAYROLL_BASE ?? "payroll.xro/1.0";
+
+export function xeroPayroll<T>(method: "GET" | "POST", path: string, body?: unknown, idempotencyKey?: string) {
+  return xero<T>(method, path, body, idempotencyKey, PAYROLL_BASE);
 }
