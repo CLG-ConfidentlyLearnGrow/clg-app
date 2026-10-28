@@ -266,10 +266,26 @@ $$;
 -- Finding a time
 -- ---------------------------------------------------------------------------
 
+-- The level a tutor must teach for this student and subject: the level the
+-- student is working at in that subject if the family gave one, otherwise
+-- their school year level.
+create or replace function private.matching_level(p_student uuid, p_subject text)
+returns text language sql stable security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (select ss.working_level from public.student_subjects ss
+     where ss.student_id = p_student and lower(trim(ss.subject)) = lower(trim(p_subject))
+       and ss.working_level is not null
+     limit 1),
+    (select s.year_level from public.students s where s.id = p_student)
+  )
+$$;
+
 -- Every free weekly time, with a tutor who can take it. A tutor is listed
 -- only when they are:
 --   * cleared for the student's state (checks verified and in date),
---   * teaching the subject at the student's year level,
+--   * teaching the subject at the student's working level (or year level),
 --   * available then (their weekly availability), and not already booked,
 --   * under their maximum weekly hours,
 --   * willing to work that way (online, or at one of the chosen libraries),
@@ -319,7 +335,8 @@ begin
     raise exception 'Choose online, at least one library, or both' using errcode = '22023';
   end if;
 
-  select s.year_level into v_level from public.students s where s.id = p_student;
+  -- Match on the level the student is working at in this subject.
+  v_level := private.matching_level(p_student, p_subject);
   if v_level is null then
     raise exception 'Add the student''s year level first' using errcode = '22023';
   end if;
@@ -493,7 +510,7 @@ begin
   -- skips the place check but not the tutor's checks).
   if p_delivery = 'home' then
     if not (private.tutor_cleared_for_student(p_tutor, p_student)
-            and private.tutor_teaches(p_tutor, p_subject, v_student.year_level)) then
+            and private.tutor_teaches(p_tutor, p_subject, private.matching_level(p_student, p_subject))) then
       raise exception 'This tutor can''t take this student for %', p_subject using errcode = '23514';
     end if;
   elsif not exists (
