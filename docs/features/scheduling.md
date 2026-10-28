@@ -6,8 +6,8 @@ https://claude.ai/artifact/VKHnZFR36UFzbxvFi5jezV
 Part 1: finding a time, booking, the tutor confirming, the weekly sessions,
 cancelling and recording what happened. Part 2: away dates and the
 waitlist. Part 3: tutor sign on and off. Part 4: reminders and notices in
-the app. Later parts: email and text sending, Teams links, renewal each
-term.
+the app. Part 5: school terms and renewing each term. Later parts: email
+and text sending, Teams links.
 
 ## What it's for
 
@@ -68,6 +68,19 @@ automatic, like booking a doctor:
     Notices show in the app now; email and text use the same notices once
     CLG switches them on.
 
+11. **Next term.** CLG keeps each state's school term dates (South
+    Australian government school dates for 2026 to 2028 are loaded; admins
+    add or correct terms). Two weeks before a term ends (four weeks before
+    the end of terms 1 and 3, when sport seasons change) the family is asked
+    about each booking that ends that term: same time and tutor next term?
+    sessions in the holidays? If they want a change, what (day and time,
+    tutor, or both) and why. The same form takes feedback, with a separate
+    tick to let CLG use it as a testimonial. "Same again" sends the tutor a
+    request for next term at the same time, which they accept as usual (so
+    the child safety and clash checks run again). A booking without holiday
+    sessions gets no sessions between terms. Tutors don't see the answers,
+    so families can be frank about wanting a change of tutor.
+
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
 note.
@@ -116,6 +129,13 @@ EEF trials of texting parents found small attainment and attendance gains
 (Texting Parents, 2016). Few messages, sent at sensible hours, keep parent
 support light.
 
+Asking before each term keeps support sustained, the condition under which
+tutoring has most effect (EEF Toolkit, above), and keeps the same tutor
+where the family is happy, which the National Tutoring Programme reviews
+link to better outcomes. Asking why families want a change, and for
+feedback each term, gives CLG the learner and parent voice that AERO and
+the EEF's implementation guidance recommend for reviewing a programme.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -124,6 +144,8 @@ support light.
 - Cancellations by who cancelled, and no-shows.
 - Tutor hours in blocks of 2 hours or more.
 - No-show rate before and after reminders.
+- Share of bookings renewed each term, and the reasons families give for a
+  change.
 
 ## Privacy and child safety
 
@@ -148,6 +170,11 @@ support light.
   the browser, compared on the server and thrown away. Only "at the
   library" or "not" is stored. Tutors can decline and still sign on; an
   admin then checks the time.
+- **Feedback and testimonials (APP 6; Australian Consumer Law)**: feedback
+  is used to improve CLG's support. It is shared as a testimonial only with
+  a separate, unticked-by-default yes, and the app records that yes. Shared
+  testimonials use a first name only and are never edited to change their
+  meaning. Tutors don't see renewal answers.
 - **Records**: bookings and sessions are deleted with the student under the
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't
