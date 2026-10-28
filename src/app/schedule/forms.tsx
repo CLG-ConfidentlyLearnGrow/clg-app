@@ -9,6 +9,7 @@ import {
   joinWaitlist,
   answerBooking,
   cancelSession,
+  confirmAvailability,
   confirmTimes,
   recordEndTime,
   saveNoticeSettings,
@@ -446,5 +447,26 @@ export function TermForm() {
       </div>
       <p className="text-xs text-zinc-600">Saving a term that already exists replaces its dates.</p>
     </ActionForm>
+  );
+}
+
+// Each term: "Is your availability right for next term?"
+export function AvailabilityCheckForm({ id }: { id: string }) {
+  return (
+    <ButtonsForm action={confirmAvailability}>
+      {(pending) => (
+        <>
+          <input type="hidden" name="id" value={id} />
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" name="answer" value="same" disabled={pending}>
+              No changes
+            </Button>
+            <button type="submit" name="answer" value="changed" disabled={pending} className={quietButton}>
+              I&apos;ve updated it
+            </button>
+          </div>
+        </>
+      )}
+    </ButtonsForm>
   );
 }

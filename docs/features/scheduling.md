@@ -81,6 +81,15 @@ automatic, like booking a doctor:
     sessions gets no sessions between terms. Tutors don't see the answers,
     so families can be frank about wanting a change of tutor.
 
+12. **Tutor availability each term.** A week before families are asked
+    (3 weeks before a term ends; 5 weeks for terms 1 and 3), each tutor is
+    asked whether their weekly availability is right for next term. They
+    tap "No changes", or update it and tap "I've updated it". Admins see who
+    hasn't answered (flagged after a week), weekly times removed since last
+    term, and bookings that now fall outside a tutor's availability. A
+    missed answer doesn't hide a tutor from bookings, and changing
+    availability never changes booked sessions.
+
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
 note.
@@ -136,6 +145,12 @@ link to better outcomes. Asking why families want a change, and for
 feedback each term, gives CLG the learner and parent voice that AERO and
 the EEF's implementation guidance recommend for reviewing a programme.
 
+Checking tutors' availability before families rebook protects the same
+consistency: a family that books a time the tutor can no longer keep loses
+the regular, stable sessions the evidence favours. Casual tutors may change
+what they offer under the Miscellaneous and Post-Secondary Awards, so the
+app shows changes to admins for a conversation rather than blocking them.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -144,6 +159,7 @@ the EEF's implementation guidance recommend for reviewing a programme.
 - Cancellations by who cancelled, and no-shows.
 - Tutor hours in blocks of 2 hours or more.
 - No-show rate before and after reminders.
+- Share of tutors confirming availability before families are asked.
 - Share of bookings renewed each term, and the reasons families give for a
   change.
 

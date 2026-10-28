@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/server";
 import { runTeamsSyncQuietly } from "@/lib/teams/sync";
 import {
   AnswerForm,
+  AvailabilityCheckForm,
   AwayForm,
   BookForm,
   CancelForm,
@@ -118,6 +119,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
+    ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []),
     ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []),
   ];
   const section = sections.find((s) => s.id === params.section)?.id ?? "sessions";
@@ -132,6 +134,18 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     ? await supabase.from("term_renewals").select("id", { count: "exact", head: true }).is("answered_at", null)
     : null;
   const renewalsToAnswer = renewalsRes?.count ?? 0;
+  // The tutor's own availability check for this term, if not yet answered.
+  const myCheckRes = isTutor
+    ? await supabase
+        .from("availability_checks")
+        .select("id")
+        .eq("tutor_id", viewer.id)
+        .is("confirmed_at", null)
+        .order("asked_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : null;
+  const myCheck = myCheckRes?.data as { id: string } | null | undefined;
   const [bookingsRes, sessionsRes] = await Promise.all([
     supabase.rpc("list_bookings"),
     supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }),
@@ -184,6 +198,17 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     >
       {section === "sessions" && (
         <>
+          {myCheck && (
+            <Card
+              title="Is your availability right for next term?"
+              description="Families will soon be booking for next term. Please check your weekly availability, then let us know. Booked sessions aren't changed."
+            >
+              <p className="mb-3 text-sm">
+                <TextLink href="/dashboard/tutor?section=hours">Check or update your availability</TextLink>
+              </p>
+              <AvailabilityCheckForm id={myCheck.id} />
+            </Card>
+          )}
           {waitingForMe.length > 0 && (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               You have {waitingForMe.length} booking request{waitingForMe.length > 1 ? "s" : ""} to answer.{" "}
@@ -358,6 +383,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       {section === "libraries" && isAdmin && <LibrariesSection />}
 
       {section === "times" && isAdmin && <TimesSection />}
+
+      {section === "tutor-availability" && isAdmin && <TutorAvailabilitySection />}
 
       {section === "notices" && <NoticesSection viewerId={viewer.id} unread={unread} />}
 
@@ -972,6 +999,72 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
         </>
       )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Admins: has each tutor checked their availability for next term?
+// ---------------------------------------------------------------------------
+type AvailabilityCheck = {
+  id: string;
+  tutor_id: string;
+  tutor_name: string;
+  term_label: string;
+  term_ends_on: string;
+  asked_at: string;
+  confirmed_at: string | null;
+  changed: boolean | null;
+  removed_slots: string[];
+  bookings_outside: number;
+};
+
+async function TutorAvailabilitySection() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("list_availability_checks");
+  const rows = (data ?? []) as AvailabilityCheck[];
+  const weekAgo = currentTime() - 7 * 24 * 3600 * 1000;
+  return (
+    <Card
+      title="Tutor availability"
+      description="Each tutor is asked 3 weeks before term ends (5 weeks for terms 1 and 3) to check their availability for next term. Tutors who haven't answered are listed first; they can still be booked."
+    >
+      {rows.length === 0 ? (
+        <Empty>No tutors have been asked yet.</Empty>
+      ) : (
+        <ul className="divide-y divide-zinc-100 text-sm">
+          {rows.map((r) => (
+            <li key={r.id} className="space-y-1 py-3 first:pt-0">
+              <p className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  <span className="font-medium">{r.tutor_name}</span>
+                  <span className="text-zinc-600"> · before {r.term_label} ends</span>
+                </span>
+                {r.confirmed_at ? (
+                  <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">
+                    {r.changed ? "Updated" : "No changes"} · {shortDate(r.confirmed_at)}
+                  </span>
+                ) : (
+                  <span
+                    className={`rounded-full px-2 text-xs ${new Date(r.asked_at).getTime() < weekAgo ? "bg-amber-50 text-amber-900" : "bg-zinc-100 text-zinc-700"}`}
+                  >
+                    Not answered · asked {shortDate(r.asked_at)}
+                  </span>
+                )}
+              </p>
+              {r.removed_slots.length > 0 && (
+                <p className="text-amber-900">Removed since last term: {r.removed_slots.join(", ")}</p>
+              )}
+              {r.bookings_outside > 0 && (
+                <p className="text-red-700">
+                  {r.bookings_outside} booking{r.bookings_outside === 1 ? " is" : "s are"} now outside their availability.
+                  Please talk it through with them.
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
