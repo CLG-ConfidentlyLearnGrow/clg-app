@@ -99,8 +99,14 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
     skills.push({ skill_id: skillId, level: String(value) });
   }
 
+  const materialIds = formData
+    .getAll("material_id")
+    .map(String)
+    .filter((m) => z.uuid().safeParse(m).success)
+    .slice(0, 10);
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("save_session_note", {
+  const { data: noteId, error } = await supabase.rpc("save_session_note", {
     p_student: v.student_id,
     p_session_date: v.session_date,
     p_minutes: v.minutes,
@@ -121,9 +127,21 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
     return { error: plain ? error.message : "Couldn't save the note. Please try again." };
   }
 
+  // Which booklets or materials were used (kept by the materials module).
+  // The note is already saved, so a problem here doesn't undo it.
+  let materialsProblem = false;
+  if (materialIds.length > 0 && typeof noteId === "string") {
+    const used = await supabase.rpc("record_material_use", { p_note: noteId, p_materials: materialIds });
+    materialsProblem = Boolean(used.error);
+  }
+
   revalidatePath(progressPath(v.student_id));
   revalidatePath("/dashboard/tutor");
-  return { message: "Session note saved. The family can see what went well, the next step and the tip for home." };
+  return {
+    message:
+      "Session note saved. The family can see what went well, the next step and the tip for home." +
+      (materialsProblem ? " The booklet used couldn't be recorded, but the note is saved." : ""),
+  };
 }
 
 const reflectionSchema = z.object({

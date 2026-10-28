@@ -47,3 +47,15 @@ Not done, because it doesn't work or gets in the way: blocking right-click or pr
 - **Privacy Act 1988 and APPs.** The stamp and open log hold tutors' names and emails (staff personal information), used to protect CLG's work. Tutors should be told this (APP 5): the materials page says so. Open records are seen only by admins, kept 2 years, then deleted nightly, and deleted at once with the account.
 - **Children's data.** Materials hold no student information. Suggestions show a tutor only their own current students' goals, using the existing access rules (two-step login, current and cleared tutor).
 - **Children's Online Privacy Code (exposure draft) and UK/EU.** No new data about children. The same design would meet UK GDPR and the EU GDPR (legitimate interest for the log; short retention).
+
+## Part 2: materials in use (Carla's feedback, 28 October 2026)
+
+Migration `20261029600200_materials_in_use.sql`, tests in `supabase/tests/materials_in_use.test.sql`.
+
+- **Booklets** are a kind of material. Like everything else, they are tagged with the skills they work on.
+- **Pick the booklet, the skills fill in.** In a session note the tutor ticks the booklet or materials they worked through; each of the booklet's skills that is in the student's goals is marked as worked on today, at its current level, so the tutor only changes the ones that moved. This keeps notes near the three-minute target (EEF: feedback's main cost is staff time). The app records which material was used with which student and when (`material_uses`, staff only), which later shows what worked.
+- **Materials appear on each student's page by themselves** (staff only): first those tagged with skills in the student's goals, then those for their subjects at the level they work at (ability first, year level second, as Carla asked for progress tracking). Families don't see materials, which stay CLG's teaching resources.
+- **Only current skills show.** Under each goal, the page shows the skills being worked on now (those in the latest note, or else those at Learning or Secure with help, or else the next one not yet secure). The rest open with a tap. This keeps the next step in focus (Hattie and Timperley: "where to next").
+- **Search skills by subject and year level**, when tagging a material and when a tutor adds a goal. The year level starts at the level given for that subject.
+
+Privacy: `material_uses` holds which materials a student used, seen only by the student's current tutors and admins, deleted with the student or the note.

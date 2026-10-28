@@ -4,8 +4,14 @@ import { RoleTabs } from "@/components/role-tabs";
 import { Card, Empty, Page, SubHeading, TextLink } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { MATERIAL_STATUS_NAMES, yearRange } from "@/lib/materials";
+import { SUBJECT_SUGGESTIONS, YEAR_LEVELS } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 import { AddSkillsForm, MaterialDetailsForm, PublishForm, TaggedSkill, type SkillOption } from "../forms";
+
+function yearsOf(from: string, to: string) {
+  const all = YEAR_LEVELS as readonly string[];
+  return all.slice(all.indexOf(from), all.indexOf(to) + 1);
+}
 
 // One material (admin): its details, its curriculum skills, and publishing.
 
@@ -15,6 +21,8 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
   if (!z.uuid().safeParse(id).success) notFound();
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
+  const year = typeof sp.year === "string" && (YEAR_LEVELS as readonly string[]).includes(sp.year) ? sp.year : "";
+  const skillSubject = typeof sp.subject === "string" && sp.subject.trim() ? sp.subject.trim().slice(0, 100) : "";
   const supabase = await createClient();
 
   const { data: m } = await supabase
@@ -33,7 +41,13 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
         "skill:curriculum_skills(id, subject, level_band, code, description, plain_description, framework:curriculum_frameworks(code, version))",
       )
       .eq("material_id", id),
-    supabase.rpc("skills_for_material", { p_subject: m.subject, p_from: m.from_level, p_to: m.to_level, p_search: q || null }),
+    supabase.rpc("skills_for_material", {
+      p_subject: skillSubject || m.subject,
+      p_from: m.from_level,
+      p_to: m.to_level,
+      p_search: q || null,
+      p_year: year || null,
+    }),
     supabase.from("material_opens").select("id", { count: "exact", head: true }).eq("material_id", id),
   ]);
   const taggedSkills: SkillOption[] = (
@@ -83,16 +97,41 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
 
           <SubHeading>Add skills</SubHeading>
           <p className="mb-3 text-sm text-zinc-600">
-            Showing skills from confirmed curricula for {m.subject}, {yearRange(m.from_level, m.to_level)}. Search to narrow the
-            list (code or words).
+            Skills from confirmed curricula for {yearRange(m.from_level, m.to_level)}. Narrow by subject, year level or words.
           </p>
-          <form className="mb-3 flex gap-2 text-sm">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="For example fractions or AC9M5N"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2"
-            />
+          <form className="mb-3 flex flex-wrap items-end gap-2 text-sm">
+            <label className="space-y-1">
+              <span className="block text-xs text-zinc-500">Subject</span>
+              <input
+                name="subject"
+                list="skill-subjects"
+                defaultValue={skillSubject || m.subject}
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              />
+              <datalist id="skill-subjects">
+                {SUBJECT_SUGGESTIONS.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            </label>
+            <label className="space-y-1">
+              <span className="block text-xs text-zinc-500">Year level</span>
+              <select name="year" defaultValue={year} className="rounded-lg border border-zinc-300 bg-white px-3 py-2">
+                <option value="">All of {yearRange(m.from_level, m.to_level)}</option>
+                {yearsOf(m.from_level, m.to_level).map((y) => (
+                  <option key={y}>{y}</option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-48 flex-1 space-y-1">
+              <span className="block text-xs text-zinc-500">Words or code</span>
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="For example fractions or AC9M5N"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              />
+            </label>
             <button className="rounded-full border border-zinc-300 px-4 py-2">Search</button>
           </form>
           {choices.length === 0 ? (
