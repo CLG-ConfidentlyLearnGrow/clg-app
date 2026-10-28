@@ -138,6 +138,8 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       >
         <p className="text-sm">
           <TextLink href="/pay">My pay</TextLink>
+          {" · "}
+          <TextLink href="/materials">CLG materials</TextLink>
         </p>
         {section === "students" && notesDue.length > 0 && (
           <Card
