@@ -213,11 +213,43 @@ export async function addRoadmapTarget(_prev: FormState, formData: FormData): Pr
   if (error) return { error: error.code === "23514" ? error.message : "Couldn't save it. Please try again." };
 
   // Assessments get a study plan straight away; it can be edited after.
-  if (v.kind === "assessment" && formData.get("plan") === "on") {
+  const planned = v.kind === "assessment" && formData.get("plan") === "on";
+  if (planned) {
     await supabase.rpc("plan_assessment_steps", { p_target: data.id });
   }
+
+  // The task sheet and rubric, if given, are kept with the assessment.
+  const problems: string[] = [];
+  for (const [field, kind, label] of [
+    ["task_sheet", "task_sheet", "task sheet"],
+    ["rubric", "rubric", "rubric"],
+  ] as const) {
+    const file = formData.get(field);
+    if (!(file instanceof File) || file.size === 0) continue;
+    const stored = await storeEvidenceFile(supabase, v.student_id, file);
+    if ("error" in stored) {
+      problems.push(`The ${label} didn't upload: ${stored.error}`);
+      continue;
+    }
+    const saved = await supabase.from("learning_evidence").insert({
+      student_id: v.student_id,
+      target_id: data.id,
+      kind,
+      subject: v.subject || null,
+      title: `${v.title}: ${label}`.slice(0, 200),
+      file_path: stored.path,
+      file_type: stored.type,
+      uploaded_by_role: "parent",
+    });
+    if (saved.error) {
+      await supabase.storage.from("learning-evidence").remove([stored.path]);
+      problems.push(`The ${label} couldn't be saved. Please try again.`);
+    }
+  }
+
   revalidatePath(progressPath(v.student_id));
-  return { message: v.kind === "assessment" ? "Added, with steps planned up to the date." : "Added to the roadmap." };
+  if (problems.length) return { error: `Added to the roadmap. ${problems.join(" ")}` };
+  return { message: planned ? "Added, with study steps planned up to the date." : "Added to the roadmap." };
 }
 
 const stepSchema = z.object({
@@ -375,6 +407,30 @@ const evidenceSchema = z.object({
   note: z.string().trim().max(1000).optional(),
 });
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+// Checks an uploaded file is a PDF or photo under the size limit and puts it
+// in the student's private folder. The caller saves the record, and removes
+// the file if that fails.
+async function storeEvidenceFile(
+  supabase: Supabase,
+  studentId: string,
+  file: File,
+): Promise<{ path: string; type: string } | { error: string }> {
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    return { error: "That file is too big. Please use a file under 3.5 MB, or take a photo instead." };
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kind = documentType(bytes);
+  if (!kind) return { error: "Please upload a PDF or a photo (JPG, PNG or WebP)." };
+  const path = `${studentId}/${randomUUID()}.${kind.ext}`;
+  const upload = await supabase.storage
+    .from("learning-evidence")
+    .upload(path, bytes, { contentType: kind.type, upsert: false });
+  if (upload.error) return { error: "Couldn't upload the file. Please try again." };
+  return { path, type: kind.type };
+}
+
 export async function addEvidence(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer();
   const { file, ...fields } = Object.fromEntries(formData);
@@ -383,19 +439,10 @@ export async function addEvidence(_prev: FormState, formData: FormData): Promise
   const v = parsed.data;
 
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a file or take a photo." };
-  if (file.size > MAX_DOCUMENT_BYTES) {
-    return { error: "That file is too big. Please use a file under 3.5 MB, or take a photo instead." };
-  }
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const type = documentType(bytes);
-  if (!type) return { error: "Please upload a PDF or a photo (JPG, PNG or WebP)." };
-
   const supabase = await createClient();
-  const path = `${v.student_id}/${randomUUID()}.${type.ext}`;
-  const upload = await supabase.storage
-    .from("learning-evidence")
-    .upload(path, bytes, { contentType: type.type, upsert: false });
-  if (upload.error) return { error: "Couldn't upload the file. Please try again." };
+  const stored = await storeEvidenceFile(supabase, v.student_id, file);
+  if ("error" in stored) return stored;
+  const { path, type } = stored;
 
   const { error } = await supabase.from("learning_evidence").insert({
     student_id: v.student_id,
@@ -406,7 +453,7 @@ export async function addEvidence(_prev: FormState, formData: FormData): Promise
     grade: v.grade || null,
     note: v.note || null,
     file_path: path,
-    file_type: type.type,
+    file_type: type,
     // The database sets the real value from who is uploading.
     uploaded_by_role: "parent",
   });

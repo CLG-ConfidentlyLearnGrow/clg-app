@@ -16,7 +16,7 @@ Tutors set goals and judge skill levels from what they see in sessions. School r
 
 ## How the design follows the evidence
 
-- **Who uploads**: the student (own login), a parent who manages the student, or the student's tutor. On a phone, the file picker offers the camera, so a photo of a marked test takes seconds.
+- **Who uploads**: the student (own login), a parent who manages the student, or the student's tutor. School reports and NAPLAN results come from parents (Carla, 2026-10-28): tutors can't add them, and a student can only if no parent manages their account (for example an adult learner). On a phone, the file picker offers the camera, so a photo of a marked test takes seconds.
 - **What**: marked work or a test, a school report, NAPLAN results, another assessment, or a sample of work. A name, and optionally the subject, date and grade as written.
 - **The tutor is told** about family and student uploads on their dashboard ("New uploads from families"), and links the skills it shows from the student's goals, with an optional comment the family can see.
 - **Family view**: a "Work and reports" card on the progress page lists every upload with the tutor's comment and the skills it shows.

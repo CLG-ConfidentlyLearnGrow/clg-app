@@ -66,12 +66,16 @@ export const RECOMMENDATION_NAMES: Record<string, string> = {
 
 // Evidence of learning: what families, students and tutors can upload.
 export const EVIDENCE_KINDS = ["graded_work", "school_report", "naplan", "other_assessment", "work_sample"] as const;
-export const EVIDENCE_KIND_NAMES: Record<(typeof EVIDENCE_KINDS)[number], string> = {
+// School reports and NAPLAN results are uploaded by a parent.
+export const PARENT_ONLY_KINDS: readonly string[] = ["school_report", "naplan"];
+export const EVIDENCE_KIND_NAMES: Record<string, string> = {
   graded_work: "Marked school work or test",
   school_report: "School report",
   naplan: "NAPLAN results",
   other_assessment: "Other assessment",
   work_sample: "Sample of work",
+  task_sheet: "Task sheet",
+  rubric: "Rubric",
 };
 
 // The compulsory parts of a senior certificate a subject can count towards (SACE).

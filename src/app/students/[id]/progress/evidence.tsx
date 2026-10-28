@@ -7,7 +7,7 @@ import { EvidenceReviewForm, EvidenceUploadForm } from "./forms";
 
 type Evidence = {
   id: string;
-  kind: keyof typeof EVIDENCE_KIND_NAMES;
+  kind: string;
   subject: string | null;
   title: string;
   dated_on: string | null;
@@ -38,6 +38,7 @@ export async function EvidenceCard({
   today,
   canUpload,
   canRemoveAny,
+  canAddReports,
   isStaff,
   goalSkills,
 }: {
@@ -46,6 +47,7 @@ export async function EvidenceCard({
   today: string;
   canUpload: boolean;
   canRemoveAny: boolean;
+  canAddReports: boolean;
   isStaff: boolean;
   goalSkills: { id: string; label: string }[];
 }) {
@@ -56,6 +58,8 @@ export async function EvidenceCard({
       "id, kind, subject, title, dated_on, grade, note, file_type, uploaded_by, uploaded_by_role, uploaded_at, reviewed_at, tutor_comment, evidence_skills(skill_id, skill:curriculum_skills(description, plain_description))",
     )
     .eq("student_id", studentId)
+    // Task sheets and rubrics show with their assessment on the roadmap.
+    .is("target_id", null)
     .order("uploaded_at", { ascending: false })
     .limit(30);
   const items = (res.data ?? []) as unknown as Evidence[];
@@ -71,7 +75,9 @@ export async function EvidenceCard({
           ? waiting > 0
             ? `${waiting} new from the family to look at.`
             : "School reports, NAPLAN, marked work and samples from sessions."
-          : "Share school reports, NAPLAN results and marked work, so the tutor can see where to focus."
+          : canAddReports
+            ? "Share school reports, NAPLAN results and marked work, so the tutor can see where to focus."
+            : "Share marked work, so the tutor can see where to focus."
       }
     >
       {items.length === 0 ? (
@@ -149,7 +155,7 @@ export async function EvidenceCard({
       {canUpload && (
         <>
           <SubHeading>Upload</SubHeading>
-          <EvidenceUploadForm studentId={studentId} today={today} isStaff={isStaff} />
+          <EvidenceUploadForm studentId={studentId} today={today} isStaff={isStaff} canAddReports={canAddReports} />
         </>
       )}
     </Card>
