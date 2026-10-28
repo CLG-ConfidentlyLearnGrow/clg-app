@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, type ReactNode } from "react";
 import { addGoal, saveFamilyNote, saveReflection, saveSessionNote } from "@/app/actions/progress";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
@@ -14,6 +15,28 @@ import {
 
 export type SkillOption = { id: string; label: string; levelBand: string; ticked?: boolean };
 export type GoalSkill = { id: string; label: string; level: SkillLevel; goal: string };
+// A booked session the note is for: its date and length fill in by themselves.
+export type NoteSession = { id: string; date: string; minutes: number; label: string };
+
+// Times how long the note takes, from the first tap in the form to the last
+// change, so CLG can check notes stay under three minutes. Only admins see
+// the result.
+function WritingTimer({ children }: { children: ReactNode }) {
+  const started = useRef<number | null>(null);
+  const out = useRef<HTMLInputElement>(null);
+  const tick = () => {
+    const now = Date.now();
+    // After a note is saved the form clears, so the next one starts afresh.
+    if (started.current === null || out.current?.value === "") started.current = now;
+    if (out.current) out.current.value = String(Math.round((now - started.current) / 1000));
+  };
+  return (
+    <div className="space-y-4" onFocusCapture={tick} onInputCapture={tick} onChangeCapture={tick}>
+      <input type="hidden" name="writing_seconds" ref={out} defaultValue="" />
+      {children}
+    </div>
+  );
+}
 
 export function AddGoalForm({
   studentId,
@@ -61,14 +84,43 @@ export function AddGoalForm({
   );
 }
 
-export function SessionNoteForm({ studentId, skills }: { studentId: string; skills: GoalSkill[] }) {
-  const today = new Date().toISOString().slice(0, 10);
+export function SessionNoteForm({
+  studentId,
+  skills,
+  session,
+  today,
+}: {
+  studentId: string;
+  skills: GoalSkill[];
+  session?: NoteSession | null;
+  today: string;
+}) {
   return (
     <ActionForm action={saveSessionNote} submitLabel="Save note">
+      <WritingTimer>
       <input type="hidden" name="student_id" value={studentId} />
+      {session && <input type="hidden" name="session_id" value={session.id} />}
+      {session && (
+        <p className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
+          For the session on <strong>{session.label}</strong>.
+        </p>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Session date" name="session_date" type="date" defaultValue={today} max={today} required />
-        <Field label="Minutes" name="minutes" type="number" min={0} max={480} step={5} defaultValue={60} required />
+        {session ? (
+          <input type="hidden" name="session_date" value={session.date} />
+        ) : (
+          <Field label="Session date" name="session_date" type="date" defaultValue={today} max={today} required />
+        )}
+        <Field
+          label="Minutes"
+          name="minutes"
+          type="number"
+          min={0}
+          max={480}
+          step={5}
+          defaultValue={session?.minutes ?? 60}
+          required
+        />
         <Select label="Attendance" name="attendance" defaultValue="attended">
           {ATTENDANCE.map((a) => (
             <option key={a} value={a}>
@@ -125,6 +177,12 @@ export function SessionNoteForm({ studentId, skills }: { studentId: string; skil
         </div>
         <Field label="Due (optional)" name="homework_due" type="date" />
       </div>
+      <Field
+        label="One thing to try at home (optional)"
+        name="home_tip"
+        maxLength={300}
+        hint='For the family: a small habit, not re-teaching. For example, "Ask them to explain one fraction at dinner."'
+      />
       <TextArea
         label="Note for CLG staff only (optional)"
         name="staff_note"
@@ -132,6 +190,7 @@ export function SessionNoteForm({ studentId, skills }: { studentId: string; skil
         rows={2}
         hint="Never shown to the student or family. For a child safety concern, use the reporting route in the child safe policy, not this box."
       />
+      </WritingTimer>
     </ActionForm>
   );
 }

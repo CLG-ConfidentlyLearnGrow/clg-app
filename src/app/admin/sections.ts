@@ -2,6 +2,7 @@
 export const ADMIN_SECTIONS = [
   { id: "families", label: "Families and matching" },
   { id: "tutors", label: "Tutors and checks" },
+  { id: "progress", label: "Progress" },
   { id: "curriculum", label: "Curriculum" },
   { id: "staff", label: "Staff and accounts" },
   { id: "records", label: "Privacy and records" },

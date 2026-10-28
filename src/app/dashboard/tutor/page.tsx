@@ -6,6 +6,8 @@ import { SectionShell } from "@/components/section-shell";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
+import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress";
+import { sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
 
 const SECTIONS = [
@@ -14,6 +16,14 @@ const SECTIONS = [
   { id: "checks", label: "Child safety checks" },
   { id: "hours", label: "Hours and availability" },
 ] as const;
+
+type DueNote = { session_id: string; tutor_id: string; student_id: string; student_name: string; starts_at: string; hours_since_end: number };
+type Caseload = {
+  student_id: string;
+  active_goals: number;
+  last_note_on: string | null;
+  notes_since_movement: number;
+};
 
 type CheckStatus = { kind: string; expires_on: string | null; status: string };
 type MyCheck = {
@@ -57,7 +67,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0;
   const section = firstTime ? "teaching" : requested;
 
-  const [assigned, checks, mine, states, settings, slots] = await Promise.all([
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes] = await Promise.all([
     supabase
       .from("tutor_assignments")
       .select("id, subject, student:students(id, full_name, year_level)")
@@ -76,7 +86,12 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .eq("tutor_id", viewer.id)
       .order("weekday")
       .order("starts_at"),
+    supabase.rpc("list_notes_due"),
+    supabase.rpc("progress_students_to_check"),
   ]);
+  // Admins get everyone's; this list is only the tutor's own.
+  const notesDue = ((dueRes.data ?? []) as DueNote[]).filter((d) => d.tutor_id === viewer.id);
+  const caseload = new Map(((caseRes.data ?? []) as Caseload[]).map((c) => [c.student_id, c]));
 
   const statusRows = (checks.data ?? []) as CheckStatus[];
   const myChecks = (mine.data ?? []) as MyCheck[];
@@ -100,6 +115,27 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         <p className="text-sm">
           <TextLink href="/pay">My pay</TextLink>
         </p>
+        {section === "students" && notesDue.length > 0 && (
+          <Card
+            title="Session notes to write"
+            description={`Notes are due within ${NOTE_DUE_HOURS} hr of the session. About three minutes each.`}
+          >
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {notesDue.map((d) => (
+                <li key={d.session_id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-0">
+                  <span>
+                    <span className="font-medium">{d.student_name}</span>
+                    <span className="text-zinc-600"> · {sessionWhen(d.starts_at)}</span>
+                    {d.hours_since_end >= NOTE_DUE_HOURS && (
+                      <span className="ml-2 text-xs text-red-700">ended {hoursAgo(d.hours_since_end)}</span>
+                    )}
+                  </span>
+                  <TextLink href={`/students/${d.student_id}/progress?session=${d.session_id}`}>Write note</TextLink>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
         {section === "students" && (
           <Card title="Your students">
             {problems > 0 && (
@@ -121,6 +157,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                       </span>
                     </span>
                     <TextLink href={`/students/${a.student!.id}/progress`}>Progress and notes</TextLink>
+                    <CaseloadLine info={caseload.get(a.student!.id)} />
                   </li>
                 ))}
               </ul>
@@ -282,5 +319,21 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         )}
       </SectionShell>
     </>
+  );
+}
+
+// One line under each student: last note, and anything worth a look.
+function CaseloadLine({ info }: { info: Caseload | undefined }) {
+  if (!info) return null;
+  return (
+    <p className="w-full text-xs text-zinc-600">
+      {info.last_note_on ? `Last note ${shortDate(info.last_note_on)}` : "No notes yet"}
+      {info.active_goals === 0 && <span className="ml-2 text-red-700">No goals set</span>}
+      {info.notes_since_movement >= STALLED_AFTER_SESSIONS && (
+        <span className="ml-2 text-amber-800">
+          No skill has moved in {info.notes_since_movement} sessions: time to adjust the goals or approach?
+        </span>
+      )}
+    </p>
   );
 }

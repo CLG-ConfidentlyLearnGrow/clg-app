@@ -5,7 +5,7 @@ import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { TutorList, loadStudentsAndTutors } from "../shared";
+import { NewUpdates, TutorList, loadStudentsAndTutors } from "../shared";
 
 const SECTIONS = [{ id: "learning", label: "Your learning" }] as const;
 
@@ -35,6 +35,7 @@ export default async function StudentDashboard() {
             </p>
           </Card>
         )}
+        {me && <NewUpdates studentIds={[me.id]} />}
         <Card title="Your tutors">
           {assignments.length === 0 ? <Empty>No tutor yet.</Empty> : <TutorList assignments={assignments} />}
         </Card>
