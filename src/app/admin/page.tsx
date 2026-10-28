@@ -12,6 +12,7 @@ import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
 import { FamilySetupForm } from "./family-setup-form";
 import { StudentLoginForm } from "./student-login-form";
+import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -286,6 +287,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               description="For a student aged 16 or over who is on a parent's account. They keep their details, history and tutor, and their parent can still see everything."
             >
               <StudentLoginForm students={loginReady} />
+            </Card>
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Send a new login link"
+              description="If a family's or student's link ran out before they used it, send them a new one."
+            >
+              <NewLinkForm />
             </Card>
             <Card
               title="Parent links to confirm"

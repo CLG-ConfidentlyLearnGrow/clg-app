@@ -88,9 +88,29 @@ update public.student_login_offers set expires_at = now() - interval '1 minute' 
 select tests.fails($$insert into auth.users (email, raw_user_meta_data) values ('lou@example.com', '{}')$$, 'expired offer gives no account');
 select tests.eq((select count(*) from public.students where id = :'lou' and account_id is null), 1, 'expired offer links nothing');
 
+
+-- The link ran out before the student used it: offer again with the same
+-- email, and the account made the first time is used.
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select public.admin_offer_student_login(:'lou', 'lou@example.com');
+reset role;
+insert into auth.users (id, email, invited_at, raw_user_meta_data)
+values ('00000000-0000-0000-0000-0000000005c2', 'lou@example.com', now(), '{}');
+update public.student_login_offers set expires_at = now() - interval '1 minute' where student_id = :'lou';
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select public.admin_offer_student_login(:'lou', 'lou@example.com');
+-- An email that has been used (confirmed) or has a role still can't be offered.
+select tests.fails_with(format($$select public.admin_offer_student_login(%L, 'kim@example.com')$$, :'lou'),
+  'already has a CLG account', 'confirmed account refused');
+reset role;
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000005c2';
+select tests.eq((select count(*) from public.students where id = :'lou' and account_id = '00000000-0000-0000-0000-0000000005c2'), 1, 'second offer hands over the record');
+
 -- Clean up so later test files see the original fixtures.
 delete from public.students where id in (:'kim', :'lou', :'max');
 delete from public.student_login_offers;
-delete from auth.users where id = '00000000-0000-0000-0000-0000000000c1';
+delete from auth.users where id in ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000005c2');
 
 \echo '  student own login: all checks passed'
