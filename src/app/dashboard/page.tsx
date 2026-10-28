@@ -1,3 +1,4 @@
+import { requireFamilyAgreement } from "@/lib/consent";
 import { redirect } from "next/navigation";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { ROLE_ORDER, ROLE_TABS } from "@/lib/roles";
@@ -8,6 +9,7 @@ import { Card, Page } from "@/components/ui";
 export default async function DashboardPage() {
   const viewer = await requireViewer();
   if (needsTwoStep(viewer)) redirect("/mfa");
+  await requireFamilyAgreement(viewer);
   const first = ROLE_ORDER.find((r) => viewer.roles.includes(r));
   if (first) redirect(ROLE_TABS[first].href);
 
