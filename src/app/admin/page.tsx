@@ -11,6 +11,7 @@ import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
 import { FamilySetupForm } from "./family-setup-form";
+import { StudentLoginForm } from "./student-login-form";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -112,7 +113,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"),
       supabase
         .from("students")
-        .select("id, full_name, state, year_level, goals, extra_info, student_subjects(subject, working_level)")
+        .select("id, account_id, full_name, date_of_birth, state, year_level, goals, extra_info, student_subjects(subject, working_level)")
         .order("full_name"),
       supabase
         .from("tutor_profiles")
@@ -219,7 +220,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     .sort((a, b) => a.name.localeCompare(b.name));
   const studentRows = (students.data ?? []) as {
     id: string;
+    account_id: string | null;
     full_name: string;
+    date_of_birth: string | null;
     state: AuState | null;
     year_level: string | null;
     goals: string | null;
@@ -227,6 +230,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     student_subjects: { subject: string; working_level: string | null }[];
   }[];
   const chosen = studentRows.find((s) => s.id === studentId);
+  // Students 16 or over still on a parent's account can get their own login.
+  const sixteenAgo = new Date();
+  sixteenAgo.setFullYear(sixteenAgo.getFullYear() - 16);
+  const loginReady = studentRows
+    .filter((s) => !s.account_id && s.date_of_birth && s.date_of_birth <= sixteenAgo.toISOString().slice(0, 10))
+    .map((s) => ({ id: s.id, name: s.full_name }));
   const pendingLinks = (
     (pending.data ?? []) as unknown as (Omit<PendingLink, "parent"> & {
       parent: { account: { full_name: string } | null } | null;
@@ -268,6 +277,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               description="Fill in a family's details for them, for example during a call, and they get a link to choose a password. Add one child at a time; use the same parent email for each child."
             >
               <FamilySetupForm />
+            </Card>
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Give a student their own login"
+              description="For a student aged 16 or over who is on a parent's account. They keep their details, history and tutor, and their parent can still see everything."
+            >
+              <StudentLoginForm students={loginReady} />
             </Card>
             <Card
               title="Parent links to confirm"
