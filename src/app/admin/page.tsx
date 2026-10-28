@@ -220,7 +220,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const studentRows = (students.data ?? []) as {
     id: string;
     full_name: string;
-    state: AuState;
+    state: AuState | null;
     year_level: string | null;
     goals: string | null;
     extra_info: string | null;
@@ -322,7 +322,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     </option>
                     {studentRows.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.full_name} ({s.state})
+                        {s.full_name} ({s.state ?? "details not finished"})
                       </option>
                     ))}
                   </select>
@@ -354,7 +354,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     </p>
                   </div>
                   <p className="mb-2 text-sm">
-                    Tutors cleared for {STATE_NAMES[chosen.state]} who teach {chosen.year_level ?? "this year level"}:
+                    Tutors cleared for {chosen.state ? STATE_NAMES[chosen.state] : "(state not given yet)"} who teach {chosen.year_level ?? "this year level"}:
                   </p>
                   {eligibleRows.length === 0 ? (
                     <p className="text-sm text-red-700">
@@ -620,7 +620,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               <StudentFrameworkForm
                 students={studentRows.map((s) => ({
                   id: s.id,
-                  name: `${s.full_name} (${s.state})`,
+                  name: `${s.full_name} (${s.state ?? "details not finished"})`,
                 }))}
                 frameworks={confirmedOptions}
               />
@@ -639,7 +639,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   {studentRows.map((s) => (
                     <li key={s.id}>
                       <TextLink href={`/students/${s.id}/progress`}>{s.full_name}</TextLink>{" "}
-                      <span className="text-zinc-500">({s.state})</span>
+                      <span className="text-zinc-500">({s.state ?? "details not finished"})</span>
                     </li>
                   ))}
                 </ul>

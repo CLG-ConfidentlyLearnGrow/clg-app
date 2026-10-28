@@ -8,6 +8,11 @@ Requested by Carla, 2026-10-28.
   - **Parents and children:** the admin enters the parent's name and email, then one child. That child's details are the name, date of birth, state, school year level, school, subjects (with the level they work at in each), end goal and other information.
   - **More children:** the admin uses the same parent email again, and each child is added to the same account.
   - **Students 16 or over, or adult learners:** they can get their own account the same way.
+- **Only the basics are needed (added 2026-10-28).** For a parent's child, the admin needs only the parent's name and email and the child's name. Anything left blank (date of birth, state, year level, school, subjects, goal) the family is asked to finish on their dashboard: a "Please finish ... details" card appears until it's done.
+  - Families can fill in a missing date of birth or state once. After that, only CLG can change them.
+  - No tutor can be assigned and nothing can be booked until date of birth, state, year level and school are in. This is enforced in the database.
+  - Students 16 or over with their own login still need date of birth, state, year level and school up front, because their age must be checked before they get a login.
+- **Why we ask for date of birth.** Every date of birth field says: "We ask for date of birth so we can apply the privacy and child safety protections that suit each age group." Date of birth decides parent consent, whether a student may have their own login (16+), and child safety checks.
 - **The family gets a link.** The app emails the link to choose a password.
   - Until CLG's own email sender (Resend) is set up, Supabase can't email families. Instead, the admin sees the link and sends it themselves, for example by text.
   - The link works once, for a short time, in any browser.

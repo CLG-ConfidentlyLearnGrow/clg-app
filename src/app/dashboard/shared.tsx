@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 export type Student = {
   id: string;
   full_name: string;
+  date_of_birth: string | null;
+  state: string | null;
   year_level: string | null;
   school: string | null;
   goals: string | null;
@@ -20,7 +22,7 @@ export type Assignment = {
 export async function loadStudentsAndTutors() {
   const supabase = await createClient();
   const [students, assignments] = await Promise.all([
-    supabase.from("students").select("id, full_name, year_level, school, goals, extra_info").order("full_name"),
+    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info").order("full_name"),
     supabase
       .from("tutor_assignments")
       .select("id, subject, student_id, tutor:tutor_profiles(bio, account:accounts(full_name))"),
@@ -42,4 +44,16 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
       ))}
     </ul>
   );
+}
+
+// Details the family still needs to give (for children set up by CLG).
+export function missingDetails(s: Student, subjectCount: number): string[] {
+  const missing: string[] = [];
+  if (!s.date_of_birth) missing.push("date of birth");
+  if (!s.state) missing.push("state");
+  if (!s.year_level) missing.push("year level");
+  if (!s.school) missing.push("school");
+  if (subjectCount === 0) missing.push("subjects");
+  if (!s.goals) missing.push("end goal");
+  return missing;
 }
