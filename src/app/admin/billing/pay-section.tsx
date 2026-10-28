@@ -52,7 +52,7 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
     supabase.from("billing_staff_pay").select("*"),
     supabase.from("billing_pay_lines").select("*").gte("work_date", start).lte("work_date", end).order("work_date"),
     supabase.from("billing_pay_problems").select("*").gte("work_date", start).lte("work_date", end),
-    supabase.from("billing_settings").select("pay_period_days, pay_period_anchor").maybeSingle(),
+    supabase.from("billing_settings").select("pay_period_days, pay_period_anchor, casual_min_enabled").maybeSingle(),
     supabase.from("account_private").select("account_id, email"),
   ]);
 
@@ -91,6 +91,13 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
           <TextLink href={`/admin/billing?section=pay&period=${addDays(start, -length)}`}>« Earlier</TextLink>
           <TextLink href={`/admin/billing?section=pay&period=${addDays(start, length)}`}>Later »</TextLink>
         </p>
+        {settings.data && !settings.data.casual_min_enabled && (
+          <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            The 2 hr minimum top-up for casual staff is switched off for now, so short days are paid only for the time
+            worked. The awards require at least 2 hr pay for each day a casual attends work, so check this with your
+            employment adviser. {isOwner ? "You can turn it back on under Pay period below." : ""}
+          </p>
+        )}
         {underAward.length > 0 && (
           <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {underAward.length} line(s) pay under the award minimum for that person&apos;s employment type. Check their
@@ -192,8 +199,12 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
       </Card>
 
       {isOwner && settings.data && (
-        <Card title="Pay period" collapsible defaultOpen={false}>
-          <PayPeriodForm days={settings.data.pay_period_days} anchor={settings.data.pay_period_anchor} />
+        <Card title="Pay period and casual minimum" collapsible defaultOpen={false}>
+          <PayPeriodForm
+            days={settings.data.pay_period_days}
+            anchor={settings.data.pay_period_anchor}
+            casualMin={settings.data.casual_min_enabled}
+          />
         </Card>
       )}
     </>
