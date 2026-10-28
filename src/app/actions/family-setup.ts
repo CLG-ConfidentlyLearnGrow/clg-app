@@ -188,6 +188,41 @@ async function setUpLearner(
   return { message: `Account made for ${name}.${sentText(email, made.link)}${note}` };
 }
 
+// Gives a student who is on a parent's account their own login. The student
+// keeps their record, history and tutor, and the parent can still see it.
+// The database checks the student is 16 or over and the email is new.
+const ownLoginSchema = z.object({
+  student_id: z.uuid("Choose a student."),
+  email: z.email("Enter the student's own email address.").trim().toLowerCase(),
+});
+
+export async function giveStudentLogin(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = ownLoginSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { student_id, email } = parsed.data;
+
+  const supabase = await createClient();
+  const offer = await supabase.rpc("admin_offer_student_login", { p_student: student_id, p_email: email });
+  if (offer.error) {
+    console.error("Student login offer failed:", offer.error.code, offer.error.message);
+    return { error: offer.error.code === "22023" ? `${offer.error.message}.` : "We couldn't do that. Please try again." };
+  }
+
+  const student = await supabase.from("students").select("full_name").eq("id", student_id).single();
+  const name = student.data?.full_name ?? "the student";
+  const made = await makeAccount(email, { full_name: name });
+  if ("error" in made) {
+    await createAdminClient().from("student_login_offers").delete().eq("id", offer.data as string);
+    return made;
+  }
+
+  revalidatePath("/admin");
+  return {
+    message: `${name} gets their own login once they use the link.${sentText(email, made.link)} Their parent can still see their details.`,
+  };
+}
+
 // A family set up by CLG agrees to the privacy policy and terms the first
 // time they sign in.
 export async function agreeToPolicies(_prev: FormState, formData: FormData): Promise<FormState> {
