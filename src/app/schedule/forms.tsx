@@ -9,6 +9,7 @@ import {
   cancelSession,
   confirmTimes,
   recordEndTime,
+  saveNoticeSettings,
   recordOutcome,
   requestBooking,
   saveTutorPlaces,
@@ -340,6 +341,35 @@ export function ConfirmTimesForm({ id, date, from, to }: { id: string; date: str
         <Field label="From" name="from_time" type="time" defaultValue={from} required />
         <Field label="To" name="to_time" type="time" defaultValue={to} required />
       </div>
+    </ActionForm>
+  );
+}
+
+export function NoticeSettingsForm({
+  settings,
+}: {
+  settings: { first_reminder_hours: number; by_email: boolean; by_text: boolean };
+}) {
+  return (
+    <ActionForm action={saveNoticeSettings} submitLabel="Save">
+      <Select label="First reminder" name="first_reminder_hours" defaultValue={String(settings.first_reminder_hours)}>
+        {[2, 6, 12, 24, 48, 72, 168].map((h) => (
+          <option key={h} value={h}>
+            {h === 168 ? "1 week" : `${h} hr`} before
+          </option>
+        ))}
+      </Select>
+      <p className="text-xs text-zinc-600">A final reminder always comes 1 hr before. Nothing arrives between 8pm and 8am.</p>
+      <fieldset className="space-y-2">
+        <legend className="mb-1 text-sm font-medium text-zinc-800">Also send them by</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="by_email" defaultChecked={settings.by_email} className="mt-1" /> Email
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="by_text" defaultChecked={settings.by_text} className="mt-1" /> Text message
+        </label>
+        <p className="text-xs text-zinc-600">Email and text reminders start once CLG switches them on.</p>
+      </fieldset>
     </ActionForm>
   );
 }

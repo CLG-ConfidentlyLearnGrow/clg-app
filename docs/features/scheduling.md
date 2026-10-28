@@ -5,8 +5,9 @@ https://claude.ai/artifact/VKHnZFR36UFzbxvFi5jezV
 
 Part 1: finding a time, booking, the tutor confirming, the weekly sessions,
 cancelling and recording what happened. Part 2: away dates and the
-waitlist. Part 3: tutor sign on and off. Later parts: reminders, Teams
-links, renewal each term.
+waitlist. Part 3: tutor sign on and off. Part 4: reminders and notices in
+the app. Later parts: email and text sending, Teams links, renewal each
+term.
 
 ## What it's for
 
@@ -57,6 +58,16 @@ automatic, like booking a doctor:
    sign-on or a location check that didn't pass. Families are still charged
    the booked time.
 
+10. **Reminders and notices.** Everyone involved (tutor, parents, and a
+    student with their own login) gets a first reminder before each session
+    (48 hr by default, each person can change it) and a final reminder 1 hr
+    before. They also hear when a booking is requested, confirmed or
+    declined, and when someone else cancels a session. Nothing arrives
+    between 8pm and 8am Adelaide time; it waits until 8am. A final reminder
+    for an early-morning session comes at 7:30pm the evening before.
+    Notices show in the app now; email and text use the same notices once
+    CLG switches them on.
+
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
 note.
@@ -98,6 +109,13 @@ quoting externally.)
   engagement in the Miscellaneous Award MA000104 and Post-Secondary Award
   MA000075). One library a day avoids unpaid travel between sessions.
 
+Reminders follow the evidence on attendance: reminder messages reduce
+missed appointments in health and education settings (for example the
+Cochrane review of mobile phone reminders, Gurol-Urganci et al. 2013), and
+EEF trials of texting parents found small attainment and attendance gains
+(Texting Parents, 2016). Few messages, sent at sensible hours, keep parent
+support light.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -105,6 +123,7 @@ quoting externally.)
 - Sessions per booking before it ends (consistency).
 - Cancellations by who cancelled, and no-shows.
 - Tutor hours in blocks of 2 hours or more.
+- No-show rate before and after reminders.
 
 ## Privacy and child safety
 
