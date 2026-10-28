@@ -7,6 +7,7 @@ import { levelFits, subjectFits } from "@/lib/students";
 import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { Roadmap } from "./roadmap";
+import { EvidenceCard } from "./evidence";
 import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 
@@ -246,6 +247,16 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
       />
 
       <TermReviewCard studentId={id} viewerId={viewer.id} isStaff={isStaff} isFamily={isFamily} />
+
+      <EvidenceCard
+        studentId={id}
+        viewerId={viewer.id}
+        today={localToday()}
+        canUpload={canPlan}
+        canRemoveAny={viewer.roles.includes("admin") || student.data.account_id === viewer.id || Boolean(familyLink.data?.can_manage)}
+        isStaff={isStaff}
+        goalSkills={noteSkills}
+      />
 
       {isFamily && latest && !reflectionOf(latest) && (
         <Card

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { checkDates } from "@/lib/check-dates";
 import { CHECK_KINDS } from "@/lib/checks";
+import { MAX_DOCUMENT_BYTES, documentType } from "@/lib/documents";
 import { PLAIN_MATHS, YEAR_LEVELS } from "@/lib/students";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
@@ -74,21 +75,6 @@ const myCheckSchema = z.object({
   completed_on: z.union([z.iso.date(), z.literal("")]).optional(),
   expires_on: z.union([z.iso.date(), z.literal("")]).optional(),
 });
-
-// The copy of a certificate a tutor attaches: a PDF or a photo.
-const MAX_DOCUMENT_BYTES = 3.5 * 1024 * 1024;
-
-// Works out the file type from its first bytes, not from its name.
-function documentType(bytes: Uint8Array): { ext: string; type: string } | null {
-  const starts = (...sig: number[]) => sig.every((b, i) => bytes[i] === b);
-  if (starts(0x25, 0x50, 0x44, 0x46)) return { ext: "pdf", type: "application/pdf" };
-  if (starts(0xff, 0xd8, 0xff)) return { ext: "jpg", type: "image/jpeg" };
-  if (starts(0x89, 0x50, 0x4e, 0x47)) return { ext: "png", type: "image/png" };
-  if (starts(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
-    return { ext: "webp", type: "image/webp" };
-  }
-  return null;
-}
 
 // A tutor adds or renews one of their own checks, with a copy of the
 // certificate. It is logged and waits for CLG to confirm it against the

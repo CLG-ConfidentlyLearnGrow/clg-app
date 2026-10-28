@@ -67,7 +67,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0;
   const section = firstTime ? "teaching" : requested;
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes] = await Promise.all([
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes] = await Promise.all([
     supabase
       .from("tutor_assignments")
       .select("id, subject, student:students(id, full_name, year_level)")
@@ -94,7 +94,17 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .eq("tutor_id", viewer.id)
       .in("status", ["draft", "returned"])
       .order("term_ends_on"),
+    // Reports and work the family uploaded that the tutor hasn't opened yet.
+    supabase
+      .from("progress_notices")
+      .select("id, student_id, title, body")
+      .eq("account_id", viewer.id)
+      .eq("kind", "evidence_added")
+      .is("read_at", null)
+      .order("deliver_at", { ascending: false })
+      .limit(20),
   ]);
+  const newUploads = (uploadsRes.data ?? []) as { id: string; student_id: string; title: string; body: string }[];
   const reviewsToWrite = (reviewsRes.data ?? []) as unknown as {
     id: string;
     student_id: string;
@@ -145,6 +155,21 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                     )}
                   </span>
                   <TextLink href={`/students/${d.student_id}/progress?session=${d.session_id}`}>Write note</TextLink>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        {section === "students" && newUploads.length > 0 && (
+          <Card title="New uploads from families" description="School reports and marked work. Link any skills they show.">
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {newUploads.map((u) => (
+                <li key={u.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-0">
+                  <span>
+                    <span className="font-medium">{u.title}</span>
+                    <span className="block text-zinc-600">{u.body}</span>
+                  </span>
+                  <TextLink href={`/students/${u.student_id}/progress`}>Have a look</TextLink>
                 </li>
               ))}
             </ul>

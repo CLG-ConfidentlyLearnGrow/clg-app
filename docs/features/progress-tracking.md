@@ -66,4 +66,4 @@ Privacy and child safety:
 
 ## Not built yet
 
-Phase 2 of the brief: evidence uploads and the family upload portal, voice-to-text, and email delivery of updates. Built: roadmaps (learning-roadmaps.md), term reviews and monthly summaries (term-reviews.md).
+Phase 2 of the brief: senior certificates by state, voice-to-text, and email delivery of updates. Built: roadmaps (learning-roadmaps.md), term reviews and monthly summaries (term-reviews.md), work and reports uploads (learning-evidence.md).

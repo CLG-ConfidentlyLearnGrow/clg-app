@@ -21,6 +21,8 @@ const PUBLIC_PATHS = [
   "/api/billing/cron",
   // The daily Teams links run (checks the same secret).
   "/api/teams/cron",
+  // The daily progress tidy-up (checks the same secret).
+  "/api/progress/cron",
 ];
 
 // Keeps the Supabase session fresh on every request and sends signed-out

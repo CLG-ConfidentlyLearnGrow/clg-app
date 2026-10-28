@@ -2,11 +2,13 @@
 
 import { useRef, type ReactNode } from "react";
 import {
+  addEvidence,
   addGoal,
   addRoadmapStep,
   addRoadmapTarget,
   checkTermReview,
   replyTermReview,
+  reviewEvidence,
   saveTermReview,
   saveFamilyNote,
   saveReflection,
@@ -14,10 +16,13 @@ import {
 } from "@/app/actions/progress";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
+import { DOCUMENT_ACCEPT } from "@/lib/documents";
 import {
   ATTENDANCE,
   ATTENDANCE_NAMES,
   CONFIDENCE_NAMES,
+  EVIDENCE_KINDS,
+  EVIDENCE_KIND_NAMES,
   RECOMMENDATION_NAMES,
   SKILL_LEVEL_NAMES,
   nextLevels,
@@ -369,6 +374,82 @@ export function CheckTermReviewForm({ reviewId }: { reviewId: string }) {
         <option value="return">Send back to the tutor</option>
       </Select>
       <Field label="What needs changing (when sending back)" name="reason" maxLength={500} />
+    </ActionForm>
+  );
+}
+
+// Upload a school report, NAPLAN results, marked work or a work sample. On a
+// phone, the file picker offers the camera.
+export function EvidenceUploadForm({ studentId, today, isStaff }: { studentId: string; today: string; isStaff: boolean }) {
+  return (
+    <ActionForm action={addEvidence} submitLabel="Upload">
+      <input type="hidden" name="student_id" value={studentId} />
+      <Field
+        label="File or photo"
+        name="file"
+        type="file"
+        required
+        accept={DOCUMENT_ACCEPT}
+        hint="A PDF, or a clear photo of each page. Up to 3.5 MB. Please cover any other children's names."
+      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Select label="What is it?" name="kind" defaultValue={isStaff ? "work_sample" : "graded_work"}>
+          {EVIDENCE_KINDS.map((k) => (
+            <option key={k} value={k}>
+              {EVIDENCE_KIND_NAMES[k]}
+            </option>
+          ))}
+        </Select>
+        <Field label="Name" name="title" required maxLength={200} hint='For example "Term 2 report" or "Fractions test".' />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Field label="Subject (optional)" name="subject" maxLength={100} />
+        <Field label="Date (optional)" name="dated_on" type="date" max={today} />
+        <Field label="Grade or mark (optional)" name="grade" maxLength={30} hint='As written, e.g. "B+" or "15/20".' />
+      </div>
+      <TextArea label="Anything to add (optional)" name="note" rows={2} maxLength={1000} />
+    </ActionForm>
+  );
+}
+
+// The tutor looks at an upload: a short comment for the family and the
+// skills from the student's goals that it shows.
+export function EvidenceReviewForm({
+  studentId,
+  evidenceId,
+  skills,
+  comment,
+  linked,
+}: {
+  studentId: string;
+  evidenceId: string;
+  skills: { id: string; label: string }[];
+  comment: string | null;
+  linked: string[];
+}) {
+  return (
+    <ActionForm action={reviewEvidence} submitLabel="Save">
+      <input type="hidden" name="student_id" value={studentId} />
+      <input type="hidden" name="evidence_id" value={evidenceId} />
+      <TextArea
+        label="Comment for the family (optional)"
+        name="comment"
+        rows={2}
+        maxLength={1000}
+        defaultValue={comment ?? ""}
+        hint="What it shows and what you'll work on next."
+      />
+      {skills.length > 0 && (
+        <fieldset className="space-y-1">
+          <legend className="mb-1 text-sm font-medium">Skills it shows (from the student&apos;s goals)</legend>
+          {skills.map((s) => (
+            <label key={s.id} className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="skill_id" value={s.id} defaultChecked={linked.includes(s.id)} className="mt-1" />
+              <span>{s.label}</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
     </ActionForm>
   );
 }

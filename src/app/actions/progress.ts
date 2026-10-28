@@ -1,10 +1,12 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
-import { ATTENDANCE, SKILL_LEVELS } from "@/lib/progress";
+import { MAX_DOCUMENT_BYTES, documentType } from "@/lib/documents";
+import { ATTENDANCE, EVIDENCE_KINDS, SKILL_LEVELS } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 
 // The database decides who may do each of these (the student's tutor,
@@ -358,4 +360,92 @@ export async function replyTermReview(_prev: FormState, formData: FormData): Pro
   if (error) return { error: error.code === "23514" ? error.message : "Couldn't send it. Please try again." };
   revalidatePath(progressPath(v.student_id));
   return { message: "Thanks! CLG and the tutor will see this." };
+}
+
+// ---------------------------------------------------------------------------
+// Evidence of learning: school reports, NAPLAN, marked work, work samples.
+// ---------------------------------------------------------------------------
+const evidenceSchema = z.object({
+  student_id: z.uuid(),
+  kind: z.enum(EVIDENCE_KINDS, "Choose what it is."),
+  title: z.string().trim().min(2, "Give it a short name, for example \"Term 2 report\".").max(200),
+  subject: z.string().trim().max(100).optional(),
+  dated_on: z.union([z.iso.date(), z.literal("")]).optional(),
+  grade: z.string().trim().max(30).optional(),
+  note: z.string().trim().max(1000).optional(),
+});
+
+export async function addEvidence(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const { file, ...fields } = Object.fromEntries(formData);
+  const parsed = evidenceSchema.safeParse(fields);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file or take a photo." };
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    return { error: "That file is too big. Please use a file under 3.5 MB, or take a photo instead." };
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const type = documentType(bytes);
+  if (!type) return { error: "Please upload a PDF or a photo (JPG, PNG or WebP)." };
+
+  const supabase = await createClient();
+  const path = `${v.student_id}/${randomUUID()}.${type.ext}`;
+  const upload = await supabase.storage
+    .from("learning-evidence")
+    .upload(path, bytes, { contentType: type.type, upsert: false });
+  if (upload.error) return { error: "Couldn't upload the file. Please try again." };
+
+  const { error } = await supabase.from("learning_evidence").insert({
+    student_id: v.student_id,
+    kind: v.kind,
+    title: v.title,
+    subject: v.subject || null,
+    dated_on: v.dated_on || null,
+    grade: v.grade || null,
+    note: v.note || null,
+    file_path: path,
+    file_type: type.type,
+    // The database sets the real value from who is uploading.
+    uploaded_by_role: "parent",
+  });
+  if (error) {
+    // Don't leave an unattached copy behind.
+    await supabase.storage.from("learning-evidence").remove([path]);
+    return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." };
+  }
+
+  revalidatePath(progressPath(v.student_id));
+  return { message: "Uploaded. The tutor will have a look." };
+}
+
+export async function removeEvidence(formData: FormData) {
+  await requireViewer();
+  const parsed = z.object({ evidence_id: z.uuid(), student_id: z.uuid() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  // The file itself is removed by the daily job once the record is gone.
+  await supabase.from("learning_evidence").delete().eq("id", parsed.data.evidence_id);
+  revalidatePath(progressPath(parsed.data.student_id));
+}
+
+export async function reviewEvidence(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({ evidence_id: z.uuid(), student_id: z.uuid(), comment: z.string().trim().max(1000).optional() })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const skills = formData.getAll("skill_id").map(String);
+  if (!skills.every((s) => z.uuid().safeParse(s).success)) return { error: "Choose skills from the list." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("review_evidence", {
+    p_evidence: parsed.data.evidence_id,
+    p_comment: parsed.data.comment ?? "",
+    p_skills: skills,
+  });
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." };
+  revalidatePath(progressPath(parsed.data.student_id));
+  return { message: "Saved." };
 }

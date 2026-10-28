@@ -63,3 +63,13 @@ export const RECOMMENDATION_NAMES: Record<string, string> = {
   fewer_sessions: "Fewer sessions",
   break: "Take a break",
 };
+
+// Evidence of learning: what families, students and tutors can upload.
+export const EVIDENCE_KINDS = ["graded_work", "school_report", "naplan", "other_assessment", "work_sample"] as const;
+export const EVIDENCE_KIND_NAMES: Record<(typeof EVIDENCE_KINDS)[number], string> = {
+  graded_work: "Marked school work or test",
+  school_report: "School report",
+  naplan: "NAPLAN results",
+  other_assessment: "Other assessment",
+  work_sample: "Sample of work",
+};
