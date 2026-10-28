@@ -4,7 +4,7 @@
 -- parent), and login ...31 (given to Cal Two for these tests).
 
 -- The migration is safe to run twice.
-\ir ../migrations/20261029200100_progress_roadmaps.sql
+\ir ../migrations/20261029500100_progress_roadmaps.sql
 
 select tests.claims(null);
 select id as cara from public.students where full_name = 'Cara One' \gset
