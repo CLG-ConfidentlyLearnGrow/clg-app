@@ -223,6 +223,58 @@ export async function giveStudentLogin(_prev: FormState, formData: FormData): Pr
   };
 }
 
+// Sends a family or student a new link to choose their password, for when
+// the first one ran out before they used it. Only for family accounts that
+// have never signed in: staff use "Add staff", and anyone who has signed in
+// can use "Forgot password" themselves.
+export async function sendNewLink(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = z.email("Enter a valid email address.").trim().toLowerCase().safeParse(formData.get("email"));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const email = parsed.data;
+
+  const supabase = await createClient();
+  const lookup = await supabase.rpc("admin_find_account", { p_email: email });
+  if (lookup.error) return { error: "We couldn't check that email. Please try again." };
+  const found = ((lookup.data ?? []) as Found[])[0];
+  if (!found) return { error: `No CLG account uses ${email}. To make one, use "Set up a family".` };
+
+  const admin = createAdminClient();
+  const roles = await admin.from("account_roles").select("role").eq("account_id", found.account_id);
+  const roleNames = (roles.data ?? []).map((r) => r.role as string);
+  if (roles.error) return { error: "We couldn't check that account. Please try again." };
+  if (roleNames.includes("admin") || roleNames.includes("tutor")) {
+    return { error: "That's a staff account. To send staff a new link, invite them again under Staff." };
+  }
+  if (roleNames.length === 0) {
+    return { error: `That account was made for a student's own login. Use "Give a student their own login" again with the same email.` };
+  }
+  const user = await admin.auth.admin.getUserById(found.account_id);
+  if (user.error || !user.data.user) return { error: "We couldn't check that account. Please try again." };
+  if (user.data.user.last_sign_in_at) {
+    return {
+      error: `${found.full_name} has already signed in. If they've forgotten their password, they can use "Forgot password" on the sign-in page.`,
+    };
+  }
+
+  const redirectTo = `${siteUrl()}/login`;
+  const confirmed = Boolean(user.data.user.email_confirmed_at);
+  const sent = confirmed
+    ? await admin.auth.resetPasswordForEmail(email, { redirectTo })
+    : await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
+  if (!sent.error) return { message: `We've emailed ${email} a new link to choose a password.` };
+  console.error("New login link email failed:", sent.error.code ?? sent.error.name, sent.error.message);
+
+  const made = await admin.auth.admin.generateLink(
+    confirmed ? { type: "recovery", email, options: { redirectTo } } : { type: "invite", email, options: { redirectTo } },
+  );
+  if (made.error || !made.data.properties?.action_link) {
+    console.error("New login link failed:", made.error?.code, made.error?.message);
+    return { error: "We couldn't make a new link. Please try again." };
+  }
+  return { message: `New link made for ${found.full_name}.${sentText(email, made.data.properties.action_link)}` };
+}
+
 // A family set up by CLG agrees to the privacy policy and terms the first
 // time they sign in.
 export async function agreeToPolicies(_prev: FormState, formData: FormData): Promise<FormState> {
