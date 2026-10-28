@@ -66,4 +66,4 @@ Privacy and child safety:
 
 ## Not built yet
 
-Phase 2 of the brief: senior certificates by state, voice-to-text, and email delivery of updates. Built: roadmaps (learning-roadmaps.md), term reviews and monthly summaries (term-reviews.md), work and reports uploads (learning-evidence.md).
+Still to come: voice-to-text, and email delivery of updates. Phase 2 built: roadmaps (learning-roadmaps.md), term reviews and monthly summaries (term-reviews.md), work and reports uploads (learning-evidence.md), senior certificates by state (senior-certificates.md).

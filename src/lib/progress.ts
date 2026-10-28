@@ -73,3 +73,17 @@ export const EVIDENCE_KIND_NAMES: Record<(typeof EVIDENCE_KINDS)[number], string
   other_assessment: "Other assessment",
   work_sample: "Sample of work",
 };
+
+// The compulsory parts of a senior certificate a subject can count towards (SACE).
+export const SENIOR_AREA_NAMES: Record<string, string> = {
+  eif: "Exploring Identities and Futures",
+  literacy: "Literacy (an English subject)",
+  numeracy: "Numeracy (a Maths subject)",
+  aif: "Activating Identities and Futures (or Research Project)",
+};
+
+export const SENIOR_STATUS_NAMES: Record<string, string> = {
+  planned: "Planning to take",
+  studying: "Studying now",
+  finished: "Finished",
+};

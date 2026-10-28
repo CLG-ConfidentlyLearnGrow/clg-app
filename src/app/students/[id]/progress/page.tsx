@@ -8,6 +8,7 @@ import { localDate, localToday, sessionWhen } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { Roadmap } from "./roadmap";
 import { EvidenceCard } from "./evidence";
+import { SeniorCertificateCard } from "./senior-certificate";
 import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 
@@ -256,6 +257,13 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         canRemoveAny={viewer.roles.includes("admin") || student.data.account_id === viewer.id || Boolean(familyLink.data?.can_manage)}
         isStaff={isStaff}
         goalSkills={noteSkills}
+      />
+
+      <SeniorCertificateCard
+        studentId={id}
+        yearLevel={student.data.year_level}
+        canPlan={canPlan}
+        thisYear={Number(localToday().slice(0, 4))}
       />
 
       {isFamily && latest && !reflectionOf(latest) && (

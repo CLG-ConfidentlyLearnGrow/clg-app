@@ -3,6 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import {
   addEvidence,
+  addSeniorSubject,
   addGoal,
   addRoadmapStep,
   addRoadmapTarget,
@@ -13,6 +14,7 @@ import {
   saveFamilyNote,
   saveReflection,
   saveSessionNote,
+  updateSeniorSubject,
 } from "@/app/actions/progress";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
@@ -23,6 +25,7 @@ import {
   CONFIDENCE_NAMES,
   EVIDENCE_KINDS,
   EVIDENCE_KIND_NAMES,
+  SENIOR_AREA_NAMES,
   RECOMMENDATION_NAMES,
   SKILL_LEVEL_NAMES,
   nextLevels,
@@ -450,6 +453,73 @@ export function EvidenceReviewForm({
           ))}
         </fieldset>
       )}
+    </ActionForm>
+  );
+}
+
+// A senior subject the student is planning, studying or has finished.
+export function SeniorSubjectForm({
+  studentId,
+  certificate,
+  thisYear,
+}: {
+  studentId: string;
+  certificate: string;
+  thisYear: number;
+}) {
+  return (
+    <ActionForm action={addSeniorSubject} submitLabel="Add subject">
+      <input type="hidden" name="student_id" value={studentId} />
+      <input type="hidden" name="certificate" value={certificate} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Field label="Subject" name="subject" required maxLength={100} hint='As the school names it, e.g. "General Mathematics".' />
+        </div>
+        <Field label="Year (optional)" name="school_year" type="number" min={2020} max={2100} defaultValue={thisYear} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Select label="Stage" name="stage" defaultValue="1">
+          <option value="1">Stage 1 (usually Year 11)</option>
+          <option value="2">Stage 2 (usually Year 12)</option>
+        </Select>
+        <Select label="Credits" name="credits" defaultValue="10">
+          <option value="10">10 (one semester)</option>
+          <option value="20">20 (full year)</option>
+        </Select>
+        <Select label="Counts towards" name="area" defaultValue="">
+          <option value="">Nothing compulsory</option>
+          {Object.entries(SENIOR_AREA_NAMES).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Select label="Status" name="status" defaultValue="studying">
+          <option value="planned">Planning to take</option>
+          <option value="studying">Studying now</option>
+          <option value="finished">Finished</option>
+        </Select>
+        <Field label="Grade (if finished)" name="grade" maxLength={3} hint="A to E at Stage 1; A+ to E- at Stage 2." />
+      </div>
+    </ActionForm>
+  );
+}
+
+export function SeniorResultForm({ studentId, id, status, grade }: { studentId: string; id: string; status: string; grade: string | null }) {
+  return (
+    <ActionForm action={updateSeniorSubject} submitLabel="Save">
+      <input type="hidden" name="student_id" value={studentId} />
+      <input type="hidden" name="id" value={id} />
+      <div className="grid grid-cols-2 gap-4">
+        <Select label="Status" name="status" defaultValue={status}>
+          <option value="planned">Planning to take</option>
+          <option value="studying">Studying now</option>
+          <option value="finished">Finished</option>
+        </Select>
+        <Field label="Grade" name="grade" maxLength={3} defaultValue={grade ?? ""} />
+      </div>
     </ActionForm>
   );
 }

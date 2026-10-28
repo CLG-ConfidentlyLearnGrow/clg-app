@@ -449,3 +449,75 @@ export async function reviewEvidence(_prev: FormState, formData: FormData): Prom
   revalidatePath(progressPath(parsed.data.student_id));
   return { message: "Saved." };
 }
+
+// ---------------------------------------------------------------------------
+// Senior certificate subjects (SACE and other states' certificates).
+// ---------------------------------------------------------------------------
+const seniorSubjectSchema = z.object({
+  student_id: z.uuid(),
+  certificate: z.string().regex(/^[A-Z_]{2,12}$/),
+  subject: z.string().trim().min(2, "Enter the subject.").max(100),
+  stage: z.coerce.number().int().min(1).max(2, "Choose Stage 1 or Stage 2."),
+  credits: z.coerce.number().refine((n) => n === 10 || n === 20, "Choose 10 or 20 credits."),
+  area: z.enum(["", "eif", "literacy", "numeracy", "aif"]).optional(),
+  school_year: z.union([z.coerce.number().int().min(2020).max(2100), z.literal("")]).optional(),
+  status: z.enum(["planned", "studying", "finished"]),
+  grade: z.string().trim().max(3).optional(),
+});
+
+export async function addSeniorSubject(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = seniorSubjectSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  if (v.status === "finished" && !v.grade) return { error: "Add the grade for a finished subject." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("senior_subjects").insert({
+    student_id: v.student_id,
+    certificate: v.certificate,
+    subject: v.subject,
+    stage: v.stage,
+    credits: v.credits,
+    area: v.area || null,
+    school_year: v.school_year || null,
+    status: v.status,
+    grade: v.status === "finished" ? v.grade : null,
+  });
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." };
+  revalidatePath(progressPath(v.student_id));
+  return { message: "Subject added." };
+}
+
+export async function updateSeniorSubject(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({
+      id: z.uuid(),
+      student_id: z.uuid(),
+      status: z.enum(["planned", "studying", "finished"]),
+      grade: z.string().trim().max(3).optional(),
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  if (v.status === "finished" && !v.grade) return { error: "Add the grade for a finished subject." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("senior_subjects")
+    .update({ status: v.status, grade: v.status === "finished" ? v.grade : null })
+    .eq("id", v.id);
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." };
+  revalidatePath(progressPath(v.student_id));
+  return { message: "Saved." };
+}
+
+export async function removeSeniorSubject(formData: FormData) {
+  await requireViewer();
+  const parsed = z.object({ id: z.uuid(), student_id: z.uuid() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.from("senior_subjects").delete().eq("id", parsed.data.id);
+  revalidatePath(progressPath(parsed.data.student_id));
+}
