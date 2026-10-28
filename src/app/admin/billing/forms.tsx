@@ -10,6 +10,7 @@ import {
   saveFamilyBilling,
   saveKeptRate,
   savePrice,
+  saveSplit,
   voidInvoice,
 } from "@/app/actions/billing";
 import { ActionForm } from "@/components/action-form";
@@ -49,6 +50,31 @@ export function FamilyPlanForm({
           ))}
         </Select>
       </div>
+    </ActionForm>
+  );
+}
+
+export function SplitForm({ familyId, payers }: { familyId: string; payers: Option[] }) {
+  return (
+    <ActionForm action={saveSplit} submitLabel="Save split">
+      <input type="hidden" name="family_id" value={familyId} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select label="Also pays" name="payer_id" required defaultValue="">
+          <option value="" disabled>
+            Choose…
+          </option>
+          {payers.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+        <Field label="Their share (%)" name="share" inputMode="numeric" required placeholder="50" />
+      </div>
+      <p className="text-xs text-zinc-500">
+        The bill payer pays the rest. Each payer saves their own card or bank debit and sees only their own share and
+        payments. Applies to invoices made from now on.
+      </p>
     </ActionForm>
   );
 }

@@ -1,4 +1,4 @@
-import { approveInvoice } from "@/app/actions/billing";
+import { approveInvoice, removeSplit } from "@/app/actions/billing";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
@@ -18,6 +18,7 @@ import {
   RunNowForm,
   SchoolPeriodForm,
   SettingsForm,
+  SplitForm,
   VoidInvoiceForm,
 } from "./forms";
 import { PaySection } from "./pay-section";
@@ -76,7 +77,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "families";
   const supabase = await createClient();
 
-  const [me, families, accounts, rates, prices, credits, invoices, overrides, periods, settings] = await Promise.all([
+  const [me, families, accounts, rates, prices, credits, invoices, overrides, periods, settings, splits] = await Promise.all([
     supabase.from("admin_profiles").select("level").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("families")
@@ -96,7 +97,9 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
     supabase.from("billing_pause_overrides").select("family_id, reason, until_on, payment_plan").is("ended_at", null),
     supabase.from("billing_school_periods").select("id, name, kind, state, starts_on, ends_on").order("starts_on"),
     supabase.from("billing_settings").select("invoice_mode, override_by, show_tutor_on_invoice").maybeSingle(),
+    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready"),
   ]);
+  const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[];
 
   const isOwner = me.data?.level === "owner";
   const canOverride = settings.data?.override_by === "admin" || isOwner;
@@ -191,6 +194,40 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                   />
                   {acct && (
                     <>
+                      <SubHeading>Split payments</SubHeading>
+                      {splitRows.filter((r) => r.family_id === f.id).length > 0 ? (
+                        <ul className="mb-3 space-y-2 text-sm">
+                          <li>
+                            {payers.get(acct.bill_payer_id ?? "") ?? "Bill payer"} (bill payer):{" "}
+                            {100 - splitRows.filter((r) => r.family_id === f.id).reduce((t, r) => t + r.share_percent, 0)}%
+                          </li>
+                          {splitRows
+                            .filter((r) => r.family_id === f.id)
+                            .map((r) => (
+                              <li key={r.account_id} className="flex flex-wrap items-center gap-3">
+                                <span>
+                                  {payers.get(r.account_id) ?? "Payer"}: {r.share_percent}% ·{" "}
+                                  {r.payment_ready ? METHOD_LABELS[r.method] : "no automatic payment yet"}
+                                </span>
+                                <form action={removeSplit}>
+                                  <input type="hidden" name="family_id" value={f.id} />
+                                  <input type="hidden" name="payer_id" value={r.account_id} />
+                                  <Button type="submit">Remove</Button>
+                                </form>
+                              </li>
+                            ))}
+                        </ul>
+                      ) : (
+                        <p className="mb-3 text-sm text-zinc-600">The bill payer pays each invoice in full.</p>
+                      )}
+                      {acct.bill_payer_id ? (
+                        <SplitForm
+                          familyId={f.id}
+                          payers={[...payers].filter(([id]) => id !== acct.bill_payer_id).map(([id, name]) => ({ id, name }))}
+                        />
+                      ) : (
+                        <p className="mb-3 text-sm text-zinc-600">Choose a bill payer first to split payments.</p>
+                      )}
                       <SubHeading>Kept rate</SubHeading>
                       {ratesOf(f.id).length > 0 ? (
                         <p className="mb-3 text-sm">
