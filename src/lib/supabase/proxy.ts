@@ -23,6 +23,8 @@ const PUBLIC_PATHS = [
   "/api/teams/cron",
   // The daily progress tidy-up (checks the same secret).
   "/api/progress/cron",
+  // The email sender, woken by the database (checks the same secret).
+  "/api/email/cron",
 ];
 
 // Keeps the Supabase session fresh on every request and sends signed-out

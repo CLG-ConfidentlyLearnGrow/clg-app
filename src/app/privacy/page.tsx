@@ -11,6 +11,7 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-2 pl-5 text-sm">
           <li>CLG collects only what it needs to provide tutoring and learning support.</li>
           <li>Your information is stored in Australia and protected with encryption.</li>
+          <li>Emails from the app are sent by Resend, an email service based in the United States. It handles your email address and the short message (such as a session reminder), not your learning records.</li>
           <li>Tutors see only the students they currently teach. Parents see only their own children.</li>
           <li>You can ask to see, correct or delete your information at any time.</li>
           <li>Learning records are deleted two years after a student&apos;s last lesson or enrolment.</li>
