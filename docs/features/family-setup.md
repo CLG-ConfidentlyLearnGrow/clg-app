@@ -14,7 +14,7 @@ Requested by Carla, 2026-10-28.
   - Students 16 or over with their own login still need date of birth, state, year level and school up front, because their age must be checked before they get a login.
 - **Why we ask for date of birth.** Every date of birth field says: "We ask for date of birth so we can apply the privacy and child safety protections that suit each age group." Date of birth decides parent consent, whether a student may have their own login (16+), and child safety checks.
 - **The family gets a link.** The app emails the link to choose a password.
-  - Until CLG's own email sender (Resend) is set up, Supabase can't email families. Instead, the admin sees the link and sends it themselves, for example by text.
+  - Until CLG's own email sender (Resend) is set up in Supabase, Supabase can't email families. Instead, the admin sees the link and sends it themselves, for example by text. See [sending-emails.md](sending-emails.md).
   - The link works once, for a short time, in any browser.
 - **First sign-in.** After choosing a password, the family agrees to the privacy policy and terms (the `/agree` page) before seeing their dashboard. They can check and change the details CLG entered. The `/agree` page also covers anyone whose parent or student account has no agreement on record.
 - **Already checked.** A parent link made by an admin is already confirmed, so a tutor can be assigned straight away. Links that parents make themselves still wait for an admin.
