@@ -1,4 +1,4 @@
-import { cronSecret } from "@/lib/billing/config";
+import { isCronRequest } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailIsSetUp, sendEmails, type OutgoingEmail } from "@/lib/email/send";
 
@@ -10,11 +10,11 @@ const SOURCES = [
   { claim: "session_notice_emails_claim", release: "session_notice_emails_release" },
   { claim: "progress_notice_emails_claim", release: "progress_notice_emails_release" },
   { claim: "billing_tutor_notice_emails_claim", release: "billing_tutor_notice_emails_release" },
+  { claim: "security_alert_emails_claim", release: "security_alert_emails_release" },
 ] as const;
 
 async function run(request: Request) {
-  const secret = cronSecret();
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isCronRequest(request)) {
     return new Response("Not allowed", { status: 401 });
   }
   if (!emailIsSetUp()) {

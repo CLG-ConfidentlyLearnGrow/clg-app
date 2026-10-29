@@ -29,3 +29,32 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run migrations and access-rule tests
         run: PG_BIN=/usr/lib/postgresql/16/bin ./scripts/test-db.sh
+
+  # Safety checks that never touch the live app.
+  security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Fails if an add-on the live app uses has a known high or critical flaw.
+      - name: Check add-ons for known security flaws
+        run: npm audit --omit=dev --audit-level=high
+      # Fails if a password, API key or other secret has been saved into the
+      # code. Uses the free Gitleaks tool, checked against its published
+      # fingerprint before it runs.
+      - name: Check the code for saved passwords and keys
+        env:
+          GITLEAKS_VERSION: 8.24.3
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          file="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$file" "$base/$file"
+          curl -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " $file\$" checksums.txt | sha256sum -c -
+          tar -xzf "$file" gitleaks
+          ./gitleaks git . --redact --no-banner --exit-code 1
