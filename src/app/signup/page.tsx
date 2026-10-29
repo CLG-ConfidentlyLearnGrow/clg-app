@@ -6,7 +6,7 @@ export default function SignupPage() {
     <Page title="Create an account">
       <Card>
         <p className="mb-4 text-sm text-zinc-600">
-          Students under 16 use CLG through a parent&apos;s account. Tutors join by invitation from CLG.
+          Parents, and students aged 16 or over, can create an account here straight away. Students under 16 use CLG through a parent&apos;s account. Tutors and admins join using the invitation link CLG emails them.
         </p>
         <SignupForm />
         <p className="mt-4 text-sm">

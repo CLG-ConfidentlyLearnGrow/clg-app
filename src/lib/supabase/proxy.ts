@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
   "/",
   "/login",
   "/signup",
+  // Staff invite links (each checks its own secret).
+  "/join",
   "/forgot-password",
   "/check-email",
   "/privacy",
