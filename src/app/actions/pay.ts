@@ -116,7 +116,7 @@ export async function sendTimesheetsNow(_prev: FormState, formData: FormData): P
   const start = day.safeParse(formData.get("period_start"));
   if (!start.success) return { error: "Choose the pay period." };
   if (!xeroConfig() || !(await xeroConnection())) {
-    return { error: "Connect Xero first (Stripe and Xero section). Until then, use these lines to enter pay by hand." };
+    return { error: "Connect Xero first (Billing, Stripe and Xero tab). Wages are paid only through Xero Payroll, never Stripe. Until Xero is connected, use these lines to enter pay in Xero by hand." };
   }
   const supabase = await createClient();
   // Work it out again first so the latest confirmed times are used.
