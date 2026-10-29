@@ -23,6 +23,8 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 
 ## Tutor and staff pay (added 2026-10-28)
 
+- **Paid through Xero Payroll only.** Tutors and staff are never paid through Stripe (Carla, 2026-10-29). Stripe is only for family payments. The app sends pay to Xero Payroll as draft timesheets, and Carla pays wages from a Xero pay run.
+
 - **Rates.** Admins enter up to three hourly rates per person (school tutoring, tertiary and other tutoring, admin) and their employment type (casual, part-time, full-time).
 - **Pay lines.** Pay comes from the confirmed worked time on each session (scheduling's sign on and sign off). A tutor who starts late is paid the time worked; a student who is late doesn't change the tutor's pay.
 - **Late cancels and no-shows.** Before the tutor has signed on: 50% of the session or 1 hr, whichever is less (CLG's own rule). After the tutor has signed on: the time they had to be there. A tutor's own cancellation is unpaid.
