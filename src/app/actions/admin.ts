@@ -7,7 +7,7 @@ import { checkDates } from "@/lib/check-dates";
 import { CHECK_KINDS, STATES } from "@/lib/checks";
 import { siteUrl } from "@/lib/env";
 import type { FormState } from "@/lib/forms";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { emailIsSetUp, sendEmails } from "@/lib/email/send";
 import { createClient } from "@/lib/supabase/server";
 
 // Every action re-checks admin access here, and the database checks again.
@@ -18,17 +18,17 @@ const inviteSchema = z.object({
 });
 
 export async function inviteStaff(_prev: FormState, formData: FormData): Promise<FormState> {
-  const viewer = await requireAdmin();
+  await requireAdmin();
   const parsed = inviteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { email, role } = parsed.data;
 
-  // Recorded through the admin's own session, so the database decides
-  // whether this admin may invite this role.
+  // Done through the admin's own session, so the database decides whether
+  // this admin may invite this role.
   const supabase = await createClient();
 
   // Someone who already has a CLG account (for example a parent who also
-  // tutors) gets the role straight away instead of an invitation email.
+  // tutors) gets the role straight away instead of an invitation.
   const existing = await supabase.rpc("grant_staff_role", { p_email: email, p_role: role });
   if (existing.error) {
     const plain = ["42501", "22023", "23505"].includes(existing.error.code ?? "");
@@ -41,60 +41,58 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
     };
   }
 
-  const invitation = await supabase
-    .from("invitations")
-    .insert({ email, role, invited_by: viewer.id })
-    .select("id")
-    .single();
-  if (invitation.error) {
-    if (invitation.error.code === "23505") {
-      // One open invitation per email. Extra roles are added once they join.
-      const open = await supabase
-        .from("invitations")
-        .select("role")
-        .eq("email", email)
-        .is("accepted_at", null)
-        .maybeSingle();
-      const as = open.data?.role ? ` as ${open.data.role}` : "";
-      return {
-        error: `${email} already has an invitation waiting${as}. Once they've accepted it and signed in, invite them again as ${role} and the role is added straight away.`,
-      };
-    }
-    if (invitation.error.code === "42501") return { error: "Only the owner can invite admins." };
-    return { error: "Couldn't create the invitation. Please try again." };
+  // Everyone else gets CLG's own invite link: for this email and role only,
+  // works once, for 7 days. Joining through it gives the role straight away.
+  // A new link replaces any earlier one for the same email.
+  const made = await supabase.rpc("create_staff_invite_link", { p_email: email, p_role: role });
+  if (made.error || typeof made.data !== "string") {
+    const plain = ["42501", "22023", "23505"].includes(made.error?.code ?? "");
+    if (made.error) console.error("Invite link failed:", made.error.code, made.error.message);
+    return { error: plain && made.error ? `${made.error.message}.` : "Couldn't make the invitation. Please try again." };
   }
+  const link = `${siteUrl()}/join?t=${made.data}`;
+  revalidatePath("/admin");
 
-  const sent = await createAdminClient().auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${siteUrl()}/auth/confirm?next=/set-password`,
-  });
-  if (sent.error) {
-    console.error("Invitation email failed:", sent.error.code ?? sent.error.name, sent.error.message);
-    if (sent.error.code === "email_exists") {
-      await supabase.from("invitations").delete().eq("id", invitation.data.id);
-      return { error: "That email already has a CLG account that isn't confirmed yet. Ask them to confirm it, then try again." };
-    }
+  const roleWords = role === "admin" ? "an admin" : "a tutor";
+  const problem = emailIsSetUp()
+    ? await sendEmails([
+        {
+          id: `staff-invite-${made.data.slice(0, 16)}`,
+          email,
+          first_name: null,
+          subject: `You're invited to join CLG Tutoring as ${roleWords}`,
+          body:
+            role === "tutor"
+              ? "CLG Tutoring has invited you to join the CLG app as a tutor. Use the button to choose your name and password. The link works once, for 7 days. Next you'll set up two-step login and add your checks (Working with Children Check, RRHAN-EC and first aid), which CLG confirms before matching you with students."
+              : "CLG Tutoring has invited you to join the CLG app as an admin. Use the button to choose your name and password. The link works once, for 7 days. Next you'll set up two-step login.",
+          link: `/join?t=${made.data}`,
+          button: "Accept invitation",
+          footer: `This invitation is only for ${email}. If you weren't expecting it, you can ignore this email.`,
+        },
+      ])
+    : "Email isn't set up yet.";
 
-    // Usually Supabase's built-in email can't send yet (it only emails the
-    // Supabase team, a few an hour, until CLG's own sender is set up). Make
-    // the invitation link instead, for the admin to send in Teams or email.
-    const link = await createAdminClient().auth.admin.generateLink({
-      type: "invite",
-      email,
-      options: { redirectTo: `${siteUrl()}/login` },
-    });
-    if (link.error || !link.data.properties?.action_link) {
-      console.error("Invitation link failed:", link.error?.code, link.error?.message);
-      await supabase.from("invitations").delete().eq("id", invitation.data.id);
-      return { error: "We couldn't send the invitation or make a link for it. Please try again later." };
-    }
-    revalidatePath("/admin");
+  if (problem) {
+    console.error("Invitation email failed:", problem);
     return {
-      message: `The email couldn't be sent, because CLG's own email sender isn't set up yet. Instead, copy this link and send it to ${email} yourself. It works once, and only for a short time (usually one hour): ${link.data.properties.action_link}`,
+      message: `The invitation is ready, but the email couldn't be sent. Copy this link and send it to ${email} yourself (for example by email or Teams). It only works for ${email}, once, for 7 days: ${link}`,
     };
   }
+  return {
+    message: `Invitation sent to ${email}. The link works once, for 7 days. When they join, they're ${roleWords} straight away. If it gets lost, add them again to send a new link (the old one stops working).`,
+  };
+}
 
+const cancelSchema = z.object({ id: z.uuid() });
+
+// Cancels an invitation nobody has used yet. Its link stops working.
+export async function cancelInvitation(formData: FormData) {
+  await requireAdmin();
+  const parsed = cancelSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const supabase = await createClient();
+  await supabase.from("invitations").delete().eq("id", parsed.data.id).is("accepted_at", null);
   revalidatePath("/admin");
-  return { message: `Invitation sent to ${email}.` };
 }
 
 export async function verifyParentLink(formData: FormData) {

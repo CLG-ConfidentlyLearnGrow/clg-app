@@ -91,14 +91,66 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     if (error.code === "weak_password") {
       return { error: "That password is too easy to guess or has appeared in a data breach. Please choose another." };
     }
-    // Includes emails with a pending staff invitation, which the database refuses.
     return {
       error:
-        "We couldn't create that account. If CLG invited you, please use the link in your invitation email.",
+        "We couldn't create that account. If CLG invited you to join as staff, please use the link in your invitation email.",
     };
   }
 
   redirect("/check-email");
+}
+
+// Joining CLG as a tutor or admin through an invite link (/join). The link
+// was only sent to the invited email, so using it proves the person owns
+// that inbox: the account is made with the email already confirmed, and the
+// database gives the invited role straight away. No approval step.
+const joinSchema = z.object({
+  t: z.string().regex(/^[0-9a-f]{64}$/, "This invitation link isn't complete. Please open it again from your email."),
+  full_name: z.string().trim().min(1, "Enter your name.").max(200),
+  password: newPassword,
+});
+
+type InviteDetails = { email: string; role: "tutor" | "admin"; expires_at: string; status: "open" | "used" | "expired" };
+
+export async function joinAsStaff(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = joinSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  // Check the link again here: it may have been used or replaced since the
+  // page was opened.
+  const supabase = await createClient();
+  const details = await supabase.rpc("staff_invite_link_details", { p_token: v.t });
+  const invite = ((details.data ?? []) as InviteDetails[])[0];
+  if (details.error) return { error: "We couldn't check your invitation. Please try again." };
+  if (!invite) return { error: "This invitation link no longer works. A newer one may have been sent. Please ask CLG for a new link." };
+  if (invite.status === "used") return { error: "This invitation has already been used. Please sign in instead." };
+  if (invite.status === "expired") return { error: "This invitation has expired. Please ask CLG to send a new link." };
+
+  const made = await createAdminClient().auth.admin.createUser({
+    email: invite.email,
+    password: v.password,
+    email_confirm: true,
+    user_metadata: { full_name: v.full_name },
+  });
+  if (made.error) {
+    console.error("Joining as staff failed:", made.error.code ?? made.error.name, made.error.message);
+    if (made.error.code === "weak_password") {
+      return { error: "That password is too easy to guess or has appeared in a data breach. Please choose another." };
+    }
+    if (made.error.code === "email_exists") {
+      return {
+        error:
+          "This email already has a CLG account. Please sign in. If you never finished setting that account up, use \"Forgot your password?\" on the sign-in page, and your invitation is added when you do.",
+      };
+    }
+    return { error: "We couldn't set up your account. Please try again, or ask CLG for a new link." };
+  }
+
+  const signedIn = await supabase.auth.signInWithPassword({ email: invite.email, password: v.password });
+  if (signedIn.error) redirect("/login");
+  // Staff must set up two-step login before they can see anything else.
+  redirect("/mfa");
 }
 
 const signInSchema = z.object({ email, password: z.string().min(1).max(128) });

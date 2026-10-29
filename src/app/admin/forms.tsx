@@ -37,8 +37,9 @@ export function InviteForm({ canInviteAdmins }: { canInviteAdmins: boolean }) {
   return (
     <ActionForm action={inviteStaff} submitLabel="Add">
       <p className="text-sm text-zinc-600">
-        New people get an invitation email. If the email already has a CLG account (for example a parent, or you),
-        the role is added to that account straight away.
+        New people get an invitation link for this role. When they join through it, they have the role straight
+        away, with no approval needed. The link only works for that email, once, for 7 days. If the email already
+        has a CLG account (for example a parent, or you), the role is added to that account straight away.
       </p>
       <Field label="Email" name="email" type="email" required />
       <Select label="Role" name="role" defaultValue="tutor">

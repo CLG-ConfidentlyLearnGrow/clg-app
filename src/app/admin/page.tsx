@@ -1,4 +1,5 @@
 import {
+  cancelInvitation,
   confirmCheck,
   releaseHold,
   verifyParentLink,
@@ -195,6 +196,17 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       }),
   );
   const isOwner = me.data?.level === "owner";
+  // Staff invitations nobody has used yet (only needed on the Staff section).
+  const openInvites =
+    section === "staff"
+      ? (((
+          await supabase
+            .from("invitations")
+            .select("id, email, role, expires_at")
+            .is("accepted_at", null)
+            .order("created_at", { ascending: false })
+        ).data ?? []) as { id: string; email: string; role: string; expires_at: string }[])
+      : [];
   const dueRows = (due.data ?? []) as Due[];
   const holdRows = (holds.data ?? []) as unknown as Hold[];
   const ruleRows = (rules.data ?? []) as Rule[];
@@ -685,6 +697,36 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           <>
             <Card title="Add staff">
               <InviteForm canInviteAdmins={isOwner} />
+            </Card>
+
+            <Card
+              title="Invitations not used yet"
+              description="Each link works once, for 7 days, only for that email. To send a new link, add the person again above."
+            >
+              {openInvites.length === 0 ? (
+                <Empty>No invitations waiting.</Empty>
+              ) : (
+                <ul className="divide-y divide-zinc-100 text-sm">
+                  {openInvites.map((i) => {
+                    const expired = new Date(i.expires_at) <= new Date();
+                    return (
+                      <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+                        <span>
+                          <span className="font-medium">{i.email}</span> as {i.role}
+                          <span className="text-zinc-500">
+                            {" "}
+                            · {expired ? "expired" : `works until ${new Date(i.expires_at).toLocaleDateString("en-AU", { timeZone: "Australia/Adelaide" })}`}
+                          </span>
+                        </span>
+                        <form action={cancelInvitation}>
+                          <input type="hidden" name="id" value={i.id} />
+                          <Button type="submit">Cancel</Button>
+                        </form>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </Card>
 
             <Card title="Unlock an account">

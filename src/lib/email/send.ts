@@ -2,9 +2,10 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { siteUrl } from "@/lib/env";
 
-// Sends the app's own emails (reminders, updates, notices) through Resend.
-// Sign-in emails (password reset, invitations) are sent by Supabase, which
-// uses the same Resend account through its SMTP setting.
+// Sends the app's own emails (reminders, updates, notices, staff invite
+// links) through Resend. Other sign-in emails (password reset, family
+// invitations) are sent by Supabase, which uses the same Resend account
+// through its SMTP setting.
 //
 // Settings (in Vercel's Environment Variables):
 //   RESEND_API_KEY  the key from resend.com > API Keys (starts with re_)
@@ -18,6 +19,10 @@ export type OutgoingEmail = {
   subject: string;
   body: string;
   link: string;
+  // Optional: the button's words and the small print at the bottom, for
+  // emails that aren't reminders (for example staff invitations).
+  button?: string;
+  footer?: string;
 };
 
 export const emailIsSetUp = () => Boolean(process.env.RESEND_API_KEY);
@@ -40,7 +45,13 @@ function render(e: OutgoingEmail) {
   const url = `${site}${e.link.startsWith("/") ? e.link : `/${e.link}`}`;
   const settings = `${site}/schedule`;
   const hello = e.first_name ? `Hi ${e.first_name},` : "Hi,";
-  const text = `${hello}\n\n${e.body}\n\nOpen the CLG app: ${url}\n\n--\nCLG Tutoring. You get this email because you use the CLG app. To stop emails like this, change your reminder settings: ${settings}`;
+  const button = e.button ?? "Open the CLG app";
+  const footerText =
+    e.footer ?? `You get this email because you use the CLG app. To stop emails like this, change your reminder settings: ${settings}`;
+  const footerHtml = e.footer
+    ? escapeHtml(e.footer)
+    : `You get this email because you use the CLG app. To stop emails like this, <a href="${escapeHtml(settings)}" style="color:${BRAND.button}">change your reminder settings</a>.`;
+  const text = `${hello}\n\n${e.body}\n\n${button}: ${url}\n\n--\nCLG Tutoring. ${footerText}`;
   const html = `<!doctype html><html><body style="margin:0;background:${BRAND.cream};font-family:Poppins,Arial,sans-serif;color:${BRAND.text}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.cream};padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:28px">
@@ -48,9 +59,9 @@ function render(e: OutgoingEmail) {
 <tr><td style="padding-top:12px;font-size:20px;font-weight:600">${escapeHtml(e.subject)}</td></tr>
 <tr><td style="padding-top:16px;font-size:15px;line-height:1.55">${escapeHtml(hello)}</td></tr>
 <tr><td style="padding-top:8px;font-size:15px;line-height:1.55">${escapeHtml(e.body)}</td></tr>
-<tr><td style="padding-top:24px"><a href="${escapeHtml(url)}" style="display:inline-block;background:${BRAND.button};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">Open the CLG app</a></td></tr>
+<tr><td style="padding-top:24px"><a href="${escapeHtml(url)}" style="display:inline-block;background:${BRAND.button};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">${escapeHtml(button)}</a></td></tr>
 </table>
-<p style="max-width:520px;font-size:12px;line-height:1.5;color:${BRAND.text};padding:16px 8px 0">You get this email because you use the CLG app. To stop emails like this, <a href="${escapeHtml(settings)}" style="color:${BRAND.button}">change your reminder settings</a>.</p>
+<p style="max-width:520px;font-size:12px;line-height:1.5;color:${BRAND.text};padding:16px 8px 0">${footerHtml}</p>
 </td></tr></table></body></html>`;
   return { html, text };
 }
