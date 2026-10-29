@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth";
+import { ADMIN_LEVEL_NAMES, requireAdmin, requireAdminLevel } from "@/lib/auth";
 import { checkDates } from "@/lib/check-dates";
 import { CHECK_KINDS, STATES } from "@/lib/checks";
 import { siteUrl } from "@/lib/env";
@@ -15,6 +15,8 @@ import { createClient } from "@/lib/supabase/server";
 const inviteSchema = z.object({
   email: z.email("Enter a valid email address.").trim().toLowerCase(),
   role: z.enum(["tutor", "admin"]),
+  // Only used for admins. The database refuses anyone but the owner.
+  level: z.enum(["operations", "support", "finance"]).optional(),
 });
 
 export async function inviteStaff(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -22,6 +24,7 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   const parsed = inviteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { email, role } = parsed.data;
+  const level = role === "admin" ? (parsed.data.level ?? "operations") : null;
 
   // Done through the admin's own session, so the database decides whether
   // this admin may invite this role.
@@ -29,7 +32,7 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
 
   // Someone who already has a CLG account (for example a parent who also
   // tutors) gets the role straight away instead of an invitation.
-  const existing = await supabase.rpc("grant_staff_role", { p_email: email, p_role: role });
+  const existing = await supabase.rpc("grant_staff_role", { p_email: email, p_role: role, p_level: level });
   if (existing.error) {
     const plain = ["42501", "22023", "23505"].includes(existing.error.code ?? "");
     return { error: plain ? `${existing.error.message}.` : "Couldn't add them. Please try again." };
@@ -37,14 +40,14 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   if (existing.data === true) {
     revalidatePath("/admin");
     return {
-      message: `${email} already had a CLG account, so they are now a ${role}. They'll see the new tools next time they sign in, after setting up two-step login.`,
+      message: `${email} already had a CLG account, so they are now ${role === "admin" ? `an admin (${ADMIN_LEVEL_NAMES[level ?? "operations"]})` : "a tutor"}. They'll see the new tools next time they sign in, after setting up two-step login.`,
     };
   }
 
   // Everyone else gets CLG's own invite link: for this email and role only,
   // works once, for 7 days. Joining through it gives the role straight away.
   // A new link replaces any earlier one for the same email.
-  const made = await supabase.rpc("create_staff_invite_link", { p_email: email, p_role: role });
+  const made = await supabase.rpc("create_staff_invite_link", { p_email: email, p_role: role, p_level: level });
   if (made.error || typeof made.data !== "string") {
     const plain = ["42501", "22023", "23505"].includes(made.error?.code ?? "");
     if (made.error) console.error("Invite link failed:", made.error.code, made.error.message);
@@ -53,7 +56,7 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   const link = `${siteUrl()}/join?t=${made.data}`;
   revalidatePath("/admin");
 
-  const roleWords = role === "admin" ? "an admin" : "a tutor";
+  const roleWords = role === "admin" ? `an admin (${ADMIN_LEVEL_NAMES[level ?? "operations"]})` : "a tutor";
   const problem = emailIsSetUp()
     ? await sendEmails([
         {
@@ -338,4 +341,137 @@ export async function declineCheck(_prev: FormState, formData: FormData): Promis
   if (error) return { error: "Couldn't send it back. Please try again." };
   revalidatePath("/admin");
   return { message: "Sent back to the tutor with your reason." };
+}
+
+// ---------------------------------------------------------------------------
+// Admin levels
+// ---------------------------------------------------------------------------
+
+const levelSchema = z.object({
+  account_id: z.uuid(),
+  level: z.enum(["operations", "support", "finance"], "Choose a level."),
+});
+
+// The owner changes another admin's level. The database checks it's the
+// owner, and that nobody changes the owner's own level.
+export async function setAdminLevel(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = levelSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_admin_level", {
+    p_account: parsed.data.account_id,
+    p_level: parsed.data.level,
+  });
+  if (error) {
+    const plain = ["42501", "22023"].includes(error.code ?? "");
+    return { error: plain ? `${error.message}.` : "Couldn't change the level. Please try again." };
+  }
+  revalidatePath("/admin");
+  return { message: `Level changed to ${ADMIN_LEVEL_NAMES[parsed.data.level]}. It applies the next time they open a page.` };
+}
+
+// The owner's (or another admin's) name and email, read with the admin's
+// own access, which the database allows for the owner and operations.
+async function nameAndEmail(accountId: string) {
+  const supabase = await createClient();
+  const [account, contact] = await Promise.all([
+    supabase.from("accounts").select("full_name").eq("id", accountId).maybeSingle(),
+    supabase.from("account_private").select("email").eq("account_id", accountId).maybeSingle(),
+  ]);
+  return { name: account.data?.full_name ?? "", email: contact.data?.email ?? null };
+}
+
+function adelaideTime(iso: string) {
+  return new Date(iso).toLocaleString("en-AU", {
+    timeZone: "Australia/Adelaide",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+const requestSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(10, "Please write why you need owner access (at least 10 characters).")
+    .max(1000, "Please keep the reason under 1000 characters."),
+});
+
+// An Operations admin asks for emergency owner access. The owner is emailed
+// straight away with the reason, and can cancel within 48 hours.
+export async function requestEmergencyAccess(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireAdmin();
+  const parsed = requestSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const supabase = await createClient();
+  const { data: id, error } = await supabase.rpc("request_emergency_owner_access", { p_reason: parsed.data.reason });
+  if (error || typeof id !== "string") {
+    const plain = ["42501", "22023", "23505"].includes(error?.code ?? "");
+    return { error: plain && error ? `${error.message}.` : "Couldn't send the request. Please try again." };
+  }
+  revalidatePath("/admin");
+
+  const { data: row } = await supabase.from("emergency_owner_access").select("starts_at").eq("id", id).maybeSingle();
+  const startsAt = row?.starts_at ? adelaideTime(row.starts_at) : "in 48 hours";
+  const { data: owners } = await supabase.from("admin_profiles").select("account_id").eq("level", "owner");
+  const ownerContacts = await Promise.all((owners ?? []).map((o) => nameAndEmail(o.account_id)));
+  const emails = ownerContacts
+    .filter((o) => o.email)
+    .map((o) => ({
+      id: `emergency-access-${id}-${o.email}`,
+      email: o.email as string,
+      first_name: o.name.split(" ")[0] || null,
+      subject: `${viewer.fullName || "An admin"} has asked for emergency owner access`,
+      body: `${viewer.fullName || "An Operations admin"} has asked for owner access to the CLG app because you may be unreachable. Their reason: "${parsed.data.reason}". If you do nothing, they get owner powers from ${startsAt} (Adelaide time) for 7 days. If you don't want this, open the app and press Cancel under Admin > Staff and accounts.`,
+      link: "/admin?section=staff",
+      button: "Review the request",
+      footer: "You get this email because you are the owner of the CLG app.",
+    }));
+  const problem = emails.length === 0 ? "No owner email found." : emailIsSetUp() ? await sendEmails(emails) : "Email isn't set up yet.";
+  if (problem) {
+    console.error("Emergency access email failed:", problem);
+    return {
+      message: `Request sent. The owner will see it in the app, but the email to them couldn't be sent, so please also try to reach them another way. Your access starts ${startsAt} unless they cancel.`,
+    };
+  }
+  return { message: `Request sent and the owner has been emailed. Your access starts ${startsAt} unless they cancel, and lasts 7 days.` };
+}
+
+const cancelRequestSchema = z.object({ id: z.uuid() });
+
+// The owner cancels emergency access (or the person who asked withdraws it).
+// The person who asked is emailed when someone else cancels it.
+export async function cancelEmergencyAccess(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireAdminLevel(["owner", "operations"]);
+  const parsed = cancelRequestSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Something went wrong. Please refresh the page." };
+  const supabase = await createClient();
+  const { data: askedBy, error } = await supabase.rpc("cancel_emergency_owner_access", { p_id: parsed.data.id });
+  if (error) {
+    const plain = ["42501", "22023"].includes(error.code ?? "");
+    return { error: plain ? `${error.message}.` : "Couldn't cancel it. Please try again." };
+  }
+  revalidatePath("/admin");
+  if (typeof askedBy === "string" && askedBy !== viewer.id) {
+    const who = await nameAndEmail(askedBy);
+    if (who.email && emailIsSetUp()) {
+      const problem = await sendEmails([
+        {
+          id: `emergency-access-cancelled-${parsed.data.id}`,
+          email: who.email,
+          first_name: who.name.split(" ")[0] || null,
+          subject: "Your emergency owner access was cancelled",
+          body: `${viewer.fullName || "The owner"} has cancelled your request for emergency owner access in the CLG app. Your own admin access hasn't changed.`,
+          link: "/admin",
+          button: "Open the app",
+        },
+      ]);
+      if (problem) console.error("Emergency access cancel email failed:", problem);
+    }
+  }
+  return { message: "Emergency owner access cancelled." };
 }

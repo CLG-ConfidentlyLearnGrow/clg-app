@@ -15,7 +15,7 @@ import { FamilySetupForm } from "./family-setup-form";
 import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
-import { requireAdmin } from "@/lib/auth";
+import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
 import {
@@ -30,6 +30,7 @@ import {
   UnlockForm,
   WorkStateForm,
 } from "./forms";
+import { EmergencyCancelForm, EmergencyRequestForm, SetLevelForm } from "./level-forms";
 import {
   FrameworkForm,
   ImportSkillsForm,
@@ -91,11 +92,16 @@ type Eligible = {
 };
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
-  const viewer = await requireAdmin();
+  // Finance admins work in Billing; everyone else at their level sees the
+  // sections that fit it (the database decides what they can actually read).
+  const viewer = await requireAdminLevel(FRONT_DESK);
+  const isFull = FULL_ADMIN.includes(viewer.level);
   const supabase = await createClient();
   const params = await searchParams;
-  const studentId = typeof params.student === "string" ? params.student : null;
-  const section = sectionFrom(params.section);
+  const studentId = isFull && typeof params.student === "string" ? params.student : null;
+  const visibleSections = isFull ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => s.id === "families");
+  const wanted = sectionFrom(params.section);
+  const section = visibleSections.some((s) => s.id === wanted) ? wanted : visibleSections[0].id;
 
   const [me, pending, checks, students, tutorList, cleared, due, holds, rules] =
     await Promise.all([
@@ -195,7 +201,46 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         };
       }),
   );
-  const isOwner = me.data?.level === "owner";
+  // Saved level, ignoring emergency access (which only operations can ask for).
+  const savedLevel = (me.data?.level ?? null) as AdminLevel | null;
+  // Acting as owner, including during emergency owner access.
+  const isOwner = viewer.level === "owner";
+  // Every staff member with their roles and level, and any emergency owner
+  // access request (owner and operations only).
+  const [staffRes, emergencyRes, pausedRes] = await Promise.all([
+    isFull && section === "staff" ? supabase.rpc("staff_list") : Promise.resolve({ data: [] }),
+    isFull
+      ? supabase
+          .from("emergency_owner_access")
+          .select("id, requested_by, reason, requested_at, starts_at, ends_at, requester:accounts!emergency_owner_access_requested_by_fkey(full_name)")
+          .is("cancelled_at", null)
+          .gt("ends_at", new Date().toISOString())
+          .order("requested_at", { ascending: false })
+          .limit(1)
+      : Promise.resolve({ data: [] }),
+    section === "families" ? supabase.rpc("family_pause_status") : Promise.resolve({ data: [] }),
+  ]);
+  const staffRows = (staffRes.data ?? []) as {
+    account_id: string;
+    full_name: string;
+    email: string | null;
+    is_tutor: boolean;
+    tutor_active: boolean | null;
+    admin_level: AdminLevel | null;
+  }[];
+  const emergency = ((emergencyRes.data ?? []) as unknown as {
+    id: string;
+    requested_by: string;
+    reason: string;
+    requested_at: string;
+    starts_at: string;
+    ends_at: string;
+    requester: { full_name: string } | null;
+  }[])[0];
+  const emergencyRunning = emergency ? new Date(emergency.starts_at) <= new Date() : false;
+  const pausedFamilies = ((pausedRes.data ?? []) as { family_id: string; family_name: string; paused: boolean; paused_since: string | null }[]).filter(
+    (f) => f.paused,
+  );
   // Staff invitations nobody has used yet (only needed on the Staff section).
   const openInvites =
     section === "staff"
@@ -263,7 +308,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         basePath="/admin"
         label="Admin"
         section={section}
-        sections={ADMIN_SECTIONS.map((s) => ({
+        sections={visibleSections.map((s) => ({
           ...s,
           count:
             s.id === "families"
@@ -277,13 +322,29 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     : undefined,
         }))}
       >
-        <p className="text-sm">
-          <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>
-          {" · "}
-          <TextLink href="/admin/teams">Teams links for online sessions</TextLink>
-          {" · "}
-          <TextLink href="/admin/materials">Materials library</TextLink>
+        <p className="text-sm text-zinc-600">
+          Your admin level: <strong>{ADMIN_LEVEL_NAMES[viewer.level]}</strong>
+          {savedLevel === "operations" && viewer.level === "owner" ? " (emergency owner access)" : ""}
         </p>
+        {emergency && savedLevel === "owner" && (
+          <Card title={emergencyRunning ? "Emergency owner access is running" : "Emergency owner access requested"}>
+            <EmergencyStatus emergency={emergency} running={emergencyRunning} />
+            <EmergencyCancelForm id={emergency.id} label={emergencyRunning ? "End it now" : "Cancel the request"} />
+          </Card>
+        )}
+        {isFull ? (
+          <p className="text-sm">
+            <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>
+            {" · "}
+            <TextLink href="/admin/teams">Teams links for online sessions</TextLink>
+            {" · "}
+            <TextLink href="/admin/materials">Materials library</TextLink>
+          </p>
+        ) : (
+          <p className="text-sm">
+            <TextLink href="/schedule">Bookings and sessions for every family</TextLink>
+          </p>
+        )}
         {section === "families" && (
           <>
             <Card
@@ -310,6 +371,27 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             >
               <NewLinkForm />
             </Card>
+            <Card
+              collapsible
+              defaultOpen={pausedFamilies.length > 0}
+              title={`Families paused for an overdue bill (${pausedFamilies.length})`}
+              description="Their sessions are on hold until they pay or the owner agrees a new date."
+            >
+              {pausedFamilies.length === 0 ? (
+                <Empty>No family is paused.</Empty>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {pausedFamilies.map((f) => (
+                    <li key={f.family_id}>
+                      {f.family_name}
+                      {f.paused_since &&
+                        ` (since ${new Date(f.paused_since).toLocaleDateString("en-AU", { timeZone: "Australia/Adelaide" })})`}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+            {isFull && (<>
             <Card
               title="Parent links to confirm"
               description={
@@ -430,6 +512,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 </>
               )}
             </Card>
+            </>)}
           </>
         )}
 
@@ -695,9 +778,56 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
         {section === "staff" && (
           <>
+            <Card
+              title="Staff and levels"
+              description="Everyone who tutors or is an admin. Admin levels: Owner (everything), Operations (day-to-day running), Support (families and bookings), Finance (invoices and pay)."
+            >
+              {staffRows.length === 0 ? (
+                <Empty>No staff yet.</Empty>
+              ) : (
+                <Table headings={["Name", "Email", "Tutor", "Admin level", ...(isOwner ? ["Change level"] : [])]}>
+                  {staffRows.map((p) => (
+                    <tr key={p.account_id}>
+                      <td>{p.full_name}</td>
+                      <td>{p.email ?? ""}</td>
+                      <td>{p.is_tutor ? (p.tutor_active === false ? "Finished" : "Yes") : "No"}</td>
+                      <td>{p.admin_level ? ADMIN_LEVEL_NAMES[p.admin_level] : "Not an admin"}</td>
+                      {isOwner && (
+                        <td>
+                          {p.admin_level && p.admin_level !== "owner" && p.account_id !== viewer.id ? (
+                            <SetLevelForm accountId={p.account_id} level={p.admin_level} />
+                          ) : (
+                            ""
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </Table>
+              )}
+            </Card>
+
             <Card title="Add staff">
               <InviteForm canInviteAdmins={isOwner} />
             </Card>
+
+            {savedLevel === "operations" && (
+              <Card
+                title="Emergency owner access"
+                description="If the owner can't be reached and something only the owner can do is urgent, ask for owner access here."
+              >
+                {emergency ? (
+                  <>
+                    <EmergencyStatus emergency={emergency} running={emergencyRunning} />
+                    {emergency.requested_by === viewer.id && (
+                      <EmergencyCancelForm id={emergency.id} label="Withdraw my request" />
+                    )}
+                  </>
+                ) : (
+                  <EmergencyRequestForm />
+                )}
+              </Card>
+            )}
 
             <Card
               title="Invitations not used yet"
@@ -844,5 +974,41 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         )}
       </SectionShell>
     </>
+  );
+}
+
+// What an emergency owner access request says, and when it starts or ends.
+function EmergencyStatus({
+  emergency,
+  running,
+}: {
+  emergency: { requested_at: string; starts_at: string; ends_at: string; reason: string; requester: { full_name: string } | null };
+  running: boolean;
+}) {
+  const when = (iso: string) =>
+    new Date(iso).toLocaleString("en-AU", {
+      timeZone: "Australia/Adelaide",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  const hoursLeft = Math.max(0, Math.ceil((new Date(running ? emergency.ends_at : emergency.starts_at).getTime() - new Date().getTime()) / 3600000));
+  return (
+    <div className="mb-4 space-y-1 text-sm">
+      <p>
+        <strong>{emergency.requester?.full_name ?? "An admin"}</strong> asked on {when(emergency.requested_at)}.
+      </p>
+      <p>
+        <strong>Reason:</strong> {emergency.reason}
+      </p>
+      <p>
+        {running
+          ? `Owner access is on until ${when(emergency.ends_at)} (about ${hoursLeft} hr left). Then it ends by itself.`
+          : `Owner access starts ${when(emergency.starts_at)} (in about ${hoursLeft} hr) unless the owner cancels. It then lasts 7 days.`}
+      </p>
+      <p className="text-xs text-zinc-500">Adelaide time. Everything done with owner access is recorded in the activity log.</p>
+    </div>
   );
 }

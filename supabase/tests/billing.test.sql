@@ -6,6 +6,8 @@
 -- The billing migration must be safe to run twice.
 \set QUIET on
 \ir ../migrations/20261027230100_billing.sql
+-- Re-running an older billing file resets its rules, so apply admin levels again.
+\ir ../migrations/20261029900200_admin_levels.sql
 
 select id as cara, family_id as fam1 from public.students where full_name = 'Cara One' \gset
 select id as cal, family_id as fam2 from public.students where full_name = 'Cal Two' \gset
@@ -71,12 +73,19 @@ reset role;
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
 set role authenticated;
 select tests.eq((select count(*) from public.billing_price_items), 3, 'admin sees all prices');
+-- Prices are a billing rule: only the owner changes them.
 update public.billing_price_items set description = 'Updated' where code = 'school_tutoring';
-select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 1, 'admin edits a price');
-select tests.fails($$insert into public.billing_price_items (code, name, amount_cents, session_level) values ('second_school', 'Second', 100, 'school')$$, 'two active prices for one level');
-select tests.fails($$delete from public.billing_price_items where code = 'other_support'$$, 'prices are turned off, not deleted');
+select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 0, 'operations admin cannot edit a price');
 update public.billing_settings set override_by = 'admin';
 select tests.eq((select count(*) from public.billing_settings where override_by = 'admin'), 0, 'staff admin cannot change settings');
+reset role;
+
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+update public.billing_price_items set description = 'Updated' where code = 'school_tutoring';
+select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 1, 'owner edits a price');
+select tests.fails($$insert into public.billing_price_items (code, name, amount_cents, session_level) values ('second_school', 'Second', 100, 'school')$$, 'two active prices for one level');
+select tests.fails($$delete from public.billing_price_items where code = 'other_support'$$, 'prices are turned off, not deleted');
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -94,6 +103,12 @@ insert into public.billing_accounts (family_id, bill_payer_id, plan) values
   (:'fam2', '00000000-0000-0000-0000-000000000002', 'monthly');
 select tests.fails(format($$update public.billing_accounts set paused = true where family_id = %L$$, :'fam1'), 'admin sets pause by hand');
 select tests.fails(format($$update public.billing_accounts set stripe_payment_method_id = 'pm_x' where family_id = %L$$, :'fam1'), 'admin types a payment reference');
+-- Kept rates are prices: operations can't set them, the owner can.
+select tests.fails($$insert into public.billing_family_rates (family_id, price_item_id, amount_cents, note)
+  select (select id from public.families order by name limit 1), id, 8000, 'Kept rate' from public.billing_price_items where code = 'school_tutoring'$$, 'operations sets a kept rate');
+reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
 -- Pat's family keeps their old $80/hr rate.
 insert into public.billing_family_rates (family_id, price_item_id, amount_cents, note)
 select :'fam1', id, 8000, 'Kept rate' from public.billing_price_items where code = 'school_tutoring';

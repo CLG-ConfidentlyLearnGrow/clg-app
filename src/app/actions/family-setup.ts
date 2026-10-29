@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin, requireViewer } from "@/lib/auth";
+import { FRONT_DESK, requireAdminLevel, requireViewer } from "@/lib/auth";
 import { childSchema, readSubjects, type Wanted } from "@/lib/child-form";
 import { siteUrl } from "@/lib/env";
 import { POLICY_VERSION, type FormState } from "@/lib/forms";
@@ -62,7 +62,7 @@ function sentText(email: string, link: string | null): string {
 }
 
 export async function setUpFamily(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FRONT_DESK);
   const contact = contactSchema.safeParse(Object.fromEntries(formData));
   if (!contact.success) return { error: contact.error.issues[0].message };
   const { who, contact_name, email } = contact.data;
@@ -197,7 +197,7 @@ const ownLoginSchema = z.object({
 });
 
 export async function giveStudentLogin(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FRONT_DESK);
   const parsed = ownLoginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { student_id, email } = parsed.data;
@@ -228,7 +228,7 @@ export async function giveStudentLogin(_prev: FormState, formData: FormData): Pr
 // have never signed in: staff use "Add staff", and anyone who has signed in
 // can use "Forgot password" themselves.
 export async function sendNewLink(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FRONT_DESK);
   const parsed = z.email("Enter a valid email address.").trim().toLowerCase().safeParse(formData.get("email"));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const email = parsed.data;

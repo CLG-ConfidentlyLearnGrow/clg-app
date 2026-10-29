@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth";
+import { PAY, requireAdminLevel } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { xeroConfig } from "@/lib/billing/config";
 import { parseDollars } from "@/lib/billing/money";
@@ -31,7 +31,7 @@ function rate(text: FormDataEntryValue | null): number | null | undefined {
 }
 
 export async function saveStaffPay(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const parsed = z
     .object({
       account_id: uuid,
@@ -72,7 +72,7 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
 }
 
 export async function addAdminTime(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const parsed = z
     .object({ account_id: uuid, day, hours: z.string(), note: z.string().max(300).optional() })
     .safeParse(Object.fromEntries(formData));
@@ -92,7 +92,7 @@ export async function addAdminTime(_prev: FormState, formData: FormData): Promis
 }
 
 export async function removePayLine(formData: FormData) {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const id = uuid.safeParse(formData.get("id"));
   if (!id.success) return;
   const supabase = await createClient();
@@ -101,7 +101,7 @@ export async function removePayLine(formData: FormData) {
 }
 
 export async function workOutPay(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const parsed = z.object({ from: day, to: day }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose the pay period." };
   const supabase = await createClient();
@@ -112,7 +112,7 @@ export async function workOutPay(_prev: FormState, formData: FormData): Promise<
 }
 
 export async function sendTimesheetsNow(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const start = day.safeParse(formData.get("period_start"));
   if (!start.success) return { error: "Choose the pay period." };
   if (!xeroConfig() || !(await xeroConnection())) {
@@ -129,7 +129,7 @@ export async function sendTimesheetsNow(_prev: FormState, formData: FormData): P
 }
 
 export async function savePayPeriod(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(PAY);
   const parsed = z
     .object({ pay_period_days: z.enum(["7", "14"]), pay_period_anchor: day, casual_min_enabled: z.string().optional() })
     .safeParse(Object.fromEntries(formData));

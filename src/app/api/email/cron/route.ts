@@ -10,6 +10,7 @@ const SOURCES = [
   { claim: "session_notice_emails_claim", release: "session_notice_emails_release" },
   { claim: "progress_notice_emails_claim", release: "progress_notice_emails_release" },
   { claim: "billing_tutor_notice_emails_claim", release: "billing_tutor_notice_emails_release" },
+  { claim: "emergency_access_emails_claim", release: "emergency_access_emails_release" },
 ] as const;
 
 async function run(request: Request) {

@@ -74,7 +74,7 @@ select tests.eq((select count(*) from public.account_roles where account_id = '0
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-0000000a1de1'), 1, 'only the invited role');
 select tests.eq((select count(*) from public.tutor_profiles where account_id = '00000000-0000-0000-0000-0000000a1de1'), 1, 'tutor profile made');
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-0000000a1de2' and role = 'admin'), 1, 'admin role given on joining');
-select tests.eq((select count(*) from public.admin_profiles where account_id = '00000000-0000-0000-0000-0000000a1de2' and level = 'staff'), 1, 'new admin is staff level');
+select tests.eq((select count(*) from public.admin_profiles where account_id = '00000000-0000-0000-0000-0000000a1de2' and level = 'operations'), 1, 'new admin is operations level');
 select tests.eq((select count(*) from public.staff_invite_link_details((select token from tokens where label = 'tutor1b')) where status = 'used'), 1, 'link used once');
 
 -- A new tutor is not cleared to teach until CLG confirms their checks.

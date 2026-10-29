@@ -8,6 +8,8 @@ begin;
 -- Runs the split migration again: it must be safe to run twice (and
 -- billing.test.sql re-ran the first billing file, which this one updates).
 \ir ../migrations/20261028230400_billing_split_payments.sql
+-- Re-running an older billing file resets its rules, so apply admin levels again.
+\ir ../migrations/20261029900200_admin_levels.sql
 
 select id as cal, family_id as fam2 from public.students where full_name = 'Cal Two' \gset
 select date_trunc('month', private.billing_today() + 120)::date as m \gset
