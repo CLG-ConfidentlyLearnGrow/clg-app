@@ -9,6 +9,7 @@ select id as sam from public.students where full_name = 'Sam Three' \gset
 update public.session_notices set email_sent_at = now() where email_sent_at is null;
 update public.progress_notices set email_sent_at = now() where email_sent_at is null;
 update public.billing_tutor_notices set sent_at = now() where sent_at is null;
+update public.security_alerts set sent_at = now() where sent_at is null;
 select tests.eq(private.emails_waiting()::int, 0, 'nothing waiting');
 
 -- Notices: one due now, one not due yet, one from 2 days ago, one for a

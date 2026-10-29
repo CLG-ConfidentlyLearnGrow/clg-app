@@ -58,7 +58,7 @@ function render(e: OutgoingEmail) {
 <tr><td style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:${BRAND.button}">CLG Tutoring</td></tr>
 <tr><td style="padding-top:12px;font-size:20px;font-weight:600">${escapeHtml(e.subject)}</td></tr>
 <tr><td style="padding-top:16px;font-size:15px;line-height:1.55">${escapeHtml(hello)}</td></tr>
-<tr><td style="padding-top:8px;font-size:15px;line-height:1.55">${escapeHtml(e.body)}</td></tr>
+<tr><td style="padding-top:8px;font-size:15px;line-height:1.55;white-space:pre-line">${escapeHtml(e.body)}</td></tr>
 <tr><td style="padding-top:24px"><a href="${escapeHtml(url)}" style="display:inline-block;background:${BRAND.button};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">${escapeHtml(button)}</a></td></tr>
 </table>
 <p style="max-width:520px;font-size:12px;line-height:1.5;color:${BRAND.text};padding:16px 8px 0">${footerHtml}</p>
