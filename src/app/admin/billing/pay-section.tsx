@@ -1,11 +1,11 @@
-import { removePayLine } from "@/app/actions/pay";
+import { approveHours, removePayLine } from "@/app/actions/pay";
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { xeroConfig } from "@/lib/billing/config";
 import { dollars, plainDate } from "@/lib/billing/money";
 import { listXeroEarningsRates, listXeroEmployees } from "@/lib/billing/payroll";
 import { xeroConnection } from "@/lib/billing/xero";
 import { createClient } from "@/lib/supabase/server";
-import { AdminTimeForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, type StaffPay } from "./pay-forms";
+import { AdminTimeForm, DeclineHoursForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, type StaffPay } from "./pay-forms";
 
 type Line = {
   id: string;
@@ -47,13 +47,14 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
   const end = period?.period_end ?? pick;
   const length = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
 
-  const [roles, pay, lines, problems, settings, emails] = await Promise.all([
+  const [roles, pay, lines, problems, settings, emails, waitingHours] = await Promise.all([
     supabase.from("account_roles").select("account_id, role, account:accounts(full_name)").in("role", ["tutor", "admin"]),
     supabase.from("billing_staff_pay").select("*"),
     supabase.from("billing_pay_lines").select("*").gte("work_date", start).lte("work_date", end).order("work_date"),
     supabase.from("billing_pay_problems").select("*").gte("work_date", start).lte("work_date", end),
     supabase.from("billing_settings").select("pay_period_days, pay_period_anchor, casual_min_enabled").maybeSingle(),
     supabase.from("account_private").select("account_id, email"),
+    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note").eq("status", "submitted").order("work_date"),
   ]);
 
   const staff = new Map<string, string>();
@@ -86,6 +87,26 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
 
   return (
     <>
+      {(waitingHours.data ?? []).length > 0 && (
+        <Card title="Admin hours waiting for approval" description="Logged by staff on their My pay page. Approved hours are paid with their tutoring in the next send to Xero.">
+          <div className="space-y-4">
+            {(waitingHours.data ?? []).map((h) => (
+              <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">
+                <p className="mb-3">
+                  <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}: {hours(h.minutes)} for {h.note}
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <form action={approveHours}>
+                    <input type="hidden" name="id" value={h.id} />
+                    <Button type="submit">Approve</Button>
+                  </form>
+                  <DeclineHoursForm id={h.id} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
       <Card title={`Pay period ${plainDate(start)} to ${plainDate(end)}`}>
         <p className="mb-4 flex gap-4 text-sm">
           <TextLink href={`/admin/billing?section=pay&period=${addDays(start, -length)}`}>« Earlier</TextLink>

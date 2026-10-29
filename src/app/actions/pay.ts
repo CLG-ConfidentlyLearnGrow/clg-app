@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireViewer } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { xeroConfig } from "@/lib/billing/config";
 import { parseDollars } from "@/lib/billing/money";
@@ -147,4 +147,60 @@ export async function savePayPeriod(_prev: FormState, formData: FormData): Promi
   if (error || !data?.length) return { error: "Only the owner can change the pay period." };
   revalidatePath(PAGE);
   return { message: "Pay settings saved. The pay period must match the pay calendar in Xero. Use \"Work out pay again\" to apply a change to this period." };
+}
+
+// ---------------------------------------------------------------------------
+// Staff log their own admin hours; an admin approves or declines them.
+// ---------------------------------------------------------------------------
+
+export async function logMyHours(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({ day, hours: z.string(), note: z.string().max(300) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Choose the day, the hours and what they were for." };
+  const hours = Number(parsed.data.hours.replace(",", "."));
+  if (!Number.isFinite(hours) || hours <= 0) return { error: "Enter the hours, for example 1.5." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("billing_log_my_hours", {
+    p_day: parsed.data.day,
+    p_minutes: Math.round(hours * 60),
+    p_note: parsed.data.note,
+  });
+  if (error) return plain(error, "Couldn't log the hours. Please try again.");
+  revalidatePath("/pay");
+  revalidatePath(PAGE);
+  return { message: "Hours logged. They're paid once CLG approves them." };
+}
+
+export async function withdrawMyHours(formData: FormData) {
+  await requireViewer();
+  const id = uuid.safeParse(formData.get("id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("billing_withdraw_my_hours", { p_log: id.data });
+  revalidatePath("/pay");
+  revalidatePath(PAGE);
+}
+
+export async function approveHours(formData: FormData) {
+  await requireAdmin();
+  const id = uuid.safeParse(formData.get("id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("billing_review_hours", { p_log: id.data, p_approve: true });
+  revalidatePath(PAGE);
+  revalidatePath("/pay");
+}
+
+export async function declineHours(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = z.object({ id: uuid, reason: z.string().max(300) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Please say why." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("billing_review_hours", { p_log: parsed.data.id, p_approve: false, p_note: parsed.data.reason });
+  if (error) return plain(error, "Couldn't decline the hours.");
+  revalidatePath(PAGE);
+  revalidatePath("/pay");
+  return { message: "Declined. They can see your reason on their pay page." };
 }
