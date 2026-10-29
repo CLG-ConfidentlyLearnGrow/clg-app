@@ -42,14 +42,36 @@ const bookingSchema = z
   })
   .refine((v) => v.last_date >= v.first_date, { message: "The last date must be after the first date." });
 
+const suggestionSchema = z.object({
+  suggested_tutor: z.uuid(),
+  suggested_weekday: z.coerce.number().int().min(1).max(7),
+  suggested_start: z.iso.time(),
+  suggested_delivery: z.enum(["online", "library", "home"]),
+  suggested_library: z.union([z.uuid(), z.literal("")]).optional(),
+  change_reason: z.enum(["tutor_fit", "family_request", "tutor_request", "time", "place", "other"]).optional(),
+  change_note: z.string().trim().max(500).optional(),
+});
+
 export async function requestBooking(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireViewer();
+  const viewer = await requireViewer();
   const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const v = parsed.data;
 
+  // An admin who picked something other than the app's suggestion says why.
+  const isAdmin = viewer.roles.includes("admin");
+  const suggestion = isAdmin && formData.get("suggested_tutor") ? suggestionSchema.safeParse(Object.fromEntries(formData)) : null;
+  const changed =
+    suggestion?.success &&
+    (suggestion.data.suggested_tutor !== v.tutor_id ||
+      suggestion.data.suggested_weekday !== v.weekday ||
+      suggestion.data.suggested_start.slice(0, 5) !== v.start_time.slice(0, 5) ||
+      suggestion.data.suggested_delivery !== v.delivery ||
+      (suggestion.data.suggested_library || "") !== (v.library_id || ""));
+  if (changed && !suggestion.data.change_reason) return { error: "Please say why you didn't use the suggested time." };
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("request_booking", {
+  const { data: bookingId, error } = await supabase.rpc("request_booking", {
     p_student: v.student_id,
     p_subject: v.subject,
     p_tutor: v.tutor_id,
@@ -63,7 +85,24 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
     p_note: v.note || null,
   });
   if (error) return { error: plainError(error, "Couldn't send the request. Please try again.") };
-  return done("Request sent. The tutor has 48 hours to confirm. You'll see it under Bookings.");
+
+  if (changed && suggestion?.success) {
+    await supabase.rpc("record_offer_change", {
+      p_booking: bookingId as string,
+      p_suggested_tutor: suggestion.data.suggested_tutor,
+      p_suggested_weekday: suggestion.data.suggested_weekday,
+      p_suggested_start: suggestion.data.suggested_start,
+      p_suggested_delivery: suggestion.data.suggested_delivery,
+      p_suggested_library: suggestion.data.suggested_library || null,
+      p_reason: suggestion.data.change_reason!,
+      p_note: suggestion.data.change_note || null,
+    });
+  }
+  return done(
+    isAdmin
+      ? "Offer sent. The tutor and family each have 48 hours to approve. It's confirmed once both say yes."
+      : "Request sent. The tutor has 48 hours to confirm. You'll see it under Bookings.",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +126,32 @@ export async function answerBooking(_prev: FormState, formData: FormData): Promi
     p_note: parsed.data.note || null,
   });
   if (error) return { error: plainError(error, "Couldn't save your answer.") };
-  return done(parsed.data.answer === "accept" ? "Accepted. The sessions are booked." : "Declined. CLG will offer the family other times.");
+  return done(
+    parsed.data.answer === "accept"
+      ? "Accepted. If the family still needs to approve, it's confirmed once they do."
+      : "Declined. CLG will offer the family other times.",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Families approve a time CLG offered
+// ---------------------------------------------------------------------------
+export async function approveBooking(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = answerSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Choose approve or decline." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("approve_booking", {
+    p_booking: parsed.data.booking_id,
+    p_ok: parsed.data.answer === "accept",
+    p_note: parsed.data.note || null,
+  });
+  if (error) return { error: plainError(error, "Couldn't save your answer.") };
+  return done(
+    parsed.data.answer === "accept"
+      ? "Approved. It's confirmed once the tutor has said yes too."
+      : "Thanks for letting us know. CLG will offer another time.",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -311,7 +375,7 @@ export async function joinWaitlist(_prev: FormState, formData: FormData): Promis
     p_note: v.note || null,
   });
   if (error) return { error: plainError(error, "Couldn't add to the waitlist.") };
-  return done("Added to the waitlist. CLG will be in touch when a suitable tutor is free.");
+  return done("Added to the waitlist. CLG will be in touch when a suitable tutor is available.");
 }
 
 export async function leaveWaitlist(formData: FormData) {
@@ -519,11 +583,23 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   if (!libraries.success) return { error: "Couldn't read the libraries you chose." };
   const online = formData.get("online") === "on";
   if (!online && libraries.data.length === 0) return { error: "Choose online, at least one library, or both." };
+  const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
+  const time = z.union([z.iso.time(), z.literal("")]);
+  const from = time.safeParse(formData.get("preferred_from") ?? "");
+  const to = time.safeParse(formData.get("preferred_to") ?? "");
+  if (!from.success || !to.success) return { error: "Couldn't read the preferred times." };
+  if (from.data && to.data && to.data <= from.data) return { error: "The preferred finish must be after the start." };
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("student_places")
-    .upsert({ student_id: student.data, online, library_ids: libraries.data });
+  const { error } = await supabase.from("student_places").upsert({
+    student_id: student.data,
+    online,
+    library_ids: libraries.data,
+    preferred_days: days.length ? days : null,
+    preferred_from: from.data || null,
+    preferred_to: to.data || null,
+    preferred_school_hours: formData.get("preferred_school_hours") === "on",
+  });
   if (error) return { error: "Couldn't save the places." };
-  return done("Saved. Searches for times will start from these places.");
+  return done("Saved. Offers will start from these places and preferences.");
 }

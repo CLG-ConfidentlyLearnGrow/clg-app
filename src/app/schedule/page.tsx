@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/server";
 import { runTeamsSyncQuietly } from "@/lib/teams/sync";
 import {
   AnswerForm,
+  ApproveForm,
   AvailabilityCheckForm,
   AwayForm,
   BookForm,
@@ -94,6 +95,7 @@ type TimeOption = {
   library_name: string | null;
   joins_other_sessions: boolean;
   learning_support: boolean;
+  preferred: boolean;
 };
 
 const list = (v: string | string[] | undefined) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
@@ -170,7 +172,23 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       r as { signed_on_at: string | null; tutor_end_at: string | null; times_confirmed_at: string | null },
     ]),
   );
-  const waitingForMe = bookings.filter((b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id);
+  // Who has approved each request (an offer from CLG needs the tutor and the family).
+  const requestedIds = bookings.filter((b) => b.status === "requested").map((b) => b.id);
+  const approvalsRes = requestedIds.length
+    ? await supabase.from("bookings").select("id, needs_family_ok, tutor_ok_at, family_ok_at").in("id", requestedIds)
+    : null;
+  const approvals = new Map(
+    ((approvalsRes?.data ?? []) as { id: string; needs_family_ok: boolean; tutor_ok_at: string | null; family_ok_at: string | null }[]).map(
+      (a) => [a.id, a],
+    ),
+  );
+  const waitingForMe = bookings.filter(
+    (b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id && !approvals.get(b.id)?.tutor_ok_at,
+  );
+  const familyToApprove = bookings.filter((b) => {
+    const a = approvals.get(b.id);
+    return b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id;
+  });
 
   const now = currentTime();
   const upcoming = sessions.filter((s) => new Date(s.ends_at).getTime() >= now);
@@ -194,8 +212,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       sections={sections.map((s) => ({
         ...s,
         count:
-          s.id === "bookings" && waitingForMe.length
-            ? waitingForMe.length
+          s.id === "bookings" && waitingForMe.length + (isAdmin ? 0 : familyToApprove.length)
+            ? waitingForMe.length + (isAdmin ? 0 : familyToApprove.length)
             : s.id === "notices" && unread
               ? unread
               : s.id === "next-term" && renewalsToAnswer
@@ -217,6 +235,12 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               </p>
               <AvailabilityCheckForm id={myCheck.id} />
             </Card>
+          )}
+          {!isAdmin && familyToApprove.length > 0 && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              CLG has offered {familyToApprove.length === 1 ? "a session time" : `${familyToApprove.length} session times`}{" "}
+              for you to approve. <TextLink href="/schedule?section=bookings">See offers</TextLink>
+            </p>
           )}
           {waitingForMe.length > 0 && (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -338,7 +362,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
             <ul className="divide-y divide-zinc-100 text-sm">
               {bookings.map((b) => {
                 const live = b.status === "confirmed" || (b.status === "requested" && !b.expired);
-                const forMe = b.status === "requested" && !b.expired && b.tutor_id === viewer.id;
+                const approval = approvals.get(b.id);
+                const forMe = waitingForMe.some((w) => w.id === b.id);
+                const forFamily = !isAdmin && familyToApprove.some((w) => w.id === b.id);
+                const waiting = b.status === "requested" && !b.expired && approval?.needs_family_ok;
                 return (
                   <li key={b.id} className="space-y-2 py-4 first:pt-0">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -358,7 +385,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                           b.status === "confirmed" ? "bg-teal-50 text-teal-900" : "bg-zinc-100 text-zinc-600"
                         }`}
                       >
-                        {b.expired ? "Expired" : (BOOKING_STATUS_NAMES[b.status] ?? b.status)}
+                        {b.expired ? "Expired" : waiting ? "Waiting for confirmation" : (BOOKING_STATUS_NAMES[b.status] ?? b.status)}
                       </span>
                     </div>
                     <p className="text-zinc-600">
@@ -366,7 +393,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                       {b.status === "confirmed" && ` · ${b.sessions_left} session${b.sessions_left === 1 ? "" : "s"} to come`}
                       {b.status === "requested" &&
                         !b.expired &&
-                        ` · tutor to answer by ${new Date(b.tutor_reply_by).toLocaleString("en-AU", {
+                        ` · ${waiting ? "to approve" : "tutor to answer"} by ${new Date(b.tutor_reply_by).toLocaleString("en-AU", {
                           weekday: "short",
                           hour: "numeric",
                           minute: "2-digit",
@@ -375,8 +402,15 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                     </p>
                     {b.family_note && <p className="text-zinc-600">Family note: {b.family_note}</p>}
                     {b.tutor_note && <p className="text-zinc-600">Tutor note: {b.tutor_note}</p>}
+                    {waiting && approval && (
+                      <p className="text-zinc-700">
+                        Tutor: {approval.tutor_ok_at ? "approved ✓" : "waiting"} · Family:{" "}
+                        {approval.family_ok_at ? "approved ✓" : "waiting"}
+                      </p>
+                    )}
                     {forMe && <AnswerForm bookingId={b.id} />}
-                    {live && !forMe && <CancelForm id={b.id} kind="booking" isAdmin={isAdmin} />}
+                    {forFamily && <ApproveForm bookingId={b.id} />}
+                    {live && !forMe && !forFamily && <CancelForm id={b.id} kind="booking" isAdmin={isAdmin} />}
                   </li>
                 );
               })}
@@ -442,15 +476,17 @@ async function BookSection({
 
   const subject = one(params.subject) || subjects[0] || "";
   const minutes = Number(one(params.minutes)) || 60;
-  const searched = one(params.go) === "1";
+  const go = one(params.go) === "1";
+  // "auto" (from the Matching tab) searches straight away with the saved places.
+  const searched = go || one(params.auto) === "1";
   // Before a search, start from the places saved for this child.
   const savedRes =
-    student && !searched
+    student && !go
       ? await supabase.from("student_places").select("online, library_ids").eq("student_id", student.id).maybeSingle()
       : null;
   const saved = savedRes?.data as { online: boolean; library_ids: string[] } | null | undefined;
-  const online = searched ? one(params.online) === "1" : (saved?.online ?? true);
-  const chosenLibs = searched ? list(params.lib) : (saved?.library_ids ?? []);
+  const online = go ? one(params.online) === "1" : (saved?.online ?? true);
+  const chosenLibs = go ? list(params.lib) : (saved?.library_ids ?? []);
   const days = list(params.day).map(Number).filter((d) => d >= 1 && d <= 7);
   const earliest = one(params.from);
   const latest = one(params.to);
@@ -460,7 +496,7 @@ async function BookSection({
   let options: TimeOption[] = [];
   let searchError = "";
   if (searched && student && subject) {
-    const { data, error } = await supabase.rpc("find_session_times", {
+    const { data, error } = await supabase.rpc("offer_options", {
       p_student: student.id,
       p_subject: subject,
       p_minutes: minutes,
@@ -480,7 +516,7 @@ async function BookSection({
     <>
       <Card
         title="Book a session"
-        description="Choose what's needed and where. You'll see only tutors who suit and are free, then pick a time."
+        description="Choose what's needed and where. You'll see only tutors who suit and are available, then pick a time."
       >
         {students.length === 0 ? (
           <Empty>
@@ -579,7 +615,7 @@ async function BookSection({
       </Card>
 
       {searched && student && subject && (
-        <Card title="Free times" description={`${subject} for ${student.full_name}, ${lengthLabel(minutes)} each week.`}>
+        <Card title="Available times" description={`${subject} for ${student.full_name}, ${lengthLabel(minutes)} each week.`}>
           {searchError ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {searchError}
@@ -587,8 +623,8 @@ async function BookSection({
           ) : options.length === 0 ? (
             <>
               <Empty>
-                No free times match. Try more days, a wider time, online, or more libraries, or join the waitlist and
-                CLG will be in touch when a suitable tutor is free.
+                No available times match. Try more days, a wider time, online, or more libraries, or join the waitlist and
+                CLG will be in touch when a suitable tutor is available.
               </Empty>
               <div className="mt-4">
                 <WaitlistForm
@@ -607,12 +643,15 @@ async function BookSection({
             </>
           ) : (
             <ul className="divide-y divide-zinc-100 text-sm">
-              {options.slice(0, 40).map((o) => (
+              {options.slice(0, 40).map((o, i) => (
                 <li
                   key={`${o.tutor_id}-${o.weekday}-${o.start_time}-${o.delivery}-${o.library_id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0"
+                  className={`flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 ${isAdmin && i === 0 ? "rounded-lg bg-teal-50 px-3" : ""}`}
                 >
                   <span>
+                    {isAdmin && i === 0 && (
+                      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-teal-800">Suggested</span>
+                    )}
                     <span className="font-medium">
                       {WEEKDAY_NAMES[o.weekday - 1]} {clockTime(o.start_time)} to {clockTime(o.end_time)}
                     </span>
@@ -624,6 +663,9 @@ async function BookSection({
                       <span className="ml-2 rounded-full bg-teal-50 px-2 text-xs text-teal-900">
                         Learning support experience
                       </span>
+                    )}
+                    {o.preferred && (
+                      <span className="ml-2 rounded-full bg-amber-50 px-2 text-xs text-amber-900">Preferred time</span>
                     )}
                     {isAdmin && o.joins_other_sessions && (
                       <span className="ml-2 rounded-full bg-amber-50 px-2 text-xs text-amber-900">Joins tutor&apos;s block</span>
@@ -642,6 +684,22 @@ async function BookSection({
                     }}
                     defaultFirst={start}
                     defaultLast={addDays(start, 70)}
+                    isAdmin={isAdmin}
+                    startOpen={isAdmin && i === 0}
+                    suggested={
+                      isAdmin && options[0]
+                        ? {
+                            student_id: student.id,
+                            subject,
+                            tutor_id: options[0].tutor_id,
+                            weekday: options[0].weekday,
+                            start_time: options[0].start_time,
+                            minutes,
+                            delivery: options[0].delivery,
+                            library_id: options[0].library_id,
+                          }
+                        : null
+                    }
                   />
                 </li>
               ))}
@@ -828,7 +886,7 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
       description={
         isAdmin
           ? "Everyone waiting for a tutor, oldest first. Check in with families who have waited 4 weeks."
-          : "Your children waiting for a suitable tutor. CLG will be in touch when one is free."
+          : "Your children waiting for a suitable tutor. CLG will be in touch when one is available."
       }
     >
       {places.length === 0 ? (
@@ -850,7 +908,7 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
                   )}
                   {w.times_now_free > 0 && (
                     <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">
-                      {w.times_now_free} time{w.times_now_free === 1 ? "" : "s"} free now
+                      {w.times_now_free} time{w.times_now_free === 1 ? "" : "s"} available now
                     </span>
                   )}
                 </span>
@@ -898,8 +956,8 @@ type MatchRow = {
 
 const STAGES: { id: string; label: string; hint: string }[] = [
   { id: "needs_tutor", label: "Needs a tutor", hint: "Asked for, nothing booked or waiting" },
-  { id: "waitlist", label: "Waitlist", hint: "No suitable tutor free yet" },
-  { id: "tutor_to_confirm", label: "Tutor to confirm", hint: "Booking request waiting for the tutor" },
+  { id: "waitlist", label: "Waitlist", hint: "No suitable tutor available yet" },
+  { id: "tutor_to_confirm", label: "Waiting for confirmation", hint: "Offer or request waiting for the tutor (and family) to approve" },
   { id: "assigned", label: "Assigned, no time", hint: "Tutor assigned but no weekly time booked" },
   { id: "active", label: "Active", hint: "Weekly sessions running" },
 ];
@@ -924,6 +982,8 @@ async function MatchingSection({
   });
   const rows = (data ?? []) as MatchRow[];
   const total = rows[0]?.total ?? 0;
+  const reasonsRes = await supabase.rpc("offer_change_reasons", { p_days: 90 });
+  const reasons = (reasonsRes.data ?? []) as { reason: string; changes: number; recent_notes: string[] | null }[];
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
   const link = (over: Record<string, string>) => {
     const q = new URLSearchParams({ section: "matching", stage, ...(search ? { q: search } : {}), ...over });
@@ -998,7 +1058,7 @@ async function MatchingSection({
                   </span>
                   {(stage === "needs_tutor" || stage === "waitlist" || stage === "assigned") && (
                     <TextLink
-                      href={`/schedule?${new URLSearchParams({ section: "book", student: r.student_id, subject: r.subject }).toString()}`}
+                      href={`/schedule?${new URLSearchParams({ section: "book", student: r.student_id, subject: r.subject, auto: "1" }).toString()}`}
                     >
                       Find a tutor
                     </TextLink>
@@ -1018,9 +1078,39 @@ async function MatchingSection({
           </p>
         )}
       </Card>
+
+      <Card
+        collapsible
+        defaultOpen={false}
+        title="Why suggestions were changed"
+        description="Last 90 days. If the same reason keeps coming up, the suggestions can be improved to allow for it."
+      >
+        {reasons.length === 0 ? (
+          <Empty>No changes recorded yet.</Empty>
+        ) : (
+          <ul className="divide-y divide-zinc-100 text-sm">
+            {reasons.map((r) => (
+              <li key={r.reason} className="py-2">
+                <span className="font-medium">{CHANGE_REASON_NAMES[r.reason] ?? r.reason}</span>
+                <span className="text-zinc-600"> · {r.changes}</span>
+                {r.recent_notes?.length ? <span className="block text-zinc-600">{r.recent_notes.join(" · ")}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </>
   );
 }
+
+const CHANGE_REASON_NAMES: Record<string, string> = {
+  family_request: "Family asked for something else",
+  tutor_request: "Tutor asked for something else",
+  tutor_fit: "Another tutor suited the student better",
+  time: "Better time for the tutor's day",
+  place: "Better place",
+  other: "Other",
+};
 
 // ---------------------------------------------------------------------------
 // Families: where each child can have sessions
@@ -1039,7 +1129,7 @@ async function ChildPlacesSection({
     supabase.from("students").select("id, full_name, account_id").order("full_name"),
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
     supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
-    supabase.from("student_places").select("student_id, online, library_ids"),
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_from, preferred_to, preferred_school_hours"),
   ]);
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
@@ -1050,7 +1140,17 @@ async function ChildPlacesSection({
       ? all.filter((s) => s.id === wanted)
       : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
   const places = new Map(
-    ((placesRes.data ?? []) as { student_id: string; online: boolean; library_ids: string[] }[]).map((p) => [p.student_id, p]),
+    (
+      (placesRes.data ?? []) as {
+        student_id: string;
+        online: boolean;
+        library_ids: string[];
+        preferred_days: number[] | null;
+        preferred_from: string | null;
+        preferred_to: string | null;
+        preferred_school_hours: boolean;
+      }[]
+    ).map((p) => [p.student_id, p]),
   );
   return (
     <Card
@@ -1069,6 +1169,10 @@ async function ChildPlacesSection({
                 libraries={librariesRes.data ?? []}
                 online={places.get(s.id)?.online ?? true}
                 chosen={places.get(s.id)?.library_ids ?? []}
+                preferredDays={places.get(s.id)?.preferred_days ?? []}
+                preferredFrom={places.get(s.id)?.preferred_from ?? ""}
+                preferredTo={places.get(s.id)?.preferred_to ?? ""}
+                schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
               />
             </div>
           ))}

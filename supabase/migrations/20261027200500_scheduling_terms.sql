@@ -302,7 +302,7 @@ begin
         and o.start_time < v_b.start_time + make_interval(mins => v_b.minutes)
         and o.start_time + make_interval(mins => o.minutes) > v_b.start_time
     ) then
-      raise exception 'That time is no longer free next term. Please choose "something different" and CLG will find another time.' using errcode = '23514';
+      raise exception 'That time is no longer available next term. Please choose "something different" and CLG will find another time.' using errcode = '23514';
     end if;
 
     insert into public.bookings (

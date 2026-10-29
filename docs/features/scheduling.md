@@ -101,6 +101,22 @@ automatic, like booking a doctor:
     hundreds of students. Stages come from the records, so nobody moves
     cards by hand.
 
+14. **CLG offers, both approve (Carla, 29 Oct 2026).** From the Matching
+    tab an admin opens a student's subject. The app suggests the best
+    tutor, time and place: the family's preferred days and times first,
+    then tutors with learning-support experience, then times that join a
+    tutor's other sessions. The admin sends it, or picks another option and
+    says why (kept so repeated reasons can improve the suggestions). The
+    tutor and the family are asked at the same time and have 48 hours. It
+    shows "Waiting for confirmation" until both approve, then the sessions
+    are made and everyone gets the details. If either says no, it returns
+    to the Matching tab. A family booking for themselves still needs only
+    the tutor.
+15. **Preferred days and times.** Optional, saved with session places and
+    clearly marked as a preference, not a guarantee, including a "during
+    school hours" option. Offers use a preferred time when one is
+    available, otherwise the closest available.
+
 Home sessions can only be booked by an admin, for special circumstances.
 Families never choose a tutor by gender or similar; requests go in the
 note.
@@ -168,6 +184,11 @@ AERO on explicit teaching and checking prior knowledge). A student a few
 years behind in maths needs a tutor who teaches that level, whatever their
 school year.
 
+Asking the tutor and family together keeps the time to a first session
+short, which the brief's measures treat as what families notice first,
+and recording why suggestions are changed gives CLG the data to review the
+process each term, as the NSSA implementation toolkit recommends.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -176,6 +197,7 @@ school year.
 - Cancellations by who cancelled, and no-shows.
 - Tutor hours in blocks of 2 hours or more.
 - No-show rate before and after reminders.
+- Share of offers approved by both sides, and reasons suggestions were changed.
 - Days from a subject being asked for to its first session (Matching tab).
 - Share of tutors confirming availability before families are asked.
 - Share of bookings renewed each term, and the reasons families give for a

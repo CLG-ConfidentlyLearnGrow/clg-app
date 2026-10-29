@@ -232,6 +232,27 @@ begin
     perform private.add_notice(new.tutor_id, null, new.id, 'booking_requested', 'New booking request',
       split_part(v_student, ' ', 1) || ' (' || new.subject || '), ' || v_when
       || '. Please accept or decline within 48 hours.', now());
+    -- A time CLG offered: the family approves too.
+    if new.needs_family_ok then
+      for p in select * from private.session_people(new.student_id, new.tutor_id) where not is_tutor loop
+        perform private.add_notice(p.account_id, null, new.id, 'booking_requested', 'Please approve a session time',
+          'CLG has found ' || v_tutor || ' for ' || v_student || ' (' || new.subject || '), ' || v_when
+          || '. Please approve or decline under Sessions within 48 hours.', now());
+      end loop;
+    end if;
+  elsif tg_op = 'UPDATE' and old.status = 'requested' and new.status = 'confirmed' and new.needs_family_ok then
+    -- Both approved: everyone gets the details.
+    for p in select * from private.session_people(new.student_id, new.tutor_id) loop
+      perform private.add_notice(p.account_id, null, new.id, 'booking_confirmed', 'Booking confirmed',
+        v_student || ': ' || new.subject || ' with ' || v_tutor || ', ' || v_when || ', '
+        || case new.delivery when 'online' then 'online'
+                             when 'home' then 'at home'
+                             else coalesce((select l.name from public.libraries l where l.id = new.library_id), 'at the library') end
+        || ', starting ' || trim(to_char(new.first_date, 'FMDD Mon')) || '.', now());
+    end loop;
+  elsif tg_op = 'UPDATE' and old.status = 'requested' and new.status = 'declined' and new.declined_by_role = 'family' then
+    perform private.add_notice(new.tutor_id, null, new.id, 'booking_declined', 'Time not suitable',
+      split_part(v_student, ' ', 1) || '''s family can''t do ' || v_when || '. CLG will find another time.', now());
   elsif tg_op = 'UPDATE' and old.status = 'requested' and new.status in ('confirmed', 'declined') then
     for p in select * from private.session_people(new.student_id, new.tutor_id) where not is_tutor loop
       perform private.add_notice(p.account_id, null, new.id,
