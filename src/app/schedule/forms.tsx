@@ -8,6 +8,7 @@ import {
   answerRenewal,
   joinWaitlist,
   answerBooking,
+  approveBooking,
   cancelSession,
   confirmAvailability,
   confirmTimes,
@@ -42,25 +43,43 @@ const quietButton =
   "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-800 transition hover:border-teal-700 hover:text-teal-800 disabled:opacity-50";
 
 // "Book this time": the family chooses the dates and can add a note.
+type BookOption = {
+  student_id: string;
+  subject: string;
+  tutor_id: string;
+  weekday: number;
+  start_time: string;
+  minutes: number;
+  delivery: string;
+  library_id: string | null;
+};
+
+const CHANGE_REASONS: [string, string][] = [
+  ["family_request", "Family asked for something else"],
+  ["tutor_request", "Tutor asked for something else"],
+  ["tutor_fit", "Another tutor suits the student better"],
+  ["time", "Better time for the tutor's day"],
+  ["place", "Better place"],
+  ["other", "Other"],
+];
+
 export function BookForm({
   option,
   defaultFirst,
   defaultLast,
+  isAdmin = false,
+  suggested,
+  startOpen = false,
 }: {
-  option: {
-    student_id: string;
-    subject: string;
-    tutor_id: string;
-    weekday: number;
-    start_time: string;
-    minutes: number;
-    delivery: string;
-    library_id: string | null;
-  };
+  option: BookOption;
   defaultFirst: string;
   defaultLast: string;
+  isAdmin?: boolean;
+  // The app's suggestion, when an admin is offering a time.
+  suggested?: BookOption | null;
+  startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   if (!open) {
     return (
       <button type="button" className={quietButton} onClick={() => setOpen(true)}>
@@ -68,12 +87,28 @@ export function BookForm({
       </button>
     );
   }
+  const isSuggestion =
+    !!suggested &&
+    suggested.tutor_id === option.tutor_id &&
+    suggested.weekday === option.weekday &&
+    suggested.start_time === option.start_time &&
+    suggested.delivery === option.delivery &&
+    (suggested.library_id ?? "") === (option.library_id ?? "");
   return (
     <div className="mt-3 w-full rounded-xl bg-zinc-50 p-4">
-      <ActionForm action={requestBooking} submitLabel="Send request to tutor">
+      <ActionForm action={requestBooking} submitLabel={isAdmin ? "Send to tutor and family" : "Send request to tutor"}>
         {Object.entries(option).map(([k, v]) => (
           <input key={k} type="hidden" name={k} value={v ?? ""} />
         ))}
+        {isAdmin && suggested && (
+          <>
+            <input type="hidden" name="suggested_tutor" value={suggested.tutor_id} />
+            <input type="hidden" name="suggested_weekday" value={suggested.weekday} />
+            <input type="hidden" name="suggested_start" value={suggested.start_time} />
+            <input type="hidden" name="suggested_delivery" value={suggested.delivery} />
+            <input type="hidden" name="suggested_library" value={suggested.library_id ?? ""} />
+          </>
+        )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
           <Field
@@ -86,12 +121,51 @@ export function BookForm({
             hint="Bookings can run across terms, up to a year."
           />
         </div>
-        <TextArea label="Note for the tutor (optional)" name="note" maxLength={1000} rows={2} />
+        {isAdmin && suggested && !isSuggestion && (
+          <>
+            <Select label="Why not the suggested time?" name="change_reason" required defaultValue="">
+              <option value="" disabled>
+                Choose…
+              </option>
+              {CHANGE_REASONS.map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Field label="More detail (optional)" name="change_note" maxLength={500} hint="Helps CLG improve the suggestions." />
+          </>
+        )}
+        <TextArea label={isAdmin ? "Note for the tutor and family (optional)" : "Note for the tutor (optional)"} name="note" maxLength={1000} rows={2} />
         <p className="text-xs text-zinc-600">
-          This books the time each week, subject to the tutor confirming within 48 hours.
+          {isAdmin
+            ? "The tutor and family each have 48 hours to approve. It's confirmed once both say yes."
+            : "This books the time each week, subject to the tutor confirming within 48 hours."}
         </p>
       </ActionForm>
     </div>
+  );
+}
+
+// The family approves or declines a time CLG offered.
+export function ApproveForm({ bookingId }: { bookingId: string }) {
+  return (
+    <ButtonsForm action={approveBooking}>
+      {(pending) => (
+        <>
+          <input type="hidden" name="booking_id" value={bookingId} />
+          <TextArea label="Note for CLG (optional)" name="note" maxLength={1000} rows={2} />
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" name="answer" value="accept" disabled={pending}>
+              Approve
+            </Button>
+            <button type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>
+              This time doesn&apos;t suit
+            </button>
+          </div>
+        </>
+      )}
+    </ButtonsForm>
   );
 }
 
@@ -478,12 +552,21 @@ export function StudentPlacesForm({
   libraries,
   online,
   chosen,
+  preferredDays = [],
+  preferredFrom = "",
+  preferredTo = "",
+  schoolHours = false,
 }: {
   studentId: string;
   libraries: { id: string; name: string; suburb: string | null }[];
   online: boolean;
   chosen: string[];
+  preferredDays?: number[];
+  preferredFrom?: string;
+  preferredTo?: string;
+  schoolHours?: boolean;
 }) {
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const box = "flex items-start gap-2 text-sm";
   return (
     <ActionForm action={saveStudentPlaces} submitLabel="Save places">
@@ -503,6 +586,29 @@ export function StudentPlacesForm({
         ))}
       </div>
       <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match isn&apos;t guaranteed.</p>
+      <fieldset className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <legend className="px-1 text-sm font-medium text-amber-900">Preferred days and times (optional: a preference, not a guarantee)</legend>
+        <label className={box}>
+          <input type="checkbox" name="preferred_school_hours" defaultChecked={schoolHours} className="mt-1" /> During school
+          hours (9am to 3pm, weekdays), for example for home schooling
+        </label>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {days.map((d, i) => (
+            <label key={d} className={box}>
+              <input type="checkbox" name="preferred_day" value={i + 1} defaultChecked={preferredDays.includes(i + 1)} className="mt-1" />{" "}
+              {d}
+            </label>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:w-2/3">
+          <Field label="From" name="preferred_from" type="time" defaultValue={preferredFrom.slice(0, 5)} />
+          <Field label="Finished by" name="preferred_to" type="time" defaultValue={preferredTo.slice(0, 5)} />
+        </div>
+        <p className="text-xs text-amber-900">
+          We&apos;ll offer these first. If none are available, we&apos;ll offer the closest time we can, and you can say if it
+          doesn&apos;t suit.
+        </p>
+      </fieldset>
     </ActionForm>
   );
 }
