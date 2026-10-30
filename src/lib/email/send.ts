@@ -55,8 +55,8 @@ function render(e: OutgoingEmail) {
   const html = `<!doctype html><html><body style="margin:0;background:${BRAND.cream};font-family:Poppins,Arial,sans-serif;color:${BRAND.text}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.cream};padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:28px">
-<tr><td style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:${BRAND.button}">CLG Tutoring</td></tr>
-<tr><td style="padding-top:12px;font-size:20px;font-weight:600">${escapeHtml(e.subject)}</td></tr>
+<tr><td><img src="${escapeHtml(site)}/brand/clg-logo-transparent.png" width="120" alt="CLG Tutoring" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding-top:16px;font-size:20px;font-weight:600">${escapeHtml(e.subject)}</td></tr>
 <tr><td style="padding-top:16px;font-size:15px;line-height:1.55">${escapeHtml(hello)}</td></tr>
 <tr><td style="padding-top:8px;font-size:15px;line-height:1.55">${escapeHtml(e.body)}</td></tr>
 <tr><td style="padding-top:24px"><a href="${escapeHtml(url)}" style="display:inline-block;background:${BRAND.button};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">${escapeHtml(button)}</a></td></tr>
