@@ -1,4 +1,4 @@
-import { cronSecret } from "@/lib/billing/config";
+import { isCronRequest } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // The daily progress tidy-up, called by Vercel's scheduler (see vercel.json).
@@ -6,8 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // student). Files can only be deleted through the file store, so the
 // database queues them and this job removes them.
 export async function GET(request: Request) {
-  const secret = cronSecret();
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isCronRequest(request)) {
     return new Response("Not allowed", { status: 401 });
   }
   const supabase = createAdminClient();

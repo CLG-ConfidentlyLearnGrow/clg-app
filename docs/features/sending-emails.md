@@ -57,6 +57,9 @@ progress updates only showed inside the app, and Supabase's sign-in emails
   - scheduling: `session_notice_emails_claim` / `_release`
   - progress: `progress_notice_emails_claim` / `_release`
   - billing: `billing_tutor_notice_emails_claim` / `_release`
+  - security alerts (shared core): `security_alert_emails_claim` / `_release`
+    (one summary email to the owner, ignores quiet hours; see
+    [security-hardening.md](security-hardening.md))
 - `src/app/api/email/cron` calls those and sends up to 100 emails at a
   time through Resend's API (with a repeat-safe key, so a retry never
   sends twice).

@@ -1,0 +1,12 @@
+# Gitleaks settings. Uses the standard rules, but skips example and test
+# files, which hold made-up values only.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Example settings and database test fixtures"
+paths = [
+  '''^\.env\.example$''',
+  '''^supabase/tests/''',
+  '''^package-lock\.json$''',
+]

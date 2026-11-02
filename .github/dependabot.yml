@@ -1,0 +1,23 @@
+# Dependabot checks each week for newer versions of the app's add-ons and
+# GitHub's build steps, and opens a pull request for each group. Small
+# updates are grouped so there is about one pull request a week to review.
+# Urgent security fixes still come through straight away.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Australia/Adelaide
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
