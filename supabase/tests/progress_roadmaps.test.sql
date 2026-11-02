@@ -50,10 +50,17 @@ select tests.eq((select count(*) from public.roadmap_steps where target_id = '00
 select tests.eq((select count(*) from public.roadmap_steps where target_id = '00000000-0000-0000-0000-0000000d0001' and due_on = :'today'::date + 13), 1, 'last step the day before');
 select tests.fails($$select public.plan_assessment_steps('00000000-0000-0000-0000-0000000d0001')$$, 'planning twice');
 
--- Steps added by hand are labelled by who added them.
+-- Only the tutor adds steps by hand (Carla, 2026-11-02); families tick them off.
+select tests.fails(format($$insert into public.roadmap_steps (student_id, target_id, title) values (%L, '00000000-0000-0000-0000-0000000d0001', 'Parent step')$$, :'cara'), 'parent adds a step');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
+set role authenticated;
 insert into public.roadmap_steps (id, student_id, target_id, title, due_on, source)
   values ('00000000-0000-0000-0000-0000000d0101', :'cara', '00000000-0000-0000-0000-0000000d0001', 'Ask the teacher what the test covers', :'today'::date + 1, 'next_step');
-select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0101' and source = 'parent'), 1, 'parent''s step labelled parent');
+select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0101' and source = 'tutor'), 1, 'tutor''s step labelled tutor, whatever is sent');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000001');
+set role authenticated;
 
 -- Ticking off.
 select public.tick_roadmap_step('00000000-0000-0000-0000-0000000d0101');
@@ -62,7 +69,7 @@ select public.tick_roadmap_step('00000000-0000-0000-0000-0000000d0101', false);
 select tests.eq((select count(*) from public.roadmap_steps where done_at is not null), 0, 'and un-ticks it');
 select tests.fails($$update public.roadmap_steps set done_at = now()$$, 'ticking by direct edit');
 update public.roadmap_steps set title = 'Ask Ms Lee what the test covers' where id = '00000000-0000-0000-0000-0000000d0101';
-select tests.eq((select count(*) from public.roadmap_steps where title like 'Ask Ms Lee%'), 1, 'parent edits a step');
+select tests.eq((select count(*) from public.roadmap_steps where title like 'Ask Ms Lee%'), 0, 'parent can''t rename a step');
 reset role;
 
 select tests.claims('00000000-0000-0000-0000-000000000002');
@@ -82,8 +89,11 @@ select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
 delete from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0102';
 select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0102'), 1, 'parent can''t remove the tutor''s step');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
+set role authenticated;
 delete from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0101';
-select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0101'), 0, 'parent removes their own step');
+select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0101'), 0, 'tutor removes a step');
 reset role;
 
 -- ===========================================================================
@@ -123,8 +133,8 @@ set role authenticated;
 insert into public.roadmap_targets (id, student_id, kind, subject, title, due_on)
   values ('00000000-0000-0000-0000-0000000d0002', :'cal', 'assessment', 'English', 'essay draft', :'today'::date + 3);
 select tests.eq(public.plan_assessment_steps('00000000-0000-0000-0000-0000000d0002'), 3, 'short time: three steps');
-insert into public.roadmap_steps (student_id, title) values (:'cal', 'Pick my essay question');
-select tests.eq((select count(*) from public.roadmap_steps where student_id = :'cal' and source = 'student'), 1, 'student''s step labelled student');
+select tests.fails(format($$insert into public.roadmap_steps (student_id, title) values (%L, 'Pick my essay question')$$, :'cal'), 'student adds their own step');
+select tests.eq((select count(*) from public.roadmap_steps where student_id = :'cal' and source = 'plan'), 3, 'student''s planned steps are there');
 select tests.eq((select count(*) from public.roadmap_targets where student_id = :'cara'), 0, 'student sees only their own roadmap');
 update public.roadmap_targets set status = 'done' where id = '00000000-0000-0000-0000-0000000d0002';
 select tests.eq((select count(*) from public.roadmap_targets where id = '00000000-0000-0000-0000-0000000d0002' and closed_at is not null), 1, 'finishing a target records when');

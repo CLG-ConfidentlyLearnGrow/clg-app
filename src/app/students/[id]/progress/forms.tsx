@@ -296,10 +296,19 @@ export function FamilyNoteForm({ studentId }: { studentId: string }) {
   return (
     <ActionForm action={saveFamilyNote} submitLabel="Send">
       <input type="hidden" name="student_id" value={studentId} />
-      <Select label="What is it?" name="kind" defaultValue="home_progress" required>
-        <option value="home_progress">Progress at home</option>
-        <option value="feedback">Feedback</option>
-      </Select>
+      <fieldset className="space-y-2">
+        <legend className="mb-1 text-sm font-medium">What is it?</legend>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <label className="flex items-center gap-2">
+            <input type="radio" name="kind" value="home_progress" defaultChecked required />
+            Progress at home
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="kind" value="feedback" />
+            Feedback
+          </label>
+        </div>
+      </fieldset>
       <TextArea
         label="Your note"
         name="body"

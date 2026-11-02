@@ -113,13 +113,16 @@ create policy "change roadmap targets" on public.roadmap_targets
 drop policy if exists "see roadmap steps" on public.roadmap_steps;
 create policy "see roadmap steps" on public.roadmap_steps
   for select to authenticated using (private.can_view_student(student_id));
+-- Steps are added and changed by the tutor or an admin (Carla, 2026-11-02;
+-- see 20261102590100_progress_tutor_steps.sql). Families tick them off.
 drop policy if exists "add roadmap steps" on public.roadmap_steps;
 create policy "add roadmap steps" on public.roadmap_steps
-  for insert to authenticated with check (private.can_plan_for(student_id));
+  for insert to authenticated with check (private.is_tutor_of(student_id) or private.is_admin());
 drop policy if exists "change roadmap steps" on public.roadmap_steps;
 create policy "change roadmap steps" on public.roadmap_steps
   for update to authenticated
-  using (private.can_plan_for(student_id)) with check (private.can_plan_for(student_id));
+  using (private.is_tutor_of(student_id) or private.is_admin())
+  with check (private.is_tutor_of(student_id) or private.is_admin());
 -- A step can be removed by whoever added it, or by the tutor or an admin.
 drop policy if exists "remove roadmap steps" on public.roadmap_steps;
 create policy "remove roadmap steps" on public.roadmap_steps

@@ -79,10 +79,10 @@ export async function Roadmap({
   const addOn = ((addOnRes.data ?? []) as AddOnStatus[])[0];
   // If the add-on can't be read, the database still decides what is allowed.
   const hasStudyPlans = addOn ? addOn.has_it : true;
-  // Assessments, goals, planned study steps and the family's own steps need
-  // the add-on. Staff steps and session next steps are part of tutoring.
+  // Assessments, goals and planned study steps need the add-on.
   const canStudyPlan = canPlan && hasStudyPlans;
-  const canAddSteps = canPlan && (hasStudyPlans || canRemoveAny);
+  // Only the tutor (or an admin) adds steps; families and students tick them off.
+  const canAddSteps = canRemoveAny;
   const files = (filesRes.data ?? []) as { id: string; target_id: string; kind: string }[];
   const targets = (targetsRes.data ?? []) as Target[];
   const steps = (stepsRes.data ?? []) as Step[];
