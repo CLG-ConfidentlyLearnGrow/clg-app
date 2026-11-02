@@ -6,7 +6,12 @@ select tests.claims(null);
 select id as sam, family_id as sam_family from public.students where full_name = 'Sam Three' \gset
 
 -- The real SA dates are loaded by the migration.
-select tests.eq((select count(*) from public.school_terms where state = 'SA' and year = 2027), 4, 'SA 2027 terms loaded');
+select tests.eq((select count(*) from public.school_terms where state = 'SA' and calendar = 'public' and year = 2027), 4, 'SA 2027 terms loaded');
+select tests.eq((select count(*) from public.school_terms g join public.school_terms p
+  on p.state = g.state and p.year = g.year and p.term = g.term and p.calendar = 'private'
+  where g.state = 'SA' and g.calendar = 'public' and g.year = 2027
+    and p.starts_on = g.starts_on and p.ends_on = g.ends_on - case when g.term = 2 then 7 else 0 end), 4,
+  'SA private 2027 terms: Term 2 ends a week early');
 
 -- Swap in made-up terms around today: this term ends in 10 days, next term
 -- starts in 24 days.

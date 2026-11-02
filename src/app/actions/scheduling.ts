@@ -491,8 +491,6 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
   const { error } = await supabase.from("notice_settings").upsert({
     account_id: viewer.id,
     first_reminder_hours: parsed.data.first_reminder_hours,
-    by_email: formData.get("by_email") === "on",
-    by_text: formData.get("by_text") === "on",
   });
   if (error) return { error: "Couldn't save your settings." };
   return done("Saved. New reminders will use these settings.");

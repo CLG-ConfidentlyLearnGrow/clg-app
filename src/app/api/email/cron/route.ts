@@ -2,14 +2,16 @@ import { isCronRequest } from "@/lib/cron-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailIsSetUp, sendEmails, type OutgoingEmail } from "@/lib/email/send";
 
-// Sends notices that are due by email. The database calls this every
-// 5 minutes while an email is waiting (see the email_sender migration).
-// Each module hands over its own due notices and marks them sent; if
-// Resend refuses them, they are put back to try again next time.
+// Sends security emails. The database calls this every 5 minutes while an
+// email is waiting (see the email_sender migration). Each source hands
+// over its due emails and marks them sent; if Resend refuses them, they are
+// put back to try again next time.
+//
+// Since 2 Nov 2026 day-to-day notices (sessions, bookings, progress,
+// pauses) are app notices only, so people don't learn to ignore CLG emails.
+// The scheduling, progress and billing claim functions still exist in the
+// database; add them back here to turn those emails on again.
 const SOURCES = [
-  { claim: "session_notice_emails_claim", release: "session_notice_emails_release" },
-  { claim: "progress_notice_emails_claim", release: "progress_notice_emails_release" },
-  { claim: "billing_tutor_notice_emails_claim", release: "billing_tutor_notice_emails_release" },
   { claim: "emergency_access_emails_claim", release: "emergency_access_emails_release" },
   { claim: "security_alert_emails_claim", release: "security_alert_emails_release" },
 ] as const;

@@ -1472,7 +1472,7 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       .limit(50),
     supabase
       .from("notice_settings")
-      .select("first_reminder_hours, by_email, by_text")
+      .select("first_reminder_hours")
       .eq("account_id", viewerId)
       .maybeSingle(),
   ]);
@@ -1510,7 +1510,7 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       </Card>
       <Card collapsible defaultOpen={false} title="Reminder settings">
         <NoticeSettingsForm
-          settings={settingsRes.data ?? { first_reminder_hours: 48, by_email: true, by_text: false }}
+          settings={settingsRes.data ?? { first_reminder_hours: 48 }}
         />
       </Card>
     </>

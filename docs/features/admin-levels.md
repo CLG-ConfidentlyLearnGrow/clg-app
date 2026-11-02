@@ -2,8 +2,8 @@
 
 Requested by Carla, 2026-10-29. Proposal approved the same day
 (https://claude.ai/artifact/1iiDNvJx6FxqwsREsSzoXa): four levels, Lauren as
-Operations, all four built now, plus emergency owner access with a 48 hr
-delay and a required reason.
+Operations, all four built now, plus emergency owner access with a delay
+(48 hr at first, 24 hr since 2 Nov 2026) and a required reason.
 
 ## What it's for
 
@@ -25,8 +25,9 @@ concerns register isn't built yet; when it is, it gets its own rules.
 
 **Emergency owner access.** If Carla can't be reached, an Operations admin
 can ask for owner access. They must write a reason. Carla is emailed at
-once with the reason. Access starts 48 hr later unless Carla cancels, lasts
-7 days, then ends by itself. The person is emailed when it starts and ends,
+once with the reason. Access starts 24 hr later unless Carla cancels it or
+approves it sooner (Carla, 2 Nov 2026; it was 48 hr), lasts 7 days, then
+ends by itself. Approving early is recorded in the activity log. The person is emailed when it starts and ends,
 and when Carla cancels. Nobody, including someone using emergency access,
 can change or remove the owner's own admin access or make a second owner.
 
