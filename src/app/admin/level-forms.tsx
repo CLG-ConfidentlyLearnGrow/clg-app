@@ -1,20 +1,52 @@
 "use client";
 
 import { cancelEmergencyAccess, requestEmergencyAccess, setAdminLevel } from "@/app/actions/admin";
+import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Select, TextArea } from "@/components/ui";
+import { initialFormState } from "@/lib/forms";
+import { TextArea } from "@/components/ui";
 
-// The owner changes another admin's level.
-export function SetLevelForm({ accountId, level }: { accountId: string; level: string }) {
+// A short label for an admin level, for example in the staff list.
+export function LevelBadge({ level }: { level: string }) {
+  const names: Record<string, string> = { owner: "Owner", operations: "Operations", support: "Support", finance: "Finance" };
   return (
-    <ActionForm action={setAdminLevel} submitLabel="Save">
+    <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800">
+      {names[level] ?? level}
+    </span>
+  );
+}
+
+// The owner changes another admin's level: one small dropdown that saves
+// as soon as a level is picked, with a one-word note.
+export function SetLevelForm({ accountId, level }: { accountId: string; level: string }) {
+  const [state, formAction, pending] = useActionState(setAdminLevel, initialFormState);
+  return (
+    <form action={formAction} className="flex items-center gap-2">
       <input type="hidden" name="account_id" value={accountId} />
-      <Select label="Level" name="level" defaultValue={level}>
+      <select
+        name="level"
+        defaultValue={level}
+        aria-label="Admin level"
+        disabled={pending}
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+        className="rounded-full border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium shadow-sm focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
+      >
         <option value="operations">Operations</option>
         <option value="support">Support</option>
         <option value="finance">Finance</option>
-      </Select>
-    </ActionForm>
+      </select>
+      {pending ? (
+        <span className="text-xs text-zinc-500">Saving…</span>
+      ) : state.error ? (
+        <span role="alert" className="text-xs text-red-700">
+          {state.error}
+        </span>
+      ) : state.message ? (
+        <span role="status" className="text-xs text-teal-800">
+          Saved
+        </span>
+      ) : null}
+    </form>
   );
 }
 
