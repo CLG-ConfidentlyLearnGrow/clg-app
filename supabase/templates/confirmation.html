@@ -1,4 +1,17 @@
-<h2>Confirm your CLG account</h2>
-<p>Thanks for signing up. Please confirm your email address:</p>
-<p><a href="{{ .SiteURL }}/auth/continue?token_hash={{ .TokenHash }}&type=email&next=/dashboard">Confirm my email</a></p>
-<p>If you didn't sign up for CLG, you can ignore this email.</p>
+<!doctype html>
+<html>
+<!-- Sign-up confirmation email. Paste this whole file into Supabase > Authentication > Emails > Confirm signup. Subject: Confirm your CLG account -->
+<body style="margin:0;background:#ede8e4;font-family:Poppins,Arial,sans-serif;color:#414042">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ede8e4;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:28px">
+<tr><td><img src="{{ .SiteURL }}/brand/clg-logo-transparent.png" width="120" alt="CLG Tutoring" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding-top:16px;font-size:20px;font-weight:600">Welcome to CLG Tutoring</td></tr>
+<tr><td style="padding-top:16px;font-size:15px;line-height:1.55">{{ if .Data.full_name }}Hi {{ .Data.full_name }},{{ else }}Hi,{{ end }}</td></tr>
+<tr><td style="padding-top:8px;font-size:15px;line-height:1.55">Thanks for signing up. Please confirm your email address to finish making your account.</td></tr>
+<tr><td style="padding-top:24px"><a href="{{ .SiteURL }}/auth/continue?token_hash={{ .TokenHash }}&amp;type=email&amp;next=/dashboard" style="display:inline-block;background:#76573a;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">Confirm my email</a></td></tr>
+<tr><td style="padding-top:20px;font-size:13px;line-height:1.5;color:#6d6a6c">If you didn't sign up for CLG, you can ignore this email. If you're joining CLG as staff, please use the invitation link CLG sent you instead.</td></tr>
+</table>
+<p style="max-width:520px;font-size:12px;line-height:1.5;color:#414042;padding:16px 8px 0">CLG Tutoring &middot; Confidently Learn &amp; Grow &middot; <a href="https://clgtutoring.com" style="color:#76573a">clgtutoring.com</a></p>
+</td></tr></table>
+</body>
+</html>
