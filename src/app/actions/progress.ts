@@ -289,7 +289,7 @@ export async function addRoadmapStep(_prev: FormState, formData: FormData): Prom
     title: v.title,
     due_on: v.due_on || null,
   });
-  if (error) return { error: "Couldn't add the step. Please try again." };
+  if (error) return { error: error.code === "23514" ? error.message : "Couldn't add the step. Please try again." };
   revalidatePath(progressPath(v.student_id));
   revalidatePath("/dashboard/student");
   return { message: "Step added." };

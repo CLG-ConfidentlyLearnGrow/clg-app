@@ -39,3 +39,7 @@ Sources opened: AERO "Tried and tested: spacing and retrieval practice" listing 
 - Parents who can't manage a child's account can read but not change the roadmap. Targets are closed, not deleted, and every change is in the audit log.
 - Children's Online Privacy Code (exposure draft): data is limited to learning plans; a student with their own login is told on the roadmap that their parent or carer can see it, as the draft Code asks.
 - Migration `20261029500100_progress_roadmaps.sql`; tests in `supabase/tests/progress_roadmaps.test.sql`.
+
+## Study plans as an add-on (2 November 2026)
+
+Carla: study plans stay free for now and become a paid subscription add-on later. Assessments, goals, "Plan study steps for me" and family-added steps sit behind an add-on switch (free by default). Tutor steps, session next steps and ticking off are always part of tutoring. See `add-ons.md`.
