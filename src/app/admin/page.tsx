@@ -15,6 +15,7 @@ import { FamilySetupForm } from "./family-setup-form";
 import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
+import { AddOnsSection } from "./add-ons-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -776,7 +777,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           </>
         )}
 
-        {section === "progress" && <ProgressSection from={params.from} to={params.to} />}
+        {section === "progress" && (
+          <>
+            <ProgressSection from={params.from} to={params.to} />
+            <AddOnsSection isOwner={isOwner} />
+          </>
+        )}
 
         {section === "staff" && (
           <>

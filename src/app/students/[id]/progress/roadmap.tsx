@@ -1,5 +1,6 @@
 import { closeRoadmapTarget, planRoadmapSteps, removeRoadmapStep, tickRoadmapStep } from "@/app/actions/progress";
 import { Card, Empty, SubHeading } from "@/components/ui";
+import { dollars } from "@/lib/billing/money";
 import { localToday, shortDate } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { AddStepForm, AddTargetForm } from "./forms";
@@ -13,6 +14,8 @@ type Target = {
   current_grade: string | null;
   target_grade: string | null;
 };
+type AddOnStatus = { has_it: boolean; mode: string; name: string; price_cents: number | null; price_period: string };
+
 export type Step = {
   id: string;
   target_id: string | null;
@@ -49,7 +52,7 @@ export async function Roadmap({
   isStudentSelf?: boolean;
 }) {
   const supabase = await createClient();
-  const [targetsRes, stepsRes, filesRes] = await Promise.all([
+  const [targetsRes, stepsRes, filesRes, addOnRes] = await Promise.all([
     supabase
       .from("roadmap_targets")
       .select("id, kind, subject, title, due_on, current_grade, target_grade")
@@ -70,7 +73,16 @@ export async function Roadmap({
       .eq("student_id", studentId)
       .not("target_id", "is", null)
       .order("uploaded_at"),
+    // Study plans are an add-on: free for now, paid later (docs/features/add-ons.md).
+    supabase.rpc("add_on_for_student", { p_code: "study_plans", p_student: studentId }),
   ]);
+  const addOn = ((addOnRes.data ?? []) as AddOnStatus[])[0];
+  // If the add-on can't be read, the database still decides what is allowed.
+  const hasStudyPlans = addOn ? addOn.has_it : true;
+  // Assessments, goals, planned study steps and the family's own steps need
+  // the add-on. Staff steps and session next steps are part of tutoring.
+  const canStudyPlan = canPlan && hasStudyPlans;
+  const canAddSteps = canPlan && (hasStudyPlans || canRemoveAny);
   const files = (filesRes.data ?? []) as { id: string; target_id: string; kind: string }[];
   const targets = (targetsRes.data ?? []) as Target[];
   const steps = (stepsRes.data ?? []) as Step[];
@@ -104,7 +116,11 @@ export async function Roadmap({
         <p className="mb-4 text-xs text-zinc-500">Your parent or carer and your tutor can see your roadmap.</p>
       )}
       {targets.length === 0 && looseSteps.length === 0 && (
-        <Empty>Nothing on the roadmap yet. Add a school assessment or a goal below.</Empty>
+        <Empty>
+          {canStudyPlan
+            ? "Nothing on the roadmap yet. Add a school assessment or a goal below."
+            : "Nothing on the roadmap yet. Each session's next step will appear here."}
+        </Empty>
       )}
 
       {looseSteps.length > 0 && (
@@ -165,14 +181,14 @@ export async function Roadmap({
               </p>
             )}
             <div className="mt-2">{list.length > 0 ? stepList(list) : null}</div>
-            {canPlan && t.kind === "assessment" && list.length === 0 && t.due_on && t.due_on > today && (
+            {canStudyPlan && t.kind === "assessment" && list.length === 0 && t.due_on && t.due_on > today && (
               <form action={planRoadmapSteps} className="mt-2">
                 <input type="hidden" name="student_id" value={studentId} />
                 <input type="hidden" name="id" value={t.id} />
                 <button className="text-sm text-teal-800 underline">Plan study steps for me</button>
               </form>
             )}
-            {canPlan && (
+            {canAddSteps && (
               <details className="mt-2">
                 <summary className="cursor-pointer text-sm text-teal-800 underline">Add a step</summary>
                 <div className="mt-3">
@@ -184,19 +200,28 @@ export async function Roadmap({
         );
       })}
 
-      {canPlan && (
+      {canAddSteps && (
         <>
           <SubHeading>Add a step for this week</SubHeading>
           <AddStepForm studentId={studentId} />
-          <details className="mt-6">
-            <summary className="cursor-pointer text-sm font-medium text-teal-800 underline">
-              Add a school assessment or a goal
-            </summary>
-            <div className="mt-3">
-              <AddTargetForm studentId={studentId} today={today} />
-            </div>
-          </details>
         </>
+      )}
+      {canStudyPlan && (
+        <details className="mt-6">
+          <summary className="cursor-pointer text-sm font-medium text-teal-800 underline">
+            Add a school assessment or a goal
+          </summary>
+          <div className="mt-3">
+            <AddTargetForm studentId={studentId} today={today} />
+          </div>
+        </details>
+      )}
+      {canPlan && !hasStudyPlans && addOn?.mode === "paid" && (
+        <p className="mt-6 rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+          Study plans (adding assessments and goals, and planned study steps) are an add-on
+          {addOn.price_cents ? `, ${dollars(addOn.price_cents)} a ${addOn.price_period}` : ""}. Ask CLG if you&apos;d
+          like them.
+        </p>
       )}
     </Card>
   );
