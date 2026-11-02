@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { Card, Empty, Page, Table } from "@/components/ui";
+import { withdrawMyHours } from "@/app/actions/pay";
+import { LogHoursForm } from "@/app/admin/billing/pay-forms";
+import { Button, Card, Empty, Page, Table } from "@/components/ui";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { dollars, plainDate } from "@/lib/billing/money";
 import { adelaideToday } from "@/lib/billing/run";
@@ -23,7 +25,7 @@ export default async function MyPayPage() {
   const supabase = await createClient();
   const today = adelaideToday();
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10);
-  const [pay, lines, settings] = await Promise.all([
+  const [pay, lines, settings, logs] = await Promise.all([
     supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("billing_pay_lines")
@@ -32,7 +34,14 @@ export default async function MyPayPage() {
       .gte("work_date", since)
       .order("work_date", { ascending: false }),
     supabase.rpc("billing_casual_min_on"),
+    supabase
+      .from("billing_hour_logs")
+      .select("id, work_date, minutes, note, status, review_note")
+      .eq("account_id", viewer.id)
+      .gte("work_date", since)
+      .order("work_date", { ascending: false }),
   ]);
+  const logRows = logs.data ?? [];
   const rows = lines.data ?? [];
   const p = pay.data;
 
@@ -51,6 +60,40 @@ export default async function MyPayPage() {
           <Empty>CLG hasn&apos;t entered your pay rates yet.</Empty>
         )}
       </Card>
+      {p?.admin_rate_cents != null && (
+        <Card title="Log admin hours" description="Hours you worked on admin. CLG approves them, then they're paid with your tutoring in the next pay run.">
+          <LogHoursForm today={today} />
+          {logRows.length > 0 && (
+            <div className="mt-6">
+              <Table headings={["Day", "What", "Hours", ""]}>
+                {logRows.map((h) => (
+                  <tr key={h.id}>
+                    <td>{plainDate(h.work_date)}</td>
+                    <td>
+                      {h.note}
+                      {h.status === "declined" && h.review_note ? ` (declined: ${h.review_note})` : ""}
+                    </td>
+                    <td>{hours(h.minutes)}</td>
+                    <td>
+                      {h.status === "submitted" ? (
+                        <form action={withdrawMyHours} className="flex items-center gap-2">
+                          <input type="hidden" name="id" value={h.id} />
+                          <span>Waiting for approval</span>
+                          <Button type="submit">Take back</Button>
+                        </form>
+                      ) : h.status === "approved" ? (
+                        "Approved"
+                      ) : (
+                        "Declined"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            </div>
+          )}
+        </Card>
+      )}
       <Card title="Last 8 weeks" description="If a time looks wrong, record the right end time on the session, or contact CLG.">
         {rows.length === 0 ? (
           <Empty>No pay yet.</Empty>

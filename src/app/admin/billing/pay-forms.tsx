@@ -1,6 +1,6 @@
 "use client";
 
-import { addAdminTime, savePayPeriod, saveStaffPay, sendTimesheetsNow, workOutPay } from "@/app/actions/pay";
+import { addAdminTime, declineHours, logMyHours, savePayPeriod, saveStaffPay, sendTimesheetsNow, workOutPay } from "@/app/actions/pay";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select } from "@/components/ui";
 
@@ -133,6 +133,27 @@ export function PayPeriodForm({ days, anchor, casualMin }: { days: number; ancho
         <input type="checkbox" name="casual_min_enabled" defaultChecked={casualMin} className="mt-1" />
         <span>Top up casual staff to the 2 hr minimum on each day they work (award rule; off for now)</span>
       </label>
+    </ActionForm>
+  );
+}
+
+export function DeclineHoursForm({ id }: { id: string }) {
+  return (
+    <ActionForm action={declineHours} submitLabel="Decline">
+      <input type="hidden" name="id" value={id} />
+      <Field label="Reason" name="reason" required minLength={3} maxLength={300} placeholder="For example: already paid as session time" />
+    </ActionForm>
+  );
+}
+
+export function LogHoursForm({ today }: { today: string }) {
+  return (
+    <ActionForm action={logMyHours} submitLabel="Log hours">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Day" name="day" type="date" required max={today} defaultValue={today} />
+        <Field label="Hours" name="hours" inputMode="decimal" required placeholder="1.5" />
+      </div>
+      <Field label="What it was for" name="note" required minLength={3} maxLength={300} placeholder="For example: progress summaries" />
     </ActionForm>
   );
 }

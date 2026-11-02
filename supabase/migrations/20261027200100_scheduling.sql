@@ -100,6 +100,15 @@ create table if not exists public.bookings (
 );
 create index if not exists bookings_tutor on public.bookings (tutor_id, weekday);
 create index if not exists bookings_student on public.bookings (student_id);
+-- When CLG offers a time (an admin books for a family), the tutor and the
+-- family both approve, in either order. The booking stays "requested"
+-- (shown as waiting for confirmation) until both have said yes, within the
+-- same 48 hours (tutor_reply_by).
+alter table public.bookings add column if not exists needs_family_ok boolean not null default false;
+alter table public.bookings add column if not exists tutor_ok_at timestamptz;
+alter table public.bookings add column if not exists family_ok_at timestamptz;
+alter table public.bookings add column if not exists family_ok_by uuid references public.accounts (id) on delete set null;
+alter table public.bookings add column if not exists declined_by_role text check (declined_by_role in ('tutor', 'family', 'admin'));
 
 create table if not exists public.sessions (
   id uuid primary key default gen_random_uuid(),
@@ -521,16 +530,18 @@ begin
     where f.tutor_id = p_tutor and f.weekday = p_weekday and f.start_time = p_start
       and f.delivery = p_delivery and f.library_id is not distinct from p_library
   ) then
-    raise exception 'Sorry, that time is no longer free. Please pick another.' using errcode = '23514';
+    raise exception 'Sorry, that time is no longer available. Please pick another.' using errcode = '23514';
   end if;
 
   insert into public.bookings (
     student_id, tutor_id, family_id, subject, weekday, start_time, minutes,
-    delivery, library_id, first_date, last_date, family_note, requested_by
+    delivery, library_id, first_date, last_date, family_note, requested_by, needs_family_ok
   ) values (
     p_student, p_tutor, v_student.family_id, trim(p_subject), p_weekday, p_start, p_minutes,
     p_delivery, case when p_delivery = 'library' then p_library end, v_first, p_last_date,
-    nullif(left(trim(p_note), 1000), ''), auth.uid()
+    nullif(left(trim(p_note), 1000), ''), auth.uid(),
+    -- An admin booking for someone else's child: the family approves too.
+    private.is_admin() and not private.can_manage_student(p_student) and not private.is_student_self(p_student)
   )
   returning id into v_id;
   return v_id;
@@ -589,7 +600,9 @@ revoke all on function private.make_sessions(uuid, date) from public;
 -- ---------------------------------------------------------------------------
 -- The tutor accepts or declines
 -- ---------------------------------------------------------------------------
-create or replace function public.respond_to_booking(p_booking uuid, p_accept boolean, p_note text default null)
+-- Confirms a booking once everyone needed has said yes: assigns the tutor
+-- and makes the weekly sessions.
+create or replace function private.confirm_booking(p_booking uuid)
 returns void language plpgsql security definer
 set search_path = ''
 as $$
@@ -598,31 +611,11 @@ declare
   v_assignment uuid;
 begin
   select * into v_b from public.bookings where id = p_booking for update;
-  if v_b.id is null or not (
-    private.is_admin()
-    or (v_b.tutor_id = auth.uid() and private.has_role('tutor') and private.has_aal2())
-  ) then
-    raise exception 'Booking not found' using errcode = 'P0002';
-  end if;
-  if v_b.status <> 'requested' then
-    raise exception 'This request has already been answered' using errcode = '22023';
-  end if;
-  if v_b.tutor_reply_by < now() and not private.is_admin() then
-    raise exception 'This request has expired. CLG will offer the family other times.' using errcode = '22023';
-  end if;
-
-  if not p_accept then
-    update public.bookings
-    set status = 'declined', tutor_note = nullif(left(trim(p_note), 1000), '')
-    where id = p_booking;
-    return;
-  end if;
-
   if private.family_paused(v_b.family_id) then
     raise exception 'This family''s bookings are paused for an overdue payment. CLG will be in touch.' using errcode = '23514';
   end if;
 
-  -- Another booking may have taken the time since the family asked.
+  -- Another booking may have taken the time since it was offered.
   if exists (
     select 1 from public.bookings o
     where o.id <> v_b.id and o.status = 'confirmed'
@@ -653,14 +646,99 @@ begin
     where id = v_assignment;
   end if;
 
-  update public.bookings
-  set status = 'confirmed', confirmed_at = now(), tutor_note = nullif(left(trim(p_note), 1000), '')
-  where id = p_booking;
+  update public.bookings set status = 'confirmed', confirmed_at = now() where id = p_booking;
   perform private.make_sessions(p_booking);
+end;
+$$;
+revoke all on function private.confirm_booking(uuid) from public;
+
+-- The tutor (or an admin for them) accepts or declines. When the family
+-- must approve too and hasn't yet, accepting records the tutor's yes and
+-- the booking waits for the family.
+create or replace function public.respond_to_booking(p_booking uuid, p_accept boolean, p_note text default null)
+returns void language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  v_b public.bookings;
+begin
+  select * into v_b from public.bookings where id = p_booking for update;
+  if v_b.id is null or not (
+    private.is_admin()
+    or (v_b.tutor_id = auth.uid() and private.has_role('tutor') and private.has_aal2())
+  ) then
+    raise exception 'Booking not found' using errcode = 'P0002';
+  end if;
+  if v_b.status <> 'requested' or v_b.tutor_ok_at is not null then
+    raise exception 'This request has already been answered' using errcode = '22023';
+  end if;
+  if v_b.tutor_reply_by < now() and not private.is_admin() then
+    raise exception 'This request has expired. CLG will offer the family other times.' using errcode = '22023';
+  end if;
+
+  if not p_accept then
+    update public.bookings
+    set status = 'declined', declined_by_role = 'tutor', tutor_note = nullif(left(trim(p_note), 1000), '')
+    where id = p_booking;
+    return;
+  end if;
+
+  if private.family_paused(v_b.family_id) then
+    raise exception 'This family''s bookings are paused for an overdue payment. CLG will be in touch.' using errcode = '23514';
+  end if;
+  update public.bookings
+  set tutor_ok_at = now(), tutor_note = nullif(left(trim(p_note), 1000), '')
+  where id = p_booking;
+  if not v_b.needs_family_ok or v_b.family_ok_at is not null then
+    perform private.confirm_booking(p_booking);
+  end if;
 end;
 $$;
 revoke all on function public.respond_to_booking(uuid, boolean, text) from public, anon;
 grant execute on function public.respond_to_booking(uuid, boolean, text) to authenticated;
+
+-- The family (or an admin for them) approves or declines a time CLG
+-- offered. Once the tutor has also said yes, the booking is confirmed.
+create or replace function public.approve_booking(p_booking uuid, p_ok boolean, p_note text default null)
+returns void language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  v_b public.bookings;
+begin
+  select * into v_b from public.bookings where id = p_booking for update;
+  if v_b.id is null or not private.can_book_for(v_b.student_id) then
+    raise exception 'Booking not found' using errcode = 'P0002';
+  end if;
+  if v_b.status <> 'requested' or not v_b.needs_family_ok or v_b.family_ok_at is not null then
+    raise exception 'This has already been answered' using errcode = '22023';
+  end if;
+  if v_b.tutor_reply_by < now() and not private.is_admin() then
+    raise exception 'This offer has expired. CLG will be in touch with other times.' using errcode = '22023';
+  end if;
+
+  if not p_ok then
+    update public.bookings
+    set status = 'declined', declined_by_role = 'family',
+        family_note = coalesce(nullif(left(trim(p_note), 1000), ''), family_note)
+    where id = p_booking;
+    return;
+  end if;
+
+  if private.family_paused(v_b.family_id) then
+    raise exception 'Bookings are paused while a payment is overdue. Please contact CLG.' using errcode = '23514';
+  end if;
+  update public.bookings
+  set family_ok_at = now(), family_ok_by = auth.uid(),
+      family_note = coalesce(nullif(left(trim(p_note), 1000), ''), family_note)
+  where id = p_booking;
+  if v_b.tutor_ok_at is not null then
+    perform private.confirm_booking(p_booking);
+  end if;
+end;
+$$;
+revoke all on function public.approve_booking(uuid, boolean, text) from public, anon;
+grant execute on function public.approve_booking(uuid, boolean, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Cancelling

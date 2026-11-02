@@ -239,6 +239,7 @@ begin
     'public.admin_find_account', 'public.admin_add_child', 'public.admin_offer_student_login',
     'public.request_booking', 'public.respond_to_booking', 'public.cancel_session',
     'public.list_bookings', 'public.list_sessions', 'public.list_waitlist', 'public.list_renewals',
+    'public.record_offer_change',
     'private.can_book_for', 'private.cancel_role',
     'private.guard_student', 'private.require_student_details'
   ] loop
@@ -338,6 +339,7 @@ select private.retarget_function('public.billing_add_admin_time', 'private.is_fi
 select private.retarget_function('public.billing_remove_pay_line', 'private.is_finance_admin()', 'private.is_pay_admin()');
 select private.retarget_function('public.billing_build_pay', 'private.is_finance_admin()', 'private.is_pay_admin()');
 select private.retarget_function('public.billing_mark_pay_sent', 'private.is_finance_admin()', 'private.is_pay_admin()');
+select private.retarget_function('public.billing_review_hours', 'private.is_finance_admin()', 'private.is_pay_admin()');
 
 -- Prices and kept family rates are billing rules: only the owner changes
 -- them. Finance and operations can still read them.
