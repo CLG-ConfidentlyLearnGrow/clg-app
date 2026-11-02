@@ -478,11 +478,14 @@ async function BookSection({
   const studentId = one(params.student) || (students.length === 1 ? students[0].id : "");
   const student = students.find((s) => s.id === studentId);
   const subjectsRes = student
-    ? await supabase.from("student_subjects").select("subject").eq("student_id", student.id).order("added_at")
+    ? await supabase.from("student_subjects").select("subject, working_level").eq("student_id", student.id).order("added_at")
     : null;
-  const subjects = (subjectsRes?.data ?? []).map((r) => r.subject as string);
+  const subjectRows = (subjectsRes?.data ?? []) as { subject: string; working_level: string | null }[];
+  const subjects = subjectRows.map((r) => r.subject);
 
   const subject = one(params.subject) || subjects[0] || "";
+  // Shown to the person matching: school year and the level they work at in this subject.
+  const workingLevel = subjectRows.find((r) => r.subject.toLowerCase() === subject.toLowerCase())?.working_level ?? null;
   const minutes = Number(one(params.minutes)) || 60;
   const go = one(params.go) === "1";
   // "auto" (from the Matching tab) searches straight away with the saved places.
@@ -526,6 +529,12 @@ async function BookSection({
         title="Book a session"
         description="Choose what's needed and where. You'll see only tutors who suit and are available, then pick a time."
       >
+        {student && subject && (
+          <p className="mb-4 rounded-lg bg-zinc-50 px-3 py-2 text-sm">
+            <span className="font-medium">{student.full_name}</span> · {subject} · School year:{" "}
+            {student.year_level ?? "not set"} · Working level: {workingLevel ?? "not sure"}
+          </p>
+        )}
         {students.length === 0 ? (
           <Empty>
             Add your child first. <TextLink href="/dashboard/parent?section=add">Add a child</TextLink>
@@ -1044,11 +1053,7 @@ async function MatchingSection({
                   <span className="text-zinc-600">
                     {" "}
                     · {r.subject}
-                    {r.working_level && r.working_level !== r.year_level
-                      ? ` · working at ${r.working_level} (${r.year_level ?? "year not set"})`
-                      : r.year_level
-                        ? ` · ${r.year_level}`
-                        : ""}
+                    {` · School year: ${r.year_level ?? "not set"} · Working level: ${r.working_level ?? "not sure"}`}
                     {r.tutor_name && ` · ${r.tutor_name}`}
                   </span>
                   {!r.has_places && (stage === "needs_tutor" || stage === "waitlist") && (
