@@ -2,6 +2,8 @@
 
 \set QUIET on
 \ir ../migrations/20261028230200_billing_credit_notes.sql
+-- Re-running an older billing file resets its rules, so apply admin levels again.
+\ir ../migrations/20261029900200_admin_levels.sql
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;

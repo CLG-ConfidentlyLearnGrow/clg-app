@@ -5,6 +5,8 @@
 \set QUIET on
 \ir ../migrations/20261028230100_billing_tutor_pay.sql
 \ir ../migrations/20261028230300_billing_casual_min_off.sql
+-- Re-running an older billing file resets its rules, so apply admin levels again.
+\ir ../migrations/20261029900200_admin_levels.sql
 
 select id as cara from public.students where full_name = 'Cara One' \gset
 
@@ -23,14 +25,24 @@ $$;
 -- ---------------------------------------------------------------------------
 -- Pay rates
 -- ---------------------------------------------------------------------------
+-- Operations can see pay but not change it; the owner and finance can.
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select tests.fails($$insert into public.billing_staff_pay (account_id, employment, school_rate_cents) values ('00000000-0000-0000-0000-000000000011', 'casual', 3400)$$, 'operations sets a pay rate');
+select tests.fails($$select public.billing_build_pay('2026-09-07', '2026-09-13')$$, 'operations works out pay');
+reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;
 insert into public.billing_staff_pay (account_id, employment, school_rate_cents, tertiary_rate_cents) values
   ('00000000-0000-0000-0000-000000000011', 'casual', 3400, 6288),
   ('00000000-0000-0000-0000-000000000012', 'part_time', 2000, null);
 select tests.fails($$select public.billing_add_admin_time('00000000-0000-0000-0000-000000000011', '2026-09-08', 60, 'Notes')$$, 'admin hours need an admin rate first');
 update public.billing_staff_pay set admin_rate_cents = 3400 where account_id = '00000000-0000-0000-0000-000000000011';
-select tests.eq((select count(*) from public.billing_award_rates), 9, 'staff admin reads award rates');
+select tests.eq((select count(*) from public.billing_award_rates), 9, 'owner reads award rates');
+reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select tests.eq((select count(*) from public.billing_award_rates), 9, 'operations reads award rates');
 update public.billing_award_rates set min_rate_cents = 1 where work_kind = 'school';
 select tests.eq((select count(*) from public.billing_award_rates where min_rate_cents = 1), 0, 'only the owner changes award rates');
 reset role;
@@ -87,7 +99,7 @@ update public.sessions set status = 'completed' where id = :'waiting';
 select tests.pay_session('00000000-0000-0000-0000-000000000012', :'cara', '2026-09-07', '10:00', 60) as t2 \gset
 update public.sessions set status = 'completed', worked_from = starts_at, worked_to = ends_at where id = :'t2';
 
-select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;
 select public.billing_add_admin_time('00000000-0000-0000-0000-000000000011', '2026-09-08', 60, 'Progress summaries');
 select tests.fails($$select public.billing_add_admin_time('00000000-0000-0000-0000-000000000011', current_date + 7, 60, 'Future')$$, 'admin hours in the future');

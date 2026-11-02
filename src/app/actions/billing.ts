@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin, requireViewer } from "@/lib/auth";
+import { FINANCE, requireAdminLevel, requireViewer } from "@/lib/auth";
 import { siteUrl } from "@/lib/env";
 import type { FormState } from "@/lib/forms";
 import { stripeKey } from "@/lib/billing/config";
@@ -33,7 +33,7 @@ const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date.");
 // ---------------------------------------------------------------------------
 
 export async function saveFamilyBilling(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({
       family_id: uuid,
@@ -58,7 +58,7 @@ export async function saveFamilyBilling(_prev: FormState, formData: FormData): P
 }
 
 export async function saveKeptRate(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({ family_id: uuid, price_item_id: uuid, amount: z.string(), note: z.string().max(500).optional() })
     .safeParse(Object.fromEntries(formData));
@@ -88,7 +88,7 @@ export async function saveKeptRate(_prev: FormState, formData: FormData): Promis
 }
 
 export async function savePrice(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({ id: uuid, amount: z.string(), gst_applies: z.string().optional(), active: z.string().optional() })
     .safeParse(Object.fromEntries(formData));
@@ -106,7 +106,7 @@ export async function savePrice(_prev: FormState, formData: FormData): Promise<F
 }
 
 export async function addSchoolPeriod(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({
       name: z.string().trim().min(1, "Give it a name, for example Term 1 2027.").max(100),
@@ -126,7 +126,7 @@ export async function addSchoolPeriod(_prev: FormState, formData: FormData): Pro
 }
 
 export async function buildInvoice(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z.object({ family_id: uuid, from: day, to: day }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose the family and both dates." };
   const supabase = await createClient();
@@ -143,7 +143,7 @@ export async function buildInvoice(_prev: FormState, formData: FormData): Promis
 }
 
 export async function runBillingNow(): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const s = await runBilling();
   revalidatePath(ADMIN_PAGE);
   const done = `Built ${s.invoicesBuilt} invoice(s), ${s.payLines} pay line(s) waiting to send, gave ${s.creditsGiven} cancellation credit(s), sent ${s.sentToXero} to Xero, charged ${s.charged}, ${s.pausesChanged} pause change(s).`;
@@ -151,7 +151,7 @@ export async function runBillingNow(): Promise<FormState> {
 }
 
 export async function approveInvoice(formData: FormData) {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const id = uuid.safeParse(formData.get("id"));
   if (!id.success) return;
   const supabase = await createClient();
@@ -160,7 +160,7 @@ export async function approveInvoice(formData: FormData) {
 }
 
 export async function voidInvoice(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z.object({ id: uuid, reason: z.string() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Please give a reason." };
   const supabase = await createClient();
@@ -171,7 +171,7 @@ export async function voidInvoice(_prev: FormState, formData: FormData): Promise
 }
 
 export async function addCredit(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z.object({ family_id: uuid, amount: z.string(), note: z.string() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Please fill in the amount and the reason." };
   const cents = parseDollars(parsed.data.amount);
@@ -184,7 +184,7 @@ export async function addCredit(_prev: FormState, formData: FormData): Promise<F
 }
 
 export async function overridePause(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({ family_id: uuid, reason: z.string(), until: day, payment_plan: z.string().max(1000).optional() })
     .safeParse(Object.fromEntries(formData));
@@ -202,7 +202,7 @@ export async function overridePause(_prev: FormState, formData: FormData): Promi
 }
 
 export async function saveBillingSettings(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({
       invoice_mode: z.enum(["awaiting_approval", "send"]),
@@ -362,7 +362,7 @@ export async function payInvoiceNow(formData: FormData) {
 // ---------------------------------------------------------------------------
 
 export async function saveSplit(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const parsed = z
     .object({ family_id: uuid, payer_id: uuid, share: z.string() })
     .safeParse(Object.fromEntries(formData));
@@ -381,7 +381,7 @@ export async function saveSplit(_prev: FormState, formData: FormData): Promise<F
 }
 
 export async function removeSplit(formData: FormData) {
-  await requireAdmin();
+  await requireAdminLevel(FINANCE);
   const family = uuid.safeParse(formData.get("family_id"));
   const payer = uuid.safeParse(formData.get("payer_id"));
   if (!family.success || !payer.success) return;
