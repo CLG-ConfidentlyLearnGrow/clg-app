@@ -101,13 +101,13 @@ export function MyCheckForm() {
           label="Date done or issued"
           name="completed_on"
           type="date"
-          hint="Needed for a police check: it lasts 5 years from this date."
+          hint="Enough on its own for RRHAN-EC and first aid (3 years) or a police check (5 years)."
         />
         <Field
           label="Expires or due again on"
           name="expires_on"
           type="date"
-          hint="Leave blank for a police check. The app works it out."
+          hint="Needed for a working with children card. Otherwise the app can work it out."
         />
       </div>
       <Field

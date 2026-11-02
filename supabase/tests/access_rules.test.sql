@@ -249,7 +249,10 @@ select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id,
   select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Vic Two'$$, 'SA-only tutor for VIC student');
 insert into public.tutor_checks (tutor_id, kind, reference, completed_on, expires_on) values
   ('00000000-0000-0000-0000-000000000012', 'wwc_vic', 'VIC-9', null, current_date + 365),
-  ('00000000-0000-0000-0000-000000000012', 'police_check', 'NPC-3', current_date - 30, null);
+  ('00000000-0000-0000-0000-000000000012', 'police_check', 'NPC-3', current_date - 30, null),
+  -- RRHAN-EC is needed for students in every state (2 Nov 2026).
+  ('00000000-0000-0000-0000-000000000012', 'rrhan_ec_fundamentals', null, current_date - 30, null),
+  ('00000000-0000-0000-0000-000000000012', 'rrhan_ec_masterclass', null, current_date - 30, null);
 insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000012', id, 'Science' from public.students where full_name = 'Vic Two';
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)

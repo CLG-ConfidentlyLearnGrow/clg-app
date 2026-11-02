@@ -325,8 +325,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 </Table>
               )}
               <p className="mt-4 text-xs text-zinc-600">
-                Each state needs its own working with children check (South Australia also needs RRHAN-EC Fundamentals
-                and Masterclass). You can also add a first aid certificate or a police check. These are optional. The more states you are cleared for, the
+                Each state needs its own working with children check, and every tutor needs RRHAN-EC Fundamentals and
+                Masterclass, wherever the student is. Upload each certificate with the date it was done or expires. The app
+                reminds you 6 weeks and 2 weeks before a check expires. You can also add a first aid certificate or a police check. These are optional. The more states you are cleared for, the
                 more students you can be matched with when a suitable match comes up. No number of students or hours is
                 guaranteed.
               </p>

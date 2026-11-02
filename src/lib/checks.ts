@@ -39,8 +39,8 @@ export const CHECK_NAMES: Record<CheckKind, string> = {
   rwvp_tas: "TAS Registration to Work with Vulnerable People",
   wwvp_act: "ACT Working with Vulnerable People registration",
   ochre_card_nt: "NT Working with Children Clearance (Ochre Card)",
-  rrhan_ec_fundamentals: "RRHAN-EC Fundamentals (SA)",
-  rrhan_ec_masterclass: "RRHAN-EC Masterclass (SA)",
+  rrhan_ec_fundamentals: "RRHAN-EC Fundamentals",
+  rrhan_ec_masterclass: "RRHAN-EC Masterclass",
   police_check: "National police check (optional, valid 5 years from issue)",
   first_aid: "First aid certificate (optional)",
 };
