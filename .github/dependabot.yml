@@ -5,7 +5,7 @@
 #
 # Big version jumps (for example TypeScript 5 to 7) are skipped. They often
 # need code changes and break the build, so they are done by hand when
-# needed. Security fixes are still offered even when they are a big jump.
+# needed. GitHub's security alerts still warn about any known flaw.
 version: 2
 updates:
   - package-ecosystem: npm
