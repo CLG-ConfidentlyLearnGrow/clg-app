@@ -39,6 +39,7 @@ export function shortDate(iso: string): string {
 export function placeLabel(delivery: string, libraryName: string | null): string {
   if (delivery === "online") return "Online";
   if (delivery === "home") return "At home";
+  if (delivery === "school") return "At school";
   return libraryName ?? "Library";
 }
 

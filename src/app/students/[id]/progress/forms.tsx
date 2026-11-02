@@ -376,6 +376,10 @@ export function TermReviewForm({ studentId, review }: { studentId: string; revie
     <ActionForm action={saveTermReview} submitLabel="Save">
       <input type="hidden" name="student_id" value={studentId} />
       <input type="hidden" name="review_id" value={review.id} />
+      <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        Please write this review yourself. Don&apos;t copy any student information (names, work, results or notes) into
+        ChatGPT, Copilot, Gemini or any other AI tool. Student information must stay in the CLG app.
+      </p>
       <TextArea
         label="How the term went"
         name="summary"

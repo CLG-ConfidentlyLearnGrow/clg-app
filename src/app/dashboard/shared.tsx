@@ -51,7 +51,7 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
 type Update = { id: string; student_id: string; title: string; body: string; deliver_at: string };
 
 // What's new since the family last looked: session notes (next step and the
-// tip for home), steps due tomorrow, the monthly summary and term reviews.
+// tip for home), steps due tomorrow, and term reviews (monthly summaries stopped on 2 Nov 2026; old ones still show).
 // Opening the progress page marks them as seen. Shows nothing when there is
 // nothing new.
 export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {

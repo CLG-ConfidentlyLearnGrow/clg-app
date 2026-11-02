@@ -34,3 +34,14 @@ Tutors enter each check themselves: the number, the date done and the date it is
 - Admins should still confirm a working with children check against the state's online check (for SA, the DHS screening portal). A copy of a card doesn't show whether the clearance is still valid today.
 - Privacy: a police check copy is sensitive information (criminal record) under the Privacy Act (APP 3.3 needs consent and that it is reasonably necessary). The upload form tells tutors who can see it. The privacy policy and tutor contract should say CLG stores copies of screening documents, and for how long.
 - Retention: copies follow the check record (screening records are kept 7 years after the tutor leaves). Still to build: the nightly deletion must also remove the stored file through the storage service, not only the record. This isn't due before 2033 at the earliest.
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- RRHAN-EC is required in every state, not only SA.
+- Tutors add the done date or expiry date with each certificate. If only
+  the done date is given, the expiry is filled in (police check 5 years,
+  RRHAN-EC 3 years, first aid 3 years).
+- Reminders go to the tutor 6 weeks and 2 weeks before a check expires;
+  admins are told at 2 weeks.

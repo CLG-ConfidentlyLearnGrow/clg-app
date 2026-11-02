@@ -1,7 +1,7 @@
 import { payInvoiceNow, setUpAutomaticPayment } from "@/app/actions/billing";
 import { Button, Card, Empty, Page, Table } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
-import { METHOD_LABELS, PLAN_LABELS, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money";
+import { METHOD_LABELS, PLAN_LABELS, PLAN_SCOPE_NOTE, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money";
 import { createClient } from "@/lib/supabase/server";
 import { AcceptTermsForm } from "./terms-form";
 
@@ -162,6 +162,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
             {!a.terms_accepted_at && (
               <Card title="Payment terms" description="Please read and agree before your first invoice.">
                 <ul className="mb-4 list-disc space-y-1 pl-5 text-sm">
+                  <li>{PLAN_SCOPE_NOTE}</li>
                   <li>Sessions are paid in advance. Weekly and monthly invoices are due 4 days before the first session; per term invoices 1 week before.</li>
                   <li>Weekly and monthly plans pay automatically, by saved card (weekly) or card or bank debit (monthly).</li>
                   <li>If an invoice is overdue, all your family&apos;s sessions go on hold until it is paid.</li>

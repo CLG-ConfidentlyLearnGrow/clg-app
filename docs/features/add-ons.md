@@ -60,3 +60,8 @@ These stay part of tutoring, whatever the switch says:
 
 - Migration `supabase/migrations/20261102500100_study_plan_add_on.sql` (run after `20261029500100` and `20261029900200`).
 - Tests `supabase/tests/progress_study_plan_add_on.test.sql`.
+
+## Changes, 2 Nov 2026
+
+A second add-on, `term_reviews`, is set up "off" with a per-term price
+to be set. See [term-reviews.md](term-reviews.md).

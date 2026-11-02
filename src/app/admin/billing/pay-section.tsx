@@ -66,7 +66,7 @@ export async function PaySection({
     supabase.from("billing_pay_problems").select("*").gte("work_date", start).lte("work_date", end),
     supabase.from("billing_settings").select("pay_period_days, pay_period_anchor, casual_min_enabled").maybeSingle(),
     supabase.from("account_private").select("account_id, email"),
-    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note").eq("status", "submitted").order("work_date"),
+    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note, logged_late").eq("status", "submitted").order("work_date"),
   ]);
 
   const staff = new Map<string, string>();
@@ -106,6 +106,7 @@ export async function PaySection({
               <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">
                 <p className="mb-3">
                   <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}: {hours(h.minutes)} for {h.note}
+                  {h.logged_late && <span className="ml-1 text-xs text-amber-800">(logged late)</span>}
                 </p>
                 {canEdit ? (
                   <div className="grid gap-4 sm:grid-cols-2">

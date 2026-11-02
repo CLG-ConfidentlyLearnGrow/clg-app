@@ -238,3 +238,22 @@ process each term, as the NSSA implementation toolkit recommends.
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't
   book and tutors can't accept new requests from them.
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- Quiet hours are 9pm to 6am. Notices are in the app only.
+- Each student follows SA government terms, SA private terms (Term 2 a week
+  shorter) or their own dates; each student's last day of Term 4 is
+  confirmed. Families are asked about next term 3 weeks before their study
+  period ends; tutors check availability 4 weeks before.
+- Offers that need both the tutor and the family are open 3 days, with
+  reminders after 2 days. Requests to a tutor still have 48 hours.
+- A tutor's away dates cancel sessions after 2 hours; families and CLG are
+  told politely, the tutor can offer other times, and families can ask for
+  another time or tutor.
+- New: requests for extra or one-off sessions, public holiday weeks with a
+  skip option, blocking, preferred parts of the day, library confirmation
+  and opening hours, and home or school sessions booked by CLG only.
+- The waitlist already lists everyone, longest wait first.

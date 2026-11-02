@@ -139,7 +139,7 @@ export function BookForm({
         <TextArea label={isAdmin ? "Note for the tutor and family (optional)" : "Note for the tutor (optional)"} name="note" maxLength={1000} rows={2} />
         <p className="text-xs text-zinc-600">
           {isAdmin
-            ? "The tutor and family each have 48 hours to approve. It's confirmed once both say yes."
+            ? "The tutor and family each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes."
             : "This books the time each week, subject to the tutor confirming within 48 hours."}
         </p>
       </ActionForm>
@@ -312,7 +312,15 @@ export function LibraryForm() {
   );
 }
 
-export function AwayForm({ choices, today }: { choices: { value: string; label: string }[]; today: string }) {
+export function AwayForm({
+  choices,
+  today,
+  isTutor = false,
+}: {
+  choices: { value: string; label: string }[];
+  today: string;
+  isTutor?: boolean;
+}) {
   return (
     <ActionForm action={addAwayDates} submitLabel="Save away dates">
       <Select label="Who will be away?" name="who" defaultValue={choices[0]?.value}>
@@ -327,6 +335,21 @@ export function AwayForm({ choices, today }: { choices: { value: string; label: 
         <Field label="Last day away" name="to_date" type="date" min={today} required />
       </div>
       <Field label="Reason (optional)" name="reason" maxLength={300} hint="For example: family holiday, school camp." />
+      {isTutor && (
+        <>
+          <TextArea
+            label="Times you could offer instead (optional, for your own away dates)"
+            name="tutor_offer"
+            maxLength={1000}
+            rows={2}
+            hint="Shared with the families whose sessions are cancelled. For example: I could do Thursday 4pm that week instead."
+          />
+          <p className="text-xs text-zinc-600">
+            Your sessions on these dates are cancelled 2 hours after you save, so you can remove the dates if you made a
+            mistake. Families and CLG are then told politely, and families can ask for another time or a different tutor.
+          </p>
+        </>
+      )}
     </ActionForm>
   );
 }
@@ -501,6 +524,10 @@ export function TermForm() {
             </option>
           ))}
         </Select>
+        <Select label="Calendar" name="calendar" defaultValue="public">
+          <option value="public">Government schools</option>
+          <option value="private">Private schools</option>
+        </Select>
         <Select label="Term" name="term" defaultValue="1">
           {[1, 2, 3, 4].map((t) => (
             <option key={t} value={t}>
@@ -546,8 +573,7 @@ export function StudentPlacesForm({
   online,
   chosen,
   preferredDays = [],
-  preferredFrom = "",
-  preferredTo = "",
+  preferredParts = [],
   schoolHours = false,
 }: {
   studentId: string;
@@ -555,8 +581,7 @@ export function StudentPlacesForm({
   online: boolean;
   chosen: string[];
   preferredDays?: number[];
-  preferredFrom?: string;
-  preferredTo?: string;
+  preferredParts?: string[];
   schoolHours?: boolean;
 }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -593,13 +618,23 @@ export function StudentPlacesForm({
             </label>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:w-2/3">
-          <Field label="From" name="preferred_from" type="time" defaultValue={preferredFrom.slice(0, 5)} />
-          <Field label="Finished by" name="preferred_to" type="time" defaultValue={preferredTo.slice(0, 5)} />
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {[
+            ["morning", "Morning (before 11am)"],
+            ["midday", "Middle of the day (11am to 2pm)"],
+            ["afternoon", "Afternoon (2pm to 5pm)"],
+            ["evening", "Evening (from 5pm)"],
+          ].map(([v, label]) => (
+            <label key={v} className={box}>
+              <input type="checkbox" name="preferred_part" value={v} defaultChecked={preferredParts.includes(v)} className="mt-1" />{" "}
+              {label}
+            </label>
+          ))}
         </div>
         <p className="text-xs text-amber-900">
-          We&apos;ll offer these first. If none are available, we&apos;ll offer the closest time we can, and you can say if it
-          doesn&apos;t suit.
+          These are preferences, not guarantees. They may not be met: it depends on which tutors are free. We&apos;ll
+          offer matching times first. If none are available, we&apos;ll offer the closest time we can, and you can say if
+          it doesn&apos;t suit.
         </p>
       </fieldset>
     </ActionForm>

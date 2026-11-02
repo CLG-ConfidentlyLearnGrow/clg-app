@@ -7,7 +7,7 @@ import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress";
-import { addDays, sessionWhen, shortDate } from "@/lib/scheduling";
+import { addDays, currentTime, sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
 
 const SECTIONS = [
@@ -109,7 +109,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .from("billing_tutor_notices")
       .select("id, kind, created_at, student:students(full_name)")
       .eq("tutor_id", viewer.id)
-      .gte("created_at", new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString())
+      .gte("created_at", new Date(currentTime() - 14 * 24 * 3600 * 1000).toISOString())
       .order("created_at", { ascending: false })
       .limit(20),
   ]);
