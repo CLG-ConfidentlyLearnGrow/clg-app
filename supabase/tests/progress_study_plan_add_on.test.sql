@@ -20,7 +20,7 @@ select tests.eq((select count(*) from public.add_ons where code = 'study_plans' 
 
 select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
-select tests.eq((select count(*) from public.add_ons), 1, 'families can see the add-ons');
+select tests.eq((select count(*) from public.add_ons where code in ('study_plans', 'term_reviews')), 2, 'families can see the add-ons');
 select tests.eq((select count(*) from public.add_on_for_student('study_plans', :'cara') where has_it = true), 1, 'free: Cara has study plans');
 insert into public.roadmap_targets (id, student_id, kind, title, due_on)
   values ('00000000-0000-0000-0000-0000000ad001', :'cara', 'assessment', 'Free plan test', :'today'::date + 14);
