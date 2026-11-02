@@ -39,7 +39,7 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 - **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.
 - **Paying.** Each payer saves their own card or bank debit in the app and is charged only their share on the charge date. A payer who hasn't set up automatic payment pays their share by link. If any payer uses bank debit, the charge date allows for it to clear in time. The bank-debit discount still depends on the bill payer's saved method, as before, and is shared in the same proportion.
 - **One invoice.** The invoice stays one invoice, with one set of session lines and one Xero invoice addressed to the bill payer. Each payer's payment is recorded against it in Xero. The invoice is paid when the shares add up to the total.
-- **Pauses.** CLG's rule is unchanged: an overdue invoice puts the whole family on hold, even if one payer has paid their share. A failed payment pauses the family until that payer pays.
+- **Pauses (updated 2026-11-02).** If part of an overdue invoice has been paid (for example one payer's share), sessions that payment covers go ahead, counting payments, credit and discount against the sessions in date order. The whole family goes on hold from the first session that isn't paid for. With nothing paid, the whole family goes on hold as before, unless an admin override is in force. This applies to any partly paid invoice, not only split ones.
 
 ### Why (research and practice)
 
