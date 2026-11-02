@@ -30,7 +30,7 @@ import {
   UnlockForm,
   WorkStateForm,
 } from "./forms";
-import { EmergencyCancelForm, EmergencyRequestForm, SetLevelForm } from "./level-forms";
+import { EmergencyCancelForm, EmergencyRequestForm, LevelBadge, SetLevelForm } from "./level-forms";
 import {
   FrameworkForm,
   ImportSkillsForm,
@@ -780,27 +780,26 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           <>
             <Card
               title="Staff and levels"
-              description="Everyone who tutors or is an admin. Admin levels: Owner (everything), Operations (day-to-day running), Support (families and bookings), Finance (invoices and pay)."
+              description="Owner: everything. Operations: day-to-day. Support: families and bookings. Finance: invoices and pay."
             >
               {staffRows.length === 0 ? (
                 <Empty>No staff yet.</Empty>
               ) : (
-                <Table headings={["Name", "Email", "Tutor", "Admin level", ...(isOwner ? ["Change level"] : [])]}>
+                <Table headings={["Name", "Email", "Tutor", "Admin"]}>
                   {staffRows.map((p) => (
                     <tr key={p.account_id}>
                       <td>{p.full_name}</td>
                       <td>{p.email ?? ""}</td>
                       <td>{p.is_tutor ? (p.tutor_active === false ? "Finished" : "Yes") : "No"}</td>
-                      <td>{p.admin_level ? ADMIN_LEVEL_NAMES[p.admin_level] : "Not an admin"}</td>
-                      {isOwner && (
-                        <td>
-                          {p.admin_level && p.admin_level !== "owner" && p.account_id !== viewer.id ? (
-                            <SetLevelForm accountId={p.account_id} level={p.admin_level} />
-                          ) : (
-                            ""
-                          )}
-                        </td>
-                      )}
+                      <td>
+                        {isOwner && p.admin_level && p.admin_level !== "owner" && p.account_id !== viewer.id ? (
+                          <SetLevelForm accountId={p.account_id} level={p.admin_level} />
+                        ) : p.admin_level ? (
+                          <LevelBadge level={p.admin_level} />
+                        ) : (
+                          "No"
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </Table>
