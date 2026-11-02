@@ -198,12 +198,27 @@ const ownLoginSchema = z.object({
 
 export async function giveStudentLogin(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdminLevel(FRONT_DESK);
+  return offerOwnLogin(formData, "admin_offer_student_login");
+}
+
+// A parent gives their own child, aged 16 or over, a login. The database
+// checks they manage this child and the child is 16 or over.
+export async function giveMyChildLogin(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  if (!viewer.roles.includes("parent")) return { error: "Only a parent can do this." };
+  return offerOwnLogin(formData, "parent_offer_student_login");
+}
+
+async function offerOwnLogin(
+  formData: FormData,
+  rpc: "admin_offer_student_login" | "parent_offer_student_login",
+): Promise<FormState> {
   const parsed = ownLoginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { student_id, email } = parsed.data;
 
   const supabase = await createClient();
-  const offer = await supabase.rpc("admin_offer_student_login", { p_student: student_id, p_email: email });
+  const offer = await supabase.rpc(rpc, { p_student: student_id, p_email: email });
   if (offer.error) {
     console.error("Student login offer failed:", offer.error.code, offer.error.message);
     return { error: offer.error.code === "22023" ? `${offer.error.message}.` : "We couldn't do that. Please try again." };
@@ -218,8 +233,9 @@ export async function giveStudentLogin(_prev: FormState, formData: FormData): Pr
   }
 
   revalidatePath("/admin");
+  revalidatePath("/dashboard", "layout");
   return {
-    message: `${name} gets their own login once they use the link.${sentText(email, made.link)} Their parent can still see their details.`,
+    message: `${name} gets their own login once they use the link.${sentText(email, made.link)} ${rpc === "parent_offer_student_login" ? "You" : "Their parent"} can still see their details.`,
   };
 }
 
