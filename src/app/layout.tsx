@@ -39,6 +39,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/schedule" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Sessions
                 </Link>
+                <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                  Your privacy
+                </Link>
                 <span className="hidden text-sm text-zinc-600 sm:inline">{viewer.fullName}</span>
                 <form action={signOut}>
                   <button
