@@ -32,6 +32,7 @@ const partialChildSchema = z.object({
   school: z.string().trim().max(200).optional(),
   goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
   extra_info: childSchema.shape.extra_info,
+  learning_needs: childSchema.shape.learning_needs,
 });
 
 type Found = { account_id: string; full_name: string; is_parent: boolean; is_student: boolean };
@@ -120,6 +121,10 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
     };
   }
 
+  if (child.data.learning_needs && typeof added.data === "string") {
+    await supabase.from("students").update({ learning_needs: child.data.learning_needs }).eq("id", added.data);
+  }
+
   revalidatePath("/admin");
   if (!isNew) {
     return { message: `${child.data.full_name} has been added to ${found!.full_name}'s account. They'll see it next time they sign in.` };
@@ -136,6 +141,7 @@ const learnerSchema = z.object({
   school: z.string().trim().min(1, "Enter the student's school, university or TAFE.").max(200),
   goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
   extra_info: childSchema.shape.extra_info,
+  learning_needs: childSchema.shape.learning_needs,
 });
 
 async function setUpLearner(
@@ -169,7 +175,7 @@ async function setUpLearner(
   const supabase = await createClient();
   const student = await supabase
     .from("students")
-    .update({ goals: v.goals || null, extra_info: v.extra_info || null })
+    .update({ goals: v.goals || null, extra_info: v.extra_info || null, learning_needs: v.learning_needs || null })
     .eq("account_id", made.userId)
     .select("id")
     .maybeSingle();
@@ -286,5 +292,10 @@ export async function agreeToPolicies(_prev: FormState, formData: FormData): Pro
     { account_id: viewer.id, kind: "terms_of_service", document_version: POLICY_VERSION },
   ]);
   if (error) return { error: "We couldn't save that. Please try again." };
+  // News and offers only when they ticked the separate, optional box.
+  if (formData.get("marketing") === "on") {
+    const news = await supabase.rpc("set_marketing_email", { p_on: true, p_version: POLICY_VERSION });
+    if (news.error) console.error("Marketing choice not saved:", news.error.code, news.error.message);
+  }
   redirect("/dashboard");
 }

@@ -25,8 +25,7 @@ export default async function AgreePage() {
       <Page title="Welcome to CLG">
         <Card>
           <p className="mb-4 text-sm">
-            Before you start, please read how CLG looks after your information and the terms of our support. CLG set up
-            your account with the details you gave us. You can check and change them on your dashboard.
+            Before you start, please read how CLG looks after your information and the terms of our support.
           </p>
           <ActionForm action={agreeToPolicies} submitLabel="Agree and continue">
             <label className="flex items-start gap-2 text-sm">
@@ -34,6 +33,10 @@ export default async function AgreePage() {
               <span>
                 I agree to CLG&apos;s <TextLink href="/privacy">privacy policy and terms</TextLink>.
               </span>
+            </label>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="marketing" className="mt-1" />
+              <span>Send me CLG news and offers by email. (Optional. You can change this any time in Your privacy.)</span>
             </label>
           </ActionForm>
         </Card>

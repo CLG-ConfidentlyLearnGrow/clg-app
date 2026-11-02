@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { MATERIAL_KINDS, MAX_VIEW_BYTES, VIEW_TYPES, titleFromFileName, viewFileType } from "@/lib/materials";
 import { checkPdf } from "@/lib/materials-stamp";
-import { PLAIN_MATHS, YEAR_LEVELS } from "@/lib/students";
+import { YEAR_LEVELS, mathsProblem } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 
 // Adding, tagging and publishing materials. Admins only; the database
@@ -21,8 +21,9 @@ const detailsSchema = z
     to_level: z.enum(YEAR_LEVELS, "Choose the highest year level it suits."),
     description: z.string().trim().max(1000, "Keep the note under 1000 characters.").optional(),
   })
-  .refine((v) => !PLAIN_MATHS.has(v.subject.toLowerCase()), {
-    message: "Choose General Maths, Essential Maths or Advanced Maths, so it reaches the right tutors.",
+  .superRefine((v, ctx) => {
+    const problem = mathsProblem(v.subject, v.to_level);
+    if (problem) ctx.addIssue({ code: "custom", message: problem });
   })
   .refine((v) => YEAR_LEVELS.indexOf(v.from_level) <= YEAR_LEVELS.indexOf(v.to_level), {
     message: "The first year level needs to be the same as or below the second.",

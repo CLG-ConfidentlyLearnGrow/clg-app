@@ -33,6 +33,9 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
     p_extra_info: parsed.data.extra_info || undefined,
   });
   if (error) return { error: "We couldn't add your child. Please check the details and try again." };
+  if (parsed.data.learning_needs && typeof studentId === "string") {
+    await supabase.from("students").update({ learning_needs: parsed.data.learning_needs }).eq("id", studentId);
+  }
   // If this fails, the parent is asked again on their next visit.
   if (typeof studentId === "string") await giveParentalConsent([studentId]);
 
@@ -50,6 +53,7 @@ const editSchema = z.object({
   school: childSchema.shape.school,
   goals: childSchema.shape.goals,
   extra_info: childSchema.shape.extra_info,
+  learning_needs: childSchema.shape.learning_needs,
   // Only sent when CLG set up the child without them; the family fills them
   // in once (the database refuses later changes).
   date_of_birth: childSchema.shape.date_of_birth.optional(),
@@ -76,6 +80,7 @@ export async function updateChild(_prev: FormState, formData: FormData): Promise
       school: v.school,
       goals: v.goals,
       extra_info: v.extra_info || null,
+      learning_needs: v.learning_needs || null,
       ...(v.date_of_birth ? { date_of_birth: v.date_of_birth } : {}),
       ...(v.state ? { state: v.state } : {}),
     })

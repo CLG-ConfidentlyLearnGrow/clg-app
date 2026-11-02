@@ -20,7 +20,8 @@ select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_
 select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values ('00000000-0000-0000-0000-000000000011', 'Science', 'Grade 4', 'Year 6')$$, 'unknown year level');
 select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values ('00000000-0000-0000-0000-000000000012', 'Science', 'Year 4', 'Year 6')$$, 'tutor adds for another tutor');
 update public.tutor_teaching set to_level = 'Year 11' where subject = 'General Maths';
-select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values ('00000000-0000-0000-0000-000000000011', 'Mathematics', 'Year 1', 'Year 2')$$, 'plain Maths must be General, Essential or Advanced');
+select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values ('00000000-0000-0000-0000-000000000011', 'Maths', 'Year 1', 'Year 2')$$, 'plain Maths is refused');
+select tests.fails($$insert into public.tutor_teaching (tutor_id, subject, from_level, to_level) values ('00000000-0000-0000-0000-000000000011', 'Mathematics', 'Year 9', 'Year 11')$$, 'Mathematics only goes to Year 10');
 select tests.eq((select count(*) from public.tutor_teaching where to_level = 'Year 11'), 1, 'tutor changes own range');
 reset role;
 
