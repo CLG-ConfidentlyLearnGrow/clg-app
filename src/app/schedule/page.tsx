@@ -115,17 +115,19 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const isDesk = adminLevel !== null && FRONT_DESK.includes(adminLevel);
   const isTutor = viewer.roles.includes("tutor");
   const canBook = isDesk || viewer.roles.includes("parent") || viewer.roles.includes("student");
+  // Booking, searching for times and the waitlist are CLG staff jobs for now.
+  // Families see their sessions and approve the times CLG offers.
 
   const sections = [
     { id: "sessions", label: "Sessions" },
     { id: "bookings", label: "Bookings" },
     ...(isAdmin ? [{ id: "matching", label: "Matching" }] : []),
-    ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
-    ...(canBook ? [{ id: "child-places", label: "Session places" }] : []),
+    ...(isDesk ? [{ id: "book", label: "Book a session" }] : []),
+    ...(isAdmin ? [{ id: "child-places", label: "Session places" }] : []),
     { id: "away", label: "Away dates" },
     { id: "notices", label: "Notices" },
     ...(canBook ? [{ id: "next-term", label: "Next term" }] : []),
-    ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
+    ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
     ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []),
@@ -308,11 +310,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
             {upcoming.length === 0 ? (
               <Empty>
                 No sessions booked yet.
-                {canBook && (
+                {isDesk ? (
                   <>
                     {" "}
                     <TextLink href="/schedule?section=book">Book a session</TextLink>
                   </>
+                ) : (
+                  canBook && " CLG will send you a time to approve."
                 )}
               </Empty>
             ) : (
@@ -423,7 +427,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         </Card>
       )}
 
-      {section === "book" && canBook && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}
+      {section === "book" && isDesk && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
@@ -437,13 +441,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
-      {section === "waitlist" && canBook && <WaitlistSection isAdmin={isDesk} />}
+      {section === "waitlist" && isDesk && <WaitlistSection isAdmin={isDesk} />}
 
       {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}
 
       {section === "matching" && isAdmin && <MatchingSection params={params} pipeline={pipeline} />}
 
-      {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
+      {section === "child-places" && isAdmin && <ChildPlacesSection isAdmin={isAdmin} params={params} />}
     </SectionShell>
   );
 }
@@ -1117,32 +1121,26 @@ const CHANGE_REASON_NAMES: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Families: where each child can have sessions
+// Admins: where each student can have sessions, and the family's preferred
+// times (families tell CLG; they don't set these themselves for now)
 // ---------------------------------------------------------------------------
 async function ChildPlacesSection({
-  viewerId,
   isAdmin,
   params,
 }: {
-  viewerId: string;
   isAdmin: boolean;
   params: Record<string, string | string[] | undefined>;
 }) {
   const supabase = await createClient();
-  const [studentsRes, linksRes, librariesRes, placesRes] = await Promise.all([
+  const [studentsRes, librariesRes, placesRes] = await Promise.all([
     supabase.from("students").select("id, full_name, account_id").order("full_name"),
-    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
     supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
     supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_from, preferred_to, preferred_school_hours"),
   ]);
-  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
-  // Admins see one student at a time (from the matching list); families see their children.
+  // Admins see one student at a time, chosen from the matching list.
   const all = studentsRes.data ?? [];
-  const students =
-    isAdmin && wanted
-      ? all.filter((s) => s.id === wanted)
-      : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
+  const students = isAdmin && wanted ? all.filter((s) => s.id === wanted) : [];
   const places = new Map(
     (
       (placesRes.data ?? []) as {
@@ -1159,10 +1157,13 @@ async function ChildPlacesSection({
   return (
     <Card
       title="Session places"
-      description="Where each child can have sessions: online, and the libraries that suit. Tutors are matched only where you both can go."
+      description="Where this student can have sessions: online, and the libraries that suit. Tutors are matched only where both can go. Preferred days are a preference, not a guarantee."
     >
       {students.length === 0 ? (
-        <Empty>No children yet.</Empty>
+        <Empty>
+          Choose a student from the <TextLink href="/schedule?section=matching">Matching</TextLink> tab to see their
+          places.
+        </Empty>
       ) : (
         <div className="space-y-6">
           {students.map((s) => (

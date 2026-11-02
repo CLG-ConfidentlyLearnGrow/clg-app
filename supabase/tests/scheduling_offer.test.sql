@@ -123,4 +123,29 @@ delete from public.sessions where booking_id in (:'offer', :'offer2');
 delete from public.tutor_assignments where student_id = :'sam' and created_by = '00000000-0000-0000-0000-000000000003';
 delete from public.bookings where id in (:'offer', :'offer2');
 
+-- Each available time says how the tutor can teach: in person, online or both.
+select tests.claims(:'offer_tutor', 'aal2');
+set role authenticated;
+select tests.fails(format($$insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at, in_person, online)
+  values (%L, 1, '09:00', '10:00', false, false)$$, :'offer_tutor'), 'a time with no way of teaching');
+reset role;
+select tests.claims(null);
+create temp table saved_slots as
+  select id, in_person, online from public.tutor_availability where tutor_id = :'offer_tutor';
+select tests.eq((select (count(*) > 0)::int from saved_slots), 1, 'the tutor has available times to test with');
+update public.tutor_availability set online = false where tutor_id = :'offer_tutor';
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}', :'first_day'::date)
+  where tutor_id = :'offer_tutor'), 0, 'in-person-only times not offered online');
+reset role;
+select tests.claims(null);
+update public.tutor_availability t set online = s.online, in_person = s.in_person from saved_slots s where s.id = t.id;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select tests.eq((select (count(*) > 0)::int from public.find_session_times(:'sam', 'General Maths', 60, true, '{}', :'first_day'::date)
+  where tutor_id = :'offer_tutor'), 1, 'online times offered again');
+reset role;
+select tests.claims(null);
+
 \echo '  scheduling offers approved by tutor and family: all checks passed'

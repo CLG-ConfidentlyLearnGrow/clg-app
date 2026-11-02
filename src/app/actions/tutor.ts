@@ -50,9 +50,15 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
   const viewer = await requireTutor();
   const parsed = slotSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  // How the tutor can teach in this time: in person, online, or both.
+  const in_person = formData.get("in_person") === "on";
+  const online = formData.get("online") === "on";
+  if (!in_person && !online) return { error: "Tick in person, online, or both." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("tutor_availability").insert({ tutor_id: viewer.id, ...parsed.data });
+  const { error } = await supabase
+    .from("tutor_availability")
+    .insert({ tutor_id: viewer.id, ...parsed.data, in_person, online });
   if (error) return { error: "Couldn't add that time." };
 
   revalidatePath("/dashboard", "layout");

@@ -35,7 +35,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <span className="hidden text-xs text-zinc-600 sm:block">Confidently Learn &amp; Grow</span>
             </Link>
             {viewer && (
-              <div className="ml-auto flex items-center gap-3">
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                <Link href="/dashboard" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                  Dashboard
+                </Link>
                 <Link href="/schedule" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Sessions
                 </Link>

@@ -383,7 +383,8 @@ begin
   -- Candidate start times every half hour inside each availability slot.
   slots as (
     select tu.tid, av.weekday,
-           g::time as st
+           g::time as st,
+           av.online as slot_online, av.in_person as slot_in_person
     from tutors tu
     join public.tutor_availability av on av.tutor_id = tu.tid
     cross join lateral generate_series(
@@ -396,15 +397,15 @@ begin
     -- Online
     select s.tid, s.weekday, s.st, 'online'::public.session_delivery as dl, null::uuid as lib
     from slots s join tutors tu on tu.tid = s.tid
-    where p_online and tu.can_online
-    union all
+    where p_online and tu.can_online and s.slot_online
+    union
     -- At a library both the family and the tutor chose
     select s.tid, s.weekday, s.st, 'library'::public.session_delivery, tp.library_id
     from slots s
     join tutors tu on tu.tid = s.tid
     join public.tutor_places tp on tp.tutor_id = s.tid
     join public.libraries l on l.id = tp.library_id and l.active
-    where tu.can_in_person and tp.library_id = any (coalesce(p_libraries, '{}'))
+    where tu.can_in_person and s.slot_in_person and tp.library_id = any (coalesce(p_libraries, '{}'))
   )
   select o.tid, tu.full_name, o.weekday, o.st,
          o.st + make_interval(mins => p_minutes),
