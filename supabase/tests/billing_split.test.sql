@@ -8,6 +8,7 @@ begin;
 -- Runs the split migration again: it must be safe to run twice (and
 -- billing.test.sql re-ran the first billing file, which this one updates).
 \ir ../migrations/20261028230400_billing_split_payments.sql
+\ir ../migrations/20261102230100_billing_partial_pause.sql
 
 select id as cal, family_id as fam2 from public.students where full_name = 'Cal Two' \gset
 select date_trunc('month', private.billing_today() + 120)::date as m \gset
@@ -89,10 +90,16 @@ select due_on as due from public.billing_invoices where id = :'inv' \gset
 select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000001', 'stripe', 'pi_split_1', 'card', :p1_owes, 'succeeded');
 select tests.eq((select count(*) from public.billing_invoices where id = :'inv' and status = 'open'), 1, 'one share paid: invoice still open');
 select tests.eq((select paid_cents from public.billing_invoice_payers(:'inv') where payer_id = '00000000-0000-0000-0000-000000000001'), :p1_owes, 'share marked paid');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 1, 'whole family paused while a share is overdue');
+-- The 40% paid covers the first session (the discount counts too), so the
+-- pause waits until the second session, the first one not paid for.
+select tests.eq((private.billing_first_unpaid_day(:'inv') = :'m'::date + 15)::int, 1, 'first session not paid for is the second one');
+select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 0, 'overdue share: paid-for session still goes ahead');
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 14)::int, 0, 'not paused before the first unpaid session');
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'paused from the first unpaid session');
 select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date)::int, 0, 'not paused on the due date');
 select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_2', 'bank_debit', :p2_owes, 'failed', 'Declined');
-select tests.eq(private.billing_family_paused(:'fam2')::int, 1, 'failed share pauses');
+select tests.eq(private.billing_family_paused(:'fam2')::int, 0, 'failed share: paid-for session still goes ahead');
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'failed share pauses from the first unpaid session');
 
 select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
