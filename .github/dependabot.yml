@@ -2,6 +2,10 @@
 # GitHub's build steps, and opens a pull request for each group. Small
 # updates are grouped so there is about one pull request a week to review.
 # Urgent security fixes still come through straight away.
+#
+# Big version jumps (for example TypeScript 5 to 7) are skipped. They often
+# need code changes and break the build, so they are done by hand when
+# needed. Security fixes are still offered even when they are a big jump.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -11,6 +15,9 @@ updates:
       day: monday
       timezone: Australia/Adelaide
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
