@@ -1,5 +1,6 @@
 import { continueEmailLink } from "@/app/actions/auth";
-import { Button, Card, Page } from "@/components/ui";
+import { Card, Page } from "@/components/ui";
+import { SubmitOnce } from "@/components/submit-once";
 import { isEmailLinkType } from "@/lib/email-links";
 import { safeNextPath } from "@/lib/forms";
 import { redirect } from "next/navigation";
@@ -15,12 +16,12 @@ export default async function ContinuePage({ searchParams }: PageProps<"/auth/co
   return (
     <Page title="One more step">
       <Card>
-        <p className="mb-4 text-sm">Press the button to carry on.</p>
+        <p className="mb-4 text-sm">Press the button once to carry on. It can take a few seconds.</p>
         <form action={continueEmailLink}>
           <input type="hidden" name="token_hash" value={token_hash} />
           <input type="hidden" name="type" value={type} />
           <input type="hidden" name="next" value={safeNextPath(typeof next === "string" ? next : null)} />
-          <Button type="submit">{label}</Button>
+          <SubmitOnce label={label} />
         </form>
       </Card>
     </Page>

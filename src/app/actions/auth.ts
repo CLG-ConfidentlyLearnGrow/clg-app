@@ -261,7 +261,11 @@ export async function continueEmailLink(formData: FormData) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-  if (error) redirect("/login?link=expired");
+  if (error) {
+    // The code shows in the Vercel logs, so we can see why a link failed.
+    console.error("Email link failed:", type, error.code ?? error.name, error.message);
+    redirect("/login?link=expired");
+  }
   redirect(type === "recovery" || type === "invite" ? "/set-password" : next);
 }
 
