@@ -1,4 +1,17 @@
-<h2>You're invited to join CLG</h2>
-<p>CLG has invited you to join its tutoring app. Choose your password to get started:</p>
-<p><a href="{{ .SiteURL }}/auth/continue?token_hash={{ .TokenHash }}&type=invite&next=/set-password">Accept invitation</a></p>
-<p>You'll then be asked to set up two-step login with an authenticator app.</p>
+<!doctype html>
+<html>
+<!-- Account invitation email (families and students set up by CLG). Paste this whole file into Supabase > Authentication > Emails > Invite user. Subject: Your CLG Tutoring account is ready -->
+<body style="margin:0;background:#ede8e4;font-family:Poppins,Arial,sans-serif;color:#414042">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ede8e4;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:28px">
+<tr><td><img src="{{ .SiteURL }}/brand/clg-logo-transparent.png" width="120" alt="CLG Tutoring" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding-top:16px;font-size:20px;font-weight:600">Your CLG account is ready</td></tr>
+<tr><td style="padding-top:16px;font-size:15px;line-height:1.55">{{ if .Data.full_name }}Hi {{ .Data.full_name }},{{ else }}Hi,{{ end }}</td></tr>
+<tr><td style="padding-top:8px;font-size:15px;line-height:1.55">CLG Tutoring has set up your account in the CLG app, where you can see sessions and progress updates. Choose your password to get started.</td></tr>
+<tr><td style="padding-top:24px"><a href="{{ .SiteURL }}/auth/continue?token_hash={{ .TokenHash }}&amp;type=invite&amp;next=/set-password" style="display:inline-block;background:#76573a;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">Choose my password</a></td></tr>
+<tr><td style="padding-top:20px;font-size:13px;line-height:1.5;color:#6d6a6c">The link works once, for a short time. If it has run out, ask CLG to send a new one. If you weren't expecting this, you can ignore this email.</td></tr>
+</table>
+<p style="max-width:520px;font-size:12px;line-height:1.5;color:#414042;padding:16px 8px 0">CLG Tutoring &middot; Confidently Learn &amp; Grow &middot; <a href="https://clgtutoring.com" style="color:#76573a">clgtutoring.com</a></p>
+</td></tr></table>
+</body>
+</html>

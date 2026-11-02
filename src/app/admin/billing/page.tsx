@@ -2,7 +2,7 @@ import { approveInvoice, removeSplit } from "@/app/actions/billing";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { FINANCE, PAY, requireAdminLevel } from "@/lib/auth";
 import { stripeIsTestMode, stripeKey, xeroConfig } from "@/lib/billing/config";
 import { METHOD_LABELS, PLAN_LABELS, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money";
 import { adelaideToday } from "@/lib/billing/run";
@@ -72,7 +72,7 @@ const XERO_NOTES: Record<string, string> = {
 };
 
 export default async function AdminBillingPage({ searchParams }: PageProps<"/admin/billing">) {
-  const viewer = await requireAdmin();
+  const viewer = await requireAdminLevel(FINANCE);
   const params = await searchParams;
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "families";
   const supabase = await createClient();
@@ -101,7 +101,9 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   ]);
   const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[];
 
-  const isOwner = me.data?.level === "owner";
+  // Emergency owner access counts as owner here too.
+  const isOwner = viewer.level === "owner" || me.data?.level === "owner";
+  const canEditPay = PAY.includes(viewer.level);
   const canOverride = settings.data?.override_by === "admin" || isOwner;
   const familyRows = (families.data ?? []) as unknown as Family[];
   const accountOf = new Map(((accounts.data ?? []) as Account[]).map((a) => [a.family_id, a]));
@@ -238,7 +240,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       ) : (
                         <p className="mb-3 text-sm text-zinc-600">Pays the price list.</p>
                       )}
-                      <KeptRateForm familyId={f.id} prices={sessionPrices} />
+                      {isOwner && <KeptRateForm familyId={f.id} prices={sessionPrices} />}
                       <SubHeading>Add credit</SubHeading>
                       <CreditForm familyId={f.id} />
                       {acct.paused && canOverride && (
@@ -314,6 +316,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
           <PaySection
             periodParam={typeof params.period === "string" ? params.period : null}
             isOwner={isOwner}
+            canEdit={canEditPay}
             today={adelaideToday()}
           />
         )}
@@ -327,7 +330,14 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                     <SubHeading>
                       {p.name} {p.active ? "" : "(not in use)"}
                     </SubHeading>
-                    <PriceForm id={p.id} amount={(p.amount_cents / 100).toFixed(2)} gst={p.gst_applies} active={p.active} />
+                    {isOwner ? (
+                      <PriceForm id={p.id} amount={(p.amount_cents / 100).toFixed(2)} gst={p.gst_applies} active={p.active} />
+                    ) : (
+                      <p className="text-sm">
+                        {dollars(p.amount_cents)}
+                        {p.gst_applies ? " plus GST" : ""}. Only the owner changes prices.
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

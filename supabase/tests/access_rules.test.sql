@@ -120,7 +120,7 @@ update auth.users set email_confirmed_at = now()
   where email in ('t1@clg.example', 't2@clg.example', 'staff@clg.example');
 select tests.eq((select count(*) from public.tutor_profiles), 2, 'tutors created when invitations accepted');
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-000000000011'), 1, 'invited tutor has only the tutor role');
-select tests.eq((select count(*) from public.admin_profiles where level = 'staff'), 1, 'staff admin created');
+select tests.eq((select count(*) from public.admin_profiles where level = 'operations'), 1, 'staff admin created as operations');
 select tests.eq((select count(*) from public.invitations where accepted_at is null and email like 't%'), 0, 'invitations marked accepted');
 select tests.fails($$insert into auth.users (email, invited_at) values ('nobody@clg.example', now())$$, 'invite with no invitation');
 -- Confirming an email later does not re-use an accepted invitation.

@@ -38,7 +38,7 @@ set role authenticated;
 select tests.eq((select public.grant_staff_role('also.tutor@example.com', 'admin'))::int, 1, 'owner adds an admin');
 select tests.eq((select public.grant_staff_role('owner@clg.example', 'tutor'))::int, 1, 'owner becomes a tutor');
 reset role;
-select tests.eq((select count(*) from public.admin_profiles where account_id = '00000000-0000-0000-0000-0000000000f1' and level = 'staff'), 1, 'new admin is staff level');
+select tests.eq((select count(*) from public.admin_profiles where account_id = '00000000-0000-0000-0000-0000000000f1' and level = 'operations'), 1, 'new admin is operations level');
 
 select tests.claims(null);
 set role anon;

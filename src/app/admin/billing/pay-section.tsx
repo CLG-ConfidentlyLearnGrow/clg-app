@@ -37,7 +37,19 @@ const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`;
 
 // Tutor and staff pay: rates, each pay period's lines, and sending them to
 // Xero Payroll.
-export async function PaySection({ periodParam, isOwner, today }: { periodParam: string | null; isOwner: boolean; today: string }) {
+// canEdit is false for Operations admins: they see pay but only the owner
+// and Finance change it.
+export async function PaySection({
+  periodParam,
+  isOwner,
+  canEdit = true,
+  today,
+}: {
+  periodParam: string | null;
+  isOwner: boolean;
+  canEdit?: boolean;
+  today: string;
+}) {
   const supabase = await createClient();
   const pick = periodParam && /^\d{4}-\d{2}-\d{2}$/.test(periodParam) ? periodParam : addDays(today, -1);
   const { data: period } = await supabase
@@ -95,13 +107,17 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
                 <p className="mb-3">
                   <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}: {hours(h.minutes)} for {h.note}
                 </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <form action={approveHours}>
-                    <input type="hidden" name="id" value={h.id} />
-                    <Button type="submit">Approve</Button>
-                  </form>
-                  <DeclineHoursForm id={h.id} />
-                </div>
+                {canEdit ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <form action={approveHours}>
+                      <input type="hidden" name="id" value={h.id} />
+                      <Button type="submit">Approve</Button>
+                    </form>
+                    <DeclineHoursForm id={h.id} />
+                  </div>
+                ) : (
+                  <p className="text-zinc-600">The owner or a Finance admin approves these.</p>
+                )}
               </div>
             ))}
           </div>
@@ -159,7 +175,7 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
                       <td>
                         {l.status === "sent" ? (
                           "In Xero"
-                        ) : l.kind === "admin" ? (
+                        ) : l.kind === "admin" && canEdit ? (
                           <form action={removePayLine}>
                             <input type="hidden" name="id" value={l.id} />
                             <Button type="submit">Remove</Button>
@@ -175,15 +191,21 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
             ))}
           </div>
         )}
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <WorkOutPayForm from={start} to={end} />
-          {pending.length > 0 && <SendTimesheetsForm periodStart={start} />}
-        </div>
+        {canEdit ? (
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <WorkOutPayForm from={start} to={end} />
+            {pending.length > 0 && <SendTimesheetsForm periodStart={start} />}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-zinc-600">You can see pay here. The owner or a Finance admin works it out and sends it to Xero.</p>
+        )}
       </Card>
 
-      <Card title="Record admin hours" collapsible defaultOpen={false}>
-        <AdminTimeForm staff={staffList.filter((s) => payOf.get(s.id)?.admin_rate_cents != null)} />
-      </Card>
+      {canEdit && (
+        <Card title="Record admin hours" collapsible defaultOpen={false}>
+          <AdminTimeForm staff={staffList.filter((s) => payOf.get(s.id)?.admin_rate_cents != null)} />
+        </Card>
+      )}
 
       <Card title="Pay rates" description="Up to three hourly rates per person. Leave a rate empty if it doesn't apply.">
         {xeroNote && <p className="mb-4 text-sm text-red-800">{xeroNote}</p>}
@@ -203,7 +225,7 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
                       ? ` · ${p.employment.replace("_", "-")} · school ${p.school_rate_cents != null ? dollars(p.school_rate_cents) : "–"}, tertiary ${p.tertiary_rate_cents != null ? dollars(p.tertiary_rate_cents) : "–"}, admin ${p.admin_rate_cents != null ? dollars(p.admin_rate_cents) : "–"}`
                       : " · no pay details yet"}
                   </summary>
-                  <div className="mt-4">
+                  {canEdit && <div className="mt-4">
                     <StaffPayForm
                       accountId={s.id}
                       pay={p}
@@ -211,7 +233,7 @@ export async function PaySection({ periodParam, isOwner, today }: { periodParam:
                       xeroRates={xeroRates}
                       suggestedEmployee={suggested}
                     />
-                  </div>
+                  </div>}
                 </details>
               );
             })}

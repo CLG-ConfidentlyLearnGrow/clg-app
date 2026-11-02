@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { leaveWaitlist, markNoticesRead, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
 import { SectionShell } from "@/components/section-shell";
-import { needsTwoStep, requireViewer } from "@/lib/auth";
+import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth";
 import {
   BOOKING_STATUS_NAMES,
   SESSION_LENGTHS,
@@ -108,9 +108,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   // Keep Teams links up to date (at most every few minutes; never slows the page).
   after(runTeamsSyncQuietly);
 
-  const isAdmin = viewer.roles.includes("admin");
+  // Admin levels: full admins (owner, operations) get every tool; support
+  // admins can book, cancel and see sessions for any family.
+  const adminLevel = viewer.roles.includes("admin") ? await getAdminLevel() : null;
+  const isAdmin = adminLevel !== null && FULL_ADMIN.includes(adminLevel);
+  const isDesk = adminLevel !== null && FRONT_DESK.includes(adminLevel);
   const isTutor = viewer.roles.includes("tutor");
-  const canBook = isAdmin || viewer.roles.includes("parent") || viewer.roles.includes("student");
+  const canBook = isDesk || viewer.roles.includes("parent") || viewer.roles.includes("student");
 
   const sections = [
     { id: "sessions", label: "Sessions" },
@@ -212,8 +216,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       sections={sections.map((s) => ({
         ...s,
         count:
-          s.id === "bookings" && waitingForMe.length + (isAdmin ? 0 : familyToApprove.length)
-            ? waitingForMe.length + (isAdmin ? 0 : familyToApprove.length)
+          s.id === "bookings" && waitingForMe.length + (isDesk ? 0 : familyToApprove.length)
+            ? waitingForMe.length + (isDesk ? 0 : familyToApprove.length)
             : s.id === "notices" && unread
               ? unread
               : s.id === "next-term" && renewalsToAnswer
@@ -236,7 +240,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               <AvailabilityCheckForm id={myCheck.id} />
             </Card>
           )}
-          {!isAdmin && familyToApprove.length > 0 && (
+          {!isDesk && familyToApprove.length > 0 && (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               CLG has offered {familyToApprove.length === 1 ? "a session time" : `${familyToApprove.length} session times`}{" "}
               for you to approve. <TextLink href="/schedule?section=bookings">See offers</TextLink>
@@ -337,7 +341,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                             <SignOnForm id={s.id} atLibrary={s.delivery === "library"} />
                           ))}
                         {new Date(s.starts_at).getTime() > now && (
-                          <CancelForm id={s.id} kind="session" isAdmin={isAdmin} />
+                          <CancelForm id={s.id} kind="session" isAdmin={isDesk} />
                         )}
                       </span>
                     ) : (
@@ -364,7 +368,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                 const live = b.status === "confirmed" || (b.status === "requested" && !b.expired);
                 const approval = approvals.get(b.id);
                 const forMe = waitingForMe.some((w) => w.id === b.id);
-                const forFamily = !isAdmin && familyToApprove.some((w) => w.id === b.id);
+                const forFamily = !isDesk && familyToApprove.some((w) => w.id === b.id);
                 const waiting = b.status === "requested" && !b.expired && approval?.needs_family_ok;
                 return (
                   <li key={b.id} className="space-y-2 py-4 first:pt-0">
@@ -410,7 +414,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                     )}
                     {forMe && <AnswerForm bookingId={b.id} />}
                     {forFamily && <ApproveForm bookingId={b.id} />}
-                    {live && !forMe && !forFamily && <CancelForm id={b.id} kind="booking" isAdmin={isAdmin} />}
+                    {live && !forMe && !forFamily && <CancelForm id={b.id} kind="booking" isAdmin={isDesk} />}
                   </li>
                 );
               })}
@@ -419,7 +423,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         </Card>
       )}
 
-      {section === "book" && canBook && <BookSection params={params} viewerId={viewer.id} isAdmin={isAdmin} />}
+      {section === "book" && canBook && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
@@ -433,9 +437,9 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
-      {section === "waitlist" && canBook && <WaitlistSection isAdmin={isAdmin} />}
+      {section === "waitlist" && canBook && <WaitlistSection isAdmin={isDesk} />}
 
-      {section === "next-term" && canBook && <NextTermSection isAdmin={isAdmin} />}
+      {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}
 
       {section === "matching" && isAdmin && <MatchingSection params={params} pipeline={pipeline} />}
 

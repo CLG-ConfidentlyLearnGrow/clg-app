@@ -46,6 +46,13 @@ export function InviteForm({ canInviteAdmins }: { canInviteAdmins: boolean }) {
         <option value="tutor">Tutor</option>
         {canInviteAdmins && <option value="admin">Admin</option>}
       </Select>
+      {canInviteAdmins && (
+        <Select label="Admin level (only used for admins)" name="level" defaultValue="operations">
+          <option value="operations">Operations: day-to-day running</option>
+          <option value="support">Support: families, bookings and login links</option>
+          <option value="finance">Finance: invoices, payments and pay</option>
+        </Select>
+      )}
     </ActionForm>
   );
 }

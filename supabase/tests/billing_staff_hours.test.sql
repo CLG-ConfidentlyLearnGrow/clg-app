@@ -5,6 +5,8 @@
 \set QUIET on
 begin;
 \ir ../migrations/20261029230100_billing_staff_hours.sql
+-- Re-running an older billing file resets its rules, so apply admin levels again.
+\ir ../migrations/20261029900200_admin_levels.sql
 
 insert into public.billing_staff_pay (account_id, employment, admin_rate_cents) values
   ('00000000-0000-0000-0000-000000000011', 'casual', 3400),
@@ -44,15 +46,17 @@ select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
 set role authenticated;
 select public.billing_log_my_hours(:'yday', 60, 'Enrolments') as log4 \gset
 select tests.fails(format($$select public.billing_review_hours(%L, true)$$, :'log4'), 'staff admin approves own hours');
-select public.billing_review_hours(:'log1', true);
-select tests.fails(format($$select public.billing_review_hours(%L, false, '')$$, :'log2'), 'declined without a reason');
-select public.billing_review_hours(:'log2', false, 'Included in session time');
-select tests.fails(format($$select public.billing_review_hours(%L, true)$$, :'log2'), 'reviewed twice');
-select tests.eq((select count(*) from public.billing_hour_logs where status = 'submitted'), 1, 'admin sees what is waiting');
+-- Operations sees hours but only the owner or Finance approves them.
+select tests.fails(format($$select public.billing_review_hours(%L, true)$$, :'log1'), 'operations approves hours');
+select tests.eq((select count(*) from public.billing_hour_logs where status = 'submitted'), 3, 'operations sees what is waiting');
 reset role;
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;
+select public.billing_review_hours(:'log1', true);
+select tests.fails(format($$select public.billing_review_hours(%L, false, '')$$, :'log2'), 'declined without a reason');
+select public.billing_review_hours(:'log2', false, 'Included in session time');
+select tests.fails(format($$select public.billing_review_hours(%L, true)$$, :'log2'), 'reviewed twice');
 select public.billing_review_hours(:'log4', true);
 reset role;
 select tests.claims(null);
