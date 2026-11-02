@@ -867,6 +867,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {section === "records" && (
           <>
             <Card
+              title="Privacy requests and breaches"
+              description="Requests from families and staff to see, fix or delete information, and the register of suspected data breaches with their deadlines."
+            >
+              <TextLink href="/admin/privacy">Open privacy requests and the breach register</TextLink>
+            </Card>
+
+            <Card
               title="Records due for deletion"
               description={
                 <>

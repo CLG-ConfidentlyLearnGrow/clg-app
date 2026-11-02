@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { childSchema, readSubjects } from "@/lib/child-form";
+import { giveParentalConsent } from "@/lib/consent";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,8 +17,12 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
   const subjects = readSubjects(formData);
   if ("error" in subjects) return subjects;
 
+  if (formData.get("parental_consent") !== "on") {
+    return { error: "Please tick the box to confirm you're the parent or guardian and agree." };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("add_my_child", {
+  const { data: studentId, error } = await supabase.rpc("add_my_child", {
     p_full_name: parsed.data.full_name,
     p_date_of_birth: parsed.data.date_of_birth,
     p_state: parsed.data.state,
@@ -28,6 +33,8 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
     p_extra_info: parsed.data.extra_info || undefined,
   });
   if (error) return { error: "We couldn't add your child. Please check the details and try again." };
+  // If this fails, the parent is asked again on their next visit.
+  if (typeof studentId === "string") await giveParentalConsent([studentId]);
 
   revalidatePath("/dashboard", "layout");
   return { message: `${parsed.data.full_name} has been added. CLG will confirm the details before a tutor is assigned.` };
