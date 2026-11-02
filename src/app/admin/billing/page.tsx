@@ -151,6 +151,8 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
       >
         <p className="text-sm">
           <TextLink href="/admin">Back to admin</TextLink>
+          {" · "}
+          <TextLink href="/admin/staff">Staff directory</TextLink>
         </p>
 
         {section === "families" && (

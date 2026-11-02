@@ -325,6 +325,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         <p className="text-sm text-zinc-600">
           Your admin level: <strong>{ADMIN_LEVEL_NAMES[viewer.level]}</strong>
           {savedLevel === "operations" && viewer.level === "owner" ? " (emergency owner access)" : ""}
+          {" · "}
+          <TextLink href="/admin/staff">Staff directory</TextLink>
         </p>
         {emergency && savedLevel === "owner" && (
           <Card title={emergencyRunning ? "Emergency owner access is running" : "Emergency owner access requested"}>
@@ -782,6 +784,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               title="Staff and levels"
               description="Owner: everything. Operations: day-to-day. Support: families and bookings. Finance: invoices and pay."
             >
+              <p className="mb-4 text-sm">
+                <TextLink href="/admin/staff">Open the staff directory</TextLink> to search staff and set job titles.
+              </p>
               {staffRows.length === 0 ? (
                 <Empty>No staff yet.</Empty>
               ) : (
