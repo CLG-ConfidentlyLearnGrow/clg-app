@@ -1,5 +1,6 @@
 import { Card, Page, TextLink } from "@/components/ui";
 import { POLICY_VERSION } from "@/lib/forms";
+import { BackLink } from "@/components/back-link";
 
 // CLG's privacy notice, written to meet the notice rules of Australia (APP 1
 // and APP 5), New Zealand (IPP 3 and 3A), the UK and EU (GDPR Articles 13
@@ -23,6 +24,9 @@ const SERVICES = [
 export default function PrivacyPage() {
   return (
     <Page title="Privacy policy" intro="How CLG Tutoring looks after information about you and your children.">
+      <p className="mb-4 text-sm">
+        <BackLink />
+      </p>
       <Card>
         <p className="text-sm text-zinc-500">
           Draft version {POLICY_VERSION}. This draft is being reviewed by a lawyer before CLG works with families outside
@@ -182,6 +186,9 @@ export default function PrivacyPage() {
           </li>
         </ul>
       </Card>
+      <p className="mt-6 text-sm">
+        <BackLink label="Back to where I was" />
+      </p>
     </Page>
   );
 }
