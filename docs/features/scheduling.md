@@ -189,6 +189,15 @@ short, which the brief's measures treat as what families notice first,
 and recording why suggestions are changed gives CLG the data to review the
 process each term, as the NSSA implementation toolkit recommends.
 
+For the pilot, CLG staff book every time and families approve what CLG
+offers, rather than searching for themselves. Staff matching keeps the
+learner's needs, working level and tutor fit at the centre (the same
+reasons as above), and keeps parent support light. Families give
+preferred days and times (a preference, not a guarantee) and study dates
+under "Preferred times"; admins choose where sessions can happen. Tutors say for each available time whether
+they can teach in person, online or both, so offers only include ways of
+teaching the tutor has agreed to.
+
 ## How we'll know it works
 
 - Time from request to confirmed booking (target: under 48 hours).
@@ -233,7 +242,8 @@ process each term, as the NSSA implementation toolkit recommends.
   meaning. Tutors don't see renewal answers.
 - **Session places (APP 3)**: families pick libraries from a list; the app
   never asks for or stores a home address or phone location for matching.
-  Only the family and admins see a child's places.
+  For the pilot, admins choose a child's places; families give preferred
+  times only. Tutors don't see either.
 - **Records**: bookings and sessions are deleted with the student under the
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't

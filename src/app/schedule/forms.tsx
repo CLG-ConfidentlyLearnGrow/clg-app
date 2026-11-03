@@ -575,6 +575,7 @@ export function StudentPlacesForm({
   preferredDays = [],
   preferredParts = [],
   schoolHours = false,
+  showPlaces = true,
 }: {
   studentId: string;
   libraries: { id: string; name: string; suburb: string | null }[];
@@ -583,27 +584,35 @@ export function StudentPlacesForm({
   preferredDays?: number[];
   preferredParts?: string[];
   schoolHours?: boolean;
+  // Admins choose places; families only give preferred times.
+  showPlaces?: boolean;
 }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const box = "flex items-start gap-2 text-sm";
   return (
-    <ActionForm action={saveStudentPlaces} submitLabel="Save places">
+    <ActionForm action={saveStudentPlaces} submitLabel={showPlaces ? "Save places" : "Save preferences"}>
       <input type="hidden" name="student_id" value={studentId} />
-      <label className={box}>
-        <input type="checkbox" name="online" defaultChecked={online} className="mt-1" /> Online
-      </label>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {libraries.map((l) => (
-          <label key={l.id} className={box}>
-            <input type="checkbox" name="library" value={l.id} defaultChecked={chosen.includes(l.id)} className="mt-1" />
-            <span>
-              {l.name}
-              {l.suburb && <span className="text-zinc-500"> · {l.suburb}</span>}
-            </span>
+      {showPlaces ? (
+        <>
+          <label className={box}>
+            <input type="checkbox" name="online" defaultChecked={online} className="mt-1" /> Online
           </label>
-        ))}
-      </div>
-      <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match isn&apos;t guaranteed.</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {libraries.map((l) => (
+              <label key={l.id} className={box}>
+                <input type="checkbox" name="library" value={l.id} defaultChecked={chosen.includes(l.id)} className="mt-1" />
+                <span>
+                  {l.name}
+                  {l.suburb && <span className="text-zinc-500"> · {l.suburb}</span>}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match isn&apos;t guaranteed.</p>
+        </>
+      ) : (
+        <input type="hidden" name="keep_places" value="1" />
+      )}
       <fieldset className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
         <legend className="px-1 text-sm font-medium text-amber-900">Preferred days and times (optional: a preference, not a guarantee)</legend>
         <label className={box}>

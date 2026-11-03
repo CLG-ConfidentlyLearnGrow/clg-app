@@ -595,17 +595,29 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   if (!student.success) return { error: "Couldn't read which child this is for." };
   const libraries = z.array(z.uuid()).safeParse(formData.getAll("library"));
   if (!libraries.success) return { error: "Couldn't read the libraries you chose." };
-  const online = formData.get("online") === "on";
-  if (!online && libraries.data.length === 0) return { error: "Choose online, at least one library, or both." };
+  let online = formData.get("online") === "on";
+  let libraryIds = libraries.data;
+  const supabase = await createClient();
+  // Families only give preferred times: keep the places CLG has set.
+  if (formData.get("keep_places") === "1") {
+    const { data: current } = await supabase
+      .from("student_places")
+      .select("online, library_ids")
+      .eq("student_id", student.data)
+      .maybeSingle();
+    online = current?.online ?? true;
+    libraryIds = (current?.library_ids as string[] | undefined) ?? [];
+  } else if (!online && libraryIds.length === 0) {
+    return { error: "Choose online, at least one library, or both." };
+  }
   const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
   const PARTS = ["morning", "midday", "afternoon", "evening"];
   const parts = formData.getAll("preferred_part").map(String).filter((p) => PARTS.includes(p));
 
-  const supabase = await createClient();
   const { error } = await supabase.from("student_places").upsert({
     student_id: student.data,
     online,
-    library_ids: libraries.data,
+    library_ids: libraryIds,
     preferred_days: days.length ? days : null,
     preferred_parts: parts.length ? parts : null,
     // Exact times were replaced by parts of the day (2 Nov 2026).

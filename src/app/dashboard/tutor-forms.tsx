@@ -37,6 +37,17 @@ export function AvailabilityForm() {
       </Select>
       <Field label="From" name="starts_at" type="time" required />
       <Field label="To" name="ends_at" type="time" required />
+      <fieldset className="space-y-2">
+        <legend className="mb-1 text-sm font-medium text-zinc-800">How you can teach in this time</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="in_person" defaultChecked className="mt-1" /> In person, at the libraries you
+          chose under &quot;Where you teach&quot;
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="online" defaultChecked className="mt-1" /> Online
+        </label>
+        <p className="text-xs text-zinc-600">Tick both if either suits you.</p>
+      </fieldset>
     </ActionForm>
   );
 }

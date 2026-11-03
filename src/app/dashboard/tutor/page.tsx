@@ -82,7 +82,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
     supabase.from("tutor_work_settings").select("max_weekly_hours").eq("tutor_id", viewer.id).maybeSingle(),
     supabase
       .from("tutor_availability")
-      .select("id, weekday, starts_at, ends_at")
+      .select("id, weekday, starts_at, ends_at, in_person, online")
       .eq("tutor_id", viewer.id)
       .order("weekday")
       .order("starts_at"),
@@ -399,6 +399,10 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 <li key={slot.id} className="flex items-center gap-3">
                   <span>
                     {WEEKDAYS[slot.weekday - 1]} {slot.starts_at.slice(0, 5)} to {slot.ends_at.slice(0, 5)}
+                    <span className="text-zinc-600">
+                      {" · "}
+                      {slot.in_person && slot.online ? "In person or online" : slot.online ? "Online only" : "In person only"}
+                    </span>
                   </span>
                   <form action={removeAvailability}>
                     <input type="hidden" name="id" value={slot.id} />
@@ -410,6 +414,10 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
               ))}
             </ul>
             <AvailabilityForm />
+            <p className="mt-3 text-sm text-zinc-600">
+              Choose which libraries you can go to under{" "}
+              <TextLink href="/schedule?section=places">Where you teach</TextLink>.
+            </p>
           </Card>
         )}
         {!viewer.roles.includes("student") && (

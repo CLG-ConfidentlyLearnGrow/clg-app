@@ -122,19 +122,23 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const isDesk = adminLevel !== null && FRONT_DESK.includes(adminLevel);
   const isTutor = viewer.roles.includes("tutor");
   const canBook = isDesk || viewer.roles.includes("parent") || viewer.roles.includes("student");
+  // Booking, searching for times and the waitlist are CLG staff jobs for now.
+  // Families see their sessions and approve the times CLG offers.
 
   const sections = [
     { id: "sessions", label: "Sessions" },
     { id: "bookings", label: "Bookings" },
     ...(isAdmin ? [{ id: "matching", label: "Matching" }] : []),
-    ...(canBook ? [{ id: "book", label: "Book a session" }] : []),
-    ...(canBook ? [{ id: "child-places", label: "Session places" }] : []),
+    ...(isDesk ? [{ id: "book", label: "Book a session" }] : []),
+    // Admins set where each student can have sessions; families give
+    // preferred times and study dates only (Carla, 2 Nov 2026).
+    ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []),
     { id: "away", label: "Away dates" },
     ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []),
     { id: "blocks", label: "Blocks" },
     { id: "notices", label: "Notices" },
     ...(canBook ? [{ id: "next-term", label: "Next term" }] : []),
-    ...(canBook ? [{ id: "waitlist", label: "Waitlist" }] : []),
+    ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []),
     ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []),
     ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []),
     ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []),
@@ -317,11 +321,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
             {upcoming.length === 0 ? (
               <Empty>
                 No sessions booked yet.
-                {canBook && (
+                {isDesk ? (
                   <>
                     {" "}
                     <TextLink href="/schedule?section=book">Book a session</TextLink>
                   </>
+                ) : (
+                  canBook && " CLG will send you a time to approve."
                 )}
               </Empty>
             ) : (
@@ -432,7 +438,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         </Card>
       )}
 
-      {section === "book" && canBook && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}
+      {section === "book" && isDesk && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
@@ -459,7 +465,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}
 
-      {section === "waitlist" && canBook && <WaitlistSection isAdmin={isDesk} />}
+      {section === "waitlist" && isDesk && <WaitlistSection isAdmin={isDesk} />}
 
       {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}
 
@@ -496,11 +502,14 @@ async function BookSection({
   const studentId = one(params.student) || (students.length === 1 ? students[0].id : "");
   const student = students.find((s) => s.id === studentId);
   const subjectsRes = student
-    ? await supabase.from("student_subjects").select("subject").eq("student_id", student.id).order("added_at")
+    ? await supabase.from("student_subjects").select("subject, working_level").eq("student_id", student.id).order("added_at")
     : null;
-  const subjects = (subjectsRes?.data ?? []).map((r) => r.subject as string);
+  const subjectRows = (subjectsRes?.data ?? []) as { subject: string; working_level: string | null }[];
+  const subjects = subjectRows.map((r) => r.subject);
 
   const subject = one(params.subject) || subjects[0] || "";
+  // Shown to the person matching: school year and the level they work at in this subject.
+  const workingLevel = subjectRows.find((r) => r.subject.toLowerCase() === subject.toLowerCase())?.working_level ?? null;
   const minutes = Number(one(params.minutes)) || 60;
   const go = one(params.go) === "1";
   // "auto" (from the Matching tab) searches straight away with the saved places.
@@ -544,6 +553,12 @@ async function BookSection({
         title="Book a session"
         description="Choose what's needed and where. You'll see only tutors who suit and are available, then pick a time."
       >
+        {student && subject && (
+          <p className="mb-4 rounded-lg bg-zinc-50 px-3 py-2 text-sm">
+            <span className="font-medium">{student.full_name}</span> · {subject} · School year:{" "}
+            {student.year_level ?? "not set"} · Working level: {workingLevel ?? "not sure"}
+          </p>
+        )}
         {students.length === 0 ? (
           <Empty>
             Add your child first. <TextLink href="/dashboard/parent?section=add">Add a child</TextLink>
@@ -981,6 +996,15 @@ async function MatchingSection({
     p_offset: (page - 1) * PAGE_SIZE,
   });
   const rows = (data ?? []) as MatchRow[];
+  // Learning needs the family wrote (core student record), shown when present.
+  const needsRes = rows.length
+    ? await supabase.from("students").select("id, learning_needs").in("id", [...new Set(rows.map((r) => r.student_id))])
+    : null;
+  const needsOf = new Map(
+    ((needsRes?.data ?? []) as { id: string; learning_needs: string | null }[])
+      .filter((n) => n.learning_needs?.trim())
+      .map((n) => [n.id, n.learning_needs as string]),
+  );
   const total = rows[0]?.total ?? 0;
   const reasonsRes = await supabase.rpc("offer_change_reasons", { p_days: 90 });
   const reasons = (reasonsRes.data ?? []) as { reason: string; changes: number; recent_notes: string[] | null }[];
@@ -1036,13 +1060,14 @@ async function MatchingSection({
                   <span className="text-zinc-600">
                     {" "}
                     · {r.subject}
-                    {r.working_level && r.working_level !== r.year_level
-                      ? ` · working at ${r.working_level} (${r.year_level ?? "year not set"})`
-                      : r.year_level
-                        ? ` · ${r.year_level}`
-                        : ""}
+                    {` · School year: ${r.year_level ?? "not set"} · Working level: ${r.working_level ?? "not sure"}`}
                     {r.tutor_name && ` · ${r.tutor_name}`}
                   </span>
+                  {needsOf.has(r.student_id) && (
+                    <span className="mt-1 block whitespace-pre-line text-xs text-zinc-700">
+                      <span className="font-medium">Learning needs:</span> {needsOf.get(r.student_id)}
+                    </span>
+                  )}
                   {!r.has_places && (stage === "needs_tutor" || stage === "waitlist") && (
                     <span className="block text-xs text-amber-900">
                       No session places saved yet ·{" "}
@@ -1113,7 +1138,8 @@ const CHANGE_REASON_NAMES: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Families: where each child can have sessions
+// Where and when each student can have sessions. Admins set the places
+// (online and libraries); families give preferred times and study dates.
 // ---------------------------------------------------------------------------
 async function ChildPlacesSection({
   viewerId,
@@ -1153,11 +1179,22 @@ async function ChildPlacesSection({
   );
   return (
     <Card
-      title="Session places"
-      description="Where and when each child can have sessions, and the study dates that sessions follow. Tutors are matched only where you both can go."
+      title={isAdmin ? "Session places" : "Preferred times"}
+      description={
+        isAdmin
+          ? "Where and when this student can have sessions, and the study dates that sessions follow. Tutors are matched only where both can go. Preferred times are a preference, not a guarantee."
+          : "Days and times that suit each child, and the study dates sessions follow. CLG chooses where sessions happen."
+      }
     >
       {students.length === 0 ? (
-        <Empty>No children yet.</Empty>
+        isAdmin ? (
+          <Empty>
+            Choose a student from the <TextLink href="/schedule?section=matching">Matching</TextLink> tab to see their
+            places.
+          </Empty>
+        ) : (
+          <Empty>No children yet.</Empty>
+        )
       ) : (
         <div className="space-y-6">
           {students.map((s) => (
@@ -1171,6 +1208,7 @@ async function ChildPlacesSection({
                 preferredDays={places.get(s.id)?.preferred_days ?? []}
                 preferredParts={places.get(s.id)?.preferred_parts ?? []}
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
+                showPlaces={isAdmin}
               />
               <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />
             </div>
