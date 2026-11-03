@@ -7,6 +7,7 @@ import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "../add-child-form";
 import { EditChildForm } from "../edit-child-form";
+import { OwnLoginForm } from "../own-login-form";
 import { NewUpdates, TutorList, loadStudentsAndTutors, missingDetails } from "../shared";
 
 const SECTIONS = [
@@ -23,14 +24,21 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
 
   const supabase = await createClient();
   const { students, assignments } = await loadStudentsAndTutors();
-  const [links, subjectRows] = await Promise.all([
+  const [links, subjectRows, logins] = await Promise.all([
     supabase.from("parent_student_links").select("student_id, verified_at"),
     supabase.from("student_subjects").select("student_id, subject, working_level").order("added_at"),
+    supabase.from("students").select("id, account_id"),
   ]);
   const subjectsOf = (id: string) =>
     (subjectRows.data ?? [])
       .filter((r) => r.student_id === id)
       .map((r) => ({ subject: r.subject, level: r.working_level as string | null }));
+  // Children 16 or over without their own login can be given one.
+  const hasLogin = new Set((logins.data ?? []).filter((r) => r.account_id).map((r) => r.id));
+  const sixteenAgo = new Date();
+  sixteenAgo.setFullYear(sixteenAgo.getFullYear() - 16);
+  const canHaveLogin = (s: { id: string; date_of_birth: string | null }) =>
+    !hasLogin.has(s.id) && !!s.date_of_birth && s.date_of_birth <= sixteenAgo.toISOString().slice(0, 10);
   const verified = new Set((links.data ?? []).filter((l) => l.verified_at).map((l) => l.student_id));
   const waiting = students.some((s) => !verified.has(s.id));
   // Children CLG set up for the family, with details still to give.
@@ -111,6 +119,16 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                           <EditChildForm child={s} subjects={subjectsOf(s.id)} />
                         </div>
                       </details>
+                      {canHaveLogin(s) && (
+                        <details className="group mt-2">
+                          <summary className="text-sm text-teal-800 underline hover:font-bold">
+                            Give {s.full_name} their own login
+                          </summary>
+                          <div className="mt-3 rounded-xl border border-zinc-200 p-4">
+                            <OwnLoginForm studentId={s.id} name={s.full_name} />
+                          </div>
+                        </details>
+                      )}
                     </li>
                   ))}
                 </ul>

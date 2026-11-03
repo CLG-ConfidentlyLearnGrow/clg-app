@@ -108,6 +108,37 @@ reset role;
 update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000005c2';
 select tests.eq((select count(*) from public.students where id = :'lou' and account_id = '00000000-0000-0000-0000-0000000005c2'), 1, 'second offer hands over the record');
 
+
+-- A parent can give their own child aged 16 or over a login; never under 16.
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select public.admin_add_child('00000000-0000-0000-0000-000000000002', 'Ola Two',
+  (current_date - interval '16 years')::date, 'SA', 'Year 11', 'Hill HS', '[]') as ola \gset
+select public.admin_add_child('00000000-0000-0000-0000-000000000002', 'Pia Two',
+  (current_date - interval '16 years' + interval '1 day')::date, 'SA', 'Year 10', 'Hill HS', '[]') as pia \gset
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select tests.fails_with(format($$select public.parent_offer_student_login(%L, 'pia@example.com')$$, :'pia'),
+  'under 16', 'parent: one day under 16 refused');
+select public.parent_offer_student_login(:'ola', 'ola@example.com');
+reset role;
+select tests.eq((select count(*) from public.student_login_offers where student_id = :'ola' and offered_by = '00000000-0000-0000-0000-000000000002'), 1, 'parent made the offer');
+select tests.claims('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select tests.fails_with(format($$select public.parent_offer_student_login(%L, 'x@example.com')$$, :'ola'),
+  'student''s parent', 'another parent refused');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
+set role authenticated;
+select tests.fails(format($$select public.parent_offer_student_login(%L, 'x@example.com')$$, :'ola'), 'a tutor');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select tests.fails(format($$select private.offer_student_login(%L, 'x@example.com')$$, :'ola'), 'calling the private helper');
+reset role;
+delete from public.students where id in (:'ola', :'pia');
+
 -- Clean up so later test files see the original fixtures.
 delete from public.students where id in (:'kim', :'lou', :'max');
 delete from public.student_login_offers;

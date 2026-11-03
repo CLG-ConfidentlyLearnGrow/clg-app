@@ -13,6 +13,12 @@ Requested by Carla, 2026-10-28.
 - **What the parent keeps.** The parent link stays, so the parent can still see and manage the student's details, bookings and invoices.
 - **First sign-in.** The student agrees to the privacy policy and terms themselves (the `/agree` page).
 
+## Parents can do it too (added 2026-11-02)
+
+- On the Parent dashboard, under each child aged 16 or over who has no login yet, there's a **"Give [name] their own login"** link. The parent enters the child's own email, and the child gets the link (or the parent sees it to pass on, until CLG's email sender is set up).
+- **Never under 16.** The option doesn't show for younger children, and the database refuses it anyway (`parent_offer_student_login` checks that the person manages this child, and the same age check applies). Tests: `supabase/tests/student_own_login.test.sql`.
+- The parent keeps seeing everything, the same as when CLG does it.
+
 ## Why (research)
 
 - **Learner agency and self-regulation.** The EEF guidance report *Metacognition and Self-Regulated Learning* (2018, updated 2021) finds that teaching learners to plan, monitor and evaluate their own learning has high impact (about +7 months). Giving older students their own view of their goals, progress and sessions supports this.
@@ -29,5 +35,4 @@ Requested by Carla, 2026-10-28.
 
 ## Not built yet
 
-- Letting a parent ask for their child's own login from the parent dashboard.
 - Removing the parent link when a student turns 18, if the student asks.
