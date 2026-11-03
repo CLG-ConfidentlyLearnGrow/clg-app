@@ -15,6 +15,7 @@ import {
 import { ActionForm } from "@/components/action-form";
 import { Field, Select } from "@/components/ui";
 import { CHECK_KINDS, CHECK_NAMES, STATES, STATE_NAMES } from "@/lib/checks";
+import { useState } from "react";
 
 type Option = { id: string; name: string };
 
@@ -34,6 +35,8 @@ function TutorSelect({ tutors }: { tutors: Option[] }) {
 }
 
 export function InviteForm({ canInviteAdmins }: { canInviteAdmins: boolean }) {
+  // The admin level only applies to admins, so it is only shown when Admin is chosen.
+  const [role, setRole] = useState("tutor");
   return (
     <ActionForm action={inviteStaff} submitLabel="Add">
       <p className="text-sm text-zinc-600">
@@ -42,12 +45,12 @@ export function InviteForm({ canInviteAdmins }: { canInviteAdmins: boolean }) {
         has a CLG account (for example a parent, or you), the role is added to that account straight away.
       </p>
       <Field label="Email" name="email" type="email" required />
-      <Select label="Role" name="role" defaultValue="tutor">
+      <Select label="Role" name="role" value={role} onChange={(e) => setRole(e.target.value)}>
         <option value="tutor">Tutor</option>
         {canInviteAdmins && <option value="admin">Admin</option>}
       </Select>
-      {canInviteAdmins && (
-        <Select label="Admin level (only used for admins)" name="level" defaultValue="operations">
+      {canInviteAdmins && role === "admin" && (
+        <Select label="Admin level" name="level" defaultValue="operations">
           <option value="operations">Operations: day-to-day running</option>
           <option value="support">Support: families, bookings and login links</option>
           <option value="finance">Finance: invoices, payments and pay</option>
