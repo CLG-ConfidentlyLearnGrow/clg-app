@@ -624,6 +624,7 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
     preferred_from: null,
     preferred_to: null,
     preferred_school_hours: formData.get("preferred_school_hours") === "on",
+    tutor_preferences: String(formData.get("tutor_preferences") ?? "").trim().slice(0, 1000) || null,
   });
   if (error) return { error: "Couldn't save the places." };
   return done("Saved. Offers will start from these places and preferences.");

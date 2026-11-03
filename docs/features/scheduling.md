@@ -267,3 +267,61 @@ See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
   skip option, blocking, preferred parts of the day, library confirmation
   and opening hours, and home or school sessions booked by CLG only.
 - The waitlist already lists everyone, longest wait first.
+
+## The Matching tab, 3 Nov 2026
+
+Carla found matching "very clunky": it was split between the admin page
+("Assign a tutor") and a Sessions sub-tab, with a long drop-down and a plain
+tutor list. Her answers to the matching questions (3 Nov 2026) set the
+design.
+
+**What it does.** A Matching tab (top bar and admin menu) for owner,
+operations and support admins:
+
+- A queue of student subjects by stage, longest wait first, filtered by
+  year level, state and a search box, with a "Next student" link.
+- One student's full picture: school year and working level, other
+  subjects, goal, learning needs, the family's tutor preferences note,
+  places, preferred times, siblings and past tutors.
+- A ranked shortlist with the reasons each tutor fits: a tutor who already
+  teaches a sibling first, then times that suit (preferred times first),
+  then place, then spare weekly hours. The top tutor's best time is ready
+  to offer in one click; choosing another records why.
+- A tutor at their weekly maximum still shows, with a note to ask them
+  first if they're the only option. The database never books a tutor past
+  their maximum. Checks due to expire within 30 days are flagged. Pay rates
+  are not shown.
+- Tutors who don't fit, and why (checks not current for the state, doesn't
+  teach the level, or can't be matched with this student).
+- A Gaps view: subjects and levels students are waiting for that no tutor
+  with current checks teaches, by state, to show who to recruit next.
+
+**Evidence.** The EEF's guidance on effective tutoring and its Teaching and
+Learning Toolkit (one to one tuition) find tutoring works best when it is
+regular, with a consistent tutor, and pitched at the learner's current
+level. Ranking keeps families with a tutor they already trust (siblings),
+offers times that fit so sessions can stay regular, and matches on working
+level. AERO's guidance on explicit teaching makes the same point about
+building from what the learner already knows. Recording why suggestions are
+changed, and the gap report, give CLG the data to review the process each
+term (NSSA implementation toolkit).
+
+**Legal.**
+
+- *Equal opportunity:* families write tutor preferences as a note. There
+  are no filters on protected attributes such as sex, age, religion or race
+  (Equal Opportunity Act 1984 (SA), Sex Discrimination Act 1984 (Cth),
+  Racial Discrimination Act 1975 (Cth), Age Discrimination Act 2004 (Cth)).
+  The form asks families not to ask for these.
+- *Privacy (APP 3, APP 6) and child safety:* before accepting an offer, a
+  tutor sees only the student's first name, year level, subject, goal,
+  place and time (`offer_card`). Learning needs, documents, progress and
+  contact details open only once there is a current assignment, which is
+  made when the tutor and family have both accepted. The database enforces
+  this (`private.is_tutor_of`), and `scheduling_offer_matching_tab.test.sql`
+  tests it. Tutors are shortlisted only for states where their WWCC and
+  RRHAN-EC are current.
+- The tutor preferences note is seen by the family and CLG admins only,
+  never by tutors.
+- *UK and EU later:* the same data-minimising approach fits UK GDPR and the
+  EU GDPR (Article 5, data minimisation) and the UK Equality Act 2010.

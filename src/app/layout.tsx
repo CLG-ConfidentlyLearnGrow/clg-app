@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { signOut } from "@/app/actions/auth";
-import { getViewer } from "@/lib/auth";
+import { FRONT_DESK, getAdminLevel, getViewer } from "@/lib/auth";
 import { EmailLinkCatcher } from "@/components/email-link-catcher";
 import "./globals.css";
 
@@ -24,6 +24,9 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const viewer = await getViewer();
+  // Matching is one of an admin's main jobs, so it sits in the top bar.
+  const adminLevel = viewer?.roles.includes("admin") ? await getAdminLevel() : null;
+  const canMatch = adminLevel !== null && FRONT_DESK.includes(adminLevel);
   return (
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">
@@ -42,6 +45,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/schedule" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Sessions
                 </Link>
+                {canMatch && (
+                  <Link href="/matching" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                    Matching
+                  </Link>
+                )}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Your privacy
                 </Link>

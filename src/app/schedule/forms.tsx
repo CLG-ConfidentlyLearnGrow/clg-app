@@ -576,6 +576,7 @@ export function StudentPlacesForm({
   preferredParts = [],
   schoolHours = false,
   showPlaces = true,
+  tutorPreferences = "",
 }: {
   studentId: string;
   libraries: { id: string; name: string; suburb: string | null }[];
@@ -586,6 +587,7 @@ export function StudentPlacesForm({
   schoolHours?: boolean;
   // Admins choose places; families only give preferred times.
   showPlaces?: boolean;
+  tutorPreferences?: string;
 }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const box = "flex items-start gap-2 text-sm";
@@ -646,6 +648,14 @@ export function StudentPlacesForm({
           it doesn&apos;t suit.
         </p>
       </fieldset>
+      <TextArea
+        label="Tutor preferences (optional)"
+        name="tutor_preferences"
+        maxLength={1000}
+        rows={2}
+        defaultValue={tutorPreferences}
+        hint="For example, experience with dyslexia or exam preparation. CLG reads this when choosing a tutor; it's a preference, not a guarantee. Please don't ask for things like gender, age, religion or background."
+      />
     </ActionForm>
   );
 }
