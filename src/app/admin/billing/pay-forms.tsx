@@ -39,13 +39,17 @@ export function StaffPayForm({
   xeroEmployees,
   xeroRates,
   suggestedEmployee,
+  roles,
 }: {
+  roles: string[];
   accountId: string;
   pay: StaffPay | null;
   xeroEmployees: Option[] | null;
   xeroRates: Option[] | null;
   suggestedEmployee: string | null;
 }) {
+  const tutor = roles.includes("tutor");
+  const admin = roles.includes("admin");
   return (
     <ActionForm action={saveStaffPay} submitLabel="Save pay details">
       <input type="hidden" name="account_id" value={accountId} />
@@ -54,17 +58,45 @@ export function StaffPayForm({
         <option value="part_time">Part-time</option>
         <option value="full_time">Full-time</option>
       </Select>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field label="School tutoring ($/hr)" name="school_rate" defaultValue={money(pay?.school_rate_cents ?? null)} inputMode="decimal" />
-        <Field label="Tertiary and other ($/hr)" name="tertiary_rate" defaultValue={money(pay?.tertiary_rate_cents ?? null)} inputMode="decimal" />
-        <Field label="Admin ($/hr)" name="admin_rate" defaultValue={money(pay?.admin_rate_cents ?? null)} inputMode="decimal" />
-      </div>
+      {/* One rate for each role the person holds. A rate for a role they
+          no longer hold is kept as it is (hidden), so it isn't lost. */}
+      {tutor ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Tutor: school tutoring ($/hr)" name="school_rate" defaultValue={money(pay?.school_rate_cents ?? null)} inputMode="decimal" />
+          <Field label="Tutor: tertiary and other ($/hr)" name="tertiary_rate" defaultValue={money(pay?.tertiary_rate_cents ?? null)} inputMode="decimal" />
+        </div>
+      ) : (
+        <>
+          <input type="hidden" name="school_rate" value={money(pay?.school_rate_cents ?? null)} />
+          <input type="hidden" name="tertiary_rate" value={money(pay?.tertiary_rate_cents ?? null)} />
+        </>
+      )}
+      {admin ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Admin ($/hr)" name="admin_rate" defaultValue={money(pay?.admin_rate_cents ?? null)} inputMode="decimal" />
+        </div>
+      ) : (
+        <input type="hidden" name="admin_rate" value={money(pay?.admin_rate_cents ?? null)} />
+      )}
       {xeroEmployees && xeroRates && (
         <div className="grid gap-3 sm:grid-cols-2">
           <XeroSelect label="Xero employee" name="xero_employee_id" value={pay?.xero_employee_id ?? suggestedEmployee} options={xeroEmployees} />
-          <XeroSelect label="Xero earnings rate: school" name="xero_school_rate_id" value={pay?.xero_school_rate_id ?? null} options={xeroRates} />
-          <XeroSelect label="Xero earnings rate: tertiary" name="xero_tertiary_rate_id" value={pay?.xero_tertiary_rate_id ?? null} options={xeroRates} />
-          <XeroSelect label="Xero earnings rate: admin" name="xero_admin_rate_id" value={pay?.xero_admin_rate_id ?? null} options={xeroRates} />
+          {tutor ? (
+            <>
+              <XeroSelect label="Xero earnings rate: school tutoring" name="xero_school_rate_id" value={pay?.xero_school_rate_id ?? null} options={xeroRates} />
+              <XeroSelect label="Xero earnings rate: tertiary tutoring" name="xero_tertiary_rate_id" value={pay?.xero_tertiary_rate_id ?? null} options={xeroRates} />
+            </>
+          ) : (
+            <>
+              <input type="hidden" name="xero_school_rate_id" value={pay?.xero_school_rate_id ?? ""} />
+              <input type="hidden" name="xero_tertiary_rate_id" value={pay?.xero_tertiary_rate_id ?? ""} />
+            </>
+          )}
+          {admin ? (
+            <XeroSelect label="Xero earnings rate: admin" name="xero_admin_rate_id" value={pay?.xero_admin_rate_id ?? null} options={xeroRates} />
+          ) : (
+            <input type="hidden" name="xero_admin_rate_id" value={pay?.xero_admin_rate_id ?? ""} />
+          )}
         </div>
       )}
     </ActionForm>

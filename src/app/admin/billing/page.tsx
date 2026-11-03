@@ -26,7 +26,7 @@ import { PaySection } from "./pay-section";
 const SECTIONS = [
   { id: "families", label: "Family billing" },
   { id: "invoices", label: "Invoices" },
-  { id: "pay", label: "Tutor pay" },
+  { id: "pay", label: "Staff pay" },
   { id: "prices", label: "Prices and settings" },
   { id: "connections", label: "Stripe and Xero" },
 ] as const;

@@ -70,8 +70,20 @@ export async function PaySection({
   ]);
 
   const staff = new Map<string, string>();
-  for (const r of (roles.data ?? []) as unknown as { account_id: string; account: { full_name: string } | null }[]) {
+  const rolesOf = new Map<string, string[]>();
+  for (const r of (roles.data ?? []) as unknown as { account_id: string; role: string; account: { full_name: string } | null }[]) {
     staff.set(r.account_id, r.account?.full_name ?? "Staff");
+    rolesOf.set(r.account_id, [...(rolesOf.get(r.account_id) ?? []), r.role]);
+  }
+  // A short summary of each person's rates, one per role they hold.
+  const rateText = (cents: number | null | undefined) => (cents != null ? dollars(cents) : "not entered");
+  function summary(id: string, p: StaffPay | null) {
+    const held = rolesOf.get(id) ?? [];
+    const parts: string[] = [];
+    if (held.includes("tutor")) parts.push(`tutor school ${rateText(p?.school_rate_cents)}, tertiary ${rateText(p?.tertiary_rate_cents)}`);
+    if (held.includes("admin")) parts.push(`admin ${rateText(p?.admin_rate_cents)}`);
+    const roleNames = held.map((r) => (r === "admin" ? "Admin" : "Tutor")).join(" and ");
+    return `${roleNames}${p ? ` · ${p.employment.replace("_", "-")}` : ""} · ${parts.join(" · ")}`;
   }
   const staffList = [...staff].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
   const payOf = new Map(((pay.data ?? []) as StaffPay[]).map((p) => [p.account_id, p]));
@@ -208,7 +220,7 @@ export async function PaySection({
         </Card>
       )}
 
-      <Card title="Pay rates" description="Up to three hourly rates per person. Leave a rate empty if it doesn't apply.">
+      <Card title="Pay rates" description="A separate hourly rate for each role a person holds: tutors have a school and a tertiary rate, admins have an admin rate. Someone who is both has all three. Pay is only worked out for a role once its rate is entered.">
         {xeroNote && <p className="mb-4 text-sm text-red-800">{xeroNote}</p>}
         {staffList.length === 0 ? (
           <Empty>No tutors or admins yet.</Empty>
@@ -221,10 +233,7 @@ export async function PaySection({
               return (
                 <details key={s.id} className="rounded-xl border border-zinc-200 p-4">
                   <summary className="cursor-pointer text-sm font-medium">
-                    {s.name}
-                    {p
-                      ? ` · ${p.employment.replace("_", "-")} · school ${p.school_rate_cents != null ? dollars(p.school_rate_cents) : "–"}, tertiary ${p.tertiary_rate_cents != null ? dollars(p.tertiary_rate_cents) : "–"}, admin ${p.admin_rate_cents != null ? dollars(p.admin_rate_cents) : "–"}`
-                      : " · no pay details yet"}
+                    {s.name} · {summary(s.id, p)}
                   </summary>
                   {canEdit && <div className="mt-4">
                     <StaffPayForm
@@ -233,6 +242,7 @@ export async function PaySection({
                       xeroEmployees={xeroEmployees?.map(({ id, name }) => ({ id, name })) ?? null}
                       xeroRates={xeroRates}
                       suggestedEmployee={suggested}
+                      roles={rolesOf.get(s.id) ?? []}
                     />
                   </div>}
                 </details>
