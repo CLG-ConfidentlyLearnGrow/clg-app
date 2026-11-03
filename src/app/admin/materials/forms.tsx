@@ -13,6 +13,7 @@ import { Button, Field, FormMessage, Select, TextArea } from "@/components/ui";
 import { initialFormState } from "@/lib/forms";
 import { MATERIAL_KINDS, MATERIAL_KIND_NAMES } from "@/lib/materials";
 import { SUBJECT_SUGGESTIONS, YEAR_LEVELS } from "@/lib/students";
+import { BusyButton } from "@/components/busy-button";
 
 type Material = {
   id: string;
@@ -124,9 +125,9 @@ export function TaggedSkill({ id, skill }: { id: string; skill: SkillOption }) {
       <form action={action}>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="skill" value={skill.id} />
-        <button type="submit" disabled={pending} className="text-xs text-red-700 underline">
+        <BusyButton type="submit" disabled={pending} className="text-xs text-red-700 underline">
           Remove
-        </button>
+        </BusyButton>
       </form>
     </li>
   );
@@ -168,9 +169,9 @@ export function PublishForm({ m, skillCount }: { m: Material; skillCount: number
       {m.status === "draft" && (
         <form action={delAction}>
           <input type="hidden" name="id" value={m.id} />
-          <button type="submit" disabled={deleting} className="text-sm text-red-700 underline">
+          <BusyButton type="submit" disabled={deleting} className="text-sm text-red-700 underline">
             Delete this draft and its files
-          </button>
+          </BusyButton>
         </form>
       )}
     </div>

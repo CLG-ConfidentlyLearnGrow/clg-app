@@ -3,6 +3,7 @@ import { Card, Empty, SubHeading, Table } from "@/components/ui";
 import { SENIOR_AREA_NAMES, SENIOR_STATUS_NAMES } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 import { SeniorResultForm, SeniorSubjectForm } from "./forms";
+import { BusyButton } from "@/components/busy-button";
 
 type Certificate = { code: string; name: string; rules_loaded: boolean; total_credits: number | null };
 type Requirement = {
@@ -123,9 +124,9 @@ export async function SeniorCertificateCard({
                     <form action={removeSeniorSubject}>
                       <input type="hidden" name="id" value={s.id} />
                       <input type="hidden" name="student_id" value={studentId} />
-                      <button type="submit" className="text-xs text-zinc-500 underline hover:text-red-700">
+                      <BusyButton type="submit" className="text-xs text-zinc-500 underline hover:text-red-700">
                         Remove subject
-                      </button>
+                      </BusyButton>
                     </form>
                   </div>
                 </details>

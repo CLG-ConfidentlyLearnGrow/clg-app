@@ -21,6 +21,7 @@ import {
   StudyPeriodForm,
   Term4LastDayForm,
 } from "./extra-forms";
+import { BusyButton } from "@/components/busy-button";
 
 const STUDY_PERIOD_NAMES: Record<string, string> = {
   public: "SA government school terms",
@@ -59,9 +60,9 @@ export async function StudyPeriodBlock({ studentId, yearLevel }: { studentId: st
                   </span>
                   <form action={removeOwnTerm}>
                     <input type="hidden" name="id" value={o.id} />
-                    <button type="submit" className="text-xs text-teal-800 underline">
+                    <BusyButton type="submit" className="text-xs text-teal-800 underline">
                       Remove
-                    </button>
+                    </BusyButton>
                   </form>
                 </li>
               ))}
@@ -384,9 +385,9 @@ export async function BlocksSection({
                 {isAdmin && !b.lifted_at && (
                   <form action={liftBlock}>
                     <input type="hidden" name="id" value={b.id} />
-                    <button type="submit" className="text-xs text-teal-800 underline">
+                    <BusyButton type="submit" className="text-xs text-teal-800 underline">
                       Lift this block
-                    </button>
+                    </BusyButton>
                   </form>
                 )}
               </li>
@@ -440,9 +441,9 @@ export async function LibrariesAdminSection() {
                   <form action={setLibraryActive}>
                     <input type="hidden" name="id" value={l.id} />
                     <input type="hidden" name="active" value={l.active ? "false" : "true"} />
-                    <button type="submit" className="text-xs text-teal-800 underline">
+                    <BusyButton type="submit" className="text-xs text-teal-800 underline">
                       {l.active ? "Hide" : "Show"}
-                    </button>
+                    </BusyButton>
                   </form>
                 </div>
                 {h.length > 0 && (
@@ -450,9 +451,9 @@ export async function LibrariesAdminSection() {
                     {h.map((x) => `${WEEKDAY_NAMES[x.weekday - 1].slice(0, 3)} ${clockTime(x.opens)}–${clockTime(x.closes)}`).join(" · ")}{" "}
                     <form action={removeLibraryHours} className="inline">
                       <input type="hidden" name="library_id" value={l.id} />
-                      <button type="submit" className="text-xs text-teal-800 underline">
+                      <BusyButton type="submit" className="text-xs text-teal-800 underline">
                         Clear hours
-                      </button>
+                      </BusyButton>
                     </form>
                   </div>
                 )}

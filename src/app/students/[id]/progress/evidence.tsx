@@ -4,6 +4,7 @@ import { EVIDENCE_KIND_NAMES } from "@/lib/progress";
 import { localDate, shortDate } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { EvidenceReviewForm, EvidenceUploadForm } from "./forms";
+import { BusyButton } from "@/components/busy-button";
 
 type Evidence = {
   id: string;
@@ -143,9 +144,9 @@ export async function EvidenceCard({
                 <form action={removeEvidence} className="mt-2">
                   <input type="hidden" name="evidence_id" value={e.id} />
                   <input type="hidden" name="student_id" value={studentId} />
-                  <button type="submit" className="text-xs text-zinc-500 underline hover:text-red-700">
+                  <BusyButton type="submit" className="text-xs text-zinc-500 underline hover:text-red-700">
                     Remove
-                  </button>
+                  </BusyButton>
                 </form>
               )}
             </li>

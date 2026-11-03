@@ -6,6 +6,7 @@ import { addRole, removeRole, resendStaffInvite, sendStaffLoginLink, setJobTitle
 import { Empty } from "@/components/ui";
 import { initialFormState, type FormState } from "@/lib/forms";
 import { SetLevelForm } from "../level-forms";
+import { BusyButton } from "@/components/busy-button";
 
 export type StaffMember = {
   account_id: string;
@@ -315,15 +316,15 @@ function InvitationCard({ invitation: i }: { invitation: Invitation }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <form action={formAction}>
           <input type="hidden" name="id" value={i.id} />
-          <button type="submit" disabled={pending} className={smallButton}>
+          <BusyButton type="submit" disabled={pending} className={smallButton}>
             {pending ? "Sending…" : "Send a new invite"}
-          </button>
+          </BusyButton>
         </form>
         <form action={cancelInvitation}>
           <input type="hidden" name="id" value={i.id} />
-          <button type="submit" className={plainButton}>
+          <BusyButton type="submit" className={plainButton}>
             Cancel invite
-          </button>
+          </BusyButton>
         </form>
       </div>
       <p className="mt-2 text-xs text-zinc-500">A new invite works once, for 7 days. The old link stops working.</p>
@@ -402,9 +403,9 @@ function JobTitleForm({ person }: { person: StaffMember }) {
         <span className="text-sm font-medium text-zinc-800">Job title</span>
         <span className="flex gap-2">
           <input name="job_title" defaultValue={person.job_title ?? ""} maxLength={80} list="job-title-suggestions" className={inputClass} />
-          <button type="submit" disabled={pending} className={smallButton}>
+          <BusyButton type="submit" disabled={pending} className={smallButton}>
             {pending ? "Saving…" : "Save"}
-          </button>
+          </BusyButton>
         </span>
         <span className="block text-xs text-zinc-500">For example: Tutor, Operations coordinator. Leave blank to remove.</span>
       </label>
@@ -424,9 +425,9 @@ function LoginLinkForm({ person }: { person: StaffMember }) {
           ? "Emails them a link to set a new password, for example if they're locked out."
           : "They haven't signed in yet. Emails them a new link to choose a password."}
       </p>
-      <button type="submit" disabled={pending} className={plainButton}>
+      <BusyButton type="submit" disabled={pending} className={plainButton}>
         {pending ? "Sending…" : person.last_sign_in_at ? "Send a password link" : "Send a new login link"}
-      </button>
+      </BusyButton>
       <Result state={state} />
     </form>
   );
@@ -509,9 +510,9 @@ function HeldRole({
             <input name="confirm_name" required autoComplete="off" className={inputClass} />
           </label>
           <div className="flex gap-2">
-            <button type="submit" disabled={pending} className="rounded-full bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50">
+            <BusyButton type="submit" disabled={pending} className="rounded-full bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50">
               {pending ? "Removing…" : "Remove role"}
-            </button>
+            </BusyButton>
             <button type="button" onClick={() => setConfirming(false)} className={plainButton}>
               Cancel
             </button>
@@ -559,9 +560,9 @@ function AddRoleForm({ person: p, isOwner }: { person: StaffMember; isOwner: boo
             </select>
           </label>
         )}
-        <button type="submit" disabled={pending || !role} className={smallButton}>
+        <BusyButton type="submit" disabled={pending || !role} className={smallButton}>
           {pending ? "Adding…" : "Add"}
-        </button>
+        </BusyButton>
       </div>
       <p className="text-xs text-zinc-500">
         A student role comes from &quot;Become a learner&quot; on their own dashboard, because it needs a student record.

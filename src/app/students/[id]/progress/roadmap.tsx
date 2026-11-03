@@ -4,6 +4,7 @@ import { dollars } from "@/lib/billing/money";
 import { localToday, shortDate } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { AddStepForm, AddTargetForm } from "./forms";
+import { BusyButton } from "@/components/busy-button";
 
 type Target = {
   id: string;
@@ -154,12 +155,12 @@ export async function Roadmap({
                 <form action={closeRoadmapTarget} className="flex gap-3">
                   <input type="hidden" name="student_id" value={studentId} />
                   <input type="hidden" name="id" value={t.id} />
-                  <button name="status" value="done" className="text-xs text-teal-800 underline">
+                  <BusyButton name="status" value="done" className="text-xs text-teal-800 underline">
                     Finished
-                  </button>
-                  <button name="status" value="dropped" className="text-xs text-zinc-500 underline">
+                  </BusyButton>
+                  <BusyButton name="status" value="dropped" className="text-xs text-zinc-500 underline">
                     Remove
-                  </button>
+                  </BusyButton>
                 </form>
               )}
             </div>
@@ -185,7 +186,7 @@ export async function Roadmap({
               <form action={planRoadmapSteps} className="mt-2">
                 <input type="hidden" name="student_id" value={studentId} />
                 <input type="hidden" name="id" value={t.id} />
-                <button className="text-sm text-teal-800 underline">Plan study steps for me</button>
+                <BusyButton className="text-sm text-teal-800 underline">Plan study steps for me</BusyButton>
               </form>
             )}
             {canAddSteps && (
@@ -248,14 +249,14 @@ export function StepRow({
           <input type="hidden" name="student_id" value={studentId} />
           <input type="hidden" name="id" value={step.id} />
           <input type="hidden" name="done" value={step.done_at ? "false" : "true"} />
-          <button
+          <BusyButton spinnerOnly
             className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded border text-xs ${
               step.done_at ? "border-teal-700 bg-teal-700 text-white" : "border-zinc-400 bg-white"
             }`}
             aria-label={step.done_at ? `Mark "${step.title}" as not done` : `Tick off "${step.title}"`}
           >
             {step.done_at ? "✓" : ""}
-          </button>
+          </BusyButton>
         </form>
       ) : (
         <span className="mt-0.5 w-5 text-center">{step.done_at ? "✓" : "○"}</span>
@@ -270,7 +271,7 @@ export function StepRow({
         <form action={removeRoadmapStep}>
           <input type="hidden" name="student_id" value={studentId} />
           <input type="hidden" name="id" value={step.id} />
-          <button className="text-xs text-zinc-500 underline">Remove</button>
+          <BusyButton className="text-xs text-zinc-500 underline">Remove</BusyButton>
         </form>
       )}
     </li>
