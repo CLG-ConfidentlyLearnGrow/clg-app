@@ -2,7 +2,7 @@
 // admins (setting up a family): field rules and the ticked subjects.
 import { z } from "zod";
 import { STATES } from "@/lib/checks";
-import { PLAIN_MATHS, YEAR_LEVELS } from "@/lib/students";
+import { YEAR_LEVELS, mathsProblem } from "@/lib/students";
 
 export const childSchema = z.object({
   full_name: z.string().trim().min(1, "Enter your child's name.").max(200),
@@ -16,6 +16,7 @@ export const childSchema = z.object({
     .min(1, "Tell us what you'd like CLG's support to achieve.")
     .max(4000, "Please keep the end goal under 4,000 characters."),
   extra_info: z.string().trim().max(2000, "Please keep other information under 2,000 characters.").optional(),
+  learning_needs: z.string().trim().max(2000, "Please keep learning needs under 2,000 characters.").optional(),
 });
 
 // The subjects the family ticked or typed, each with the level the child is
@@ -36,13 +37,13 @@ export function readSubjects(formData: FormData): Wanted[] | { error: string } {
     return { error: "Please choose the subjects again." };
   }
   const parsed = wantedSchema.safeParse(raw);
+  const yearLevel = String(formData.get("year_level") ?? "") || null;
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const seen = new Set<string>();
   const subjects: Wanted[] = [];
   for (const s of parsed.data) {
-    if (PLAIN_MATHS.has(s.subject.toLowerCase())) {
-      return { error: "For Maths, please tick General, Essential or Advanced Maths." };
-    }
+    const problem = mathsProblem(s.subject, s.level ?? yearLevel);
+    if (problem) return { error: problem };
     if (!seen.has(s.subject.toLowerCase())) {
       seen.add(s.subject.toLowerCase());
       subjects.push(s);

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { SUBJECT_SUGGESTIONS, YEAR_LEVELS, YEAR_LEVEL_NAMES } from "@/lib/students";
+import { useEffect, useRef, useState } from "react";
+import { SUBJECT_SUGGESTIONS, YEAR_LEVELS, YEAR_LEVEL_NAMES, subjectsFor } from "@/lib/students";
 
 export type ChosenSubject = { subject: string; level: string | null };
 
@@ -10,8 +10,21 @@ const inputClass =
 
 // Tick one or more subjects and, for each, the level the child is working
 // at (which can differ from their school year), or "Not sure". Sent to the
-// server as one hidden field, "subjects_json".
-export function SubjectPicker({ chosen = [] }: { chosen?: ChosenSubject[] }) {
+// server as one hidden field, "subjects_json". The list follows the year
+// level chosen in the same form (Foundation to Year 10, or Years 11 and 12),
+// or the yearLevel given.
+export function SubjectPicker({ chosen = [], yearLevel = null }: { chosen?: ChosenSubject[]; yearLevel?: string | null }) {
+  const box = useRef<HTMLFieldSetElement>(null);
+  const [year, setYear] = useState<string | null>(yearLevel);
+  useEffect(() => {
+    const select = box.current?.closest("form")?.querySelector<HTMLSelectElement>('select[name="year_level"]');
+    if (!select) return;
+    const read = () => setYear(select.value || yearLevel);
+    read();
+    select.addEventListener("change", read);
+    return () => select.removeEventListener("change", read);
+  }, [yearLevel]);
+  const shown = subjectsFor(year);
   const listed = new Set<string>(SUBJECT_SUGGESTIONS.map((s) => s.toLowerCase()));
   const [picked, setPicked] = useState<Map<string, string>>(
     () =>
@@ -42,7 +55,7 @@ export function SubjectPicker({ chosen = [] }: { chosen?: ChosenSubject[] }) {
     });
 
   return (
-    <fieldset className="space-y-2">
+    <fieldset ref={box} className="space-y-2">
       <legend className="text-sm font-medium">Subjects to get help with</legend>
       <p className="text-xs text-zinc-500">
         Tick each subject, then choose the level your child is working at in it. This can be different from their
@@ -51,7 +64,7 @@ export function SubjectPicker({ chosen = [] }: { chosen?: ChosenSubject[] }) {
       </p>
       <input type="hidden" name="subjects_json" value={value} />
       <ul className="space-y-1">
-        {SUBJECT_SUGGESTIONS.map((s) => (
+        {[...shown, ...[...picked.keys()].filter((p) => !shown.includes(p))].map((s) => (
           <li key={s} className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <label className="flex min-w-48 items-center gap-2 text-sm">
               <input type="checkbox" checked={picked.has(s)} onChange={(e) => toggle(s, e.target.checked)} />

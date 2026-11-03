@@ -19,11 +19,11 @@ export function FamilySetupForm() {
         <legend className="text-sm font-medium">Who is the account for?</legend>
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="who" value="parent" checked={who === "parent"} onChange={() => setWho("parent")} />
-          A parent or carer, with their child
+          A parent or carer, with their child. Use this for most students under 18, including those 16 or over.
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="who" value="learner" checked={who === "learner"} onChange={() => setWho("learner")} />
-          A student aged 16 or over, or an adult learner, with their own login
+          A student with their own login, and no parent account: an adult learner, or a student 16 or over who manages their own support. A student on a parent&apos;s account can be given their own login later.
         </label>
       </fieldset>
       <Field

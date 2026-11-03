@@ -11,6 +11,7 @@ export type Student = {
   school: string | null;
   goals: string | null;
   extra_info: string | null;
+  learning_needs: string | null;
 };
 export type Assignment = {
   id: string;
@@ -24,7 +25,7 @@ export type Assignment = {
 export async function loadStudentsAndTutors() {
   const supabase = await createClient();
   const [students, assignments] = await Promise.all([
-    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info").order("full_name"),
+    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs").order("full_name"),
     supabase
       .from("tutor_assignments")
       .select("id, subject, student_id, tutor:tutor_profiles(bio, account:accounts(full_name))"),

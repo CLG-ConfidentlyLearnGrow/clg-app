@@ -39,31 +39,71 @@ export const YEAR_LEVEL_NAMES: Record<YearLevel, string> = {
   "Adult learner": "Adult learner (not currently studying)",
 };
 
-// Suggestions for the subject box. Tutors can also type their own.
-// Maths is split three ways because each is taught very differently.
-export const MATHS_SUBJECTS = ["General Maths", "Essential Maths", "Advanced Maths"] as const;
-export const PLAIN_MATHS = new Set(["maths", "math", "mathematics"]);
+// Subjects families and tutors choose from (Carla, 2 Nov 2026). The list
+// depends on the student's year level: Foundation to Year 10 follows the
+// Australian Curriculum, Years 11 and 12 follow SACE. Anyone can also type
+// another subject.
+const byName = (a: string, b: string) => a.localeCompare(b);
 
-export const SUBJECT_SUGGESTIONS = [
-  ...MATHS_SUBJECTS,
-  "English",
-  "Science",
-  "Humanities and Social Sciences",
-  "History",
-  "Geography",
-  "Economics and Business",
+export const JUNIOR_SUBJECTS = [
   "Digital Technologies",
-  "Literacy",
-  "Numeracy",
-  "Biology",
-  "Chemistry",
-  "Physics",
-  "Psychology",
-  "English Literary Studies",
-  "Essential English",
-  "Research Project",
+  "Economics and Business",
+  "English",
+  "Humanities and Social Sciences",
+  "Mathematics",
+  "Science",
   "Study skills",
 ] as const;
+
+// Maths in Years 11 and 12 is four separate SACE subjects.
+export const SENIOR_MATHS = [
+  "Mathematics: Essential",
+  "Mathematics: General",
+  "Mathematics: Methods",
+  "Mathematics: Specialist",
+] as const;
+
+export const SENIOR_SUBJECTS = [
+  "Activating Identities and Futures (AIF) / Research Project",
+  "Biology",
+  "Chemistry",
+  "Digital Technologies",
+  "Economics and Business",
+  "English",
+  ...SENIOR_MATHS,
+  "Physics",
+  "Psychology",
+  "Study skills",
+] as const;
+
+// Every subject, A to Z. Used where the year level isn't known, and for
+// university, TAFE and adult learners.
+export const SUBJECT_SUGGESTIONS: readonly string[] = [...new Set<string>([...JUNIOR_SUBJECTS, ...SENIOR_SUBJECTS])].sort(byName);
+
+const SENIOR_LEVELS = new Set(["Year 11", "Year 12"]);
+const JUNIOR_LEVELS = new Set<string>(YEAR_LEVELS.slice(0, YEAR_LEVELS.indexOf("Year 10") + 1));
+
+// The subjects to offer a student in this year level, A to Z.
+export function subjectsFor(yearLevel?: string | null): readonly string[] {
+  if (yearLevel && JUNIOR_LEVELS.has(yearLevel)) return [...JUNIOR_SUBJECTS].sort(byName);
+  if (yearLevel && SENIOR_LEVELS.has(yearLevel)) return [...SENIOR_SUBJECTS].sort(byName);
+  return SUBJECT_SUGGESTIONS;
+}
+
+// "Maths" on its own is ambiguous: Foundation to Year 10 is "Mathematics";
+// Years 11 and 12 choose one of the four SACE maths subjects. Returns a plain
+// message when the subject doesn't suit the levels, or null when it's fine.
+const MATHS_WORDS = new Set(["maths", "math"]);
+export function mathsProblem(subject: string, highestLevel?: string | null): string | null {
+  const s = subject.trim().toLowerCase();
+  if (MATHS_WORDS.has(s)) {
+    return "Choose Mathematics for Foundation to Year 10, or Mathematics: Essential, General, Methods or Specialist for Years 11 and 12.";
+  }
+  if (s === "mathematics" && highestLevel && !JUNIOR_LEVELS.has(highestLevel)) {
+    return "Mathematics covers Foundation to Year 10. For Year 11 and above, choose Mathematics: Essential, General, Methods or Specialist.";
+  }
+  return null;
+}
 
 // The same subject and level matching the database uses to attach a
 // curriculum (private.subject_fits and private.level_fits), so "General
@@ -74,6 +114,8 @@ function normSubject(s: string) {
     .trim()
     .replace(/\(.*\)/g, "")
     .replace(/\s+(f|\d+)\s*[-–]\s*\d+$/, "")
+    .replace(/^mathematics:\s*(essential|general|methods|specialist)$/, "$1 mathematics")
+    .replace(/^methods mathematics$/, "mathematical methods")
     .replace(/\bmaths?\b/g, "mathematics")
     .replace(/^humanities and social sciences$/, "hass")
     .replace(/\s+/g, " ")

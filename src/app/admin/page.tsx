@@ -124,7 +124,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"),
       supabase
         .from("students")
-        .select("id, account_id, full_name, date_of_birth, state, year_level, goals, extra_info, student_subjects(subject, working_level)")
+        .select("id, account_id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, student_subjects(subject, working_level)")
         .order("full_name"),
       supabase
         .from("tutor_profiles")
@@ -286,8 +286,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     date_of_birth: string | null;
     state: AuState | null;
     year_level: string | null;
+    school: string | null;
     goals: string | null;
     extra_info: string | null;
+    learning_needs: string | null;
     student_subjects: { subject: string; working_level: string | null }[];
   }[];
   const chosen = studentRows.find((s) => s.id === studentId);
@@ -463,16 +465,25 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 <>
                   <div className="mb-4 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
                     <p>
+                      <strong>School year:</strong> {chosen.year_level ?? "Not given yet"}
+                      {chosen.school ? ` at ${chosen.school}` : ""}
+                    </p>
+                    <p>
                       <strong>Wants help with:</strong>{" "}
                       {chosen.student_subjects.length > 0
                         ? chosen.student_subjects
-                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "level unsure"})`)
+                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "working level not sure"})`)
                             .join(", ")
                         : "No subjects given"}
                     </p>
                     <p>
                       <strong>End goal:</strong> {chosen.goals || "None given"}
                     </p>
+                    {chosen.learning_needs && (
+                      <p>
+                        <strong>Learning needs:</strong> {chosen.learning_needs}
+                      </p>
+                    )}
                     {chosen.extra_info && (
                       <p>
                         <strong>Other information:</strong> {chosen.extra_info}
