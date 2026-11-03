@@ -53,15 +53,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Your privacy
                 </Link>
-                <span className="hidden text-sm text-zinc-600 sm:inline">{viewer.fullName}</span>
-                <form action={signOut}>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm text-zinc-700 transition hover:border-teal-700 hover:text-teal-800"
-                  >
-                    Sign out
-                  </button>
-                </form>
+                {/* Who is signed in sits above Sign out, in small grey text, so it
+                    doesn't look like another menu link. */}
+                <div className="flex flex-col items-end gap-1 border-l border-zinc-200 pl-3">
+                  <span className="max-w-[10rem] truncate text-xs text-zinc-500" title={viewer.fullName}>
+                    Signed in as {viewer.fullName}
+                  </span>
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm text-zinc-700 transition hover:border-teal-700 hover:text-teal-800"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
           </div>
