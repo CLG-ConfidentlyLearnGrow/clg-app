@@ -253,7 +253,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   return (
     <Page title={`${student.data.full_name}: progress`}>
       <p className="text-sm">
-        <TextLink href="/dashboard">Back to dashboard</TextLink>
+        <TextLink href="/dashboard">Back to Home</TextLink>
       </p>
 
       <Card title="Next step">
