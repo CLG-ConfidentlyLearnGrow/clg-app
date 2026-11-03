@@ -14,6 +14,9 @@ import { createClient } from "@/lib/supabase/server";
 import { BookForm } from "../schedule/forms";
 import { CourseDetails, type CourseUnit } from "@/components/course-details";
 import { CourseOverviewForm } from "../admin/course-overview-form";
+import { ADMIN_SECTIONS } from "../admin/sections";
+import { RoleTabs } from "@/components/role-tabs";
+import { SectionShell } from "@/components/section-shell";
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null };
 type QueueRow = {
@@ -124,150 +127,163 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   const next = currentIndex >= 0 ? rows[currentIndex + 1] : undefined;
   const current = STAGES.find((s) => s.id === stage)!;
 
+  // Same admin side menu as the rest of the admin area, so admins can move
+  // between sections without leaving Matching. It can be hidden.
+  const adminSections = isFull
+    ? ADMIN_SECTIONS
+    : ADMIN_SECTIONS.filter((s) => s.id === "families" || s.id === "matching");
+
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Matching</h1>
-          <p className="text-sm text-zinc-600">
-            Students waiting for a tutor, and the tutors who suit them best. Matching is on fit only.
-          </p>
-        </div>
-        <nav className="flex gap-2 text-sm" aria-label="Matching views">
-          <Link
-            href="/matching"
-            className={`rounded-full border px-3 py-1 ${view === "queue" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`}
-          >
-            Students waiting
-          </Link>
-          <Link
-            href="/matching?view=gaps"
-            className={`rounded-full border px-3 py-1 ${view === "gaps" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`}
-          >
-            Gaps
-          </Link>
-        </nav>
-      </div>
-
-      {view === "gaps" ? (
-        <GapsView />
-      ) : (
-        <>
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {STAGES.map((s) => {
-              const c = counts.find((x) => x.stage === s.id);
-              const active = s.id === stage;
-              return (
-                <li key={s.id}>
-                  <Link
-                    href={link({ stage: s.id, page: "1" })}
-                    className={`block rounded-lg border px-3 py-2 text-sm ${active ? "border-teal-700 bg-teal-50" : "border-zinc-200 bg-white hover:border-teal-700"}`}
-                  >
-                    <span className="block text-2xl font-semibold">{c?.subjects ?? 0}</span>
-                    <span className="block">{s.label}</span>
-                    {c?.oldest_days != null && <span className="block text-xs text-zinc-600">longest {c.oldest_days} days</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
-            <div className={`space-y-4 ${studentId ? "order-2 lg:order-1" : ""}`}>
-              <Card title={`${current.label} (${total})`} description={current.hint}>
-                <form method="get" action="/matching" className="mb-4 space-y-2">
-                  <input type="hidden" name="stage" value={stage} />
-                  <Field label="Search by student or subject" name="q" defaultValue={search} maxLength={100} />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Select label="Year level" name="year" defaultValue={year}>
-                      <option value="">Any</option>
-                      {YEAR_LEVELS.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </Select>
-                    <Select label="State" name="state" defaultValue={state}>
-                      <option value="">Any</option>
-                      {STATES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <button type="submit" className="rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm">
-                    Filter
-                  </button>
-                </form>
-                {rows.length === 0 ? (
-                  <Empty>Nobody at this stage.</Empty>
-                ) : (
-                  <ul className="divide-y divide-zinc-100 text-sm">
-                    {rows.map((r) => {
-                      const active = r.student_id === studentId && r.subject === subject;
-                      return (
-                        <li key={`${r.student_id}-${r.subject}`}>
-                          <Link
-                            href={link({ page: String(page), student: r.student_id, subject: r.subject })}
-                            aria-current={active ? "true" : undefined}
-                            className={`block rounded-md px-2 py-2 ${active ? "bg-teal-50" : "hover:bg-zinc-50"}`}
-                          >
-                            <span className="flex items-baseline justify-between gap-2">
-                              <span className="font-medium">{r.student_name}</span>
-                              <span className={`text-xs ${r.days >= 7 && stage !== "active" ? "text-amber-900" : "text-zinc-600"}`}>
-                                {r.days === 0 ? "today" : `${r.days} day${r.days === 1 ? "" : "s"}`}
-                              </span>
-                            </span>
-                            <span className="block text-zinc-600">
-                              {r.subject} · {r.year_level ?? "year not set"}
-                              {r.working_level ? ` · working at ${r.working_level}` : ""} · {r.state}
-                              {r.tutor_name ? ` · ${r.tutor_name}` : ""}
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-                {pages > 1 && (
-                  <p className="mt-4 flex items-center gap-4 text-sm">
-                    {page > 1 && (
-                      <Link className="underline" href={link({ page: String(page - 1) })}>
-                        Previous
-                      </Link>
-                    )}
-                    <span className="text-zinc-600">
-                      Page {page} of {pages}
-                    </span>
-                    {page < pages && (
-                      <Link className="underline" href={link({ page: String(page + 1) })}>
-                        Next
-                      </Link>
-                    )}
-                  </p>
-                )}
-              </Card>
-              {isFull && <ReasonsCard />}
-            </div>
-
-            <div className={studentId ? "order-1 lg:order-2" : ""}>
-              {studentId && subject ? (
-                <StudentPanel
-                  studentId={studentId}
-                  subject={subject}
-                  nextHref={next ? link({ page: String(page), student: next.student_id, subject: next.subject }) : null}
-                />
-              ) : (
-                <Card title="Choose a student">
-                  <Empty>Pick a student from the list to see the tutors who suit them.</Empty>
-                </Card>
-              )}
-            </div>
+    <>
+      <RoleTabs roles={viewer.roles} active="admin" />
+      <SectionShell
+        basePath="/admin"
+        label="Admin"
+        section="matching"
+        sections={adminSections.map((s) => ({ id: s.id, label: s.label }))}
+      >
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm text-zinc-600">
+              Students waiting for a tutor, and the tutors who suit them best. Matching is on fit only.
+            </p>
           </div>
-        </>
-      )}
-    </main>
+          <nav className="flex gap-2 text-sm" aria-label="Matching views">
+            <Link
+              href="/matching"
+              className={`rounded-full border px-3 py-1 ${view === "queue" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`}
+            >
+              Students waiting
+            </Link>
+            <Link
+              href="/matching?view=gaps"
+              className={`rounded-full border px-3 py-1 ${view === "gaps" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`}
+            >
+              Gaps
+            </Link>
+          </nav>
+        </div>
+
+        {view === "gaps" ? (
+          <GapsView />
+        ) : (
+          <>
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {STAGES.map((s) => {
+                const c = counts.find((x) => x.stage === s.id);
+                const active = s.id === stage;
+                return (
+                  <li key={s.id}>
+                    <Link
+                      href={link({ stage: s.id, page: "1" })}
+                      className={`block rounded-lg border px-3 py-2 text-sm ${active ? "border-teal-700 bg-teal-50" : "border-zinc-200 bg-white hover:border-teal-700"}`}
+                    >
+                      <span className="block text-2xl font-semibold">{c?.subjects ?? 0}</span>
+                      <span className="block">{s.label}</span>
+                      {c?.oldest_days != null && <span className="block text-xs text-zinc-600">longest {c.oldest_days} days</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
+              <div className={`space-y-4 ${studentId ? "order-2 lg:order-1" : ""}`}>
+                <Card title={`${current.label} (${total})`} description={current.hint}>
+                  <form method="get" action="/matching" className="mb-4 space-y-2">
+                    <input type="hidden" name="stage" value={stage} />
+                    <Field label="Search by student or subject" name="q" defaultValue={search} maxLength={100} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Select label="Year level" name="year" defaultValue={year}>
+                        <option value="">Any</option>
+                        {YEAR_LEVELS.map((y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
+                        ))}
+                      </Select>
+                      <Select label="State" name="state" defaultValue={state}>
+                        <option value="">Any</option>
+                        {STATES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <button type="submit" className="rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm">
+                      Filter
+                    </button>
+                  </form>
+                  {rows.length === 0 ? (
+                    <Empty>Nobody at this stage.</Empty>
+                  ) : (
+                    <ul className="divide-y divide-zinc-100 text-sm">
+                      {rows.map((r) => {
+                        const active = r.student_id === studentId && r.subject === subject;
+                        return (
+                          <li key={`${r.student_id}-${r.subject}`}>
+                            <Link
+                              href={link({ page: String(page), student: r.student_id, subject: r.subject })}
+                              aria-current={active ? "true" : undefined}
+                              className={`block rounded-md px-2 py-2 ${active ? "bg-teal-50" : "hover:bg-zinc-50"}`}
+                            >
+                              <span className="flex items-baseline justify-between gap-2">
+                                <span className="font-medium">{r.student_name}</span>
+                                <span className={`text-xs ${r.days >= 7 && stage !== "active" ? "text-amber-900" : "text-zinc-600"}`}>
+                                  {r.days === 0 ? "today" : `${r.days} day${r.days === 1 ? "" : "s"}`}
+                                </span>
+                              </span>
+                              <span className="block text-zinc-600">
+                                {r.subject} · {r.year_level ?? "year not set"}
+                                {r.working_level ? ` · working at ${r.working_level}` : ""} · {r.state}
+                                {r.tutor_name ? ` · ${r.tutor_name}` : ""}
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {pages > 1 && (
+                    <p className="mt-4 flex items-center gap-4 text-sm">
+                      {page > 1 && (
+                        <Link className="underline" href={link({ page: String(page - 1) })}>
+                          Previous
+                        </Link>
+                      )}
+                      <span className="text-zinc-600">
+                        Page {page} of {pages}
+                      </span>
+                      {page < pages && (
+                        <Link className="underline" href={link({ page: String(page + 1) })}>
+                          Next
+                        </Link>
+                      )}
+                    </p>
+                  )}
+                </Card>
+                {isFull && <ReasonsCard />}
+              </div>
+
+              <div className={studentId ? "order-1 lg:order-2" : ""}>
+                {studentId && subject ? (
+                  <StudentPanel
+                    studentId={studentId}
+                    subject={subject}
+                    nextHref={next ? link({ page: String(page), student: next.student_id, subject: next.subject }) : null}
+                  />
+                ) : (
+                  <Card title="Choose a student">
+                    <Empty>Pick a student from the list to see the tutors who suit them.</Empty>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </SectionShell>
+    </>
   );
 }
 
