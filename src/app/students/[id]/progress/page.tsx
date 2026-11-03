@@ -15,6 +15,7 @@ import { SeniorCertificateCard } from "./senior-certificate";
 import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 import { StudentMaterialsCard, type StudentMaterial } from "./materials";
+import { BusyButton } from "@/components/busy-button";
 
 type StudentRow = {
   id: string;
@@ -416,12 +417,12 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                     <form action={closeGoal} className="flex gap-2">
                       <input type="hidden" name="goal_id" value={g.id} />
                       <input type="hidden" name="student_id" value={id} />
-                      <button name="status" value="achieved" className="text-xs text-teal-700 underline">
+                      <BusyButton name="status" value="achieved" className="text-xs text-teal-700 underline">
                         Achieved
-                      </button>
-                      <button name="status" value="stopped" className="text-xs text-zinc-500 underline">
+                      </BusyButton>
+                      <BusyButton name="status" value="stopped" className="text-xs text-zinc-500 underline">
                         Stop
-                      </button>
+                      </BusyButton>
                     </form>
                   )}
                 </div>

@@ -49,6 +49,7 @@ import {
   TermForm,
   WaitlistForm,
 } from "./forms";
+import { BusyButton } from "@/components/busy-button";
 
 // The scheduling module's one page. Each person sees the sections that fit
 // their roles; the database decides which bookings and sessions they see.
@@ -853,9 +854,9 @@ async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; i
                   {canRemove && (
                     <form action={removeAwayDates}>
                       <input type="hidden" name="id" value={a.id} />
-                      <button type="submit" className="text-xs text-red-700 underline">
+                      <BusyButton type="submit" className="text-xs text-red-700 underline">
                         Remove
-                      </button>
+                      </BusyButton>
                     </form>
                   )}
                 </li>
@@ -943,9 +944,9 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
               {w.note && <p className="text-zinc-600">Note: {w.note}</p>}
               <form action={leaveWaitlist}>
                 <input type="hidden" name="id" value={w.id} />
-                <button type="submit" className="text-xs text-red-700 underline">
+                <BusyButton type="submit" className="text-xs text-red-700 underline">
                   Take off the waitlist
-                </button>
+                </BusyButton>
               </form>
             </li>
           ))}
@@ -1358,9 +1359,9 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
             </ul>
             {unread > 0 && (
               <form action={markNoticesRead} className="mt-4">
-                <button type="submit" className="text-sm text-teal-800 underline">
+                <BusyButton type="submit" className="text-sm text-teal-800 underline">
                   Mark all as read
-                </button>
+                </BusyButton>
               </form>
             )}
           </>

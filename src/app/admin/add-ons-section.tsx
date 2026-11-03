@@ -4,6 +4,7 @@ import { dollars } from "@/lib/billing/money";
 import { shortDate } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
 import { GiveAddOnForm, SetAddOnForm, type AddOn } from "./add-on-forms";
+import { BusyButton } from "@/components/busy-button";
 
 type Member = {
   add_on: string;
@@ -81,7 +82,7 @@ export async function AddOnsSection({ isOwner }: { isOwner: boolean }) {
                           <form action={endAddOn}>
                             <input type="hidden" name="add_on" value={a.code} />
                             <input type="hidden" name="student_id" value={m.student_id} />
-                            <button className="text-xs text-zinc-500 underline">Remove</button>
+                            <BusyButton className="text-xs text-zinc-500 underline">Remove</BusyButton>
                           </form>
                         </td>
                       </tr>

@@ -158,16 +158,10 @@ export function Select({
   );
 }
 
-export function Button({ children, ...props }: ComponentProps<"button">) {
-  return (
-    <button
-      className="shrink-0 rounded-full bg-teal-700 px-5 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition hover:bg-teal-900 hover:font-bold hover:shadow-md disabled:opacity-50 disabled:hover:bg-teal-700 disabled:hover:font-medium"
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+// The main button. It lives in its own file because it watches its form:
+// while the form is saving it is switched off and shows a spinner, so it
+// can't be pressed twice.
+export { Button, BusyButton } from "@/components/busy-button";
 
 export function FormMessage({ state }: { state: FormState }) {
   if (state.error) {

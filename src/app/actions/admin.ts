@@ -111,7 +111,10 @@ export async function verifyParentLink(formData: FormData) {
     .from("parent_student_links")
     .update({ verified_at: new Date().toISOString() })
     .eq("parent_id", ids.data.parent_id)
-    .eq("student_id", ids.data.student_id);
+    .eq("student_id", ids.data.student_id)
+    // Only the first press counts: a second press leaves the original
+    // confirmation time alone.
+    .is("verified_at", null);
   revalidatePath("/admin");
 }
 

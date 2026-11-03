@@ -40,6 +40,7 @@ import {
   ImportSkillsForm,
   StudentFrameworkForm,
 } from "./curriculum-forms";
+import { BusyButton } from "@/components/busy-button";
 
 type PendingLink = {
   parent_id: string;
@@ -635,16 +636,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                           {total > 0 && (
                             <form action={confirmCurriculum}>
                               <input type="hidden" name="framework_id" value={d.id} />
-                              <button type="submit" className="text-sm font-medium text-teal-800 underline hover:font-bold hover:text-teal-950">
+                              <BusyButton type="submit" className="text-sm font-medium text-teal-800 underline hover:font-bold hover:text-teal-950">
                                 Confirm
-                              </button>
+                              </BusyButton>
                             </form>
                           )}
                           <form action={discardCurriculum}>
                             <input type="hidden" name="framework_id" value={d.id} />
-                            <button type="submit" className="text-sm text-red-700 underline hover:font-bold hover:text-red-900">
+                            <BusyButton type="submit" className="text-sm text-red-700 underline hover:font-bold hover:text-red-900">
                               Throw away
-                            </button>
+                            </BusyButton>
                           </form>
                         </div>
                       </li>

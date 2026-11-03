@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress";
 import { addDays, currentTime, sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
+import { BusyButton } from "@/components/busy-button";
 
 const SECTIONS = [
   { id: "students", label: "Your students" },
@@ -286,9 +287,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                       </span>
                       <form action={removeTeaching}>
                         <input type="hidden" name="id" value={t.id} />
-                        <button type="submit" className="text-xs text-red-700 underline">
+                        <BusyButton type="submit" className="text-xs text-red-700 underline">
                           Remove
-                        </button>
+                        </BusyButton>
                       </form>
                     </li>
                   ))}
@@ -406,9 +407,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                   </span>
                   <form action={removeAvailability}>
                     <input type="hidden" name="id" value={slot.id} />
-                    <button type="submit" className="text-xs text-red-700 underline">
+                    <BusyButton type="submit" className="text-xs text-red-700 underline">
                       Remove
-                    </button>
+                    </BusyButton>
                   </form>
                 </li>
               ))}

@@ -24,6 +24,7 @@ import {
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, FormMessage, Select, TextArea } from "@/components/ui";
 import { initialFormState, type FormState } from "@/lib/forms";
+import { BusyButton } from "@/components/busy-button";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
@@ -159,9 +160,9 @@ export function ApproveForm({ bookingId }: { bookingId: string }) {
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Approve
             </Button>
-            <button type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>
+            <BusyButton type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>
               This time doesn&apos;t suit
-            </button>
+            </BusyButton>
           </div>
         </>
       )}
@@ -180,9 +181,9 @@ export function AnswerForm({ bookingId }: { bookingId: string }) {
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Accept
             </Button>
-            <button type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>
+            <BusyButton type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>
               Decline
-            </button>
+            </BusyButton>
           </div>
         </>
       )}
@@ -233,12 +234,12 @@ export function OutcomeForm({ id }: { id: string }) {
       {(pending) => (
         <div className="flex flex-wrap gap-2">
           <input type="hidden" name="id" value={id} />
-          <button type="submit" name="outcome" value="completed" disabled={pending} className={quietButton}>
+          <BusyButton type="submit" name="outcome" value="completed" disabled={pending} className={quietButton}>
             Done
-          </button>
-          <button type="submit" name="outcome" value="no_show" disabled={pending} className={quietButton}>
+          </BusyButton>
+          <BusyButton type="submit" name="outcome" value="no_show" disabled={pending} className={quietButton}>
             No-show
-          </button>
+          </BusyButton>
         </div>
       )}
     </ButtonsForm>
@@ -556,9 +557,9 @@ export function AvailabilityCheckForm({ id }: { id: string }) {
             <Button type="submit" name="answer" value="same" disabled={pending}>
               No changes
             </Button>
-            <button type="submit" name="answer" value="changed" disabled={pending} className={quietButton}>
+            <BusyButton type="submit" name="answer" value="changed" disabled={pending} className={quietButton}>
               I&apos;ve updated it
-            </button>
+            </BusyButton>
           </div>
         </>
       )}
