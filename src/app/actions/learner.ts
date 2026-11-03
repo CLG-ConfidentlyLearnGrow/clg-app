@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { readSubjects } from "@/lib/child-form";
 import { STATES } from "@/lib/checks";
+import { saveStudyDetails } from "@/lib/study-details";
 import { YEAR_LEVELS } from "@/lib/students";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ const learnerSchema = z.object({
   year_level: z.enum(YEAR_LEVELS, "Choose your year level or stage of study."),
   school: z.string().trim().min(1, "Enter your school, university or TAFE.").max(200),
   goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
+  program: z.string().trim().max(300, "Please keep the degree or course name under 300 characters.").optional(),
 });
 
 export async function addMeAsLearner(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -29,7 +31,7 @@ export async function addMeAsLearner(_prev: FormState, formData: FormData): Prom
   if ("error" in picked) return { error: picked.error.replace("your child wants", "you want") };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("add_me_as_learner", {
+  const { data: studentId, error } = await supabase.rpc("add_me_as_learner", {
     p_date_of_birth: parsed.data.date_of_birth,
     p_state: parsed.data.state,
     p_year_level: parsed.data.year_level,
@@ -41,5 +43,6 @@ export async function addMeAsLearner(_prev: FormState, formData: FormData): Prom
     console.error("Add me as learner failed:", error.code, error.message);
     return { error: error.code === "22023" ? `${error.message}.` : "We couldn't add your student profile. Please try again." };
   }
+  if (typeof studentId === "string") await saveStudyDetails(supabase, studentId, parsed.data.program, picked);
   redirect("/dashboard/student");
 }

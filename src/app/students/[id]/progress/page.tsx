@@ -1,7 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { closeGoal } from "@/app/actions/progress";
 import { Button, Card, Page, TextLink } from "@/components/ui";
-import { needsTwoStep, requireViewer } from "@/lib/auth";
+import { FRONT_DESK, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth";
+import { CourseDetails } from "@/components/course-details";
+import { CourseOverviewForm } from "@/app/admin/course-overview-form";
 import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Attendance, type SkillLevel } from "@/lib/progress";
 import { YEAR_LEVELS, levelFits, subjectFits } from "@/lib/students";
 import { bandCoversYear } from "@/lib/materials";
@@ -76,7 +78,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
   const student = await supabase
     .from("students")
-    .select("id, full_name, year_level, goals, extra_info, account_id")
+    .select("id, full_name, year_level, school, program, goals, extra_info, learning_needs, account_id")
     .eq("id", id)
     .maybeSingle();
   if (!student.data) notFound();
@@ -88,7 +90,11 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const [familyLink, myAssignment, requested, familyNotes] = await Promise.all([
     supabase.from("parent_student_links").select("student_id, can_manage").eq("student_id", id).eq("parent_id", viewer.id).maybeSingle(),
     supabase.from("tutor_assignments").select("id").eq("student_id", id).eq("tutor_id", viewer.id).limit(1),
-    supabase.from("student_subjects").select("subject, working_level").eq("student_id", id).order("added_at"),
+    supabase
+      .from("student_subjects")
+      .select("id, subject, working_level, course_code, course_url, course_overview")
+      .eq("student_id", id)
+      .order("added_at"),
     supabase
       .from("family_notes")
       .select("id, kind, body, written_at, writer:accounts!family_notes_written_by_fkey(full_name)")
@@ -122,6 +128,11 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   ]);
 
   const isStaff = isStudentStaff && !familyView;
+  // Admins at owner, operations or support level write university or TAFE
+  // course overviews for the tutor (the database checks this too).
+  const tertiary = student.data.year_level === "University or TAFE" || student.data.year_level === "Adult learner";
+  const adminLevel = isStaff && tertiary && viewer.roles.includes("admin") ? await getAdminLevel() : null;
+  const canWriteOverview = adminLevel !== null && FRONT_DESK.includes(adminLevel);
   const isFamily = familyView;
   // Planning the roadmap: the student, a parent who manages them, or staff.
   const canPlan = isStaff || student.data.account_id === viewer.id || Boolean(familyLink.data?.can_manage);
@@ -330,9 +341,28 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                     .join(", ")
                 : "None given"}
             </p>
+            {student.data.school && (
+              <p>
+                <strong>School, university or TAFE:</strong> {student.data.school}
+              </p>
+            )}
+            <CourseDetails
+              program={student.data.program}
+              units={requested.data ?? []}
+              overviewForm={
+                canWriteOverview
+                  ? (u) => <CourseOverviewForm subjectId={u.id} overview={u.course_overview} />
+                  : undefined
+              }
+            />
             <p>
               <strong>End goal:</strong> {student.data.goals || "None given"}
             </p>
+            {student.data.learning_needs && (
+              <p>
+                <strong>Learning needs:</strong> {student.data.learning_needs}
+              </p>
+            )}
             {student.data.extra_info && (
               <p>
                 <strong>Other information:</strong> {student.data.extra_info}

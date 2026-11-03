@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import { childSchema, readSubjects } from "@/lib/child-form";
 import { giveParentalConsent } from "@/lib/consent";
+import { saveStudyDetails } from "@/lib/study-details";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,7 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
   if (parsed.data.learning_needs && typeof studentId === "string") {
     await supabase.from("students").update({ learning_needs: parsed.data.learning_needs }).eq("id", studentId);
   }
+  if (typeof studentId === "string") await saveStudyDetails(supabase, studentId, parsed.data.program, subjects);
   // If this fails, the parent is asked again on their next visit.
   if (typeof studentId === "string") await giveParentalConsent([studentId]);
 
@@ -54,6 +56,7 @@ const editSchema = z.object({
   goals: childSchema.shape.goals,
   extra_info: childSchema.shape.extra_info,
   learning_needs: childSchema.shape.learning_needs,
+  program: childSchema.shape.program,
   // Only sent when CLG set up the child without them; the family fills them
   // in once (the database refuses later changes).
   date_of_birth: childSchema.shape.date_of_birth.optional(),
@@ -119,6 +122,7 @@ export async function updateChild(_prev: FormState, formData: FormData): Promise
       .eq("id", have.get(s.subject.toLowerCase())!.id);
     if (e) return failed;
   }
+  if (!(await saveStudyDetails(supabase, v.student_id, v.program, subjects))) return failed;
 
   revalidatePath("/dashboard", "layout");
   return { message: "Saved." };

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { FRONT_DESK, requireAdminLevel, requireViewer } from "@/lib/auth";
 import { childSchema, readSubjects, type Wanted } from "@/lib/child-form";
+import { saveStudyDetails } from "@/lib/study-details";
 import { siteUrl } from "@/lib/env";
 import { POLICY_VERSION, type FormState } from "@/lib/forms";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -33,6 +34,7 @@ const partialChildSchema = z.object({
   goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
   extra_info: childSchema.shape.extra_info,
   learning_needs: childSchema.shape.learning_needs,
+  program: childSchema.shape.program,
 });
 
 type Found = { account_id: string; full_name: string; is_parent: boolean; is_student: boolean };
@@ -121,8 +123,11 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
     };
   }
 
-  if (child.data.learning_needs && typeof added.data === "string") {
-    await supabase.from("students").update({ learning_needs: child.data.learning_needs }).eq("id", added.data);
+  if (typeof added.data === "string") {
+    if (child.data.learning_needs) {
+      await supabase.from("students").update({ learning_needs: child.data.learning_needs }).eq("id", added.data);
+    }
+    await saveStudyDetails(supabase, added.data, child.data.program, subjects);
   }
 
   revalidatePath("/admin");
@@ -142,6 +147,7 @@ const learnerSchema = z.object({
   goals: z.string().trim().max(4000, "Please keep the end goal under 4,000 characters.").optional(),
   extra_info: childSchema.shape.extra_info,
   learning_needs: childSchema.shape.learning_needs,
+  program: childSchema.shape.program,
 });
 
 async function setUpLearner(
@@ -175,7 +181,12 @@ async function setUpLearner(
   const supabase = await createClient();
   const student = await supabase
     .from("students")
-    .update({ goals: v.goals || null, extra_info: v.extra_info || null, learning_needs: v.learning_needs || null })
+    .update({
+      goals: v.goals || null,
+      extra_info: v.extra_info || null,
+      learning_needs: v.learning_needs || null,
+      program: v.program || null,
+    })
     .eq("account_id", made.userId)
     .select("id")
     .maybeSingle();
@@ -186,7 +197,15 @@ async function setUpLearner(
       !(
         await supabase
           .from("student_subjects")
-          .insert(subjects.map((s) => ({ student_id: student.data!.id, subject: s.subject, working_level: s.level })))
+          .insert(
+            subjects.map((s) => ({
+              student_id: student.data!.id,
+              subject: s.subject,
+              working_level: s.level,
+              course_code: s.course_code || null,
+              course_url: s.course_url || null,
+            })),
+          )
       ).error);
 
   revalidatePath("/admin");
