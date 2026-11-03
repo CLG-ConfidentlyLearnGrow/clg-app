@@ -16,6 +16,7 @@ import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
 import { AddOnsSection } from "./add-ons-section";
+import { LeavingSection } from "./leaving-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -31,7 +32,7 @@ import {
   UnlockForm,
   WorkStateForm,
 } from "./forms";
-import { EmergencyCancelForm, EmergencyRequestForm, LevelBadge, SetLevelForm } from "./level-forms";
+import { EmergencyApproveForm, EmergencyCancelForm, EmergencyRequestForm, LevelBadge, SetLevelForm } from "./level-forms";
 import {
   FrameworkForm,
   ImportSkillsForm,
@@ -332,6 +333,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {emergency && savedLevel === "owner" && (
           <Card title={emergencyRunning ? "Emergency owner access is running" : "Emergency owner access requested"}>
             <EmergencyStatus emergency={emergency} running={emergencyRunning} />
+            {!emergencyRunning && <EmergencyApproveForm id={emergency.id} />}
             <EmergencyCancelForm id={emergency.id} label={emergencyRunning ? "End it now" : "Cancel the request"} />
           </Card>
         )}
@@ -875,6 +877,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           </>
         )}
 
+        {section === "leaving" && <LeavingSection />}
+
         {section === "records" && (
           <>
             <Card
@@ -1023,7 +1027,7 @@ function EmergencyStatus({
       <p>
         {running
           ? `Owner access is on until ${when(emergency.ends_at)} (about ${hoursLeft} hr left). Then it ends by itself.`
-          : `Owner access starts ${when(emergency.starts_at)} (in about ${hoursLeft} hr) unless the owner cancels. It then lasts 7 days.`}
+          : `Owner access starts ${when(emergency.starts_at)} (in about ${hoursLeft} hr) unless the owner cancels it or approves it sooner. It then lasts 7 days.`}
       </p>
       <p className="text-xs text-zinc-500">Adelaide time. Everything done with owner access is recorded in the activity log.</p>
     </div>

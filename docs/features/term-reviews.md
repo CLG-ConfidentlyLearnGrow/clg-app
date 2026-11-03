@@ -35,3 +35,14 @@ The brief calls the term review "the moment parents decide to stay or leave". CL
 - No free-text fields invite health or diagnosis details; the form asks about learning only.
 - The progress module reads scheduling's school terms and sessions but never writes them.
 - Migration `20261029500200_progress_term_reviews.sql`; tests in `supabase/tests/progress_term_reviews.test.sql`.
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- Term reviews are now an opt-in paid add-on (`term_reviews`), starting
+  "off" until Carla sets a price. Only students with the add-on get a draft.
+- Reviews follow each student's own study dates.
+- The tutor writes the review. The form and the notice say not to put any
+  student information into AI tools.
+- Monthly summaries are removed (no new ones are made).

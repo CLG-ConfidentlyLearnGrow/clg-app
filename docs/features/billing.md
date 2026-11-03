@@ -75,3 +75,14 @@ From the pilot, the app can report: sessions lost to payment pauses (aim close t
 - **Tax invoices.** GST shown per line where it applies; invoices go through Xero, which adds CLG's ABN and "Tax invoice". Records kept at least 5 years (ATO); invoices stay when a family's learning records are deleted (the family name and line details are copied onto the invoice).
 - **Consumer law.** No card surcharges (banned from 1 October 2026; discounts for bank debit are allowed). Families accept the terms in the app with the version and date recorded. Credits-not-refunds sits alongside the consumer guarantees: a refund is still owed where the law requires one. The family terms need a lawyer's check.
 - **UK and EU later.** VAT, UK GDPR and strong customer authentication for cards (Stripe handles SCA).
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- Drafting prices: $90 per hour (school) and $110 per hour (tertiary),
+  GST-free, invoiced separately. Session prices stay $95 and $115.
+- Admin hours are due by the day after the pay week ends. Late hours can
+  still be logged and are flagged for the approving admin.
+- Payment plans (per year, term, month or week) are for ongoing tutoring
+  only.

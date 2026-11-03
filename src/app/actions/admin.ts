@@ -402,7 +402,7 @@ const requestSchema = z.object({
 });
 
 // An Operations admin asks for emergency owner access. The owner is emailed
-// straight away with the reason, and can cancel within 48 hours.
+// straight away with the reason, and can cancel or approve within 24 hours.
 export async function requestEmergencyAccess(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireAdmin();
   const parsed = requestSchema.safeParse(Object.fromEntries(formData));
@@ -416,7 +416,7 @@ export async function requestEmergencyAccess(_prev: FormState, formData: FormDat
   revalidatePath("/admin");
 
   const { data: row } = await supabase.from("emergency_owner_access").select("starts_at").eq("id", id).maybeSingle();
-  const startsAt = row?.starts_at ? adelaideTime(row.starts_at) : "in 48 hours";
+  const startsAt = row?.starts_at ? adelaideTime(row.starts_at) : "in 24 hours";
   const { data: owners } = await supabase.from("admin_profiles").select("account_id").eq("level", "owner");
   const ownerContacts = await Promise.all((owners ?? []).map((o) => nameAndEmail(o.account_id)));
   const emails = ownerContacts
@@ -426,7 +426,7 @@ export async function requestEmergencyAccess(_prev: FormState, formData: FormDat
       email: o.email as string,
       first_name: o.name.split(" ")[0] || null,
       subject: `${viewer.fullName || "An admin"} has asked for emergency owner access`,
-      body: `${viewer.fullName || "An Operations admin"} has asked for owner access to the CLG app because you may be unreachable. Their reason: "${parsed.data.reason}". If you do nothing, they get owner powers from ${startsAt} (Adelaide time) for 7 days. If you don't want this, open the app and press Cancel under Admin > Staff and accounts.`,
+      body: `${viewer.fullName || "An Operations admin"} has asked for owner access to the CLG app because you may be unreachable. Their reason: "${parsed.data.reason}". If you do nothing, they get owner powers from ${startsAt} (Adelaide time) for 7 days. Open the app under Admin > Staff and accounts to cancel it, or to approve it so it starts now.`,
       link: "/admin?section=staff",
       button: "Review the request",
       footer: "You get this email because you are the owner of the CLG app.",
@@ -442,6 +442,22 @@ export async function requestEmergencyAccess(_prev: FormState, formData: FormDat
 }
 
 const cancelRequestSchema = z.object({ id: z.uuid() });
+
+// The owner approves a waiting request, so owner access starts now
+// instead of after 24 hours. It still ends by itself after 7 days.
+export async function approveEmergencyAccess(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(["owner"]);
+  const parsed = cancelRequestSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Something went wrong. Please refresh the page." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("approve_emergency_owner_access", { p_id: parsed.data.id });
+  if (error) {
+    const plain = ["42501", "22023"].includes(error.code ?? "");
+    return { error: plain ? `${error.message}.` : "Couldn't approve it. Please try again." };
+  }
+  revalidatePath("/admin");
+  return { message: "Approved. Owner access has started and ends by itself in 7 days." };
+}
 
 // The owner cancels emergency access (or the person who asked withdraws it).
 // The person who asked is emailed when someone else cancels it.

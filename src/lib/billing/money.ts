@@ -19,8 +19,12 @@ export const PLAN_LABELS = {
   weekly: "Weekly",
   monthly: "Monthly",
   term: "Per term",
-  upfront: "Upfront",
+  upfront: "Per year (upfront)",
 } as const;
+
+// Payment plans are for ongoing tutoring only. One-off sessions, drafting and
+// other single services are invoiced on their own.
+export const PLAN_SCOPE_NOTE = "Payment plans (per year, term, month or week) are for ongoing tutoring only. One-off sessions and other single services are invoiced separately.";
 export type BillingPlan = keyof typeof PLAN_LABELS;
 
 export const METHOD_LABELS = {

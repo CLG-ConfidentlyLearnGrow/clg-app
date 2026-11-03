@@ -4,6 +4,9 @@
 
 -- The migration is safe to run twice.
 \ir ../migrations/20261029500200_progress_term_reviews.sql
+-- Re-running it resets the review rules, so apply the 2 Nov 2026 change
+-- (paid opt-in, no monthly summaries) again.
+\ir ../migrations/20261103000800_progress_term_review_add_on.sql
 
 select tests.claims(null);
 select id as cara from public.students where full_name = 'Cara One' \gset
@@ -19,8 +22,14 @@ insert into public.school_terms (state, year, term, starts_on, ends_on)
 -- ===========================================================================
 -- Reviews are made three weeks before the term ends
 -- ===========================================================================
+-- Only for students whose family opted in (the paid add-on).
+select tests.eq(private.queue_term_reviews(), 0, 'no reviews while the add-on is off');
+update public.add_ons set mode = 'paid', price_cents = 2500 where code = 'term_reviews';
+select tests.eq(private.queue_term_reviews(), 0, 'no reviews for students without the add-on');
+insert into public.add_on_members (add_on, student_id, note) values ('term_reviews', :'cara', 'Family opted in');
 select private.queue_term_reviews();
 select private.queue_term_reviews();
+select tests.eq((select count(*) from public.progress_notices where kind = 'review_due' and body like '%AI tools%'), 1, 'tutor reminded not to use AI tools');
 select tests.eq((select count(*) from public.term_reviews where student_id = :'cara'
   and tutor_id = '00000000-0000-0000-0000-000000000011' and status = 'draft'), 1, 'one review per student and tutor');
 select id as review from public.term_reviews where student_id = :'cara' \gset
@@ -117,16 +126,13 @@ reset role;
 -- Monthly summary
 -- ===========================================================================
 select tests.claims(null);
-select private.queue_monthly_summaries(current_date);
-select private.queue_monthly_summaries(current_date);
-select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary' and student_id = :'cara'
-  and account_id = '00000000-0000-0000-0000-000000000001' and for_date = date_trunc('month', current_date)::date), 1, 'parent gets one summary');
-select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary' and student_id = :'cara'
-  and body like '%Skills moved up a step:%'), 1, 'summary lists skill movement');
-select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary'
-  and account_id = '00000000-0000-0000-0000-000000000002' and student_id = :'cara'), 0, 'other parent gets none');
+-- No longer sent (2 Nov 2026).
+select tests.eq(private.queue_monthly_summaries(current_date), 0, 'monthly summaries are no longer made');
+select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary'), 0, 'no monthly summary sent');
 
--- Put the real terms back.
+-- Put the real terms back, and the add-on as it was.
+delete from public.add_on_members where add_on = 'term_reviews';
+update public.add_ons set mode = 'off', price_cents = null where code = 'term_reviews';
 delete from public.school_terms where state = 'SA';
 insert into public.school_terms select * from saved_terms;
 

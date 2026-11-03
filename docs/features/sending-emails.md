@@ -102,3 +102,12 @@ progress updates only showed inside the app, and Supabase's sign-in emails
 - **UK/EU later:** the same design fits UK GDPR and PECR (service
   messages, minimal data, a named processor with an overseas transfer
   basis).
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+Carla chose app notices only. Session, booking and billing notices are no
+longer emailed or texted, and the email and text settings are gone.
+Sign-in and password links, security alerts to the owner, and emergency
+access emails are still sent.
