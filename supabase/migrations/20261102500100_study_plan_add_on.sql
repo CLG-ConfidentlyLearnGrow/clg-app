@@ -42,7 +42,7 @@ create table if not exists public.add_ons (
 
 insert into public.add_ons (code, name, description, mode, price_period, gst_applies) values
   ('study_plans', 'Study plans',
-   'Assessments and goals on the roadmap, study steps planned for each assessment, and steps the family adds. Free while it is being tested.',
+   'Assessments and goals on the roadmap, with study steps planned for each assessment. Free while it is being tested.',
    'free', 'month', false)
 on conflict (code) do nothing;
 
