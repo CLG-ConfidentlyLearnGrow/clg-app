@@ -12,6 +12,7 @@ import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
 import { ADMIN_SECTIONS, sectionFrom } from "./sections";
 import { FamilySetupForm } from "./family-setup-form";
+import { RemoveRoleForm } from "./remove-role-form";
 import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
@@ -982,6 +983,17 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 />
               )}
             </Card>
+
+            {isOwner && (
+              <Card
+                collapsible
+                defaultOpen={false}
+                title="Remove a role or delete an account"
+                description="For when someone's role changes (for example a tutor who becomes an admin only), or to clear test accounts."
+              >
+                <RemoveRoleForm />
+              </Card>
+            )}
 
             {isOwner && (
               <Card
