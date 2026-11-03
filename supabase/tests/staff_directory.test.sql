@@ -112,6 +112,64 @@ select public.set_staff_job_title('00000000-0000-0000-0000-0000000007d1', '   ')
 reset role;
 select tests.eq((select count(*) from public.staff_job_titles where account_id = '00000000-0000-0000-0000-0000000007d1'), 0, 'blank title removes it');
 
+-- ---------------------------------------------------------------------------
+-- Adding and removing roles from the directory
+-- ---------------------------------------------------------------------------
+-- (Test accounts sign up as parents, so take that role away first.)
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select public.admin_remove_role('00000000-0000-0000-0000-0000000007d1', 'parent', 'Dir Desk');
+reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
+set role authenticated;
+select public.admin_add_role('00000000-0000-0000-0000-0000000007d2', 'tutor');
+select public.admin_add_role('00000000-0000-0000-0000-0000000007d1', 'parent');
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-0000000007d2', 'tutor')$$, 'adds a role they already have');
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-000000000011', 'admin', 'support')$$, 'operations adds an admin');
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-0000000007d1', 'student')$$, 'student role added here');
+reset role;
+select tests.eq((select count(*) from public.tutor_profiles where account_id = '00000000-0000-0000-0000-0000000007d2' and active), 1, 'operations adds a tutor role');
+select tests.eq((select count(*) from public.tutor_work_settings where tutor_id = '00000000-0000-0000-0000-0000000007d2'), 1, 'new tutor gets work settings');
+select tests.eq((select count(*) from public.parent_profiles where account_id = '00000000-0000-0000-0000-0000000007d1'), 1, 'operations adds a parent role');
+select tests.eq((select count(*) from public.audit_log where action = 'add_role' and record_id = '00000000-0000-0000-0000-0000000007d2'), 1, 'added role logged');
+
+-- Support, finance, tutors and admins without two-step login can't add roles.
+select tests.claims('00000000-0000-0000-0000-0000000007d1', 'aal2');
+set role authenticated;
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-000000000001', 'tutor')$$, 'support adds a role');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
+set role authenticated;
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-000000000011', 'parent')$$, 'tutor adds a role');
+reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal1');
+set role authenticated;
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-000000000001', 'tutor')$$, 'operations without two-step login adds a role');
+reset role;
+
+-- The directory shows every role and who has never signed in.
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select tests.eq((select count(*) from public.staff_directory() where account_id = '00000000-0000-0000-0000-0000000007d1' and is_parent and is_admin and last_sign_in_at is null), 1, 'directory shows parent role and no sign-in yet');
+
+-- Owner: adds an admin at a level, removes it, and brings a finished tutor back.
+select public.admin_add_role('00000000-0000-0000-0000-000000000011', 'admin', 'support');
+select tests.fails($$select public.admin_add_role('00000000-0000-0000-0000-000000000001', 'admin', 'owner')$$, 'owner makes a second owner');
+reset role;
+select tests.eq((select count(*) from public.admin_profiles where account_id = '00000000-0000-0000-0000-000000000011' and level = 'support'), 1, 'owner adds an admin at a level');
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select public.admin_remove_role('00000000-0000-0000-0000-000000000011', 'admin', (select full_name from public.accounts where id = '00000000-0000-0000-0000-000000000011'));
+select public.admin_remove_role('00000000-0000-0000-0000-0000000007d2', 'tutor', 'Dir Books');
+reset role;
+select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-000000000011' and role = 'admin'), 0, 'owner removes the admin role');
+select tests.eq((select count(*) from public.tutor_profiles where account_id = '00000000-0000-0000-0000-0000000007d2' and not active and ended_on is not null), 1, 'removed tutor is finished');
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select public.admin_add_role('00000000-0000-0000-0000-0000000007d2', 'tutor');
+reset role;
+select tests.eq((select count(*) from public.tutor_profiles where account_id = '00000000-0000-0000-0000-0000000007d2' and active and ended_on is null), 1, 'finished tutor made current again');
+
 -- Tidy up so later tests see the same staff as before.
 delete from public.account_roles where account_id in ('00000000-0000-0000-0000-0000000007d1', '00000000-0000-0000-0000-0000000007d2');
 delete from public.security_alerts where account_id in ('00000000-0000-0000-0000-0000000007d1', '00000000-0000-0000-0000-0000000007d2');

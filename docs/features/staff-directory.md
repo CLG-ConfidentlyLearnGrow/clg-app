@@ -111,3 +111,37 @@ which checks the level and that the person is staff.
 **Not built (could be added later):** letting tutors see the directory
 (names and job titles only), phone numbers, start dates, or a link to Xero
 employee records.
+
+## Part 2: roles and links (Carla, 2026-11-03)
+
+Carla asked to resend links and to add and remove each employee's roles
+from the directory. Migration `20261103400100_staff_directory_roles.sql`.
+
+- **Manage** on each person (owner and operations) opens: job title, a
+  login link, and their roles.
+- **Login link.** Never signed in: emails a new link to choose a password.
+  Signed in before: emails a password reset link (for a locked-out staff
+  member). If the email can't be sent, the admin gets the link to pass on.
+- **Invited, not joined yet.** Invitations not used yet show as their own
+  cards, with **Send a new invite** (the old link stops working, as with
+  "Add staff") and **Cancel invite**. A Status filter shows only these, and
+  another shows staff who have **never signed in**.
+- **Adding roles** (`admin_add_role`): tutor or parent by the owner or
+  operations; admin (at Operations, Support or Finance) by the owner only.
+  A tutor who had finished becomes current again. A new tutor still needs
+  confirmed checks before matching; a child a new parent adds still needs
+  an admin to confirm the link (child safety, unchanged). A student role
+  needs a student record, so it comes from "Become a learner".
+- **Removing roles** reuses `admin_remove_role` (owner only, name typed to
+  confirm, records kept under the keeping rules; see
+  remove-roles-delete-accounts.md). The owner's own admin role can't be
+  removed. The owner also changes an admin's level here.
+- Every add and remove goes in the activity log, and the owner's security
+  alert emails fire as for any role change.
+
+**Evidence.** Same as above: the OAIC's guide to securing personal
+information and the ACSC Essential Eight both call for granting and
+removing access promptly as roles change, and reviewing who has which
+access. Seeing every role next to each person makes that review easy.
+
+**Privacy.** The only new item shown is the last sign-in date, to admins.

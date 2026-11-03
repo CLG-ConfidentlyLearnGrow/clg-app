@@ -96,6 +96,7 @@ export async function cancelInvitation(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("invitations").delete().eq("id", parsed.data.id).is("accepted_at", null);
   revalidatePath("/admin");
+  revalidatePath("/admin/staff");
 }
 
 export async function verifyParentLink(formData: FormData) {
