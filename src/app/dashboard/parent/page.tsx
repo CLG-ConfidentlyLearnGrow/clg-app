@@ -10,6 +10,26 @@ import { EditChildForm } from "../edit-child-form";
 import { OwnLoginForm } from "../own-login-form";
 import { NewUpdates, TutorList, loadStudentsAndTutors, missingDetails } from "../shared";
 
+type SubjectRow = {
+  student_id: string;
+  subject: string;
+  working_level: string | null;
+  course_code?: string | null;
+  course_url?: string | null;
+};
+
+// Falls back to the basic fields if the university/TAFE database update
+// hasn't been run yet, so children and their subjects still show.
+async function loadSubjects(supabase: Awaited<ReturnType<typeof createClient>>): Promise<SubjectRow[]> {
+  const full = await supabase
+    .from("student_subjects")
+    .select("student_id, subject, working_level, course_code, course_url")
+    .order("added_at");
+  if (!full.error) return (full.data ?? []) as SubjectRow[];
+  const core = await supabase.from("student_subjects").select("student_id, subject, working_level").order("added_at");
+  return (core.data ?? []) as SubjectRow[];
+}
+
 const SECTIONS = [
   { id: "children", label: "Your children" },
   { id: "add", label: "Add a child" },
@@ -26,17 +46,17 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
   const { students, assignments } = await loadStudentsAndTutors();
   const [links, subjectRows, logins] = await Promise.all([
     supabase.from("parent_student_links").select("student_id, verified_at"),
-    supabase.from("student_subjects").select("student_id, subject, working_level, course_code, course_url").order("added_at"),
+    loadSubjects(supabase),
     supabase.from("students").select("id, account_id"),
   ]);
   const subjectsOf = (id: string) =>
-    (subjectRows.data ?? [])
+    subjectRows
       .filter((r) => r.student_id === id)
       .map((r) => ({
         subject: r.subject,
         level: r.working_level as string | null,
-        course_code: r.course_code as string | null,
-        course_url: r.course_url as string | null,
+        course_code: r.course_code ?? null,
+        course_url: r.course_url ?? null,
       }));
   // Children 16 or over without their own login can be given one.
   const hasLogin = new Set((logins.data ?? []).filter((r) => r.account_id).map((r) => r.id));

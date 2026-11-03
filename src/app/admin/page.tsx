@@ -15,6 +15,7 @@ import { FamilySetupForm } from "./family-setup-form";
 import { RemoveRoleForm } from "./remove-role-form";
 import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
+import { DuplicateList, LinkParentForm, ParentLinkList, type DuplicateRow, type ParentLinkRow } from "./parent-link-forms";
 import { ProgressSection } from "./progress-section";
 import { AddOnsSection } from "./add-ons-section";
 import { LeavingSection } from "./leaving-section";
@@ -251,6 +252,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             .order("created_at", { ascending: false })
         ).data ?? []) as { id: string; email: string; role: string; expires_at: string }[])
       : [];
+  // Parents of each student, and possible double-ups (Families section only).
+  const [parentLinksRes, duplicatesRes] =
+    section === "families"
+      ? await Promise.all([supabase.rpc("admin_student_parents"), supabase.rpc("admin_possible_duplicate_children")])
+      : [{ data: [] }, { data: [] }];
+  const parentLinks = (parentLinksRes.data ?? []) as ParentLinkRow[];
+  const duplicates = (duplicatesRes.data ?? []) as DuplicateRow[];
   const dueRows = (due.data ?? []) as Due[];
   const holdRows = (holds.data ?? []) as unknown as Hold[];
   const ruleRows = (rules.data ?? []) as Rule[];
@@ -308,7 +316,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           ...s,
           count:
             s.id === "families"
-              ? pendingLinks.length
+              ? pendingLinks.length + duplicates.length
               : s.id === "tutors"
                 ? pendingCheckRows.length
                 : s.id === "curriculum" && drafts.length
@@ -356,6 +364,32 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             </Card>
             <Card
               collapsible
+              defaultOpen={duplicates.length > 0}
+              title={`Possible double-ups (${duplicates.length})`}
+              description="Students with the same name and date of birth, usually because a second parent added a child CLG already has. Their parent's link waits here until you decide."
+            >
+              <DuplicateList rows={duplicates} />
+            </Card>
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Link another parent or guardian"
+              description="For a student with more than one parent or guardian. Each parent sees the same profile, instead of adding the child again."
+            >
+              <LinkParentForm
+                students={studentRows.map((s) => ({ id: s.id, name: s.full_name, born: s.date_of_birth }))}
+              />
+            </Card>
+            <Card
+              collapsible
+              defaultOpen={false}
+              title="Parents of each student"
+              description="Who can see each student. Remove a link made by mistake here."
+            >
+              <ParentLinkList rows={parentLinks} />
+            </Card>
+            <Card
+              collapsible
               defaultOpen={false}
               title="Give a student their own login"
               description="For a student aged 16 or over who is on a parent's account. They keep their details, history and tutor, and their parent can still see everything."
@@ -395,7 +429,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               title="Parent links to confirm"
               description={
                 <>
-                  Confirm each parent and child before a tutor can be assigned.
+                  A parent&apos;s own child is confirmed straight away. Links only wait here when CLG added a
+                  parent by hand without confirming, or a double-up is being checked above.
                 </>
               }
             >

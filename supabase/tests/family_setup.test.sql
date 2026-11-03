@@ -79,7 +79,7 @@ select tests.fails($$select private.add_child_for('00000000-0000-0000-0000-00000
 -- Parents adding their own child still works, and stays unchecked.
 select public.add_my_child('Fay One', (current_date - interval '10 years')::date, 'SA', 'Year 5', 'Hill PS', '[{"subject": "English"}]') as fay \gset
 reset role;
-select tests.eq((select count(*) from public.parent_student_links where student_id = :'fay' and verified_at is null), 1, 'parent-made link waits for an admin');
+select tests.eq((select count(*) from public.parent_student_links where student_id = :'fay' and verified_at is not null and verified_by is null), 1, 'parent-made link confirmed straight away');
 
 select tests.claims(null);
 set role anon;
