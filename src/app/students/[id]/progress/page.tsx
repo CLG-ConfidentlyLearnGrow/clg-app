@@ -16,6 +16,17 @@ import { TermReviewCard } from "./term-review";
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms";
 import { StudentMaterialsCard, type StudentMaterial } from "./materials";
 
+type StudentRow = {
+  id: string;
+  full_name: string;
+  year_level: string | null;
+  school: string | null;
+  program: string | null;
+  goals: string | null;
+  extra_info: string | null;
+  learning_needs: string | null;
+  account_id: string | null;
+};
 type Skill = {
   id: string;
   subject: string;
@@ -76,12 +87,26 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
   const { subject, view, session, year } = await searchParams;
   const supabase = await createClient();
 
-  const student = await supabase
+  const full = await supabase
     .from("students")
     .select("id, full_name, year_level, school, program, goals, extra_info, learning_needs, account_id")
     .eq("id", id)
     .maybeSingle();
-  if (!student.data) notFound();
+  // If a newer database update (course name, learning needs) hasn't been run
+  // yet, those columns are missing and the query fails. Open the page with
+  // the core details rather than showing "page not found".
+  let studentRow: StudentRow | null = full.data as StudentRow | null;
+  if (full.error) {
+    console.error("Progress page: student details", full.error.message);
+    const core = await supabase
+      .from("students")
+      .select("id, full_name, year_level, school, goals, extra_info, account_id")
+      .eq("id", id)
+      .maybeSingle();
+    studentRow = core.data ? { ...core.data, program: null, learning_needs: null } : null;
+  }
+  if (!studentRow) notFound();
+  const student = { data: studentRow };
 
   // Who is the viewer to this student? Someone can be a parent and also
   // staff (Carla is both), so the family view is chosen from the link they
