@@ -97,7 +97,7 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
         intro="CLG's own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and don't share, upload or keep copies."
       >
         <p className="text-sm">
-          <TextLink href="/dashboard/tutor">Back to your dashboard</TextLink>
+          <TextLink href="/dashboard/tutor">Back to Home</TextLink>
         </p>
 
         {byStudent.size > 0 && (
