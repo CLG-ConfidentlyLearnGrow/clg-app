@@ -5,6 +5,7 @@ export const ADMIN_SECTIONS = [
   { id: "progress", label: "Progress" },
   { id: "curriculum", label: "Curriculum" },
   { id: "staff", label: "Staff and accounts" },
+  { id: "leaving", label: "Leaving" },
   { id: "records", label: "Privacy and records" },
 ] as const;
 

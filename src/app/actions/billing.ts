@@ -48,7 +48,8 @@ export async function saveFamilyBilling(_prev: FormState, formData: FormData): P
   if (plan === "weekly" && existing.data?.method === "bank_debit") {
     return { error: "Weekly families pay by card. Ask the family to save a card first, or choose monthly or per term." };
   }
-  const values = { plan, bill_payer_id: bill_payer_id || null };
+  const viewer = await requireViewer();
+  const values = { plan, bill_payer_id: bill_payer_id || null, plan_chosen_at: new Date().toISOString(), plan_chosen_by: viewer.id };
   const result = existing.data
     ? await supabase.from("billing_accounts").update(values).eq("family_id", family_id)
     : await supabase.from("billing_accounts").insert({ family_id, ...values });
@@ -236,6 +237,21 @@ async function myFamilyAccount(familyId: string) {
     .eq("family_id", familyId)
     .maybeSingle();
   return data;
+}
+
+// A parent or adult learner chooses how often the family pays. Allowed
+// until CLG sends the first invoice; the database checks this too.
+export async function chooseBillingPlan(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const parsed = z
+    .object({ family_id: uuid, plan: z.enum(["weekly", "monthly", "term", "upfront"]) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Please choose how often you'd like to pay." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("billing_choose_plan", { p_family: parsed.data.family_id, p_plan: parsed.data.plan });
+  if (error) return plain(error, "Couldn't save your choice. Please try again.");
+  revalidatePath("/billing");
+  return { message: "Thanks, your choice is saved." };
 }
 
 export async function acceptBillingTerms(_prev: FormState, formData: FormData): Promise<FormState> {

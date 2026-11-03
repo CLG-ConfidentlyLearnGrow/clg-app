@@ -25,7 +25,7 @@ export default async function MyPayPage() {
   const supabase = await createClient();
   const today = adelaideToday();
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10);
-  const [pay, lines, settings, logs] = await Promise.all([
+  const [pay, lines, settings, logs, due] = await Promise.all([
     supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("billing_pay_lines")
@@ -40,7 +40,9 @@ export default async function MyPayPage() {
       .eq("account_id", viewer.id)
       .gte("work_date", since)
       .order("work_date", { ascending: false }),
+    supabase.rpc("billing_hours_due_by", { p_day: today }),
   ]);
+  const dueBy = (due.data as string | null) ?? null;
   const logRows = logs.data ?? [];
   const rows = lines.data ?? [];
   const p = pay.data;
@@ -61,7 +63,7 @@ export default async function MyPayPage() {
         )}
       </Card>
       {p?.admin_rate_cents != null && (
-        <Card title="Log admin hours" description="Hours you worked on admin. CLG approves them, then they're paid with your tutoring in the next pay run.">
+        <Card title="Log admin hours" description={`Hours you worked on admin. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they're paid with your tutoring in the next pay run.`}>
           <LogHoursForm today={today} />
           {logRows.length > 0 && (
             <div className="mt-6">

@@ -59,7 +59,9 @@ select tests.eq(((select charge_on from private.billing_dates('monthly', 'bank_d
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-000000000001');
 set role authenticated;
-select tests.eq((select count(*) from public.billing_price_items), 2, 'parent sees active prices only');
+select tests.eq((select count(*) from public.billing_price_items), 4, 'parent sees active prices only (tutoring and drafting, school and tertiary)');
+select tests.eq((select count(*) from public.billing_price_items where code like 'drafting_%' and not gst_applies
+  and amount_cents in (9000, 11000)), 2, 'drafting $90 school, $110 tertiary, GST-free');
 update public.billing_price_items set amount_cents = 1 where code = 'school_tutoring';
 select tests.eq((select count(*) from public.billing_price_items where amount_cents = 1), 0, 'price unchanged');
 select tests.eq((select count(*) from public.billing_settings), 0, 'parent cannot see settings');
@@ -67,12 +69,12 @@ reset role;
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal1');
 set role authenticated;
-select tests.eq((select count(*) from public.billing_price_items), 2, 'admin without two-step login gets parent-level view');
+select tests.eq((select count(*) from public.billing_price_items), 4, 'admin without two-step login gets parent-level view');
 reset role;
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
 set role authenticated;
-select tests.eq((select count(*) from public.billing_price_items), 3, 'admin sees all prices');
+select tests.eq((select count(*) from public.billing_price_items), 5, 'admin sees all prices');
 -- Prices are a billing rule: only the owner changes them.
 update public.billing_price_items set description = 'Updated' where code = 'school_tutoring';
 select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 0, 'operations admin cannot edit a price');

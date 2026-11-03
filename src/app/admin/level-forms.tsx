@@ -1,6 +1,6 @@
 "use client";
 
-import { cancelEmergencyAccess, requestEmergencyAccess, setAdminLevel } from "@/app/actions/admin";
+import { approveEmergencyAccess, cancelEmergencyAccess, requestEmergencyAccess, setAdminLevel } from "@/app/actions/admin";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { initialFormState } from "@/lib/forms";
@@ -55,8 +55,8 @@ export function EmergencyRequestForm() {
   return (
     <ActionForm action={requestEmergencyAccess} submitLabel="Ask for owner access">
       <p className="text-sm text-zinc-600">
-        The owner is emailed straight away with your reason. If they don&apos;t cancel within 48 hr, you get owner
-        access for 7 days, then it ends by itself. Everything you do with it is recorded.
+        The owner is emailed straight away with your reason. Your owner access starts after 24 hr unless they cancel
+        it, or sooner if they approve it. It lasts 7 days, then ends by itself. Everything you do with it is recorded.
       </p>
       <TextArea
         label="Why do you need owner access?"
@@ -75,6 +75,15 @@ export function EmergencyRequestForm() {
 export function EmergencyCancelForm({ id, label }: { id: string; label: string }) {
   return (
     <ActionForm action={cancelEmergencyAccess} submitLabel={label}>
+      <input type="hidden" name="id" value={id} />
+    </ActionForm>
+  );
+}
+
+// The owner approves a waiting request so it starts now.
+export function EmergencyApproveForm({ id }: { id: string }) {
+  return (
+    <ActionForm action={approveEmergencyAccess} submitLabel="Approve now">
       <input type="hidden" name="id" value={id} />
     </ActionForm>
   );

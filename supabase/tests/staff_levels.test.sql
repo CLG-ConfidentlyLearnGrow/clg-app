@@ -4,6 +4,10 @@
 -- operations admin (...b0), parent P1 (...01) and tutor T1 (...11).
 -- Ids used here: support admin ...7c1, finance admin ...7c2.
 
+-- Earlier tests re-ran the admin levels file (48 hr emergency delay), so
+-- apply the 24 hr change on top again.
+\ir ../migrations/20261103000200_emergency_access_24_hours.sql
+
 insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000007c1', 'desk@clg.example', now(), '{"signup_as":"parent","full_name":"Dee Desk"}'),
   ('00000000-0000-0000-0000-0000000007c2', 'books@clg.example', now(), '{"signup_as":"parent","full_name":"Bo Books"}');
@@ -178,14 +182,15 @@ select tests.fails($$select public.request_emergency_owner_access(null)$$, 'no r
 select public.request_emergency_owner_access('Carla is in hospital and a tutor needs to be added today.');
 select tests.fails($$select public.request_emergency_owner_access('Asking a second time while waiting.')$$, 'second request while one is waiting');
 select tests.eq((select count(*) from public.emergency_owner_access), 1, 'operations sees the request');
--- Waiting: still operations for 48 hours.
-select tests.fails($$select public.set_admin_level('00000000-0000-0000-0000-0000000007c1', 'finance')$$, 'owner powers before 48 hours');
+-- Waiting: still operations for 24 hours.
+select tests.fails($$select public.set_admin_level('00000000-0000-0000-0000-0000000007c1', 'finance')$$, 'owner powers before 24 hours');
+select tests.fails(format($$select public.approve_emergency_owner_access(%L)$$, (select id from public.emergency_owner_access where cancelled_at is null)), 'person who asked approves their own request');
 reset role;
 select tests.eq((select count(*) from public.audit_log where action = 'emergency_access_requested'
   and details ->> 'reason' = 'Carla is in hospital and a tutor needs to be added today.'), 1, 'reason kept in the activity log');
 select tests.eq((select count(*) from public.emergency_owner_access
-  where starts_at between now() + interval '47 hours 59 minutes' and now() + interval '48 hours 1 minute'
-    and ends_at = starts_at + interval '7 days'), 1, 'starts in 48 hours, lasts 7 days');
+  where starts_at between now() + interval '23 hours 59 minutes' and now() + interval '24 hours 1 minute'
+    and ends_at = starts_at + interval '7 days'), 1, 'starts in 24 hours, lasts 7 days');
 
 -- Others can't see or cancel it.
 select tests.claims('00000000-0000-0000-0000-0000000007c1', 'aal2');
@@ -206,11 +211,18 @@ select tests.eq((select (public.cancel_emergency_owner_access(:'request_id') = '
 reset role;
 select tests.eq((select count(*) from public.emergency_owner_access where cancelled_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'owner cancelled it');
 
--- Asked again and the 48 hours pass (moved by hand here).
+-- Asked again, and the owner approves it straight away.
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
 set role authenticated;
 select public.request_emergency_owner_access('Carla unreachable overseas, invoices need approving.');
 reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select tests.eq((select (public.approve_emergency_owner_access((select id from public.emergency_owner_access where cancelled_at is null)) = '00000000-0000-0000-0000-0000000000b0')::int), 1, 'owner approves sooner');
+reset role;
+select tests.eq((select count(*) from public.emergency_owner_access where cancelled_at is null
+  and starts_at <= now() and ends_at between now() + interval '6 days 23 hours' and now() + interval '7 days 1 minute'), 1, 'approved: starts now, lasts 7 days');
+select tests.eq((select count(*) from public.audit_log where action = 'emergency_access_approved'), 1, 'approval in the activity log');
 update public.emergency_owner_access set starts_at = now() - interval '1 minute' where cancelled_at is null;
 -- The person who asked is emailed that it has started (once).
 select tests.eq((select private.emails_waiting())::int, 1, 'start email wakes the sender');

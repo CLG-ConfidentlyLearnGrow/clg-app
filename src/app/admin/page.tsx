@@ -16,6 +16,7 @@ import { StudentLoginForm } from "./student-login-form";
 import { NewLinkForm } from "./new-link-form";
 import { ProgressSection } from "./progress-section";
 import { AddOnsSection } from "./add-ons-section";
+import { LeavingSection } from "./leaving-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
@@ -31,7 +32,7 @@ import {
   UnlockForm,
   WorkStateForm,
 } from "./forms";
-import { EmergencyCancelForm, EmergencyRequestForm, LevelBadge, SetLevelForm } from "./level-forms";
+import { EmergencyApproveForm, EmergencyCancelForm, EmergencyRequestForm, LevelBadge, SetLevelForm } from "./level-forms";
 import {
   FrameworkForm,
   ImportSkillsForm,
@@ -123,7 +124,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"),
       supabase
         .from("students")
-        .select("id, account_id, full_name, date_of_birth, state, year_level, goals, extra_info, student_subjects(subject, working_level)")
+        .select("id, account_id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, student_subjects(subject, working_level)")
         .order("full_name"),
       supabase
         .from("tutor_profiles")
@@ -285,8 +286,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     date_of_birth: string | null;
     state: AuState | null;
     year_level: string | null;
+    school: string | null;
     goals: string | null;
     extra_info: string | null;
+    learning_needs: string | null;
     student_subjects: { subject: string; working_level: string | null }[];
   }[];
   const chosen = studentRows.find((s) => s.id === studentId);
@@ -332,6 +335,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {emergency && savedLevel === "owner" && (
           <Card title={emergencyRunning ? "Emergency owner access is running" : "Emergency owner access requested"}>
             <EmergencyStatus emergency={emergency} running={emergencyRunning} />
+            {!emergencyRunning && <EmergencyApproveForm id={emergency.id} />}
             <EmergencyCancelForm id={emergency.id} label={emergencyRunning ? "End it now" : "Cancel the request"} />
           </Card>
         )}
@@ -461,16 +465,25 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 <>
                   <div className="mb-4 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
                     <p>
+                      <strong>School year:</strong> {chosen.year_level ?? "Not given yet"}
+                      {chosen.school ? ` at ${chosen.school}` : ""}
+                    </p>
+                    <p>
                       <strong>Wants help with:</strong>{" "}
                       {chosen.student_subjects.length > 0
                         ? chosen.student_subjects
-                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "level unsure"})`)
+                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "working level not sure"})`)
                             .join(", ")
                         : "No subjects given"}
                     </p>
                     <p>
                       <strong>End goal:</strong> {chosen.goals || "None given"}
                     </p>
+                    {chosen.learning_needs && (
+                      <p>
+                        <strong>Learning needs:</strong> {chosen.learning_needs}
+                      </p>
+                    )}
                     {chosen.extra_info && (
                       <p>
                         <strong>Other information:</strong> {chosen.extra_info}
@@ -875,6 +888,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           </>
         )}
 
+        {section === "leaving" && <LeavingSection />}
+
         {section === "records" && (
           <>
             <Card
@@ -1023,7 +1038,7 @@ function EmergencyStatus({
       <p>
         {running
           ? `Owner access is on until ${when(emergency.ends_at)} (about ${hoursLeft} hr left). Then it ends by itself.`
-          : `Owner access starts ${when(emergency.starts_at)} (in about ${hoursLeft} hr) unless the owner cancels. It then lasts 7 days.`}
+          : `Owner access starts ${when(emergency.starts_at)} (in about ${hoursLeft} hr) unless the owner cancels it or approves it sooner. It then lasts 7 days.`}
       </p>
       <p className="text-xs text-zinc-500">Adelaide time. Everything done with owner access is recorded in the activity log.</p>
     </div>

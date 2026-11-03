@@ -192,9 +192,9 @@ process each term, as the NSSA implementation toolkit recommends.
 For the pilot, CLG staff book every time and families approve what CLG
 offers, rather than searching for themselves. Staff matching keeps the
 learner's needs, working level and tutor fit at the centre (the same
-reasons as above), and keeps parent support light. Families tell CLG
-their preferred days; admins record them under "Session places" as a
-preference, not a guarantee. Tutors say for each available time whether
+reasons as above), and keeps parent support light. Families give
+preferred days and times (a preference, not a guarantee) and study dates
+under "Preferred times"; admins choose where sessions can happen. Tutors say for each available time whether
 they can teach in person, online or both, so offers only include ways of
 teaching the tutor has agreed to.
 
@@ -242,9 +242,28 @@ teaching the tutor has agreed to.
   meaning. Tutors don't see renewal answers.
 - **Session places (APP 3)**: families pick libraries from a list; the app
   never asks for or stores a home address or phone location for matching.
-  For the pilot, admins record a child's places and preferred times;
-  families don't see or set them in the app. Tutors don't see them.
+  For the pilot, admins choose a child's places; families give preferred
+  times only. Tutors don't see either.
 - **Records**: bookings and sessions are deleted with the student under the
   retention rules. Billing keeps its own copy of what it invoices (7 years).
 - **Overdue payments**: when billing marks a family as paused, they can't
   book and tutors can't accept new requests from them.
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- Quiet hours are 9pm to 6am. Notices are in the app only.
+- Each student follows SA government terms, SA private terms (Term 2 a week
+  shorter) or their own dates; each student's last day of Term 4 is
+  confirmed. Families are asked about next term 3 weeks before their study
+  period ends; tutors check availability 4 weeks before.
+- Offers that need both the tutor and the family are open 3 days, with
+  reminders after 2 days. Requests to a tutor still have 48 hours.
+- A tutor's away dates cancel sessions after 2 hours; families and CLG are
+  told politely, the tutor can offer other times, and families can ask for
+  another time or tutor.
+- New: requests for extra or one-off sessions, public holiday weeks with a
+  skip option, blocking, preferred parts of the day, library confirmation
+  and opening hours, and home or school sessions booked by CLG only.
+- The waitlist already lists everyone, longest wait first.

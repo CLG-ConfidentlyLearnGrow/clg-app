@@ -14,7 +14,8 @@ select tests.eq((select count(*) from public.student_subjects where student_id =
 select tests.fails($$select public.add_my_child('No Subject', (current_date - interval '12 years')::date, 'SA', 'Year 7', 'Hill PS')$$, 'child without a subject');
 select tests.fails($$select public.add_my_child('Empty Subject', (current_date - interval '12 years')::date, 'SA', 'Year 7', 'Hill PS', '[]'::jsonb)$$, 'child with empty subject list');
 insert into public.student_subjects (student_id, subject) values (:'cara', 'English');
-select tests.fails(format($$insert into public.student_subjects (student_id, subject) values (%L, 'Maths')$$, :'cara'), 'plain Maths must be General, Essential or Advanced');
+select tests.fails(format($$insert into public.student_subjects (student_id, subject) values (%L, 'Maths')$$, :'cara'), 'plain Maths is refused');
+select tests.fails(format($$insert into public.student_subjects (student_id, subject, working_level) values (%L, 'Mathematics', 'Year 11')$$, :'cara'), 'Mathematics is not a Year 11 subject');
 select tests.fails(format($$insert into public.student_subjects (student_id, subject) values (%L, ' english ')$$, :'cara'), 'same subject twice');
 select tests.fails(format($$update public.student_subjects set subject = 'Science' where student_id = %L$$, :'cara'), 'subjects are added or removed, not changed');
 select tests.fails(format($$update public.student_subjects set working_level = 'Grade 4' where student_id = %L$$, :'cara'), 'unknown working level');
@@ -55,6 +56,11 @@ select tests.eq(private.subject_fits('Humanities and Social Sciences', 'HASS F-6
 select tests.eq(private.subject_fits('History', 'History 7-10')::int, 1, 'History');
 select tests.eq(private.subject_fits('Numeracy', 'Mathematics')::int, 1, 'Numeracy');
 select tests.eq(private.subject_fits('English', 'Mathematics')::int, 0, 'English is not Maths');
+select tests.eq(private.subject_fits('Mathematics', 'Mathematics')::int, 1, 'Mathematics fits AC9 Mathematics');
+select tests.eq(private.subject_fits('Mathematics: General', 'General Mathematics')::int, 1, 'Mathematics: General fits SACE');
+select tests.eq(private.subject_fits('Mathematics: Methods', 'Mathematical Methods')::int, 1, 'Mathematics: Methods fits SACE');
+select tests.eq(private.subject_fits('Mathematics: Specialist', 'Specialist Mathematics')::int, 1, 'Mathematics: Specialist fits SACE');
+select tests.eq(private.subject_fits('Mathematics: Essential', 'General Mathematics')::int, 0, 'Essential is not General');
 select tests.eq(private.level_fits('Year 11', 'Year 11 (Stage 1)')::int, 1, 'Year 11 fits Stage 1');
 select tests.eq(private.level_fits('Year 1', 'Year 11 (Stage 1)')::int, 0, 'Year 1 is not Year 11');
 select tests.eq(private.level_fits('Year 6', 'Year 6')::int, 1, 'same year');

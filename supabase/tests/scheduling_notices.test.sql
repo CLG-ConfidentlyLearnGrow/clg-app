@@ -5,9 +5,11 @@
 select tests.claims(null);
 select id as sam from public.students where full_name = 'Sam Three' \gset
 
--- Quiet hours: nothing between 8pm and 8am Adelaide time.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 21:00 Australia/Adelaide') = timestamptz '2026-11-04 08:00 Australia/Adelaide')::int, 1, '9pm moves to 8am next day');
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 06:30 Australia/Adelaide') = timestamptz '2026-11-04 08:00 Australia/Adelaide')::int, 1, '6:30am moves to 8am');
+-- Quiet hours: nothing between 9pm and 6am Adelaide time.
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 21:00 Australia/Adelaide') = timestamptz '2026-11-04 06:00 Australia/Adelaide')::int, 1, '9pm moves to 6am next day');
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 20:30 Australia/Adelaide') = timestamptz '2026-11-03 20:30 Australia/Adelaide')::int, 1, '8:30pm is no longer quiet');
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 05:30 Australia/Adelaide') = timestamptz '2026-11-04 06:00 Australia/Adelaide')::int, 1, '5:30am moves to 6am');
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 06:30 Australia/Adelaide') = timestamptz '2026-11-04 06:30 Australia/Adelaide')::int, 1, '6:30am is no longer quiet');
 select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 15:00 Australia/Adelaide') = timestamptz '2026-11-04 15:00 Australia/Adelaide')::int, 1, 'daytime unchanged');
 
 -- Notices from the earlier booking tests.
@@ -25,10 +27,10 @@ select tests.fails($$insert into public.notice_settings (account_id) values ('00
 select tests.fails($$update public.notice_settings set first_reminder_hours = 1$$, 'under 2 hours');
 reset role;
 
--- Two sessions in 3 days' time: 4pm, and 7:30am.
+-- Two sessions in 3 days' time: 4pm, and 6am.
 select tests.claims(null);
 select ((current_date + 3) + time '16:00') at time zone 'Australia/Adelaide' as afternoon \gset
-select ((current_date + 3) + time '07:30') at time zone 'Australia/Adelaide' as morning \gset
+select ((current_date + 3) + time '06:00') at time zone 'Australia/Adelaide' as morning \gset
 insert into public.sessions (student_id, tutor_id, subject, level_kind, delivery, starts_at, ends_at) values
   (:'sam', '00000000-0000-0000-0000-000000000013', 'General Maths', 'school', 'online', :'afternoon', :'afternoon'::timestamptz + interval '1 hour'),
   (:'sam', '00000000-0000-0000-0000-000000000013', 'General Maths', 'school', 'online', :'morning', :'morning'::timestamptz + interval '1 hour');
@@ -44,10 +46,10 @@ select tests.eq((select count(*) from public.session_notices where session_id = 
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_pm' and kind = 'reminder_first'
   and account_id = '00000000-0000-0000-0000-000000000013' and deliver_at = :'afternoon'::timestamptz - interval '48 hours'), 1, 'tutor''s first reminder at 48 hr (default)');
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_final'
-  and deliver_at = ((current_date + 2) + time '19:30') at time zone 'Australia/Adelaide'), 2, '7:30am session: final reminder the evening before');
+  and deliver_at = ((current_date + 2) + time '20:30') at time zone 'Australia/Adelaide'), 2, '6am session: final reminder 8:30pm the evening before');
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_first'
   and account_id = '00000000-0000-0000-0000-000000000003'
-  and deliver_at = ((current_date + 2) + time '08:00') at time zone 'Australia/Adelaide'), 1, 'first reminder moved out of quiet hours');
+  and deliver_at = ((current_date + 2) + time '06:00') at time zone 'Australia/Adelaide'), 1, 'first reminder 24 hr before a 6am session is outside quiet hours');
 select private.queue_reminders();
 select tests.eq((select count(*) from public.session_notices where session_id in (:'s_pm', :'s_am')), 8, 'queued only once');
 

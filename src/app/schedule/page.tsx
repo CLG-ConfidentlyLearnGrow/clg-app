@@ -1,8 +1,16 @@
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { leaveWaitlist, markNoticesRead, removeAwayDates, setLibraryActive } from "@/app/actions/scheduling";
+import { leaveWaitlist, markNoticesRead, removeAwayDates } from "@/app/actions/scheduling";
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui";
 import { SectionShell } from "@/components/section-shell";
+import {
+  BlocksSection,
+  LibrariesAdminSection,
+  RequestsSection,
+  StudyDatesToCheck,
+  StudyPeriodBlock,
+} from "./extra-sections";
+import { SuggestLibraryForm } from "./extra-forms";
 import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth";
 import {
   BOOKING_STATUS_NAMES,
@@ -32,7 +40,6 @@ import {
   CancelForm,
   ConfirmTimesForm,
   EndTimeForm,
-  LibraryForm,
   NoticeSettingsForm,
   OutcomeForm,
   PlacesForm,
@@ -123,8 +130,12 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     { id: "bookings", label: "Bookings" },
     ...(isAdmin ? [{ id: "matching", label: "Matching" }] : []),
     ...(isDesk ? [{ id: "book", label: "Book a session" }] : []),
-    ...(isAdmin ? [{ id: "child-places", label: "Session places" }] : []),
+    // Admins set where each student can have sessions; families give
+    // preferred times and study dates only (Carla, 2 Nov 2026).
+    ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []),
     { id: "away", label: "Away dates" },
+    ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []),
+    { id: "blocks", label: "Blocks" },
     { id: "notices", label: "Notices" },
     ...(canBook ? [{ id: "next-term", label: "Next term" }] : []),
     ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []),
@@ -431,7 +442,20 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}
 
-      {section === "libraries" && isAdmin && <LibrariesSection />}
+      {section === "libraries" && isAdmin && <LibrariesAdminSection />}
+
+      {section === "requests" && (canBook || isTutor) && (
+        <RequestsSection viewerId={viewer.id} isAdmin={isDesk} isTutor={isTutor} canAsk={canBook && !isDesk} />
+      )}
+
+      {section === "blocks" && (
+        <BlocksSection
+          viewerId={viewer.id}
+          isAdmin={isAdmin}
+          isTutor={isTutor}
+          bookings={bookings.filter((b) => b.status !== "declined")}
+        />
+      )}
 
       {section === "times" && isAdmin && <TimesSection />}
 
@@ -447,7 +471,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "matching" && isAdmin && <MatchingSection params={params} pipeline={pipeline} />}
 
-      {section === "child-places" && isAdmin && <ChildPlacesSection isAdmin={isAdmin} params={params} />}
+      {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
     </SectionShell>
   );
 }
@@ -737,7 +761,7 @@ async function BookSection({
 async function PlacesSection({ viewerId }: { viewerId: string }) {
   const supabase = await createClient();
   const [librariesRes, placesRes, settingsRes] = await Promise.all([
-    supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
+    supabase.from("libraries").select("id, name, suburb, confirmed_at").eq("active", true).order("name"),
     supabase.from("tutor_places").select("library_id").eq("tutor_id", viewerId),
     supabase.from("tutor_session_settings").select("online, in_person, learning_support").eq("tutor_id", viewerId).maybeSingle(),
   ]);
@@ -752,47 +776,21 @@ async function PlacesSection({ viewerId }: { viewerId: string }) {
       }
     >
       <PlacesForm
-        libraries={librariesRes.data ?? []}
+        libraries={(librariesRes.data ?? []).map((l) => ({
+          id: l.id as string,
+          name: l.confirmed_at ? (l.name as string) : `${l.name} (CLG is checking this library)`,
+          suburb: l.suburb as string | null,
+        }))}
         chosen={(placesRes.data ?? []).map((p) => p.library_id as string)}
         settings={settingsRes.data ?? { online: true, in_person: true, learning_support: false }}
       />
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Admins: libraries families and tutors can choose
-// ---------------------------------------------------------------------------
-async function LibrariesSection() {
-  const supabase = await createClient();
-  const { data } = await supabase.from("libraries").select("id, name, suburb, active").order("name");
-  const libraries = data ?? [];
-  return (
-    <Card title="Libraries" description="Public libraries families and tutors can choose for in-person sessions.">
-      {libraries.length === 0 ? (
-        <Empty>No libraries yet.</Empty>
-      ) : (
-        <ul className="divide-y divide-zinc-100 text-sm">
-          {libraries.map((l) => (
-            <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
-              <span className={l.active ? "" : "text-zinc-400"}>
-                <span className="font-medium">{l.name}</span>
-                {l.suburb && ` · ${l.suburb}`}
-                {!l.active && " (hidden)"}
-              </span>
-              <form action={setLibraryActive}>
-                <input type="hidden" name="id" value={l.id} />
-                <input type="hidden" name="active" value={l.active ? "false" : "true"} />
-                <button type="submit" className="text-xs text-teal-800 underline">
-                  {l.active ? "Hide" : "Show"}
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      )}
-      <SubHeading>Add a library</SubHeading>
-      <LibraryForm />
+      <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+        In-person sessions are only at public libraries CLG has confirmed, and only inside the library&apos;s opening
+        hours. Sessions at a student&apos;s home or school are arranged by CLG only.
+      </p>
+      <SubHeading>Teach at a library that isn&apos;t listed?</SubHeading>
+      <p className="text-sm text-zinc-600">Add it here. CLG checks it and adds its opening hours before families can book it.</p>
+      <SuggestLibraryForm />
     </Card>
   );
 }
@@ -864,7 +862,7 @@ async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; i
         {choices.length > 0 && (
           <>
             <SubHeading>Add away dates</SubHeading>
-            <AwayForm choices={choices} today={localToday()} />
+            <AwayForm choices={choices} today={localToday()} isTutor={isTutor} />
           </>
         )}
       </Card>
@@ -1126,26 +1124,33 @@ const CHANGE_REASON_NAMES: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Admins: where each student can have sessions, and the family's preferred
-// times (families tell CLG; they don't set these themselves for now)
+// Where and when each student can have sessions. Admins set the places
+// (online and libraries); families give preferred times and study dates.
 // ---------------------------------------------------------------------------
 async function ChildPlacesSection({
+  viewerId,
   isAdmin,
   params,
 }: {
+  viewerId: string;
   isAdmin: boolean;
   params: Record<string, string | string[] | undefined>;
 }) {
   const supabase = await createClient();
-  const [studentsRes, librariesRes, placesRes] = await Promise.all([
-    supabase.from("students").select("id, full_name, account_id").order("full_name"),
-    supabase.from("libraries").select("id, name, suburb").eq("active", true).order("name"),
-    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_from, preferred_to, preferred_school_hours"),
+  const [studentsRes, linksRes, librariesRes, placesRes] = await Promise.all([
+    supabase.from("students").select("id, full_name, account_id, year_level").order("full_name"),
+    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
+    supabase.from("libraries").select("id, name, suburb").eq("active", true).not("confirmed_at", "is", null).order("name"),
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours"),
   ]);
+  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
-  // Admins see one student at a time, chosen from the matching list.
+  // Admins see one student at a time (from the matching list); families see their children.
   const all = studentsRes.data ?? [];
-  const students = isAdmin && wanted ? all.filter((s) => s.id === wanted) : [];
+  const students =
+    isAdmin && wanted
+      ? all.filter((s) => s.id === wanted)
+      : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
   const places = new Map(
     (
       (placesRes.data ?? []) as {
@@ -1153,22 +1158,29 @@ async function ChildPlacesSection({
         online: boolean;
         library_ids: string[];
         preferred_days: number[] | null;
-        preferred_from: string | null;
-        preferred_to: string | null;
+        preferred_parts: string[] | null;
         preferred_school_hours: boolean;
       }[]
     ).map((p) => [p.student_id, p]),
   );
   return (
     <Card
-      title="Session places"
-      description="Where this student can have sessions: online, and the libraries that suit. Tutors are matched only where both can go. Preferred days are a preference, not a guarantee."
+      title={isAdmin ? "Session places" : "Preferred times"}
+      description={
+        isAdmin
+          ? "Where and when this student can have sessions, and the study dates that sessions follow. Tutors are matched only where both can go. Preferred times are a preference, not a guarantee."
+          : "Days and times that suit each child, and the study dates sessions follow. CLG chooses where sessions happen."
+      }
     >
       {students.length === 0 ? (
-        <Empty>
-          Choose a student from the <TextLink href="/schedule?section=matching">Matching</TextLink> tab to see their
-          places.
-        </Empty>
+        isAdmin ? (
+          <Empty>
+            Choose a student from the <TextLink href="/schedule?section=matching">Matching</TextLink> tab to see their
+            places.
+          </Empty>
+        ) : (
+          <Empty>No children yet.</Empty>
+        )
       ) : (
         <div className="space-y-6">
           {students.map((s) => (
@@ -1180,10 +1192,11 @@ async function ChildPlacesSection({
                 online={places.get(s.id)?.online ?? true}
                 chosen={places.get(s.id)?.library_ids ?? []}
                 preferredDays={places.get(s.id)?.preferred_days ?? []}
-                preferredFrom={places.get(s.id)?.preferred_from ?? ""}
-                preferredTo={places.get(s.id)?.preferred_to ?? ""}
+                preferredParts={places.get(s.id)?.preferred_parts ?? []}
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
+                showPlaces={isAdmin}
               />
+              <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />
             </div>
           ))}
         </div>
@@ -1228,7 +1241,7 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
     isAdmin
       ? supabase
           .from("school_terms")
-          .select("id, state, year, term, starts_on, ends_on")
+          .select("id, state, calendar, year, term, starts_on, ends_on")
           .gte("ends_on", addDays(localToday(), -120))
           .order("state")
           .order("starts_on")
@@ -1240,6 +1253,7 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
   const terms = (termsRes.data ?? []) as {
     id: string;
     state: string;
+    calendar: string;
     year: number;
     term: number;
     starts_on: string;
@@ -1255,7 +1269,7 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
         title="Next term"
         description={
           isAdmin
-            ? "Families are asked 2 weeks before term ends (4 weeks before the end of terms 1 and 3). Unanswered questions are listed first."
+            ? "Families are asked 3 weeks before each student's study period ends, and tutors 4 weeks before. Unanswered questions are listed first."
             : "Before each term ends, tell us whether you'd like the same again next term, and whether you'd like sessions in the holidays."
         }
       >
@@ -1305,7 +1319,11 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
 
       {isAdmin && (
         <>
-          <Card title="School terms" description="Used for renewal questions and for skipping the holidays.">
+          <StudyDatesToCheck />
+          <Card
+            title="School terms"
+            description="Used for renewal questions and for skipping the holidays. SA private schools have the same dates as government schools, except Term 2 ends a week earlier. Each student's last day of Term 4 is confirmed separately."
+          >
             {terms.length === 0 ? (
               <Empty>No terms yet.</Empty>
             ) : (
@@ -1314,7 +1332,7 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) {
                   <li key={t.id} className="py-2">
                     <span>
                       <span className="font-medium">
-                        {t.state} Term {t.term} {t.year}
+                        {t.state} {t.calendar === "private" ? "private schools " : ""}Term {t.term} {t.year}
                       </span>
                       <span className="text-zinc-600">
                         {" "}
@@ -1359,7 +1377,7 @@ async function TutorAvailabilitySection() {
   return (
     <Card
       title="Tutor availability"
-      description="Each tutor is asked 3 weeks before term ends (5 weeks for terms 1 and 3) to check their availability for next term. Tutors who haven't answered are listed first; they can still be booked."
+      description="Each tutor is asked 4 weeks before term ends to check their availability for next term. Tutors who haven't answered are listed first; they can still be booked."
     >
       {rows.length === 0 ? (
         <Empty>No tutors have been asked yet.</Empty>
@@ -1478,7 +1496,7 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       .limit(50),
     supabase
       .from("notice_settings")
-      .select("first_reminder_hours, by_email, by_text")
+      .select("first_reminder_hours")
       .eq("account_id", viewerId)
       .maybeSingle(),
   ]);
@@ -1516,7 +1534,7 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       </Card>
       <Card collapsible defaultOpen={false} title="Reminder settings">
         <NoticeSettingsForm
-          settings={settingsRes.data ?? { first_reminder_hours: 48, by_email: true, by_text: false }}
+          settings={settingsRes.data ?? { first_reminder_hours: 48 }}
         />
       </Card>
     </>

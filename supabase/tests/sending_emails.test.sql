@@ -35,7 +35,13 @@ select account_id as tutor from public.tutor_profiles limit 1 \gset
 insert into public.billing_tutor_notices (tutor_id, student_id, kind, created_at)
   values (:'tutor', :'sam', 'on_hold', ((current_date - 1) + time '12:00') at time zone 'Australia/Adelaide');
 
-select tests.eq(private.emails_waiting()::int, 1, 'emails waiting');
+-- App notices only (2 Nov 2026): these no longer wake the email sender.
+select tests.eq(private.emails_waiting()::int, 0, 'notification emails no longer wake the sender');
+select tests.eq((select count(*) from public.notice_settings where by_email), 0, 'nobody has email reminders switched on');
+
+-- The modules' claim functions are kept (unused) for if email comes back.
+-- Check they still work, with P3 switched back on for the test.
+update public.notice_settings set by_email = true where account_id = '00000000-0000-0000-0000-000000000003';
 -- No pg_net or Vault here, so waking the sender quietly does nothing.
 select tests.eq(private.wake_email_sender()::int, 0, 'no sender call without pg_net and Vault');
 
@@ -71,3 +77,6 @@ select tests.eq((select count(*) from public.session_notices where body = 'Email
 select tests.eq((select count(*) from public.session_notices where body = 'Started' and email_sent_at is null), 1, 'no reminder once the session started');
 select tests.eq((select count(*) from public.session_notices where body = 'Too old' and email_sent_at is null), 1, 'old notices not emailed');
 select tests.eq(private.emails_waiting()::int, 0, 'nothing left waiting');
+
+-- The app's sender only asks for security emails now.
+select tests.eq(position('session_notice_emails_claim' in pg_get_functiondef('private.emails_waiting()'::regprocedure)), 0, 'sender check ignores session notices');

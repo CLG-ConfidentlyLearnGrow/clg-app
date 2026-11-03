@@ -11,6 +11,7 @@ export type Student = {
   school: string | null;
   goals: string | null;
   extra_info: string | null;
+  learning_needs: string | null;
 };
 export type Assignment = {
   id: string;
@@ -24,7 +25,7 @@ export type Assignment = {
 export async function loadStudentsAndTutors() {
   const supabase = await createClient();
   const [students, assignments] = await Promise.all([
-    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info").order("full_name"),
+    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs").order("full_name"),
     supabase
       .from("tutor_assignments")
       .select("id, subject, student_id, tutor:tutor_profiles(bio, account:accounts(full_name))"),
@@ -51,7 +52,7 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
 type Update = { id: string; student_id: string; title: string; body: string; deliver_at: string };
 
 // What's new since the family last looked: session notes (next step and the
-// tip for home), steps due tomorrow, the monthly summary and term reviews.
+// tip for home), steps due tomorrow, and term reviews (monthly summaries stopped on 2 Nov 2026; old ones still show).
 // Opening the progress page marks them as seen. Shows nothing when there is
 // nothing new.
 export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {

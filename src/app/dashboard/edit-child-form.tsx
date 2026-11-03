@@ -18,6 +18,7 @@ export type ChildDetails = {
   school: string | null;
   goals: string | null;
   extra_info: string | null;
+  learning_needs: string | null;
 };
 
 export function EditChildForm({ child, subjects }: { child: ChildDetails; subjects: ChosenSubject[] }) {
@@ -30,7 +31,7 @@ export function EditChildForm({ child, subjects }: { child: ChildDetails; subjec
       <YearLevelSelect label="Year level at school this year" defaultValue={child.year_level ?? ""} />
       <Field label="School" name="school" required maxLength={200} defaultValue={child.school ?? ""} />
       <SubjectPicker chosen={subjects} />
-      <GoalFields goals={child.goals ?? ""} extraInfo={child.extra_info ?? ""} />
+      <GoalFields goals={child.goals ?? ""} extraInfo={child.extra_info ?? ""} learningNeeds={child.learning_needs ?? ""} />
       {child.date_of_birth && child.state && (
         <p className="text-xs text-zinc-500">To change the date of birth or state, please contact CLG.</p>
       )}

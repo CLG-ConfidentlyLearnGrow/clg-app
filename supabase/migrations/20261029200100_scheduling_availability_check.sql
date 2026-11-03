@@ -197,9 +197,7 @@ as $$
               select 1 from public.tutor_availability av
               where av.tutor_id = b.tutor_id and av.weekday = b.weekday
                 and av.starts_at <= b.start_time
-                and av.ends_at >= b.start_time + make_interval(mins => b.minutes)
-                -- and the slot still allows this way of teaching
-                and (case when b.delivery = 'online' then av.online else av.in_person end)))
+                and av.ends_at >= b.start_time + make_interval(mins => b.minutes)))
   from latest l
   join public.accounts a on a.id = l.tutor_id
   join public.school_terms t on t.id = l.term_id

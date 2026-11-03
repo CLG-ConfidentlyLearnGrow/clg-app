@@ -7,7 +7,7 @@ import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress";
-import { addDays, sessionWhen, shortDate } from "@/lib/scheduling";
+import { addDays, currentTime, sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms";
 
 const SECTIONS = [
@@ -67,7 +67,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0;
   const section = firstTime ? "teaching" : requested;
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes] = await Promise.all([
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes] = await Promise.all([
     supabase
       .from("tutor_assignments")
       .select("id, subject, student:students(id, full_name, year_level)")
@@ -103,7 +103,22 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .is("read_at", null)
       .order("deliver_at", { ascending: false })
       .limit(20),
+    // Sessions put on hold or back on in the last 2 weeks. These used to be
+    // emailed; since 2 Nov 2026 they are shown here instead (app notices only).
+    supabase
+      .from("billing_tutor_notices")
+      .select("id, kind, created_at, student:students(full_name)")
+      .eq("tutor_id", viewer.id)
+      .gte("created_at", new Date(currentTime() - 14 * 24 * 3600 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
+  const pauses = (pausesRes.data ?? []) as unknown as {
+    id: string;
+    kind: "on_hold" | "back_on";
+    created_at: string;
+    student: { full_name: string } | null;
+  }[];
   const newUploads = (uploadsRes.data ?? []) as { id: string; student_id: string; title: string; body: string }[];
   const reviewsToWrite = (reviewsRes.data ?? []) as unknown as {
     id: string;
@@ -141,6 +156,25 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
           {" · "}
           <TextLink href="/materials">CLG materials</TextLink>
         </p>
+        {section === "students" && pauses.length > 0 && (
+          <Card title="Sessions on hold or back on" description="From the last 2 weeks. Your schedule shows what's on.">
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {pauses.map((p) => (
+                <li key={p.id} className="py-2.5 first:pt-0">
+                  <span className="font-medium">{p.student?.full_name ?? "A student"}</span>
+                  <span className="text-zinc-600">
+                    {" · "}
+                    {p.kind === "on_hold"
+                      ? "on hold for now. Please don't run these sessions until CLG says they're back on."
+                      : "back on."}
+                    {" · "}
+                    {shortDate(p.created_at.slice(0, 10))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
         {section === "students" && notesDue.length > 0 && (
           <Card
             title="Session notes to write"
@@ -291,8 +325,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 </Table>
               )}
               <p className="mt-4 text-xs text-zinc-600">
-                Each state needs its own working with children check (South Australia also needs RRHAN-EC Fundamentals
-                and Masterclass). You can also add a first aid certificate or a police check. These are optional. The more states you are cleared for, the
+                Each state needs its own working with children check, and every tutor needs RRHAN-EC Fundamentals and
+                Masterclass, wherever the student is. Upload each certificate with the date it was done or expires. The app
+                reminds you 6 weeks and 2 weeks before a check expires. You can also add a first aid certificate or a police check. These are optional. The more states you are cleared for, the
                 more students you can be matched with when a suitable match comes up. No number of students or hours is
                 guaranteed.
               </p>

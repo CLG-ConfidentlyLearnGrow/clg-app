@@ -33,10 +33,12 @@ export function AddChildForm() {
 export function GoalFields({
   goals = "",
   extraInfo = "",
+  learningNeeds = "",
   optional = false,
 }: {
   goals?: string;
   extraInfo?: string;
+  learningNeeds?: string;
   optional?: boolean;
 }) {
   return (
@@ -57,6 +59,14 @@ export function GoalFields({
         maxLength={2000}
         defaultValue={extraInfo}
         hint="For example, interests, how your child learns best, or times that suit. Please don't include medical details here; CLG will ask privately if needed."
+      />
+      <TextArea
+        label="Learning needs (optional)"
+        name="learning_needs"
+        rows={3}
+        maxLength={2000}
+        defaultValue={learningNeeds}
+        hint="Anything that affects how they learn, in your own words, for example dyslexia, ADHD, anxiety about tests, or adjustments their school makes. Only share what will help. Only CLG staff and their tutor see this."
       />
     </>
   );

@@ -45,10 +45,26 @@ select tests.fails(format($$select public.add_away_dates('00000000-0000-0000-000
 reset role;
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2');
 set role authenticated;
-select tests.eq(public.add_away_dates('00000000-0000-0000-0000-000000000013', null, :'first_day'::date, :'first_day'::date, 'Exam'), 1, 'tutor away cancels one session');
-select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled' and cancelled_by_role = 'tutor' and cancel_reason = 'Away: Exam'), 1, 'cancelled by the tutor');
+-- A tutor's away dates wait 2 hours, so a mistake can be fixed first.
+select tests.eq(public.add_away_dates('00000000-0000-0000-0000-000000000013', null, :'first_day'::date, :'first_day'::date, 'Exam', 'Thursday 4pm that week'), 0, 'nothing cancelled straight away');
+select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled'), 0, 'session still on during the 2 hours');
+-- Oops, wrong day: the tutor removes it inside the 2 hours, and enters it again.
+select public.remove_away_dates(id) from public.away_dates where tutor_id = '00000000-0000-0000-0000-000000000013' and applied_at is null;
+select public.add_away_dates('00000000-0000-0000-0000-000000000013', null, :'first_day'::date, :'first_day'::date, 'Exam', 'Thursday 4pm that week');
 select tests.eq((select count(*) from public.away_dates where student_id = :'sam'), 1, 'tutor sees their student''s away dates');
 reset role;
+select tests.claims(null);
+select private.apply_due_away_dates();
+select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled'), 0, 'not cancelled before the 2 hours are up');
+update public.away_dates set applies_at = now() - interval '1 minute' where tutor_id = '00000000-0000-0000-0000-000000000013' and applied_at is null;
+select tests.eq(private.apply_due_away_dates(), 1, 'tutor away cancels one session after 2 hours');
+select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled' and cancelled_by_role = 'tutor'
+  and cancel_reason like 'Your tutor isn''t available that day%'), 1, 'cancelled by the tutor, politely');
+select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003'
+  and kind = 'tutor_away' and body like '%Thursday 4pm that week%' and body like '%Requests%'), 1, 'family told, with the tutor''s other times');
+select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0'
+  and kind = 'staff_alert' and title like 'Tutor away%'), 1, 'admins told');
+select tests.eq(private.apply_due_away_dates(), 0, 'applied once');
 
 select tests.claims('00000000-0000-0000-0000-000000000014', 'aal2');
 set role authenticated;

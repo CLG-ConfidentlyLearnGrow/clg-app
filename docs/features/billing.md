@@ -55,6 +55,17 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 
 Not built yet (next steps): email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), NDIS and school funding.
 
+## Families choose how often they pay (added 2026-11-02)
+
+Carla found during testing that nothing asked a family how often they pay; only an admin could set it, and new families defaulted to weekly.
+
+- The family's Billing page now asks "How often would you like to pay?" (weekly, monthly, per term, all upfront), with a plain note on each.
+- A parent or adult learner can change it until CLG sends the first invoice; after that they contact CLG. Admins can still set it on Admin > Billing, which shows "Plan not chosen yet" for families who haven't picked.
+- Weekly needs a card, so a family on bank debit can't switch to weekly.
+- Families already invoiced keep their current plan. Migration: `20261103230100_billing_choose_plan.sql`.
+- Invoices are still built for a family who hasn't chosen (using weekly). In the pilot they wait for approval in Xero, so an admin will spot it.
+- Legal: choosing a plan before agreeing to terms supports informed consent under the Australian Consumer Law (clear payment terms before the contract).
+
 ## Why (education research)
 
 - **Regular sessions matter.** One-to-one tuition adds about +5 months' progress on average. It works best as short, regular sessions over a set period, up to about ten weeks (EEF Teaching and Learning Toolkit; Evidence for Learning's Australian edition). A payment gap that stops sessions breaks that regularity. So the design favours automatic payment, invoices well ahead of time, and pauses that lift within minutes of payment.
@@ -75,3 +86,14 @@ From the pilot, the app can report: sessions lost to payment pauses (aim close t
 - **Tax invoices.** GST shown per line where it applies; invoices go through Xero, which adds CLG's ABN and "Tax invoice". Records kept at least 5 years (ATO); invoices stay when a family's learning records are deleted (the family name and line details are copied onto the invoice).
 - **Consumer law.** No card surcharges (banned from 1 October 2026; discounts for bank debit are allowed). Families accept the terms in the app with the version and date recorded. Credits-not-refunds sits alongside the consumer guarantees: a refund is still owed where the law requires one. The family terms need a lawyer's check.
 - **UK and EU later.** VAT, UK GDPR and strong customer authentication for cards (Stripe handles SCA).
+
+## Changes, 2 Nov 2026
+
+See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
+
+- Drafting prices: $90 per hour (school) and $110 per hour (tertiary),
+  GST-free, invoiced separately. Session prices stay $95 and $115.
+- Admin hours are due by the day after the pay week ends. Late hours can
+  still be logged and are flagged for the approving admin.
+- Payment plans (per year, term, month or week) are for ongoing tutoring
+  only.

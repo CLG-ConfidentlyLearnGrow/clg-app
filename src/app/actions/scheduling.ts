@@ -100,7 +100,7 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
   }
   return done(
     isAdmin
-      ? "Offer sent. The tutor and family each have 48 hours to approve. It's confirmed once both say yes."
+      ? "Offer sent. The tutor and family each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes."
       : "Request sent. The tutor has 48 hours to confirm. You'll see it under Bookings.",
   );
 }
@@ -303,6 +303,7 @@ const awaySchema = z
     from_date: z.iso.date("Choose the first day away."),
     to_date: z.iso.date("Choose the last day away."),
     reason: z.string().trim().max(300).optional(),
+    tutor_offer: z.string().trim().max(1000).optional(),
   })
   .refine((v) => v.to_date >= v.from_date, { message: "The last day must be on or after the first day." });
 
@@ -322,8 +323,15 @@ export async function addAwayDates(_prev: FormState, formData: FormData): Promis
     p_from: v.from_date,
     p_to: v.to_date,
     p_reason: v.reason || null,
+    p_tutor_offer: studentId ? null : v.tutor_offer || null,
   });
   if (error) return { error: plainError(error, "Couldn't save the away dates.") };
+  // A tutor's away dates wait 2 hours before sessions are cancelled, so a
+  // mistake can be fixed by removing them.
+  if (!studentId)
+    return done(
+      "Saved. Booked sessions on these dates will be cancelled in 2 hours, and families and CLG will be told. Remove the dates before then if you made a mistake.",
+    );
   const n = Number(data ?? 0);
   return done(n ? `Saved. ${n} booked session${n === 1 ? " was" : "s were"} cancelled.` : "Saved. No booked sessions were affected.");
 }
@@ -491,8 +499,6 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
   const { error } = await supabase.from("notice_settings").upsert({
     account_id: viewer.id,
     first_reminder_hours: parsed.data.first_reminder_hours,
-    by_email: formData.get("by_email") === "on",
-    by_text: formData.get("by_text") === "on",
   });
   if (error) return { error: "Couldn't save your settings." };
   return done("Saved. New reminders will use these settings.");
@@ -538,6 +544,7 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
 const termSchema = z
   .object({
     state: z.enum(["SA", "NSW", "VIC", "QLD", "WA", "TAS", "ACT", "NT"]),
+    calendar: z.enum(["public", "private"]).default("public"),
     term: z.coerce.number().int().min(1).max(4),
     starts_on: z.iso.date("Enter the first day of term."),
     ends_on: z.iso.date("Enter the last day of term."),
@@ -551,8 +558,15 @@ export async function addTerm(_prev: FormState, formData: FormData): Promise<For
   const v = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.from("school_terms").upsert(
-    { state: v.state, year: Number(v.starts_on.slice(0, 4)), term: v.term, starts_on: v.starts_on, ends_on: v.ends_on },
-    { onConflict: "state,year,term" },
+    {
+      state: v.state,
+      calendar: v.calendar,
+      year: Number(v.starts_on.slice(0, 4)),
+      term: v.term,
+      starts_on: v.starts_on,
+      ends_on: v.ends_on,
+    },
+    { onConflict: "state,calendar,year,term" },
   );
   if (error) return { error: "Couldn't save the term. Only CLG admins can change term dates." };
   return done("Term saved.");
@@ -581,23 +595,34 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   if (!student.success) return { error: "Couldn't read which child this is for." };
   const libraries = z.array(z.uuid()).safeParse(formData.getAll("library"));
   if (!libraries.success) return { error: "Couldn't read the libraries you chose." };
-  const online = formData.get("online") === "on";
-  if (!online && libraries.data.length === 0) return { error: "Choose online, at least one library, or both." };
-  const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
-  const time = z.union([z.iso.time(), z.literal("")]);
-  const from = time.safeParse(formData.get("preferred_from") ?? "");
-  const to = time.safeParse(formData.get("preferred_to") ?? "");
-  if (!from.success || !to.success) return { error: "Couldn't read the preferred times." };
-  if (from.data && to.data && to.data <= from.data) return { error: "The preferred finish must be after the start." };
-
+  let online = formData.get("online") === "on";
+  let libraryIds = libraries.data;
   const supabase = await createClient();
+  // Families only give preferred times: keep the places CLG has set.
+  if (formData.get("keep_places") === "1") {
+    const { data: current } = await supabase
+      .from("student_places")
+      .select("online, library_ids")
+      .eq("student_id", student.data)
+      .maybeSingle();
+    online = current?.online ?? true;
+    libraryIds = (current?.library_ids as string[] | undefined) ?? [];
+  } else if (!online && libraryIds.length === 0) {
+    return { error: "Choose online, at least one library, or both." };
+  }
+  const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
+  const PARTS = ["morning", "midday", "afternoon", "evening"];
+  const parts = formData.getAll("preferred_part").map(String).filter((p) => PARTS.includes(p));
+
   const { error } = await supabase.from("student_places").upsert({
     student_id: student.data,
     online,
-    library_ids: libraries.data,
+    library_ids: libraryIds,
     preferred_days: days.length ? days : null,
-    preferred_from: from.data || null,
-    preferred_to: to.data || null,
+    preferred_parts: parts.length ? parts : null,
+    // Exact times were replaced by parts of the day (2 Nov 2026).
+    preferred_from: null,
+    preferred_to: null,
     preferred_school_hours: formData.get("preferred_school_hours") === "on",
   });
   if (error) return { error: "Couldn't save the places." };
