@@ -34,6 +34,8 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 - **Xero Payroll.** Each pay period (weekly by default; must match Xero's pay calendar), admins send each person's lines to Xero Payroll as a draft timesheet, one earnings rate per kind of work. Carla checks and approves in Xero, which handles super (Payday Super from 1 July 2026) and Single Touch Payroll. Part-time staff paid a fixed weekly pattern still need their pattern hours entered in Xero.
 - **Privacy.** Staff see only their own rates and pay (with two-step login); only admins see everyone's. Families never see pay.
 
+Pay rates per role (2026-11-03): on Admin > Billing > Staff pay, each person shows only the rates for roles they hold. Tutors get a school and a tertiary rate, and admins get an admin rate. Each rate has its own Xero earnings rate. A rate for a role someone no longer holds is kept, not wiped. Pay for a role is only worked out once its rate is entered.
+
 ## Split payments between payers (added 2026-10-28)
 
 - **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.
