@@ -59,7 +59,19 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
   const { error } = await supabase
     .from("tutor_availability")
     .insert({ tutor_id: viewer.id, ...parsed.data, in_person, online });
-  if (error) return { error: "Couldn't add that time." };
+  if (error) {
+    // Say what went wrong in plain words, so it can be fixed quickly.
+    if (error.code === "PGRST204" || error.code === "42703") {
+      return {
+        error:
+          "The app's database is missing an update, so times can't be saved yet. The owner needs to run the migration 20261103600100_availability_places.sql in Supabase.",
+      };
+    }
+    if (error.code === "23503") {
+      return { error: "Your tutor profile isn't set up yet. Ask a CLG admin to finish setting up your tutor account." };
+    }
+    return { error: "Couldn't add that time. Please try again, or tell a CLG admin if it keeps happening." };
+  }
 
   revalidatePath("/dashboard", "layout");
   return { message: "Added." };
