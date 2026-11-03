@@ -996,6 +996,15 @@ async function MatchingSection({
     p_offset: (page - 1) * PAGE_SIZE,
   });
   const rows = (data ?? []) as MatchRow[];
+  // Learning needs the family wrote (core student record), shown when present.
+  const needsRes = rows.length
+    ? await supabase.from("students").select("id, learning_needs").in("id", [...new Set(rows.map((r) => r.student_id))])
+    : null;
+  const needsOf = new Map(
+    ((needsRes?.data ?? []) as { id: string; learning_needs: string | null }[])
+      .filter((n) => n.learning_needs?.trim())
+      .map((n) => [n.id, n.learning_needs as string]),
+  );
   const total = rows[0]?.total ?? 0;
   const reasonsRes = await supabase.rpc("offer_change_reasons", { p_days: 90 });
   const reasons = (reasonsRes.data ?? []) as { reason: string; changes: number; recent_notes: string[] | null }[];
@@ -1054,6 +1063,11 @@ async function MatchingSection({
                     {` · School year: ${r.year_level ?? "not set"} · Working level: ${r.working_level ?? "not sure"}`}
                     {r.tutor_name && ` · ${r.tutor_name}`}
                   </span>
+                  {needsOf.has(r.student_id) && (
+                    <span className="mt-1 block whitespace-pre-line text-xs text-zinc-700">
+                      <span className="font-medium">Learning needs:</span> {needsOf.get(r.student_id)}
+                    </span>
+                  )}
                   {!r.has_places && (stage === "needs_tutor" || stage === "waitlist") && (
                     <span className="block text-xs text-amber-900">
                       No session places saved yet ·{" "}
