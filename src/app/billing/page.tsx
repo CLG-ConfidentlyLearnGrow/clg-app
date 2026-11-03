@@ -3,6 +3,7 @@ import { Button, Card, Empty, Page, Table } from "@/components/ui";
 import { requireViewer } from "@/lib/auth";
 import { METHOD_LABELS, PLAN_LABELS, PLAN_SCOPE_NOTE, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money";
 import { createClient } from "@/lib/supabase/server";
+import { ChoosePlanForm } from "./plan-form";
 import { AcceptTermsForm } from "./terms-form";
 
 type Account = {
@@ -48,7 +49,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     .find(Boolean);
   const supabase = await createClient();
 
-  const [accounts, families, invoices, onHold, splits] = await Promise.all([
+  const [accounts, families, invoices, onHold, splits, choices] = await Promise.all([
     supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused"),
     supabase.from("families").select("id, name"),
     supabase
@@ -62,7 +63,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     supabase.rpc("my_support_on_hold"),
     // Split payments: a payer sees their own row; the main payer sees the split.
     supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready"),
+    // Families this person pays for, and whether they've chosen how often.
+    supabase.rpc("billing_my_plan_choices"),
   ]);
+  const choiceRows = (choices.data ?? []) as { family_id: string; family_name: string; plan: BillingPlan; chosen: boolean; can_change: boolean }[];
+  const choiceOf = new Map(choiceRows.map((c) => [c.family_id, c]));
   const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[];
   const accountRows = (accounts.data ?? []) as Account[];
   const nameOf = new Map((families.data ?? []).map((f) => [f.id, f.name]));
@@ -98,7 +103,19 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         </Card>
       )}
 
-      {accountRows.length === 0 && onHold.data !== true && (
+      {choiceRows
+        .filter((c) => !c.chosen && c.can_change)
+        .map((c) => (
+          <Card
+            key={`plan-${c.family_id}`}
+            title={choiceRows.length > 1 ? `How often would you like to pay? (${c.family_name})` : "How often would you like to pay?"}
+            description="Please choose before your first invoice. You can change it until CLG sends that invoice."
+          >
+            <ChoosePlanForm familyId={c.family_id} plan={c.plan} chosen={false} />
+          </Card>
+        ))}
+
+      {accountRows.length === 0 && choiceRows.length === 0 && onHold.data !== true && (
         <Empty>There is no billing for you yet. CLG sets this up once sessions are booked.</Empty>
       )}
 
@@ -124,7 +141,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
               <dl className="grid gap-2 text-sm sm:grid-cols-3">
                 <div>
                   <dt className="text-zinc-500">Plan</dt>
-                  <dd>{PLAN_LABELS[a.plan]}</dd>
+                  <dd>{choiceOf.get(a.family_id)?.chosen === false ? "Not chosen yet" : PLAN_LABELS[a.plan]}</dd>
                 </div>
                 <div>
                   <dt className="text-zinc-500">Automatic payment</dt>
@@ -139,6 +156,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                 <input type="hidden" name="family_id" value={a.family_id} />
                 <Button type="submit">{ready ? "Change card or bank account" : "Set up automatic payment"}</Button>
               </form>
+              {choiceOf.get(a.family_id)?.chosen && choiceOf.get(a.family_id)?.can_change && (
+                <details className="mt-4 text-sm">
+                  <summary className="cursor-pointer">Change how often you pay</summary>
+                  <div className="mt-3">
+                    <ChoosePlanForm familyId={a.family_id} plan={a.plan} chosen />
+                  </div>
+                </details>
+              )}
               {myShare && (
                 <p className="mt-3 text-sm">
                   Your family&apos;s invoices are shared. You pay {myShare.share_percent}% of each one from your own card or

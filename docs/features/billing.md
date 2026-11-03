@@ -55,6 +55,17 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 
 Not built yet (next steps): email and text messages (tutor notices and reminders are queued in the app, ready for when email sending is set up), NDIS and school funding.
 
+## Families choose how often they pay (added 2026-11-02)
+
+Carla found during testing that nothing asked a family how often they pay; only an admin could set it, and new families defaulted to weekly.
+
+- The family's Billing page now asks "How often would you like to pay?" (weekly, monthly, per term, all upfront), with a plain note on each.
+- A parent or adult learner can change it until CLG sends the first invoice; after that they contact CLG. Admins can still set it on Admin > Billing, which shows "Plan not chosen yet" for families who haven't picked.
+- Weekly needs a card, so a family on bank debit can't switch to weekly.
+- Families already invoiced keep their current plan. Migration: `20261103230100_billing_choose_plan.sql`.
+- Invoices are still built for a family who hasn't chosen (using weekly). In the pilot they wait for approval in Xero, so an admin will spot it.
+- Legal: choosing a plan before agreeing to terms supports informed consent under the Australian Consumer Law (clear payment terms before the contract).
+
 ## Why (education research)
 
 - **Regular sessions matter.** One-to-one tuition adds about +5 months' progress on average. It works best as short, regular sessions over a set period, up to about ten weeks (EEF Teaching and Learning Toolkit; Evidence for Learning's Australian edition). A payment gap that stops sessions breaks that regularity. So the design favours automatic payment, invoices well ahead of time, and pauses that lift within minutes of payment.

@@ -46,6 +46,7 @@ type Account = {
   payment_ready: boolean;
   bill_payer_id: string | null;
   terms_accepted_at: string | null;
+  plan_chosen_at: string | null;
   paused: boolean;
   paused_since: string | null;
 };
@@ -85,7 +86,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
       .order("name"),
     supabase
       .from("billing_accounts")
-      .select("family_id, plan, method, payment_ready, bill_payer_id, terms_accepted_at, paused, paused_since"),
+      .select("family_id, plan, method, payment_ready, bill_payer_id, terms_accepted_at, plan_chosen_at, paused, paused_since"),
     supabase.from("billing_family_rates").select("family_id, amount_cents, price:billing_price_items(name)"),
     supabase.from("billing_price_items").select("id, code, name, unit, amount_cents, gst_applies, active, session_level").order("code"),
     supabase.from("billing_credits").select("family_id, amount_cents"),
@@ -184,7 +185,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                   title={`${f.name}${acct?.paused ? " (paused)" : ""}`}
                   description={
                     acct
-                      ? `${PLAN_LABELS[acct.plan]} · ${acct.payment_ready ? METHOD_LABELS[acct.method] : "No automatic payment yet"} · Credit ${dollars(balance.get(f.id))}${acct.terms_accepted_at ? "" : " · Terms not accepted yet"}`
+                      ? `${acct.plan_chosen_at ? PLAN_LABELS[acct.plan] : "Plan not chosen yet"} · ${acct.payment_ready ? METHOD_LABELS[acct.method] : "No automatic payment yet"} · Credit ${dollars(balance.get(f.id))}${acct.terms_accepted_at ? "" : " · Terms not accepted yet"}`
                       : "No billing plan yet"
                   }
                 >
