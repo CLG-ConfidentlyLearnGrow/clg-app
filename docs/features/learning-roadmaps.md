@@ -19,11 +19,11 @@ Sources opened: AERO "Tried and tested: spacing and retrieval practice" listing 
 ## How the design follows the evidence
 
 - **Targets**: a school assessment (date, grade now, grade aiming for) or a learning goal, optionally linked to one of the tutor's goals.
-- **Steps**: small and dated. Anyone who plans can add, edit and tick them: the student (own login), a parent who manages them, the tutor, an admin. Steps show who added them.
+- **Steps**: small and dated. The tutor (or an admin) adds and edits them; the student (own login) and parents tick them off and tell the tutor about progress in "Tell the tutor" (Carla, 2026-11-02; migration `20261102590100_progress_tutor_steps.sql`). Steps show who added them.
 - **Next steps join automatically**: each session note's next step becomes a step due by the next booked session (or a week later). No extra tutor time.
 - **Task sheet and rubric** (added 2026-10-28, Carla): when adding an assessment, the family can attach the task sheet and the rubric (marking guide). They are kept with the assessment, in the private upload store with the same access rules (migration `20261029500500_progress_assessment_files.sql`). Rubrics let the tutor and student plan against the marking criteria; EEF feedback guidance stresses clear success criteria.
-- **"Plan study steps for me"**: for an assessment, six steps spread from today to the day before (list the topics, self-test on hard parts, mixed practice, a timed practice test, fix mistakes, a last self-test). Under a week away, three steps. Everything can be changed.
-- **Who drives it**: high school and tertiary students plan their own; for primary and middle school the steps mostly come from the tutor's next steps, with parents ticking off (brief, "Learning roadmaps").
+- **"Plan study steps for me"**: for an assessment, six steps spread from today to the day before (list the topics, self-test on hard parts, mixed practice, a timed practice test, fix mistakes, a last self-test). Under a week away, three steps. The tutor can change them.
+- **Who drives it**: families add upcoming assessments and goals; the steps come from the tutor (and each session's next step) and the plan button, and the student or parent ticks them off. Planning stays a conversation with the tutor in each session.
 - **One reminder** the afternoon before steps are due: to the student if they have their own login, otherwise to the parents who manage them. Never to the tutor. Nothing between 8pm and 8am.
 
 ## How we'll know it works
@@ -42,4 +42,4 @@ Sources opened: AERO "Tried and tested: spacing and retrieval practice" listing 
 
 ## Study plans as an add-on (2 November 2026)
 
-Carla: study plans stay free for now and become a paid subscription add-on later. Assessments, goals, "Plan study steps for me" and family-added steps sit behind an add-on switch (free by default). Tutor steps, session next steps and ticking off are always part of tutoring. See `add-ons.md`.
+Carla: study plans stay free for now and become a paid subscription add-on later. Assessments, goals, and "Plan study steps for me" sit behind an add-on switch (free by default). Tutor steps, session next steps and ticking off are always part of tutoring. See `add-ons.md`.
