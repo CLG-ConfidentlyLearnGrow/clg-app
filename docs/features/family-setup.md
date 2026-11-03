@@ -17,7 +17,7 @@ Requested by Carla, 2026-10-28.
   - Until CLG's own email sender (Resend) is set up in Supabase, Supabase can't email families. Instead, the admin sees the link and sends it themselves, for example by text. See [sending-emails.md](sending-emails.md).
   - The link works once, for a short time, in any browser.
 - **First sign-in.** After choosing a password, the family agrees to the privacy policy and terms (the `/agree` page) before seeing their dashboard. They can check and change the details CLG entered. The `/agree` page also covers anyone whose parent or student account has no agreement on record.
-- **Already checked.** A parent link made by an admin is already confirmed, so a tutor can be assigned straight away. Links that parents make themselves still wait for an admin.
+- **Already checked.** A parent link made by an admin is already confirmed, so a tutor can be assigned straight away. Links that parents make themselves are confirmed straight away too (since 3 Nov 2026), unless the child looks like a double-up; see [link-parents.md](link-parents.md).
 - **Existing parent accounts.** If the email already belongs to a parent, the child is added to that account. No second account or email is made.
 
 ## Sending a new link (added 2026-10-28)

@@ -101,6 +101,9 @@ reset role;
 -- Requesting
 -- ---------------------------------------------------------------------------
 select (current_date + 7 + ((8 - extract(isodow from current_date)::int) % 7)) as first_day \gset
+-- Parents' own links are confirmed straight away; undo that to test the rule.
+select tests.claims(null);
+update public.parent_student_links set verified_at = null where student_id = :'sam';
 select tests.claims('00000000-0000-0000-0000-000000000003');
 set role authenticated;
 select tests.fails(format($$select public.request_booking(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'library', %L, %L::date, %L::date + 28)$$, :'sam', :'lib_a', :'first_day', :'first_day'), 'parent link not yet verified');

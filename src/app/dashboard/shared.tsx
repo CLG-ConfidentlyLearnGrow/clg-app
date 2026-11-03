@@ -23,16 +23,33 @@ export type Assignment = {
 
 // Students and tutor assignments this person may see. The database decides
 // which rows come back.
+const STUDENT_FIELDS = "id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, program";
+// The fields every version of the database has. Used if a newer database
+// update hasn't been run yet, so families still see their children.
+const CORE_STUDENT_FIELDS = "id, full_name, date_of_birth, state, year_level, school, goals, extra_info";
+
+async function loadStudents(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const full = await supabase.from("students").select(STUDENT_FIELDS).order("full_name");
+  if (!full.error) return (full.data ?? []) as Student[];
+  console.error("Loading students failed; trying the core fields. Has every database update been run?", full.error.code, full.error.message);
+  const core = await supabase.from("students").select(CORE_STUDENT_FIELDS).order("full_name");
+  return ((core.data ?? []) as Omit<Student, "learning_needs" | "program">[]).map((s) => ({
+    ...s,
+    learning_needs: null,
+    program: null,
+  }));
+}
+
 export async function loadStudentsAndTutors() {
   const supabase = await createClient();
   const [students, assignments] = await Promise.all([
-    supabase.from("students").select("id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, program").order("full_name"),
+    loadStudents(supabase),
     supabase
       .from("tutor_assignments")
       .select("id, subject, student_id, tutor:tutor_profiles(bio, account:accounts(full_name))"),
   ]);
   return {
-    students: (students.data ?? []) as Student[],
+    students,
     assignments: (assignments.data ?? []) as unknown as Assignment[],
   };
 }

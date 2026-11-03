@@ -228,7 +228,10 @@ select tests.eq((select count(*) from public.tutor_checks where reference = 'NPC
 reset role;
 select tests.eq(private.tutor_cleared_for_state('00000000-0000-0000-0000-000000000011', 'SA')::int, 1, 'still cleared with a recent police check');
 set role authenticated;
--- Cleared, but the parent link is not verified yet.
+-- Cleared, but the parent link is not verified (parents' own links are now
+-- confirmed straight away, so undo that here to test the rule).
+update public.parent_student_links set verified_at = null
+  where student_id = (select id from public.students where full_name = 'Cara One');
 select tests.fails($$insert into public.tutor_assignments (tutor_id, student_id, subject)
   select '00000000-0000-0000-0000-000000000011', id, 'General Maths' from public.students where full_name = 'Cara One'$$, 'assign before parent link verified');
 update public.parent_student_links set verified_at = now()

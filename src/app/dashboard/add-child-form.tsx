@@ -11,6 +11,7 @@ import { YearLevelSelect } from "@/components/year-level-select";
 export function AddChildForm() {
   return (
     <ActionForm action={addChild} submitLabel="Add child">
+      <OneProfilePerChild />
       <Field label="Child's full name" name="full_name" required maxLength={200} />
       <Field label="Date of birth" name="date_of_birth" type="date" required hint={DOB_HINT} />
       <StateSelect label="State your child lives in" />
@@ -26,6 +27,20 @@ export function AddChildForm() {
       <GoalFields />
       <ParentalConsentBox />
     </ActionForm>
+  );
+}
+
+// Each child has one profile that every parent or guardian shares. A second
+// parent adding the child again makes a double-up that CLG has to merge.
+export function OneProfilePerChild() {
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-zinc-800">
+      <p className="font-medium">Has another parent or guardian already added this child?</p>
+      <p className="mt-1">
+        Please don&apos;t add them again. Each child has one profile that all their parents and guardians share. Instead,
+        contact CLG and we&apos;ll link you to your child&apos;s existing profile.
+      </p>
+    </div>
   );
 }
 
