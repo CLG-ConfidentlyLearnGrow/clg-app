@@ -48,7 +48,7 @@ Asked for by Carla on 3 November 2026.
 
 ## Where it lives
 
-- Database: `supabase/migrations/20261103600100_tertiary_study_details.sql`
+- Database: `supabase/migrations/20261103610100_tertiary_study_details.sql`
   (`students.program`; `student_subjects.course_code`, `course_url`,
   `course_overview`; `admin_set_course_overview`).
 - Tests: `supabase/tests/tertiary_study_details.test.sql`.
