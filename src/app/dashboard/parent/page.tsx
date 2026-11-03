@@ -26,13 +26,18 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
   const { students, assignments } = await loadStudentsAndTutors();
   const [links, subjectRows, logins] = await Promise.all([
     supabase.from("parent_student_links").select("student_id, verified_at"),
-    supabase.from("student_subjects").select("student_id, subject, working_level").order("added_at"),
+    supabase.from("student_subjects").select("student_id, subject, working_level, course_code, course_url").order("added_at"),
     supabase.from("students").select("id, account_id"),
   ]);
   const subjectsOf = (id: string) =>
     (subjectRows.data ?? [])
       .filter((r) => r.student_id === id)
-      .map((r) => ({ subject: r.subject, level: r.working_level as string | null }));
+      .map((r) => ({
+        subject: r.subject,
+        level: r.working_level as string | null,
+        course_code: r.course_code as string | null,
+        course_url: r.course_url as string | null,
+      }));
   // Children 16 or over without their own login can be given one.
   const hasLogin = new Set((logins.data ?? []).filter((r) => r.account_id).map((r) => r.id));
   const sixteenAgo = new Date();

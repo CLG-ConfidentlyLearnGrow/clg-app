@@ -49,7 +49,7 @@ export function FamilySetupForm() {
           <Field label="Child's date of birth (optional)" name="date_of_birth" type="date" hint={DOB_HINT} />
           <StateSelect label="State the child lives in (optional)" optional />
           <YearLevelSelect label="Year level at school this year (optional)" optional />
-          <Field label="School (optional)" name="school" maxLength={200} />
+          <Field label="School, university or TAFE (optional)" name="school" maxLength={200} />
         </>
       ) : (
         <>

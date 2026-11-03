@@ -16,7 +16,7 @@ export function AddChildForm() {
       <StateSelect label="State your child lives in" />
       <YearLevelSelect label="Year level at school this year" />
       <Field
-        label="School"
+        label="School, university or TAFE"
         name="school"
         required
         maxLength={200}

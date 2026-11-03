@@ -17,15 +17,27 @@ export const childSchema = z.object({
     .max(4000, "Please keep the end goal under 4,000 characters."),
   extra_info: z.string().trim().max(2000, "Please keep other information under 2,000 characters.").optional(),
   learning_needs: z.string().trim().max(2000, "Please keep learning needs under 2,000 characters.").optional(),
+  // University or TAFE: the degree or course overall.
+  program: z.string().trim().max(300, "Please keep the degree or course name under 300 characters.").optional(),
 });
 
 // The subjects the family ticked or typed, each with the level the child is
 // working at (null = not sure), tidied and without repeats.
-export type Wanted = { subject: string; level: string | null };
+// University and TAFE units can also carry a unit code and a link.
+export type Wanted = { subject: string; level: string | null; course_code?: string; course_url?: string };
 const wantedSchema = z.array(
   z.object({
     subject: z.string().trim().min(1).max(100, "Each subject name must be under 100 characters."),
     level: z.enum(YEAR_LEVELS, "Choose a level from the list, or Not sure.").nullable(),
+    course_code: z.string().trim().max(40, "Please keep each unit code under 40 characters.").optional(),
+    course_url: z
+      .union([
+        z.literal(""),
+        z
+          .url({ protocol: /^https?$/, error: "Each course link must be a web address starting with https://" })
+          .max(500, "Please keep each course link under 500 characters."),
+      ])
+      .optional(),
   }),
 );
 
@@ -46,7 +58,12 @@ export function readSubjects(formData: FormData): Wanted[] | { error: string } {
     if (problem) return { error: problem };
     if (!seen.has(s.subject.toLowerCase())) {
       seen.add(s.subject.toLowerCase());
-      subjects.push(s);
+      subjects.push({
+        subject: s.subject,
+        level: s.level,
+        ...(s.course_code ? { course_code: s.course_code } : {}),
+        ...(s.course_url ? { course_url: s.course_url.trim() } : {}),
+      });
     }
   }
   if (subjects.length === 0) return { error: "Choose at least one subject your child wants help with." };

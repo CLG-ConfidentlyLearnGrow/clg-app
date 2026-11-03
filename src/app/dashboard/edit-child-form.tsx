@@ -19,6 +19,7 @@ export type ChildDetails = {
   goals: string | null;
   extra_info: string | null;
   learning_needs: string | null;
+  program: string | null;
 };
 
 export function EditChildForm({ child, subjects }: { child: ChildDetails; subjects: ChosenSubject[] }) {
@@ -29,8 +30,8 @@ export function EditChildForm({ child, subjects }: { child: ChildDetails; subjec
       {!child.date_of_birth && <Field label="Date of birth" name="date_of_birth" type="date" required hint={DOB_HINT} />}
       {!child.state && <StateSelect label="State your child lives in" />}
       <YearLevelSelect label="Year level at school this year" defaultValue={child.year_level ?? ""} />
-      <Field label="School" name="school" required maxLength={200} defaultValue={child.school ?? ""} />
-      <SubjectPicker chosen={subjects} />
+      <Field label="School, university or TAFE" name="school" required maxLength={200} defaultValue={child.school ?? ""} />
+      <SubjectPicker chosen={subjects} program={child.program ?? ""} />
       <GoalFields goals={child.goals ?? ""} extraInfo={child.extra_info ?? ""} learningNeeds={child.learning_needs ?? ""} />
       {child.date_of_birth && child.state && (
         <p className="text-xs text-zinc-500">To change the date of birth or state, please contact CLG.</p>
