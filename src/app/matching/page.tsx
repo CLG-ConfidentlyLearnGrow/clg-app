@@ -12,6 +12,8 @@ import { WEEKDAY_NAMES, addDays, clockTime, localToday, placeLabel, shortDate } 
 import { YEAR_LEVELS } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 import { BookForm } from "../schedule/forms";
+import { CourseDetails, type CourseUnit } from "@/components/course-details";
+import { CourseOverviewForm } from "../admin/course-overview-form";
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null };
 type QueueRow = {
@@ -277,10 +279,14 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
   const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes] = await Promise.all([
     supabase
       .from("students")
-      .select("id, full_name, family_id, year_level, school, state, goals, learning_needs")
+      .select("id, full_name, family_id, year_level, school, state, goals, learning_needs, program")
       .eq("id", studentId)
       .maybeSingle(),
-    supabase.from("student_subjects").select("subject, working_level").eq("student_id", studentId).order("added_at"),
+    supabase
+      .from("student_subjects")
+      .select("id, subject, working_level, course_code, course_url, course_overview")
+      .eq("student_id", studentId)
+      .order("added_at"),
     supabase
       .from("student_places")
       .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences")
@@ -299,6 +305,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
     state: string;
     goals: string | null;
     learning_needs: string | null;
+    program: string | null;
   } | null;
   if (!student) {
     return (
@@ -307,7 +314,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       </Card>
     );
   }
-  const subjects = (subjectsRes.data ?? []) as { subject: string; working_level: string | null }[];
+  const subjects = (subjectsRes.data ?? []) as (CourseUnit & { working_level: string | null })[];
   const places = placesRes.data as {
     online: boolean;
     library_ids: string[];
@@ -396,6 +403,14 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
             {past.map((p) => `${p.accounts?.full_name ?? "A tutor"} (${p.subject}, to ${shortDate(p.ends_on)})`).join(", ") || "None"}
           </Detail>
         </dl>
+        {/* University and TAFE students: degree, unit codes, course pages and CLG's overview. */}
+        <div className="mt-3 text-sm">
+          <CourseDetails
+            program={student.program}
+            units={subjects}
+            overviewForm={(u) => <CourseOverviewForm subjectId={u.id} overview={u.course_overview} />}
+          />
+        </div>
       </Card>
 
       <Card
