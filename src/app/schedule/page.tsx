@@ -128,7 +128,6 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const sections = [
     { id: "sessions", label: "Sessions" },
     { id: "bookings", label: "Bookings" },
-    ...(isAdmin ? [{ id: "matching", label: "Matching" }] : []),
     ...(isDesk ? [{ id: "book", label: "Book a session" }] : []),
     // Admins set where each student can have sessions; families give
     // preferred times and study dates only (Carla, 2 Nov 2026).
@@ -144,6 +143,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []),
     ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []),
   ];
+  // Matching has its own tab now.
+  if (params.section === "matching") redirect("/matching");
   const section = sections.find((s) => s.id === params.section)?.id ?? "sessions";
 
   const supabase = await createClient();
@@ -157,9 +158,6 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     : null;
   const renewalsToAnswer = renewalsRes?.count ?? 0;
   // Admins: how many subjects are waiting for a tutor.
-  const pipelineRes = isAdmin ? await supabase.rpc("matching_pipeline") : null;
-  const pipeline = (pipelineRes?.data ?? []) as PipelineStage[];
-  const needsTutor = pipeline.find((p) => p.stage === "needs_tutor")?.subjects ?? 0;
   // The tutor's own availability check for this term, if not yet answered.
   const myCheckRes = isTutor
     ? await supabase
@@ -202,6 +200,14 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const waitingForMe = bookings.filter(
     (b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id && !approvals.get(b.id)?.tutor_ok_at,
   );
+  // What a tutor sees before accepting: first name, year level, subject,
+  // goal, place and time. The rest opens once they and the family accept.
+  const goalRes = await Promise.all(
+    waitingForMe.map((w) => supabase.rpc("offer_card", { p_booking: w.id }).maybeSingle()),
+  );
+  const goalOf = new Map(
+    waitingForMe.map((w, i) => [w.id, ((goalRes[i].data as { goal: string | null } | null)?.goal ?? "").trim()]),
+  );
   const familyToApprove = bookings.filter((b) => {
     const a = approvals.get(b.id);
     return b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id;
@@ -235,9 +241,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               ? unread
               : s.id === "next-term" && renewalsToAnswer
                 ? renewalsToAnswer
-                : s.id === "matching" && needsTutor
-                  ? needsTutor
-                  : undefined,
+                : undefined,
       }))}
     >
       {section === "sessions" && (
@@ -419,6 +423,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                           timeZone: "Australia/Adelaide",
                         })}`}
                     </p>
+                    {forMe && goalOf.get(b.id) && <p className="text-zinc-600">Goal: {goalOf.get(b.id)}</p>}
                     {b.family_note && <p className="text-zinc-600">Family note: {b.family_note}</p>}
                     {b.tutor_note && <p className="text-zinc-600">Tutor note: {b.tutor_note}</p>}
                     {waiting && approval && (
@@ -469,7 +474,6 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}
 
-      {section === "matching" && isAdmin && <MatchingSection params={params} pipeline={pipeline} />}
 
       {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
     </SectionShell>
@@ -952,192 +956,6 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
-// Admins: the matching pipeline
-// ---------------------------------------------------------------------------
-type PipelineStage = { stage: string; subjects: number; oldest_days: number | null };
-type MatchRow = {
-  student_id: string;
-  student_name: string;
-  year_level: string | null;
-  working_level: string | null;
-  subject: string;
-  stage: string;
-  since: string;
-  days: number;
-  tutor_name: string | null;
-  has_places: boolean;
-  total: number;
-};
-
-const STAGES: { id: string; label: string; hint: string }[] = [
-  { id: "needs_tutor", label: "Needs a tutor", hint: "Asked for, nothing booked or waiting" },
-  { id: "waitlist", label: "Waitlist", hint: "No suitable tutor available yet" },
-  { id: "tutor_to_confirm", label: "Waiting for confirmation", hint: "Offer or request waiting for the tutor (and family) to approve" },
-  { id: "assigned", label: "Assigned, no time", hint: "Tutor assigned but no weekly time booked" },
-  { id: "active", label: "Active", hint: "Weekly sessions running" },
-];
-const PAGE_SIZE = 50;
-
-async function MatchingSection({
-  params,
-  pipeline,
-}: {
-  params: Record<string, string | string[] | undefined>;
-  pipeline: PipelineStage[];
-}) {
-  const stage = STAGES.find((s) => s.id === one(params.stage))?.id ?? "needs_tutor";
-  const search = one(params.q).slice(0, 100);
-  const page = Math.max(Number(one(params.page)) || 1, 1);
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("list_matching", {
-    p_stage: stage,
-    p_search: search || null,
-    p_limit: PAGE_SIZE,
-    p_offset: (page - 1) * PAGE_SIZE,
-  });
-  const rows = (data ?? []) as MatchRow[];
-  // Learning needs the family wrote (core student record), shown when present.
-  const needsRes = rows.length
-    ? await supabase.from("students").select("id, learning_needs").in("id", [...new Set(rows.map((r) => r.student_id))])
-    : null;
-  const needsOf = new Map(
-    ((needsRes?.data ?? []) as { id: string; learning_needs: string | null }[])
-      .filter((n) => n.learning_needs?.trim())
-      .map((n) => [n.id, n.learning_needs as string]),
-  );
-  const total = rows[0]?.total ?? 0;
-  const reasonsRes = await supabase.rpc("offer_change_reasons", { p_days: 90 });
-  const reasons = (reasonsRes.data ?? []) as { reason: string; changes: number; recent_notes: string[] | null }[];
-  const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
-  const link = (over: Record<string, string>) => {
-    const q = new URLSearchParams({ section: "matching", stage, ...(search ? { q: search } : {}), ...over });
-    return `/schedule?${q.toString()}`;
-  };
-  const current = STAGES.find((s) => s.id === stage)!;
-
-  return (
-    <>
-      <Card title="Matching" description="Every subject a student has asked for, by stage. Oldest first.">
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {STAGES.map((s) => {
-            const p = pipeline.find((x) => x.stage === s.id);
-            const active = s.id === stage;
-            return (
-              <li key={s.id}>
-                <a
-                  href={link({ stage: s.id, page: "1" })}
-                  className={`block rounded-lg border px-3 py-2 text-sm ${active ? "border-teal-700 bg-teal-50" : "border-zinc-200 bg-white hover:border-teal-700"}`}
-                >
-                  <span className="block text-2xl font-semibold">{p?.subjects ?? 0}</span>
-                  <span className="block">{s.label}</span>
-                  {p?.oldest_days != null && (
-                    <span className="block text-xs text-zinc-600">longest {p.oldest_days} days</span>
-                  )}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-        <form method="get" action="/schedule" className="mt-4 flex flex-wrap items-end gap-2">
-          <input type="hidden" name="section" value="matching" />
-          <input type="hidden" name="stage" value={stage} />
-          <div className="min-w-0 flex-1">
-            <Field label="Search by student or subject" name="q" defaultValue={search} maxLength={100} />
-          </div>
-          <Button type="submit">Search</Button>
-        </form>
-      </Card>
-
-      <Card title={`${current.label} (${total})`} description={current.hint}>
-        {rows.length === 0 ? (
-          <Empty>Nobody at this stage.</Empty>
-        ) : (
-          <ul className="divide-y divide-zinc-100 text-sm">
-            {rows.map((r) => (
-              <li key={`${r.student_id}-${r.subject}`} className="flex flex-wrap items-baseline justify-between gap-2 py-3 first:pt-0">
-                <span>
-                  <span className="font-medium">{r.student_name}</span>
-                  <span className="text-zinc-600">
-                    {" "}
-                    · {r.subject}
-                    {` · School year: ${r.year_level ?? "not set"} · Working level: ${r.working_level ?? "not sure"}`}
-                    {r.tutor_name && ` · ${r.tutor_name}`}
-                  </span>
-                  {needsOf.has(r.student_id) && (
-                    <span className="mt-1 block whitespace-pre-line text-xs text-zinc-700">
-                      <span className="font-medium">Learning needs:</span> {needsOf.get(r.student_id)}
-                    </span>
-                  )}
-                  {!r.has_places && (stage === "needs_tutor" || stage === "waitlist") && (
-                    <span className="block text-xs text-amber-900">
-                      No session places saved yet ·{" "}
-                      <a className="underline" href={`/schedule?section=child-places&student=${r.student_id}`}>
-                        add them
-                      </a>
-                    </span>
-                  )}
-                </span>
-                <span className="flex items-center gap-3">
-                  <span className={`text-xs ${r.days >= 7 && stage !== "active" ? "text-amber-900" : "text-zinc-600"}`}>
-                    {r.days === 0 ? "today" : `${r.days} day${r.days === 1 ? "" : "s"}`}
-                  </span>
-                  {(stage === "needs_tutor" || stage === "waitlist" || stage === "assigned") && (
-                    <TextLink
-                      href={`/schedule?${new URLSearchParams({ section: "book", student: r.student_id, subject: r.subject, auto: "1" }).toString()}`}
-                    >
-                      Find a tutor
-                    </TextLink>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {pages > 1 && (
-          <p className="mt-4 flex items-center gap-4 text-sm">
-            {page > 1 && <a className="underline" href={link({ page: String(page - 1) })}>Previous</a>}
-            <span className="text-zinc-600">
-              Page {page} of {pages}
-            </span>
-            {page < pages && <a className="underline" href={link({ page: String(page + 1) })}>Next</a>}
-          </p>
-        )}
-      </Card>
-
-      <Card
-        collapsible
-        defaultOpen={false}
-        title="Why suggestions were changed"
-        description="Last 90 days. If the same reason keeps coming up, the suggestions can be improved to allow for it."
-      >
-        {reasons.length === 0 ? (
-          <Empty>No changes recorded yet.</Empty>
-        ) : (
-          <ul className="divide-y divide-zinc-100 text-sm">
-            {reasons.map((r) => (
-              <li key={r.reason} className="py-2">
-                <span className="font-medium">{CHANGE_REASON_NAMES[r.reason] ?? r.reason}</span>
-                <span className="text-zinc-600"> · {r.changes}</span>
-                {r.recent_notes?.length ? <span className="block text-zinc-600">{r.recent_notes.join(" · ")}</span> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-    </>
-  );
-}
-
-const CHANGE_REASON_NAMES: Record<string, string> = {
-  family_request: "Family asked for something else",
-  tutor_request: "Tutor asked for something else",
-  tutor_fit: "Another tutor suited the student better",
-  time: "Better time for the tutor's day",
-  place: "Better place",
-  other: "Other",
-};
-
-// ---------------------------------------------------------------------------
 // Where and when each student can have sessions. Admins set the places
 // (online and libraries); families give preferred times and study dates.
 // ---------------------------------------------------------------------------
@@ -1155,7 +973,7 @@ async function ChildPlacesSection({
     supabase.from("students").select("id, full_name, account_id, year_level").order("full_name"),
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
     supabase.from("libraries").select("id, name, suburb").eq("active", true).not("confirmed_at", "is", null).order("name"),
-    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours"),
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences"),
   ]);
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
@@ -1174,6 +992,7 @@ async function ChildPlacesSection({
         preferred_days: number[] | null;
         preferred_parts: string[] | null;
         preferred_school_hours: boolean;
+        tutor_preferences: string | null;
       }[]
     ).map((p) => [p.student_id, p]),
   );
@@ -1189,7 +1008,7 @@ async function ChildPlacesSection({
       {students.length === 0 ? (
         isAdmin ? (
           <Empty>
-            Choose a student from the <TextLink href="/schedule?section=matching">Matching</TextLink> tab to see their
+            Choose a student from the <TextLink href="/matching">Matching</TextLink> tab to see their
             places.
           </Empty>
         ) : (
@@ -1209,6 +1028,7 @@ async function ChildPlacesSection({
                 preferredParts={places.get(s.id)?.preferred_parts ?? []}
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
                 showPlaces={isAdmin}
+                tutorPreferences={places.get(s.id)?.tutor_preferences ?? ""}
               />
               <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />
             </div>

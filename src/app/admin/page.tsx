@@ -20,9 +20,9 @@ import { AddOnsSection } from "./add-ons-section";
 import { LeavingSection } from "./leaving-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { STATE_NAMES, checkName, type AuState } from "@/lib/checks";
+import { redirect } from "next/navigation";
+import { checkName, type AuState } from "@/lib/checks";
 import {
-  AssignForm,
   CheckForm,
   DeclineCheckForm,
   EraseStudentForm,
@@ -87,13 +87,6 @@ function plainPeriod(p: string) {
   return p.replace(/\bmons?\b/g, (m) => (m === "mon" ? "month" : "months"));
 }
 
-type Eligible = {
-  tutor_id: string;
-  full_name: string;
-  subjects: string[];
-  max_weekly_hours: number | null;
-};
-
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   // Finance admins work in Billing; everyone else at their level sees the
   // sections that fit it (the database decides what they can actually read).
@@ -101,9 +94,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const isFull = FULL_ADMIN.includes(viewer.level);
   const supabase = await createClient();
   const params = await searchParams;
-  const studentId = isFull && typeof params.student === "string" ? params.student : null;
-  const visibleSections = isFull ? ADMIN_SECTIONS : ADMIN_SECTIONS.filter((s) => s.id === "families");
+  const visibleSections = isFull
+    ? ADMIN_SECTIONS
+    : ADMIN_SECTIONS.filter((s) => s.id === "families" || s.id === "matching");
   const wanted = sectionFrom(params.section);
+  // Matching has its own page (owner, operations and support).
+  if (wanted === "matching") redirect("/matching");
   const section = visibleSections.some((s) => s.id === wanted) ? wanted : visibleSections[0].id;
 
   const [me, pending, checks, students, tutorList, cleared, due, holds, rules] =
@@ -259,10 +255,6 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const holdRows = (holds.data ?? []) as unknown as Hold[];
   const ruleRows = (rules.data ?? []) as Rule[];
 
-  const eligible = studentId
-    ? await supabase.rpc("eligible_tutors", { p_student: studentId })
-    : null;
-  const eligibleRows = (eligible?.data ?? []) as Eligible[];
   const statesByTutor = new Map<string, string[]>();
   for (const row of cleared.data ?? []) {
     statesByTutor.set(row.tutor_id, [
@@ -293,7 +285,6 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     learning_needs: string | null;
     student_subjects: { subject: string; working_level: string | null }[];
   }[];
-  const chosen = studentRows.find((s) => s.id === studentId);
   // Students 16 or over still on a parent's account can get their own login.
   const sixteenAgo = new Date();
   sixteenAgo.setFullYear(sixteenAgo.getFullYear() - 16);
@@ -441,93 +432,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             </Card>
 
             <Card title="Assign a tutor">
-              <form method="get" className="mb-4 flex items-end gap-3">
-                <input type="hidden" name="section" value="families" />
-                <label className="block flex-1 space-y-1">
-                  <span className="text-sm font-medium">Student</span>
-                  <select
-                    name="student"
-                    defaultValue={studentId ?? ""}
-                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-brand focus:ring-2 focus:ring-teal-100 focus:outline-none"
-                  >
-                    <option value="" disabled>
-                      Choose…
-                    </option>
-                    {studentRows.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.full_name} ({s.state ?? "details not finished"})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <Button type="submit">Find tutors</Button>
-              </form>
-              {chosen && (
-                <>
-                  <div className="mb-4 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
-                    <p>
-                      <strong>School year:</strong> {chosen.year_level ?? "Not given yet"}
-                      {chosen.school ? ` at ${chosen.school}` : ""}
-                    </p>
-                    <p>
-                      <strong>Wants help with:</strong>{" "}
-                      {chosen.student_subjects.length > 0
-                        ? chosen.student_subjects
-                            .map((r) => `${r.subject} (${r.working_level ? `working at ${r.working_level}` : "working level not sure"})`)
-                            .join(", ")
-                        : "No subjects given"}
-                    </p>
-                    <p>
-                      <strong>End goal:</strong> {chosen.goals || "None given"}
-                    </p>
-                    {chosen.learning_needs && (
-                      <p>
-                        <strong>Learning needs:</strong> {chosen.learning_needs}
-                      </p>
-                    )}
-                    {chosen.extra_info && (
-                      <p>
-                        <strong>Other information:</strong> {chosen.extra_info}
-                      </p>
-                    )}
-                    <p className="text-xs text-zinc-500">
-                      When you assign a tutor, the curriculum for that subject and year level is attached automatically
-                      (if one is loaded and confirmed).
-                    </p>
-                  </div>
-                  <p className="mb-2 text-sm">
-                    Tutors cleared for {chosen.state ? STATE_NAMES[chosen.state] : "(state not given yet)"} who teach {chosen.year_level ?? "this year level"}:
-                  </p>
-                  {eligibleRows.length === 0 ? (
-                    <p className="text-sm text-red-700">
-                      No tutor is both cleared for this student and has added a subject they teach at this year level.
-                      Tutors add their subjects under &quot;What you teach&quot; in their dashboard.
-                    </p>
-                  ) : (
-                    <>
-                      <ul className="mb-4 list-disc pl-5 text-sm">
-                        {eligibleRows.map((t) => (
-                          <li key={t.tutor_id}>
-                            {t.full_name}
-                            {t.subjects.length > 0 &&
-                              `: ${t.subjects.join(", ")}`}
-                            {t.max_weekly_hours != null &&
-                              ` (up to ${t.max_weekly_hours} h/week)`}
-                          </li>
-                        ))}
-                      </ul>
-                      <AssignForm
-                        studentId={chosen.id}
-                        tutors={eligibleRows.map((t) => ({
-                          id: t.tutor_id,
-                          name: t.full_name,
-                          subjects: t.subjects,
-                        }))}
-                      />
-                    </>
-                  )}
-                </>
-              )}
+              <p className="text-sm">
+                Matching now has its own tab. Choose a student there to see the tutors who suit them best and offer a
+                time. The tutor sees the student&apos;s details once they and the family accept.
+              </p>
+              <p className="mt-3">
+                <TextLink href="/matching">Go to Matching</TextLink>
+              </p>
             </Card>
             </>)}
           </>

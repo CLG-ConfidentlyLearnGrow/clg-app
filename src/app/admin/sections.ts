@@ -1,6 +1,7 @@
 // The admin area is split into these sections, shown one at a time.
 export const ADMIN_SECTIONS = [
-  { id: "families", label: "Families and matching" },
+  { id: "families", label: "Families" },
+  { id: "matching", label: "Matching" },
   { id: "tutors", label: "Tutors and checks" },
   { id: "progress", label: "Progress" },
   { id: "curriculum", label: "Curriculum" },
