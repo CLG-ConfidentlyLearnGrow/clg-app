@@ -63,6 +63,11 @@ export async function runBilling(): Promise<Summary> {
   if (pay.error) summary.problems.push(`Tutor pay: ${pay.error.message}`);
   else summary.payLines = pay.data ?? 0;
 
+  // Part-time and full-time staff: top up to their agreed hours once a pay
+  // period ends. Top-ups wait for an admin to approve them.
+  const topUps = await db.rpc("billing_check_guaranteed_hours", { p_day: yesterday });
+  if (topUps.error) summary.problems.push(`Guaranteed hours: ${topUps.error.message}`);
+
   return summary;
 }
 

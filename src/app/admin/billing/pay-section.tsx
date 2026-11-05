@@ -12,7 +12,7 @@ type Line = {
   account_id: string | null;
   staff_name: string;
   work_date: string;
-  kind: "session" | "late_cancel" | "min_topup" | "admin";
+  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed";
   work_kind: string;
   minutes: number;
   rate_cents: number;
@@ -26,7 +26,9 @@ const KIND_LABELS: Record<Line["kind"], string> = {
   session: "Session",
   late_cancel: "Late cancel",
   min_topup: "2 hr minimum top-up",
-  admin: "Admin hours",
+  admin: "Office admin",
+  tutoring_work: "Tutoring work",
+  guaranteed: "Guaranteed hours top-up",
 };
 
 function addDays(day: string, n: number) {
@@ -66,7 +68,7 @@ export async function PaySection({
     supabase.from("billing_pay_problems").select("*").gte("work_date", start).lte("work_date", end),
     supabase.from("billing_settings").select("pay_period_days, pay_period_anchor, casual_min_enabled").maybeSingle(),
     supabase.from("account_private").select("account_id, email"),
-    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note, logged_late").eq("status", "submitted").order("work_date"),
+    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note, logged_late, work_type, source").eq("status", "submitted").order("work_date"),
   ]);
 
   const staff = new Map<string, string>();
@@ -112,12 +114,14 @@ export async function PaySection({
   return (
     <>
       {(waitingHours.data ?? []).length > 0 && (
-        <Card title="Admin hours waiting for approval" description="Logged by staff on their My pay page. Approved hours are paid with their tutoring in the next send to Xero.">
+        <Card title="Hours waiting for approval" description="Tutoring work and office admin logged by staff on their My pay page, and guaranteed hours top-ups added by the app. Approved hours are paid in the next send to Xero.">
           <div className="space-y-4">
             {(waitingHours.data ?? []).map((h) => (
               <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">
                 <p className="mb-3">
-                  <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}: {hours(h.minutes)} for {h.note}
+                  <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}:{" "}
+                  {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"},{" "}
+                  {hours(h.minutes)}. {h.note}
                   {h.logged_late && <span className="ml-1 text-xs text-amber-800">(logged late)</span>}
                 </p>
                 {canEdit ? (
