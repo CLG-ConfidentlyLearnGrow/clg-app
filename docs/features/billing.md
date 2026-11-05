@@ -36,6 +36,13 @@ CLG bills families in advance for tutoring. Today that is done by hand in Xero, 
 
 Pay rates per role (2026-11-03): on Admin > Billing > Staff pay, each person shows only the rates for roles they hold. Tutors get a school and a tertiary rate, and admins get an admin rate. Each rate has its own Xero earnings rate. A rate for a role someone no longer holds is kept, not wiped. Pay for a role is only worked out once its rate is entered.
 
+Tutoring work and guaranteed hours (2026-11-05, Carla): work tied to tutoring that isn't a session (lesson prep, materials, marking, tutoring admin) belongs to the tutor role under the tutoring award, so it's paid at the tutor rate. General office work is the admin role (Clerks award).
+- When logging hours on My pay, staff choose "Tutoring work (not sessions)" or "Office admin". Only people with the admin role can log office admin, and every entry needs a short description.
+- Tutoring work is paid at the school rate, or at the tertiary rate for tertiary-only tutors.
+- Part-time and full-time staff can have agreed hours per week. Once a pay period ends, if sessions plus logged hours fall short, the app adds a "guaranteed hours" top-up for the owner or Finance to approve. Staff can't remove a top-up.
+- One employment type per person (Carla chose this 2026-11-05).
+- Migration: `20261105230100_billing_tutoring_hours.sql`. The award reading needs the adviser to confirm.
+
 ## Split payments between payers (added 2026-10-28)
 
 - **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.

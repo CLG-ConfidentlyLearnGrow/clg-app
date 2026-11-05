@@ -11,7 +11,9 @@ const KIND_LABELS: Record<string, string> = {
   session: "Session",
   late_cancel: "Late cancel",
   min_topup: "2 hr minimum top-up",
-  admin: "Admin hours",
+  admin: "Office admin",
+  tutoring_work: "Tutoring work",
+  guaranteed: "Guaranteed hours top-up",
 };
 
 const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`;
@@ -26,7 +28,7 @@ export default async function MyPayPage() {
   const today = adelaideToday();
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10);
   const [pay, lines, settings, logs, due] = await Promise.all([
-    supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents").eq("account_id", viewer.id).maybeSingle(),
+    supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents, guaranteed_weekly_minutes").eq("account_id", viewer.id).maybeSingle(),
     supabase
       .from("billing_pay_lines")
       .select("id, work_date, kind, work_kind, minutes, rate_cents, amount_cents, note, status")
@@ -36,7 +38,7 @@ export default async function MyPayPage() {
     supabase.rpc("billing_casual_min_on"),
     supabase
       .from("billing_hour_logs")
-      .select("id, work_date, minutes, note, status, review_note")
+      .select("id, work_date, minutes, note, status, review_note, work_type, source")
       .eq("account_id", viewer.id)
       .gte("work_date", since)
       .order("work_date", { ascending: false }),
@@ -46,6 +48,9 @@ export default async function MyPayPage() {
   const logRows = logs.data ?? [];
   const rows = lines.data ?? [];
   const p = pay.data;
+  // Tutors log tutoring work; only admin staff can log office admin.
+  const canTutor = viewer.roles.includes("tutor") && (p?.school_rate_cents != null || p?.tertiary_rate_cents != null);
+  const canAdmin = viewer.roles.includes("admin") && p?.admin_rate_cents != null;
 
   return (
     <Page title="My pay" intro="Your pay from sessions and admin hours. CLG checks it in Xero before each pay run.">
@@ -56,15 +61,18 @@ export default async function MyPayPage() {
             {p.school_rate_cents != null && <li>School tutoring: {dollars(p.school_rate_cents)}/hr</li>}
             {p.tertiary_rate_cents != null && <li>Tertiary and other tutoring: {dollars(p.tertiary_rate_cents)}/hr</li>}
             {p.admin_rate_cents != null && <li>Admin: {dollars(p.admin_rate_cents)}/hr</li>}
+            {p.guaranteed_weekly_minutes != null && p.employment !== "casual" && (
+              <li>Agreed hours: {hours(p.guaranteed_weekly_minutes)} a week. If you work less in a pay period, CLG tops it up.</li>
+            )}
             {p.employment === "casual" && settings.data === true && <li>As a casual, you&apos;re paid at least 2 hr for each day you work.</li>}
           </ul>
         ) : (
           <Empty>CLG hasn&apos;t entered your pay rates yet.</Empty>
         )}
       </Card>
-      {p?.admin_rate_cents != null && (
-        <Card title="Log admin hours" description={`Hours you worked on admin. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they're paid with your tutoring in the next pay run.`}>
-          <LogHoursForm today={today} />
+      {(canTutor || canAdmin) && (
+        <Card title="Log hours" description={`Work outside sessions, with a short description of what you did. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they're paid with your tutoring in the next pay run.`}>
+          <LogHoursForm today={today} canTutor={canTutor} canAdmin={canAdmin} />
           {logRows.length > 0 && (
             <div className="mt-6">
               <Table headings={["Day", "What", "Hours", ""]}>
@@ -72,12 +80,14 @@ export default async function MyPayPage() {
                   <tr key={h.id}>
                     <td>{plainDate(h.work_date)}</td>
                     <td>
-                      {h.note}
+                      {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"}: {h.note}
                       {h.status === "declined" && h.review_note ? ` (declined: ${h.review_note})` : ""}
                     </td>
                     <td>{hours(h.minutes)}</td>
                     <td>
-                      {h.status === "submitted" ? (
+                      {h.status === "submitted" && h.source === "guaranteed" ? (
+                        "Waiting for approval"
+                      ) : h.status === "submitted" ? (
                         <form action={withdrawMyHours} className="flex items-center gap-2">
                           <input type="hidden" name="id" value={h.id} />
                           <span>Waiting for approval</span>

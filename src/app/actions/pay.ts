@@ -51,12 +51,21 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
   if (Object.values(rates).some((r) => r === undefined)) {
     return { error: "Enter hourly rates in dollars, for example 34 or 62.88. Leave a rate empty if it doesn't apply." };
   }
+  // Agreed weekly hours, for part-time and full-time staff only.
+  const agreed = String(formData.get("guaranteed_hours") ?? "").trim();
+  let guaranteed: number | null = null;
+  if (parsed.data.employment !== "casual" && agreed !== "") {
+    const h = Number(agreed.replace(",", "."));
+    if (!Number.isFinite(h) || h < 0.25 || h > 60) return { error: "Enter agreed hours per week between 0.25 and 60, or leave it empty." };
+    guaranteed = Math.round(h * 60);
+  }
   const xero = (v?: string) => (v && v.trim() ? v.trim() : null);
   const supabase = await createClient();
   const { error } = await supabase.from("billing_staff_pay").upsert({
     account_id: parsed.data.account_id,
     employment: parsed.data.employment,
     ...rates,
+    guaranteed_weekly_minutes: guaranteed,
     ...(formData.has("xero_employee_id")
       ? {
           xero_employee_id: xero(parsed.data.xero_employee_id),
@@ -107,8 +116,13 @@ export async function workOutPay(_prev: FormState, formData: FormData): Promise<
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("billing_build_pay", { p_from: parsed.data.from, p_to: parsed.data.to });
   if (error) return plain(error, "Couldn't work out pay.");
+  // Then check agreed hours for part-time and full-time staff (only once the pay period has ended).
+  const topUps = await supabase.rpc("billing_check_guaranteed_hours", { p_day: parsed.data.to });
   revalidatePath(PAGE);
-  return { message: `Pay worked out: ${data ?? 0} line(s) waiting to go to Xero.` };
+  const added = topUps.data ?? 0;
+  return {
+    message: `Pay worked out: ${data ?? 0} line(s) waiting to go to Xero.${added > 0 ? ` ${added} guaranteed hours top-up(s) are waiting for approval above.` : ""}`,
+  };
 }
 
 export async function sendTimesheetsNow(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -154,11 +168,15 @@ export async function savePayPeriod(_prev: FormState, formData: FormData): Promi
 // ---------------------------------------------------------------------------
 
 export async function logMyHours(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireViewer();
+  const viewer = await requireViewer();
   const parsed = z
-    .object({ day, hours: z.string(), note: z.string().max(300) })
+    .object({ day, hours: z.string(), note: z.string().max(300), type: z.enum(["tutoring", "admin"]).optional() })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose the day, the hours and what they were for." };
+  // Only admin staff can log office admin; everyone else logs tutoring work.
+  const type = viewer.roles.includes("admin") ? (parsed.data.type ?? null) : "tutoring";
+  if (!type) return { error: "Choose tutoring work or office admin." };
+  if (parsed.data.note.trim().length < 3) return { error: "Please write a short description of what you did." };
   const hours = Number(parsed.data.hours.replace(",", "."));
   if (!Number.isFinite(hours) || hours <= 0) return { error: "Enter the hours, for example 1.5." };
   const supabase = await createClient();
@@ -166,6 +184,7 @@ export async function logMyHours(_prev: FormState, formData: FormData): Promise<
     p_day: parsed.data.day,
     p_minutes: Math.round(hours * 60),
     p_note: parsed.data.note,
+    p_type: type,
   });
   if (error) return plain(error, "Couldn't log the hours. Please try again.");
   revalidatePath("/pay");
