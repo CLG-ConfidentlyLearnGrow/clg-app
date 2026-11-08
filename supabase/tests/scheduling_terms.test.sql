@@ -37,7 +37,10 @@ select tests.fails($$select * from public.school_terms$$, 'anon reads terms');
 reset role;
 
 -- A booking that skips the holidays gets no sessions between terms.
+-- Clear away dates left by earlier tests first: on some days of the week
+-- they land on this booking's dates and drop a session.
 select tests.claims(null);
+delete from public.away_dates where tutor_id = '00000000-0000-0000-0000-000000000013' or student_id = :'sam';
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery,
                              first_date, last_date, status, confirmed_at, skip_holidays)
 select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General Maths',
