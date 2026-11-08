@@ -12,6 +12,7 @@ export type StaffPay = {
   school_rate_cents: number | null;
   tertiary_rate_cents: number | null;
   admin_rate_cents: number | null;
+  guaranteed_weekly_minutes: number | null;
   xero_employee_id: string | null;
   xero_school_rate_id: string | null;
   xero_tertiary_rate_id: string | null;
@@ -58,6 +59,17 @@ export function StaffPayForm({
         <option value="part_time">Part-time</option>
         <option value="full_time">Full-time</option>
       </Select>
+      <Field
+        label="Agreed hours per week (part-time and full-time only)"
+        name="guaranteed_hours"
+        inputMode="decimal"
+        placeholder="For example 10"
+        defaultValue={pay?.guaranteed_weekly_minutes != null ? String(Math.round((pay.guaranteed_weekly_minutes / 60) * 100) / 100) : ""}
+      />
+      <p className="-mt-2 text-xs text-zinc-600">
+        If their sessions and logged hours come to less than this in a pay period (for example in the school holidays), the
+        app adds a top-up for you to approve. Leave empty for casuals.
+      </p>
       {/* One rate for each role the person holds. A rate for a role they
           no longer hold is kept as it is (hidden), so it isn't lost. */}
       {tutor ? (
@@ -178,14 +190,35 @@ export function DeclineHoursForm({ id }: { id: string }) {
   );
 }
 
-export function LogHoursForm({ today }: { today: string }) {
+export function LogHoursForm({ today, canTutor, canAdmin }: { today: string; canTutor: boolean; canAdmin: boolean }) {
   return (
     <ActionForm action={logMyHours} submitLabel="Log hours">
+      {canTutor && canAdmin ? (
+        <fieldset className="space-y-2 text-sm">
+          <legend className="mb-1 font-medium">What kind of hours?</legend>
+          <label className="flex items-start gap-2">
+            <input type="radio" name="type" value="tutoring" required className="mt-1" />
+            <span>
+              <strong>Tutoring work (not sessions)</strong>
+              <span className="block text-zinc-600">Lesson prep, making materials, marking, tutoring-related admin. Paid at your tutoring rate.</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input type="radio" name="type" value="admin" required className="mt-1" />
+            <span>
+              <strong>Office admin</strong>
+              <span className="block text-zinc-600">General CLG office work, such as enquiries, rostering or invoicing. Paid at your admin rate.</span>
+            </span>
+          </label>
+        </fieldset>
+      ) : (
+        <input type="hidden" name="type" value={canAdmin ? "admin" : "tutoring"} />
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Day" name="day" type="date" required max={today} defaultValue={today} />
         <Field label="Hours" name="hours" inputMode="decimal" required placeholder="1.5" />
       </div>
-      <Field label="What it was for" name="note" required minLength={3} maxLength={300} placeholder="For example: progress summaries" />
+      <Field label="What you did" name="note" required minLength={3} maxLength={300} placeholder="For example: made fraction worksheets for Year 7" />
     </ActionForm>
   );
 }
