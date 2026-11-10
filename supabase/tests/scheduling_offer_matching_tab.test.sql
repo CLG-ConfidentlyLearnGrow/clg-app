@@ -43,6 +43,9 @@ select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
 set role authenticated;
 select tests.eq((select (at_max and times = 0)::int from public.matching_shortlist(:'sam', 'General Maths')
   where tutor_id = '00000000-0000-0000-0000-000000000013'), 1, 'tutor at their maximum is flagged and not offered times');
+select tests.eq((select (rank = (select count(*) from public.matching_shortlist(:'sam', 'General Maths')))::int
+  from public.matching_shortlist(:'sam', 'General Maths') where tutor_id = '00000000-0000-0000-0000-000000000013'), 1,
+  'a tutor with no spare hours comes after tutors with room');
 reset role;
 select tests.claims(null);
 update public.tutor_work_settings set max_weekly_hours = 3 where tutor_id = '00000000-0000-0000-0000-000000000013';

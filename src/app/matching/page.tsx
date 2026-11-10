@@ -431,7 +431,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
 
       <Card
         title="Tutors who suit"
-        description="Best fit first: a tutor who already teaches a sibling, then times that suit, then place, then spare hours. Pay rates are not shown."
+        description="Best fit tutor: teaches the subject at the level the student is working at, then a tutor who already teaches a sibling, then spare hours, then a place that suits, then a time that suits. Pay rates are not shown."
       >
         {shortlistRes.error ? (
           <Empty>{shortlistRes.error.message}</Empty>
