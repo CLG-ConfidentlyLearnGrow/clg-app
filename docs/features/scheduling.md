@@ -283,9 +283,12 @@ operations and support admins:
 - One student's full picture: school year and working level, other
   subjects, goal, learning needs, the family's tutor preferences note,
   places, preferred times, siblings and past tutors.
-- A ranked shortlist with the reasons each tutor fits: a tutor who already
-  teaches a sibling first, then times that suit (preferred times first),
-  then place, then spare weekly hours. The top tutor's best time is ready
+- A ranked shortlist with the reasons each tutor fits. Only tutors who
+  teach the subject at the level the student is working at are listed.
+  Best fit order (Carla, 10 Nov 2026): a tutor who already teaches a
+  sibling, then spare hours (room for this session), then a place that
+  suits (one of the student's libraries, or online), then a time that suits
+  (preferred times first). The top tutor's best time is ready
   to offer in one click; choosing another records why.
 - A tutor at their weekly maximum still shows, with a note to ask them
   first if they're the only option. The database never books a tutor past
