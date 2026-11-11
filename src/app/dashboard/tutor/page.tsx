@@ -68,7 +68,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0;
   const section = firstTime ? "teaching" : requested;
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes] = await Promise.all([
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes, libsRes] = await Promise.all([
     supabase
       .from("tutor_assignments")
       .select("id, subject, student:students(id, full_name, year_level)")
@@ -83,7 +83,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
     supabase.from("tutor_work_settings").select("max_weekly_hours").eq("tutor_id", viewer.id).maybeSingle(),
     supabase
       .from("tutor_availability")
-      .select("id, weekday, starts_at, ends_at, in_person, online")
+      .select("id, weekday, starts_at, ends_at, in_person, online, library_id, library:libraries(name)")
       .eq("tutor_id", viewer.id)
       .order("weekday")
       .order("starts_at"),
@@ -113,6 +113,13 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .gte("created_at", new Date(currentTime() - 14 * 24 * 3600 * 1000).toISOString())
       .order("created_at", { ascending: false })
       .limit(20),
+    // Libraries a tutor can pick for a time: confirmed ones, and any they suggested.
+    supabase
+      .from("libraries")
+      .select("id, name, suburb")
+      .eq("active", true)
+      .or(`confirmed_at.not.is.null,suggested_by.eq.${viewer.id}`)
+      .order("name"),
   ]);
   const pauses = (pausesRes.data ?? []) as unknown as {
     id: string;
@@ -403,7 +410,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                     {WEEKDAYS[slot.weekday - 1]} {slot.starts_at.slice(0, 5)} to {slot.ends_at.slice(0, 5)}
                     <span className="text-zinc-600">
                       {" · "}
-                      {slot.in_person && slot.online ? "In person or online" : slot.online ? "Online only" : "In person only"}
+                      {slotPlace(slot)}
                     </span>
                   </span>
                   <form action={removeAvailability}>
@@ -415,10 +422,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 </li>
               ))}
             </ul>
-            <AvailabilityForm />
+            <AvailabilityForm libraries={(libsRes.data ?? []) as { id: string; name: string; suburb: string | null }[]} />
             <p className="mt-3 text-sm text-zinc-600">
-              Choose which libraries you can go to under{" "}
-              <TextLink href="/schedule?section=places">Where you teach</TextLink>.
+              Library not in the list? Suggest it under <TextLink href="/schedule?section=places">Where you teach</TextLink>.
             </p>
           </Card>
         )}
@@ -446,4 +452,12 @@ function CaseloadLine({ info }: { info: Caseload | undefined }) {
       )}
     </p>
   );
+}
+
+// Where a weekly time can be taught, in words.
+function slotPlace(slot: { in_person: boolean; online: boolean; library: unknown }) {
+  const lib = (Array.isArray(slot.library) ? slot.library[0] : slot.library) as { name: string } | null;
+  if (!slot.in_person) return "Online only";
+  const where = lib?.name ?? "any of your libraries (please re-add this time with one library)";
+  return slot.online ? `Online or at ${where}` : `At ${where}`;
 }

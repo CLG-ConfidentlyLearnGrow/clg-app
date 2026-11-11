@@ -403,3 +403,25 @@ group tuition" and "One to one tuition"). Under the Australian Consumer Law
 the family should know what they are booking (how long, and which weeks)
 before agreeing; asking them directly does that. No new personal
 information is collected beyond a date and two yes/no answers.
+
+## A place for each availability time, 11 Nov 2026
+
+Carla asked that tutors give a place for each weekly time: online, one
+library, or online and one library. Never several libraries in one time.
+
+- The tutor's "Add time" form has an Online tick and a Library list (one
+  library). For another library on another day, they add another time.
+- The list shows libraries CLG has confirmed, plus any the tutor suggested
+  that CLG is still checking. The database refuses any other library.
+- Choosing a library for a time also adds it to the tutor's libraries under
+  "Where you teach", so lists of where each tutor works stay right.
+- Finding times offers a time only at its own library. Older times with "in
+  person" ticked but no library still use any of the tutor's libraries until
+  the tutor re-adds them. Where a tutor had only one library, it was filled
+  in for them.
+- The term availability check compares each booking with its own time's
+  library.
+
+Research: giving each slot a fixed place cuts travel between sites and
+keeps sessions regular, which supports the consistent, scheduled tutoring
+the EEF links to better outcomes. No new personal information is collected.

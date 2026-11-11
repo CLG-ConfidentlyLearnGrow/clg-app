@@ -50,22 +50,28 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
   const viewer = await requireTutor();
   const parsed = slotSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  // How the tutor can teach in this time: in person, online, or both.
-  const in_person = formData.get("in_person") === "on";
+  // Where the tutor can teach in this time: online, one library, or both.
   const online = formData.get("online") === "on";
-  if (!in_person && !online) return { error: "Tick in person, online, or both." };
+  const lib = z.union([z.uuid(), z.literal("")]).safeParse(String(formData.get("library_id") ?? ""));
+  if (!lib.success) return { error: "Couldn't read the library you chose." };
+  const library_id = lib.data || null;
+  const in_person = library_id !== null;
+  if (!in_person && !online) return { error: "Choose online, a library, or both." };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("tutor_availability")
-    .insert({ tutor_id: viewer.id, ...parsed.data, in_person, online });
+    .insert({ tutor_id: viewer.id, ...parsed.data, in_person, online, library_id });
   if (error) {
     // Say what went wrong in plain words, so it can be fixed quickly.
     if (error.code === "PGRST204" || error.code === "42703") {
       return {
         error:
-          "The app's database is missing an update, so times can't be saved yet. The owner needs to run the migration 20261103600100_availability_places.sql in Supabase.",
+          "The app's database is missing an update, so times can't be saved yet. The owner needs to run the migration 20261111600400_availability_one_library.sql (and any earlier scheduling updates) in Supabase.",
       };
+    }
+    if (error.code === "22023") {
+      return { error: "That library can't be chosen yet. Pick one from the list, or suggest it under Where you teach." };
     }
     if (error.code === "23503") {
       return { error: "Your tutor profile isn't set up yet. Ask a CLG admin to finish setting up your tutor account." };
