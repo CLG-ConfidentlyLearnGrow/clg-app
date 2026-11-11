@@ -46,6 +46,7 @@ import {
   RenewalForm,
   SignOnForm,
   StudentPlacesForm,
+  type StudentTerm,
   TermForm,
   WaitlistForm,
 } from "./forms";
@@ -525,6 +526,15 @@ async function BookSection({
       ? await supabase.from("student_places").select("online, library_ids").eq("student_id", student.id).maybeSingle()
       : null;
   const saved = savedRes?.data as { online: boolean; library_ids: string[] } | null | undefined;
+  // For the end date: the family's "book until" date and the student's term dates.
+  const [untilRes, termsRes] = student
+    ? await Promise.all([
+        supabase.from("student_places").select("book_until").eq("student_id", student.id).maybeSingle(),
+        supabase.rpc("student_term_dates", { p_student: student.id }),
+      ])
+    : [null, null];
+  const bookUntil = (untilRes?.data?.book_until as string | null | undefined) ?? null;
+  const terms = (termsRes?.data ?? []) as StudentTerm[];
   const online = go ? one(params.online) === "1" : (saved?.online ?? true);
   const chosenLibs = go ? list(params.lib) : (saved?.library_ids ?? []);
   const days = list(params.day).map(Number).filter((d) => d >= 1 && d <= 7);
@@ -729,7 +739,9 @@ async function BookSection({
                       library_id: o.library_id,
                     }}
                     defaultFirst={start}
-                    defaultLast={addDays(start, 70)}
+                    defaultLast={bookUntil ?? ""}
+                    terms={terms}
+                    bookUntil={bookUntil}
                     isAdmin={isAdmin}
                     startOpen={isAdmin && i === 0}
                     suggested={
@@ -974,7 +986,7 @@ async function ChildPlacesSection({
     supabase.from("students").select("id, full_name, account_id, year_level").order("full_name"),
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
     supabase.from("libraries").select("id, name, suburb").eq("active", true).not("confirmed_at", "is", null).order("name"),
-    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences"),
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until"),
   ]);
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
@@ -984,6 +996,15 @@ async function ChildPlacesSection({
     isAdmin && wanted
       ? all.filter((s) => s.id === wanted)
       : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
+  // Each child's term dates, for the "book until" picker.
+  const termsFor = new Map<string, StudentTerm[]>(
+    await Promise.all(
+      students.map(async (s) => {
+        const { data } = await supabase.rpc("student_term_dates", { p_student: s.id });
+        return [s.id as string, (data ?? []) as StudentTerm[]] as const;
+      }),
+    ),
+  );
   const places = new Map(
     (
       (placesRes.data ?? []) as {
@@ -994,6 +1015,7 @@ async function ChildPlacesSection({
         preferred_parts: string[] | null;
         preferred_school_hours: boolean;
         tutor_preferences: string | null;
+        book_until: string | null;
       }[]
     ).map((p) => [p.student_id, p]),
   );
@@ -1030,6 +1052,9 @@ async function ChildPlacesSection({
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
                 showPlaces={isAdmin}
                 tutorPreferences={places.get(s.id)?.tutor_preferences ?? ""}
+                bookUntil={places.get(s.id)?.book_until ?? ""}
+                terms={termsFor.get(s.id) ?? []}
+                today={localToday()}
               />
               <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />
             </div>
