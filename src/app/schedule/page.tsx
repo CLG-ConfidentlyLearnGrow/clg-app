@@ -45,6 +45,7 @@ import {
   PlacesForm,
   RenewalForm,
   SignOnForm,
+  BookingLengthForm,
   StudentPlacesForm,
   type StudentTerm,
   TermForm,
@@ -134,6 +135,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     // Admins set where each student can have sessions; families give
     // preferred times and study dates only (Carla, 2 Nov 2026).
     ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []),
+    ...(canBook ? [{ id: "booking-length", label: "How long to book" }] : []),
     { id: "away", label: "Away dates" },
     ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []),
     { id: "blocks", label: "Blocks" },
@@ -478,6 +480,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
 
       {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
+      {section === "booking-length" && canBook && <BookingLengthSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
     </SectionShell>
   );
 }
@@ -969,6 +972,86 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
+// How long each family wants to book for: the last date, and whether
+// sessions go ahead in school holidays and on public holidays. Families must
+// fill it in; CLG admins can change it (one student at a time, from Matching).
+// ---------------------------------------------------------------------------
+async function BookingLengthSection({
+  viewerId,
+  isAdmin,
+  params,
+}: {
+  viewerId: string;
+  isAdmin: boolean;
+  params: Record<string, string | string[] | undefined>;
+}) {
+  const supabase = await createClient();
+  const [studentsRes, linksRes, placesRes] = await Promise.all([
+    supabase.from("students").select("id, full_name, account_id").order("full_name"),
+    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
+    supabase.from("student_places").select("student_id, book_until, include_school_holidays, include_public_holidays"),
+  ]);
+  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
+  const wanted = one(params.student);
+  const all = studentsRes.data ?? [];
+  const students =
+    isAdmin && wanted ? all.filter((s) => s.id === wanted) : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
+  const places = new Map(
+    (
+      (placesRes.data ?? []) as {
+        student_id: string;
+        book_until: string | null;
+        include_school_holidays: boolean | null;
+        include_public_holidays: boolean | null;
+      }[]
+    ).map((p) => [p.student_id, p]),
+  );
+  const termsFor = new Map<string, StudentTerm[]>(
+    await Promise.all(
+      students.map(async (s) => {
+        const { data } = await supabase.rpc("student_term_dates", { p_student: s.id });
+        return [s.id as string, (data ?? []) as StudentTerm[]] as const;
+      }),
+    ),
+  );
+  return (
+    <Card
+      title="How long to book"
+      description="The last date for sessions, and whether they go ahead in school holidays and on public holidays. CLG needs this before offering times. It can be changed later."
+    >
+      {students.length === 0 ? (
+        isAdmin ? (
+          <Empty>
+            Choose a student from the <TextLink href="/matching">Matching</TextLink> tab to see this.
+          </Empty>
+        ) : (
+          <Empty>No children yet.</Empty>
+        )
+      ) : (
+        <div className="space-y-6">
+          {students.map((s) => {
+            const p = places.get(s.id);
+            return (
+              <div key={s.id} className="space-y-2">
+                <SubHeading>{s.full_name}</SubHeading>
+                <BookingLengthForm
+                  studentId={s.id}
+                  today={localToday()}
+                  terms={termsFor.get(s.id) ?? []}
+                  until={p?.book_until ?? ""}
+                  schoolHolidays={p?.include_school_holidays ?? null}
+                  publicHolidays={p?.include_public_holidays ?? null}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Where and when each student can have sessions. Admins set the places
 // (online and libraries); families give preferred times and study dates.
 // ---------------------------------------------------------------------------
@@ -986,7 +1069,7 @@ async function ChildPlacesSection({
     supabase.from("students").select("id, full_name, account_id, year_level").order("full_name"),
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
     supabase.from("libraries").select("id, name, suburb").eq("active", true).not("confirmed_at", "is", null).order("name"),
-    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until"),
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences"),
   ]);
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
   const wanted = one(params.student);
@@ -996,15 +1079,6 @@ async function ChildPlacesSection({
     isAdmin && wanted
       ? all.filter((s) => s.id === wanted)
       : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
-  // Each child's term dates, for the "book until" picker.
-  const termsFor = new Map<string, StudentTerm[]>(
-    await Promise.all(
-      students.map(async (s) => {
-        const { data } = await supabase.rpc("student_term_dates", { p_student: s.id });
-        return [s.id as string, (data ?? []) as StudentTerm[]] as const;
-      }),
-    ),
-  );
   const places = new Map(
     (
       (placesRes.data ?? []) as {
@@ -1015,7 +1089,6 @@ async function ChildPlacesSection({
         preferred_parts: string[] | null;
         preferred_school_hours: boolean;
         tutor_preferences: string | null;
-        book_until: string | null;
       }[]
     ).map((p) => [p.student_id, p]),
   );
@@ -1052,9 +1125,6 @@ async function ChildPlacesSection({
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false}
                 showPlaces={isAdmin}
                 tutorPreferences={places.get(s.id)?.tutor_preferences ?? ""}
-                bookUntil={places.get(s.id)?.book_until ?? ""}
-                terms={termsFor.get(s.id) ?? []}
-                today={localToday()}
               />
               <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />
             </div>

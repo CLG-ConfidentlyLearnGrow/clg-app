@@ -374,22 +374,32 @@ waiting first" rule). No new personal information is collected.
 ## Booking end dates, 11 Nov 2026
 
 Carla asked that end dates are never guessed, that the student's term dates
-are shown so the right end can be picked, and that parents say how long
-they want to book for.
+are shown so the right end can be picked, and that families say how long
+they want to book for as its own step, separate from preferred times.
 
-- Families add "Book sessions until" in each child's preferred times. It
-  must be from today and no more than a year ahead.
+- A "How long to book" tab under Sessions asks each family, for each child:
+  the last date for sessions (from today, up to a year ahead), whether
+  sessions go ahead in school holidays, and whether they go ahead on public
+  holidays. All three are needed. Families are told they can change it
+  later.
+- CLG admins can change it for a family (Matching shows it, with a Change
+  link).
 - When CLG offers a time (Matching, or Book a session), the last date is
-  the family's "book until" date. If the family hasn't given one, it is
-  left blank for the admin to fill in. The app no longer fills in 10 weeks.
+  the family's date. If the family hasn't answered, it is left blank for the
+  admin to fill in. The app no longer fills in 10 weeks.
+- A new booking copies the family's holiday answers (skip_holidays and
+  skip_public_holidays). Renewals keep their own choice.
 - Beside every last-date box there is a list of the student's term dates
   (from their school calendar, the private school calendar or their own
   study periods), so the end of a term can be picked in one step.
 - Only the family, the student (with their own login) and CLG admins can
-  see a student's term dates (student_term_dates).
+  see a student's term dates (student_term_dates) or set the booking length
+  (set_booking_length).
 
 Research: matching tutoring blocks to school terms supports regular,
 sustained sessions, which the EEF and Evidence for Learning toolkits link
 to the strongest tutoring gains (EEF Teaching and Learning Toolkit, "Small
-group tuition" and "One to one tuition"). No new personal information is
-collected beyond a date.
+group tuition" and "One to one tuition"). Under the Australian Consumer Law
+the family should know what they are booking (how long, and which weeks)
+before agreeing; asking them directly does that. No new personal
+information is collected beyond a date and two yes/no answers.

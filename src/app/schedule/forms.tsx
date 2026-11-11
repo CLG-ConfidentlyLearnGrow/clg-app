@@ -16,6 +16,7 @@ import {
   saveNoticeSettings,
   recordOutcome,
   requestBooking,
+  saveBookingLength,
   saveStudentPlaces,
   saveTutorPlaces,
   signOn,
@@ -28,6 +29,61 @@ import { BusyButton } from "@/components/busy-button";
 import { SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, placeLabel } from "@/lib/scheduling";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
+
+// How long the family wants to book for: a last date, and whether sessions
+// go ahead in school holidays and on public holidays. Needed before CLG
+// offers times. Families can change it later; CLG admins can change it too.
+export function BookingLengthForm({
+  studentId,
+  today,
+  terms,
+  until,
+  schoolHolidays,
+  publicHolidays,
+}: {
+  studentId: string;
+  today: string;
+  terms: StudentTerm[];
+  until: string;
+  schoolHolidays: boolean | null;
+  publicHolidays: boolean | null;
+}) {
+  const missing = !until || schoolHolidays === null || publicHolidays === null;
+  const yesNo = (name: string, label: string, current: boolean | null) => (
+    <fieldset className="space-y-1">
+      <legend className="text-sm font-medium text-zinc-800">{label}</legend>
+      <div className="flex gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input type="radio" name={name} value="yes" defaultChecked={current === true} required /> Yes
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name={name} value="no" defaultChecked={current === false} required /> No
+        </label>
+      </div>
+    </fieldset>
+  );
+  return (
+    <ActionForm action={saveBookingLength} submitLabel="Save">
+      <input type="hidden" name="student_id" value={studentId} />
+      {missing && (
+        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          Please fill this in. CLG needs it before offering session times.
+        </p>
+      )}
+      <LastDateField
+        name="book_until"
+        label="Book sessions until"
+        min={today}
+        defaultValue={until}
+        terms={terms}
+        hint="For example, the end of this term or the end of the school year (up to a year ahead)."
+      />
+      {yesNo("school_holidays", "Sessions during school holidays?", schoolHolidays)}
+      {yesNo("public_holidays", "Sessions on public holidays?", publicHolidays)}
+      <p className="text-xs text-zinc-600">You can change these later, here or by asking CLG.</p>
+    </ActionForm>
+  );
+}
 
 // A term or study period from the student's school calendar.
 export type StudentTerm = { label: string; starts_on: string; ends_on: string };
@@ -811,9 +867,6 @@ export function StudentPlacesForm({
   schoolHours = false,
   showPlaces = true,
   tutorPreferences = "",
-  bookUntil = "",
-  terms = [],
-  today,
 }: {
   studentId: string;
   libraries: { id: string; name: string; suburb: string | null }[];
@@ -825,9 +878,6 @@ export function StudentPlacesForm({
   // Admins choose places; families only give preferred times.
   showPlaces?: boolean;
   tutorPreferences?: string;
-  bookUntil?: string;
-  terms?: StudentTerm[];
-  today: string;
 }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const box = "flex items-start gap-2 text-sm";
@@ -888,15 +938,6 @@ export function StudentPlacesForm({
           it doesn&apos;t suit.
         </p>
       </fieldset>
-      <LastDateField
-        name="book_until"
-        label="Book sessions until (optional)"
-        min={today}
-        defaultValue={bookUntil}
-        terms={terms}
-        required={false}
-        hint="How long you'd like to book for, for example to the end of this term or the school year. CLG uses this as the last date when offering times."
-      />
       <TextArea
         label="Tutor preferences (optional)"
         name="tutor_preferences"

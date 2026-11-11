@@ -305,7 +305,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       .order("added_at"),
     supabase
       .from("student_places")
-      .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until")
+      .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until, include_school_holidays, include_public_holidays")
       .eq("student_id", studentId)
       .maybeSingle(),
     supabase.from("libraries").select("id, name, active, confirmed_at").order("name"),
@@ -340,6 +340,8 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
     preferred_school_hours: boolean;
     tutor_preferences: string | null;
     book_until: string | null;
+    include_school_holidays: boolean | null;
+    include_public_holidays: boolean | null;
   } | null;
   const terms = (termsRes.data ?? []) as StudentTerm[];
   const libraryName = new Map((librariesRes.data ?? []).map((l) => [l.id as string, l.name as string]));
@@ -425,7 +427,20 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
           <Detail label="Goal">{student.goals || "None given"}</Detail>
           <Detail label="Learning needs">{student.learning_needs || "None given"}</Detail>
           <Detail label="Tutor preferences">{places?.tutor_preferences || "None given"}</Detail>
-          <Detail label="Book until">{places?.book_until ? shortDate(places.book_until) : "Not given yet"}</Detail>
+          <Detail label="How long to book">
+            {places?.book_until ? (
+              <>
+                Until {shortDate(places.book_until)}
+                {places.include_school_holidays !== null &&
+                  `, ${places.include_school_holidays ? "including" : "not in"} school holidays`}
+                {places.include_public_holidays !== null &&
+                  `, ${places.include_public_holidays ? "including" : "not on"} public holidays`}
+              </>
+            ) : (
+              <span className="text-amber-800">Family hasn&apos;t said yet</span>
+            )}{" "}
+            <TextLink href={`/schedule?section=booking-length&student=${student.id}`}>Change</TextLink>
+          </Detail>
           <Detail label="Places">
             {places
               ? [places.online ? "Online" : null, ...places.library_ids.map((id) => libraryName.get(id) ?? "a library")]

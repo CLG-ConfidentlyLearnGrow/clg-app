@@ -595,6 +595,31 @@ export async function confirmAvailability(_prev: FormState, formData: FormData):
 // ---------------------------------------------------------------------------
 // Where a child can have sessions (families and admins)
 // ---------------------------------------------------------------------------
+// How long the family wants to book for (families and CLG admins).
+const bookingLengthSchema = z.object({
+  student_id: z.uuid("Couldn't read which child this is for."),
+  book_until: z.iso.date("Please choose the last date."),
+  school_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead in school holidays."),
+  public_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead on public holidays."),
+});
+
+export async function saveBookingLength(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const v = bookingLengthSchema.safeParse(Object.fromEntries(formData));
+  if (!v.success) return { error: v.error.issues[0].message };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_booking_length", {
+    p_student: v.data.student_id,
+    p_until: v.data.book_until,
+    p_school_holidays: v.data.school_holidays === "yes",
+    p_public_holidays: v.data.public_holidays === "yes",
+  });
+  if (error) {
+    return { error: error.code === "23514" ? "The last date must be from today and within a year." : plainError(error, "Couldn't save this.") };
+  }
+  return done("Saved. You can change this at any time.");
+}
+
 export async function saveStudentPlaces(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer();
   const student = z.uuid().safeParse(formData.get("student_id"));
@@ -616,8 +641,6 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   } else if (!online && libraryIds.length === 0) {
     return { error: "Choose online, at least one library, or both." };
   }
-  const bookUntil = z.union([z.iso.date(), z.literal("")]).safeParse(String(formData.get("book_until") ?? ""));
-  if (!bookUntil.success) return { error: "Please enter the \"book until\" date as a date." };
   const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
   const PARTS = ["morning", "midday", "afternoon", "evening"];
   const parts = formData.getAll("preferred_part").map(String).filter((p) => PARTS.includes(p));
@@ -633,8 +656,7 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
     preferred_to: null,
     preferred_school_hours: formData.get("preferred_school_hours") === "on",
     tutor_preferences: String(formData.get("tutor_preferences") ?? "").trim().slice(0, 1000) || null,
-    book_until: bookUntil.data || null,
   });
-  if (error) return { error: error.code === "23514" ? "The \"book until\" date must be from today and within a year." : "Couldn't save the places." };
+  if (error) return { error: "Couldn't save the places." };
   return done("Saved. Offers will start from these places and preferences.");
 }
