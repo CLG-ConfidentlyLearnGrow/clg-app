@@ -139,6 +139,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
       <SectionShell
         basePath="/admin"
         label="Admin"
+        role="admin"
         section="matching"
         sections={adminSections.map((s) => ({ id: s.id, label: s.label }))}
       >

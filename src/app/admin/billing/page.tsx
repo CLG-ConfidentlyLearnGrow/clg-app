@@ -144,6 +144,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
       <SectionShell
         basePath="/admin/billing"
         label="Billing"
+        role="admin"
         section={section}
         sections={SECTIONS.map((s) => ({
           ...s,

@@ -63,7 +63,7 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
   return (
     <>
       <RoleTabs roles={viewer.roles} active="admin" />
-      <Page title={m.title} intro={`${m.subject}, ${yearRange(m.from_level, m.to_level)}. ${MATERIAL_STATUS_NAMES[m.status] ?? m.status}.`}>
+      <Page role="admin" title={m.title} intro={`${m.subject}, ${yearRange(m.from_level, m.to_level)}. ${MATERIAL_STATUS_NAMES[m.status] ?? m.status}.`}>
         <p className="text-sm">
           <TextLink href="/admin/materials?section=library">Back to the library</TextLink>
           {" · "}

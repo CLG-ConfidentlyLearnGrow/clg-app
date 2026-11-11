@@ -59,6 +59,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
       <SectionShell
         basePath="/admin/teams"
         label="Teams links"
+        role="admin"
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "sessions" ? failures.length || undefined : undefined }))}
       >

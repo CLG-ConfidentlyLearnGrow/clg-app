@@ -149,6 +149,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       <SectionShell
         basePath="/dashboard/tutor"
         label="Tutor"
+        role="tutor"
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "checks" && problems ? problems : undefined }))}
       >
