@@ -2,6 +2,8 @@ import { requireFamilyAgreement } from "@/lib/consent";
 import { redirect } from "next/navigation";
 import { Card, Empty, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
+import { CountBadge } from "@/components/count-badge";
+import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -38,10 +40,27 @@ export default async function StudentDashboard() {
     : null;
   const steps = (stepsRes?.data ?? []) as Step[];
 
+  // Numbers where something needs doing: overdue steps, and billing for an
+  // adult learner who pays for themselves (a parent sees billing on theirs).
+  const todo = await getToDoCounts(viewer.roles);
+  const familyBilling = viewer.roles.includes("parent") ? undefined : todo.get("family", "billing");
+
   return (
     <>
       <RoleTabs roles={viewer.roles} active="student" />
-      <SectionShell basePath="/dashboard/student" label="Student" role="student" section="learning" sections={[...SECTIONS]}>
+      <SectionShell
+        basePath="/dashboard/student"
+        label="Student"
+        role="student"
+        section="learning"
+        sections={SECTIONS.map((s) => ({ ...s, count: todo.forRole("student") }))}
+      >
+        {familyBilling && (
+          <p className="text-sm">
+            <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>{" "}
+            <CountBadge n={familyBilling} className="bg-student-strong text-white" />
+          </p>
+        )}
         {onHold.data === true && (
           <Card title="Sessions on hold">
             <p className="text-sm">

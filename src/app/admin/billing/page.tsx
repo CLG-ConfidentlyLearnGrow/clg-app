@@ -1,5 +1,6 @@
 import { approveInvoice, removeSplit } from "@/app/actions/billing";
 import { RoleTabs } from "@/components/role-tabs";
+import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { FINANCE, PAY, requireAdminLevel } from "@/lib/auth";
@@ -119,7 +120,6 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   const overrideOf = new Map((overrides.data ?? []).map((o) => [o.family_id, o]));
   const sessionPrices = (prices.data ?? []).filter((p) => p.unit === "hour").map((p) => ({ id: p.id, name: p.name }));
   const invoiceRows = (invoices.data ?? []) as Invoice[];
-  const waiting = invoiceRows.filter((i) => i.status === "draft" || i.status === "awaiting_approval");
   const paused = familyRows.filter((f) => accountOf.get(f.id)?.paused);
 
   let xeroName: string | null = null;
@@ -138,6 +138,9 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   }
   const xeroNote = typeof params.xero === "string" ? XERO_NOTES[params.xero] : undefined;
 
+  // Numbers on the menu: families on hold, invoices and staff hours to approve.
+  const todo = await getToDoCounts(viewer.roles);
+
   return (
     <>
       <RoleTabs roles={viewer.roles} active="admin" />
@@ -146,10 +149,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
         label="Billing"
         role="admin"
         section={section}
-        sections={SECTIONS.map((s) => ({
-          ...s,
-          count: s.id === "families" ? paused.length || undefined : s.id === "invoices" ? waiting.length || undefined : undefined,
-        }))}
+        sections={SECTIONS.map((s) => ({ ...s, count: todo.get("billing", s.id) }))}
       >
         <p className="text-sm">
           <TextLink href="/admin">Back to admin</TextLink>

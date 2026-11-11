@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { removeAvailability, removeTeaching } from "@/app/actions/tutor";
 import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
+import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
@@ -149,6 +150,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   }[]).filter((a) => a.student);
   const clearedStates = (states.data ?? []).map((s) => STATE_NAMES[s.state as AuState] ?? s.state);
   const problems = statusRows.filter((c) => c.status !== "current").length;
+  // Numbers on the menu: notes, reviews and uploads to look at, what you
+  // teach if it's empty, and checks to renew.
+  const todo = await getToDoCounts(viewer.roles);
 
   return (
     <>
@@ -158,7 +162,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         label="Tutor"
         role="tutor"
         section={section}
-        sections={SECTIONS.map((s) => ({ ...s, count: s.id === "checks" && problems ? problems : undefined }))}
+        sections={SECTIONS.map((s) => ({ ...s, count: todo.get("tutor", s.id) }))}
       >
         <p className="text-sm">
           <TextLink href="/pay">My pay</TextLink>

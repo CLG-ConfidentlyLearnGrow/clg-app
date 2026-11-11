@@ -21,7 +21,8 @@ import { AddOnsSection } from "./add-ons-section";
 import { LeavingSection } from "./leaving-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { schedulingCounts } from "@/lib/scheduling-counts";
+import { getToDoCounts } from "@/lib/to-do-counts";
+import { CountBadge } from "@/components/count-badge";
 import { redirect } from "next/navigation";
 import { checkName, type AuState } from "@/lib/checks";
 import {
@@ -307,8 +308,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     })[]
   ).map((l) => ({ ...l, parent: l.parent?.account ?? null }));
 
-  // Matching: subjects waiting for a tutor, shown as a number on the menu.
-  const schedCounts = await schedulingCounts(await createClient());
+  // Numbers on the menu where something needs doing (one list for the whole app).
+  const todo = await getToDoCounts(viewer.roles);
+  const billingToDo = [todo.get("billing", "families"), todo.get("billing", "invoices"), todo.get("billing", "pay")]
+    .reduce<number>((t, n) => t + (n ?? 0), 0);
 
   return (
     <>
@@ -318,21 +321,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         label="Admin"
         role="admin"
         section={section}
-        sections={visibleSections.map((s) => ({
-          ...s,
-          count:
-            s.id === "families"
-              ? pendingLinks.length + duplicates.length
-              : s.id === "tutors"
-                ? pendingCheckRows.length
-                : s.id === "curriculum" && drafts.length
-                  ? drafts.length
-                  : s.id === "records"
-                    ? dueRows.length
-                    : s.id === "matching"
-                      ? schedCounts.matching || undefined
-                      : undefined,
-        }))}
+        sections={visibleSections.map((s) => ({ ...s, count: todo.get("admin", s.id) }))}
       >
         <p className="text-sm text-zinc-600">
           Your admin level: <strong>{ADMIN_LEVEL_NAMES[viewer.level]}</strong>
@@ -349,7 +338,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         )}
         {isFull ? (
           <p className="text-sm">
-            <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>
+            <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>{" "}
+            <CountBadge n={billingToDo} className="bg-admin-strong text-white" />
             {" · "}
             <TextLink href="/admin/teams">Teams links for online sessions</TextLink>
             {" · "}
@@ -851,7 +841,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               title="Privacy requests and breaches"
               description="Requests from families and staff to see, fix or delete information, and the register of suspected data breaches with their deadlines."
             >
-              <TextLink href="/admin/privacy">Open privacy requests and the breach register</TextLink>
+              <TextLink href="/admin/privacy">Open privacy requests and the breach register</TextLink>{" "}
+              <CountBadge
+                n={(todo.get("privacy", "requests") ?? 0) + (todo.get("privacy", "incidents") ?? 0)}
+                className="bg-admin-strong text-white"
+              />
             </Card>
 
             <Card
