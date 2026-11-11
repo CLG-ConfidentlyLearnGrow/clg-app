@@ -91,6 +91,7 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps<"/a
       <SectionShell
         basePath="/admin/materials"
         label="Materials"
+        role="admin"
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "library" ? needs.length || undefined : undefined }))}
       >

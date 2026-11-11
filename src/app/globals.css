@@ -40,6 +40,26 @@
   --color-brand: #a8815b;
   --color-cream: #ede8e4;
   --color-charcoal: #414042;
+
+  /*
+    Each dashboard has its own colour, so it's clear which profile you're in.
+    All are soft, earthy shades that sit with the bronze brand.
+      accent  bars, dots and borders (decoration only)
+      strong  text and white-on-colour labels (at least 4.5:1 contrast)
+      tint    pale backgrounds behind strong text
+  */
+  --color-admin-accent: #6b6870;
+  --color-admin-strong: #414042;
+  --color-admin-tint: #e8e6ea;
+  --color-tutor-accent: #a8815b;
+  --color-tutor-strong: #76573a;
+  --color-tutor-tint: #efe6dc;
+  --color-parent-accent: #7c9a78;
+  --color-parent-strong: #486a4c;
+  --color-parent-tint: #e2ece0;
+  --color-student-accent: #6e8fb0;
+  --color-student-strong: #3d5d7e;
+  --color-student-tint: #e0e9f2;
 }
 
 body {

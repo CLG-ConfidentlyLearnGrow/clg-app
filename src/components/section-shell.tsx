@@ -3,24 +3,35 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { PageTitle } from "@/components/ui";
+import type { Role } from "@/lib/auth";
+import { ROLE_THEME } from "@/lib/role-theme";
 
 type Section = { id: string; label: string; count?: number };
 
 // Dashboard layout: side headings for each section, which can be hidden to
 // give the page more room. On phones the menu opens from a button at the top.
+// "role" colours the menu and heading in that dashboard's colour.
 export function SectionShell({
   basePath,
   label,
+  role,
   section,
   sections,
   children,
 }: {
   basePath: string;
   label: string;
+  role?: Role;
   section: string;
   sections: Section[];
   children: ReactNode;
 }) {
+  const theme = role ? ROLE_THEME[role] : null;
+  const activeItem = theme ? `${theme.strongBg} font-medium text-white` : "bg-teal-700 font-medium text-white";
+  const idleItem = `text-zinc-800 ${theme ? theme.hoverTint : "hover:bg-teal-100"}`;
+  const activeCount = `bg-white ${theme ? theme.strongText : "text-teal-800"}`;
+  const idleCount = `${theme ? theme.strongBg : "bg-teal-500"} text-white`;
+  const menuBox = `rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm ${theme ? `border-t-4 ${theme.accentTopBorder}` : ""}`;
   const [open, setOpen] = useState(true);
   const [phoneOpen, setPhoneOpen] = useState(false);
 
@@ -42,13 +53,13 @@ export function SectionShell({
                 onClick={() => setPhoneOpen(false)}
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
-                  active ? "bg-teal-700 font-medium text-white" : "text-zinc-800 hover:bg-teal-100"
+                  active ? activeItem : idleItem
                 }`}
               >
                 <span>{s.label}</span>
                 {s.count ? (
                   <span
-                    className={`rounded-full px-2 text-xs ${active ? "bg-white text-teal-800" : "bg-teal-500 text-white"}`}
+                    className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`}
                   >
                     {s.count}
                   </span>
@@ -77,7 +88,7 @@ export function SectionShell({
             {open && <span>Hide menu</span>}
             {!open && <span className="sr-only">Show menu</span>}
           </button>
-          {open && <div className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {open && <div className={menuBox}>{links}</div>}
         </div>
       </aside>
 
@@ -95,10 +106,10 @@ export function SectionShell({
             </span>
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>
           </button>
-          {phoneOpen && <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">{links}</div>}
+          {phoneOpen && <div className={`mt-2 ${menuBox}`}>{links}</div>}
         </div>
 
-        <PageTitle title={current?.label ?? label} />
+        <PageTitle title={current?.label ?? label} role={role} />
         <div className="space-y-6">{children}</div>
       </div>
     </div>

@@ -312,6 +312,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       <SectionShell
         basePath="/admin"
         label="Admin"
+        role="admin"
         section={section}
         sections={visibleSections.map((s) => ({
           ...s,

@@ -74,7 +74,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
   return (
     <>
       <RoleTabs roles={viewer.roles} active="parent" />
-      <SectionShell basePath="/dashboard/parent" label="Parent" section={section} sections={[...SECTIONS]}>
+      <SectionShell basePath="/dashboard/parent" label="Parent" role="parent" section={section} sections={[...SECTIONS]}>
         {section === "children" && (
           <>
             {unfinished.map(({ child, missing }) => (

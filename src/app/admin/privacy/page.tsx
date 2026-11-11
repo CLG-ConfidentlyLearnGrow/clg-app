@@ -80,6 +80,7 @@ export default async function AdminPrivacyPage({ searchParams }: PageProps<"/adm
       <SectionShell
         basePath="/admin/privacy"
         label="Privacy"
+        role="admin"
         section={section}
         sections={SECTIONS.map((s) => ({
           ...s,

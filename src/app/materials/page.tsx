@@ -89,10 +89,12 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
     byStudent.set(s.student_id, entry);
   }
 
+  const materialsRole = viewer.roles.includes("tutor") ? "tutor" : "admin";
   return (
     <>
-      <RoleTabs roles={viewer.roles} active={viewer.roles.includes("tutor") ? "tutor" : "admin"} />
+      <RoleTabs roles={viewer.roles} active={materialsRole} />
       <Page
+        role={materialsRole}
         title="Materials"
         intro="CLG's own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and don't share, upload or keep copies."
       >

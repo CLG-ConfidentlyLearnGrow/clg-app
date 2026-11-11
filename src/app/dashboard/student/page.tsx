@@ -41,7 +41,7 @@ export default async function StudentDashboard() {
   return (
     <>
       <RoleTabs roles={viewer.roles} active="student" />
-      <SectionShell basePath="/dashboard/student" label="Student" section="learning" sections={[...SECTIONS]}>
+      <SectionShell basePath="/dashboard/student" label="Student" role="student" section="learning" sections={[...SECTIONS]}>
         {onHold.data === true && (
           <Card title="Sessions on hold">
             <p className="text-sm">

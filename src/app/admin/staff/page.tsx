@@ -40,6 +40,7 @@ export default async function StaffDirectoryPage() {
           <TextLink href={back.href}>{back.label}</TextLink>
         </p>
         <PageTitle
+          role="admin"
           title="Staff directory"
           intro={
             canEdit

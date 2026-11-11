@@ -1,21 +1,45 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import type { Role } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
+import { ROLE_THEME } from "@/lib/role-theme";
 
-export function Page({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function Page({
+  title,
+  intro,
+  role,
+  children,
+}: {
+  title: string;
+  intro?: ReactNode;
+  role?: Role;
+  children: ReactNode;
+}) {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
-      <PageTitle title={title} intro={intro} />
+      <PageTitle title={title} intro={intro} role={role} />
       <div className="space-y-6">{children}</div>
     </main>
   );
 }
 
-export function PageTitle({ title, intro }: { title: string; intro?: ReactNode }) {
+// The page heading. With "role", a coloured label above it names the
+// dashboard (e.g. "Parent dashboard") and the bar under it takes that
+// dashboard's colour, so it's clear which profile you're in.
+export function PageTitle({ title, intro, role }: { title: string; intro?: ReactNode; role?: Role }) {
+  const theme = role ? ROLE_THEME[role] : null;
   return (
     <div className="mb-8">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
-      <div className="mt-3 h-1 w-12 rounded-full bg-brand" aria-hidden />
+      {theme && (
+        <p
+          className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${theme.tintBg} ${theme.strongText}`}
+        >
+          <span className={`h-2 w-2 rounded-full ${theme.accent}`} aria-hidden />
+          {theme.title}
+        </p>
+      )}
+      <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${theme ? theme.strongText : ""}`}>{title}</h1>
+      <div className={`mt-3 h-1 w-12 rounded-full ${theme ? theme.accent : "bg-brand"}`} aria-hidden />
       {intro && <p className="mt-4 max-w-2xl text-zinc-600">{intro}</p>}
     </div>
   );
