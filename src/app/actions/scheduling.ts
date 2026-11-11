@@ -70,8 +70,12 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
       (suggestion.data.suggested_library || "") !== (v.library_id || ""));
   if (changed && !suggestion.data.change_reason) return { error: "Please say why you didn't use the suggested time." };
 
+  // "Another time or place" (CLG admins only): outside the tutor's availability.
+  const other = isAdmin && formData.get("other") === "1";
+  if (other && suggestion?.success && !suggestion.data.change_reason) return { error: "Please say why you didn't use the suggested time." };
+
   const supabase = await createClient();
-  const { data: bookingId, error } = await supabase.rpc("request_booking", {
+  const { data: bookingId, error } = await supabase.rpc(other ? "offer_other_time" : "request_booking", {
     p_student: v.student_id,
     p_subject: v.subject,
     p_tutor: v.tutor_id,

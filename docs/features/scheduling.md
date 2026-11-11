@@ -328,3 +328,27 @@ term (NSSA implementation toolkit).
   never by tutors.
 - *UK and EU later:* the same data-minimising approach fits UK GDPR and the
   EU GDPR (Article 5, data minimisation) and the UK Equality Act 2010.
+
+## Changing the time and place on an offer, 11 Nov 2026
+
+Carla asked to be able to change the time and place before offering a tutor.
+
+- Each tutor on the Matching card has "Offer this tutor". It starts on the
+  best time, and a list shows all of that tutor's other suitable times and
+  places (preferred times are marked).
+- "Another time or place" lets an admin type any day, start time, length and
+  place (online or a confirmed library), even outside the tutor's
+  availability. The admin is reminded to check with the tutor first.
+- Anything but the app's suggestion asks for a reason, which feeds the
+  "why a different choice" report (as before).
+- The tutor and the family still both approve before anything is booked.
+- For another time or place the database still checks the tutor is active,
+  cleared for the student's state, teaches the subject at the student's
+  level, isn't blocked from this student, has room under their weekly
+  maximum and has no other booking at that time (offer_other_time).
+
+Research: keeping an admin in the loop for exceptions, with a recorded
+reason, matches the brief's "people decide, the app suggests" approach and
+lets CLG see where the suggestions fall short (EEF guidance on using data
+to improve implementation). No new personal information is collected.
+
