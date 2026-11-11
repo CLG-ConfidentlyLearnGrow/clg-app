@@ -122,6 +122,7 @@ export async function answerBooking(_prev: FormState, formData: FormData): Promi
   await requireViewer();
   const parsed = answerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose accept or decline." };
+  if (parsed.data.answer === "decline" && !parsed.data.note?.trim()) return { error: "Please give a reason for declining." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("respond_to_booking", {
@@ -144,6 +145,7 @@ export async function approveBooking(_prev: FormState, formData: FormData): Prom
   await requireViewer();
   const parsed = answerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose approve or decline." };
+  if (parsed.data.answer === "decline" && !parsed.data.note?.trim()) return { error: "Please give a reason for declining." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("approve_booking", {
     p_booking: parsed.data.booking_id,
@@ -593,6 +595,31 @@ export async function confirmAvailability(_prev: FormState, formData: FormData):
 // ---------------------------------------------------------------------------
 // Where a child can have sessions (families and admins)
 // ---------------------------------------------------------------------------
+// How long the family wants to book for (families and CLG admins).
+const bookingLengthSchema = z.object({
+  student_id: z.uuid("Couldn't read which child this is for."),
+  book_until: z.iso.date("Please choose the last date."),
+  school_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead in school holidays."),
+  public_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead on public holidays."),
+});
+
+export async function saveBookingLength(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer();
+  const v = bookingLengthSchema.safeParse(Object.fromEntries(formData));
+  if (!v.success) return { error: v.error.issues[0].message };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_booking_length", {
+    p_student: v.data.student_id,
+    p_until: v.data.book_until,
+    p_school_holidays: v.data.school_holidays === "yes",
+    p_public_holidays: v.data.public_holidays === "yes",
+  });
+  if (error) {
+    return { error: error.code === "23514" ? "The last date must be from today and within a year." : plainError(error, "Couldn't save this.") };
+  }
+  return done("Saved. You can change this at any time.");
+}
+
 export async function saveStudentPlaces(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer();
   const student = z.uuid().safeParse(formData.get("student_id"));

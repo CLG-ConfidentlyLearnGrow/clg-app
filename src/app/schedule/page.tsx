@@ -45,7 +45,9 @@ import {
   PlacesForm,
   RenewalForm,
   SignOnForm,
+  BookingLengthForm,
   StudentPlacesForm,
+  type StudentTerm,
   TermForm,
   WaitlistForm,
 } from "./forms";
@@ -133,6 +135,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     // Admins set where each student can have sessions; families give
     // preferred times and study dates only (Carla, 2 Nov 2026).
     ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []),
+    ...(canBook ? [{ id: "booking-length", label: "How long to book" }] : []),
     { id: "away", label: "Away dates" },
     ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []),
     { id: "blocks", label: "Blocks" },
@@ -477,6 +480,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
 
       {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
+      {section === "booking-length" && canBook && <BookingLengthSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}
     </SectionShell>
   );
 }
@@ -525,6 +529,15 @@ async function BookSection({
       ? await supabase.from("student_places").select("online, library_ids").eq("student_id", student.id).maybeSingle()
       : null;
   const saved = savedRes?.data as { online: boolean; library_ids: string[] } | null | undefined;
+  // For the end date: the family's "book until" date and the student's term dates.
+  const [untilRes, termsRes] = student
+    ? await Promise.all([
+        supabase.from("student_places").select("book_until").eq("student_id", student.id).maybeSingle(),
+        supabase.rpc("student_term_dates", { p_student: student.id }),
+      ])
+    : [null, null];
+  const bookUntil = (untilRes?.data?.book_until as string | null | undefined) ?? null;
+  const terms = (termsRes?.data ?? []) as StudentTerm[];
   const online = go ? one(params.online) === "1" : (saved?.online ?? true);
   const chosenLibs = go ? list(params.lib) : (saved?.library_ids ?? []);
   const days = list(params.day).map(Number).filter((d) => d >= 1 && d <= 7);
@@ -729,7 +742,9 @@ async function BookSection({
                       library_id: o.library_id,
                     }}
                     defaultFirst={start}
-                    defaultLast={addDays(start, 70)}
+                    defaultLast={bookUntil ?? ""}
+                    terms={terms}
+                    bookUntil={bookUntil}
                     isAdmin={isAdmin}
                     startOpen={isAdmin && i === 0}
                     suggested={
@@ -951,6 +966,86 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) {
             </li>
           ))}
         </ul>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// How long each family wants to book for: the last date, and whether
+// sessions go ahead in school holidays and on public holidays. Families must
+// fill it in; CLG admins can change it (one student at a time, from Matching).
+// ---------------------------------------------------------------------------
+async function BookingLengthSection({
+  viewerId,
+  isAdmin,
+  params,
+}: {
+  viewerId: string;
+  isAdmin: boolean;
+  params: Record<string, string | string[] | undefined>;
+}) {
+  const supabase = await createClient();
+  const [studentsRes, linksRes, placesRes] = await Promise.all([
+    supabase.from("students").select("id, full_name, account_id").order("full_name"),
+    supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId),
+    supabase.from("student_places").select("student_id, book_until, include_school_holidays, include_public_holidays"),
+  ]);
+  const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string));
+  const wanted = one(params.student);
+  const all = studentsRes.data ?? [];
+  const students =
+    isAdmin && wanted ? all.filter((s) => s.id === wanted) : all.filter((s) => mine.has(s.id) || s.account_id === viewerId);
+  const places = new Map(
+    (
+      (placesRes.data ?? []) as {
+        student_id: string;
+        book_until: string | null;
+        include_school_holidays: boolean | null;
+        include_public_holidays: boolean | null;
+      }[]
+    ).map((p) => [p.student_id, p]),
+  );
+  const termsFor = new Map<string, StudentTerm[]>(
+    await Promise.all(
+      students.map(async (s) => {
+        const { data } = await supabase.rpc("student_term_dates", { p_student: s.id });
+        return [s.id as string, (data ?? []) as StudentTerm[]] as const;
+      }),
+    ),
+  );
+  return (
+    <Card
+      title="How long to book"
+      description="The last date for sessions, and whether they go ahead in school holidays and on public holidays. CLG needs this before offering times. It can be changed later."
+    >
+      {students.length === 0 ? (
+        isAdmin ? (
+          <Empty>
+            Choose a student from the <TextLink href="/matching">Matching</TextLink> tab to see this.
+          </Empty>
+        ) : (
+          <Empty>No children yet.</Empty>
+        )
+      ) : (
+        <div className="space-y-6">
+          {students.map((s) => {
+            const p = places.get(s.id);
+            return (
+              <div key={s.id} className="space-y-2">
+                <SubHeading>{s.full_name}</SubHeading>
+                <BookingLengthForm
+                  studentId={s.id}
+                  today={localToday()}
+                  terms={termsFor.get(s.id) ?? []}
+                  until={p?.book_until ?? ""}
+                  schoolHolidays={p?.include_school_holidays ?? null}
+                  publicHolidays={p?.include_public_holidays ?? null}
+                />
+              </div>
+            );
+          })}
+        </div>
       )}
     </Card>
   );

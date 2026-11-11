@@ -352,3 +352,54 @@ reason, matches the brief's "people decide, the app suggests" approach and
 lets CLG see where the suggestions fall short (EEF guidance on using data
 to improve implementation). No new personal information is collected.
 
+
+## Declined offers, 11 Nov 2026
+
+Carla found that a declined session sent CLG no notice, and that the
+student's waiting time restarted after a decline.
+
+- When a tutor or family declines a session time, CLG's owner and
+  operations admins get a notice under Schedule. It says who declined, gives
+  any reason, and points to Matching.
+- A student who was never taken on keeps their waiting time. Only sessions
+  that were confirmed (went ahead) restart the count when they finish.
+  Declined or expired offers don't.
+- Tutors can't book sessions themselves. Booking is open to CLG admins,
+  parents (for their own children) and students with their own login.
+
+Research: tracking how long each learner has waited, without resets, keeps
+the queue fair and shows where CLG needs more tutors (the brief's "longest
+waiting first" rule). No new personal information is collected.
+
+## Booking end dates, 11 Nov 2026
+
+Carla asked that end dates are never guessed, that the student's term dates
+are shown so the right end can be picked, and that families say how long
+they want to book for as its own step, separate from preferred times.
+
+- A "How long to book" tab under Sessions asks each family, for each child:
+  the last date for sessions (from today, up to a year ahead), whether
+  sessions go ahead in school holidays, and whether they go ahead on public
+  holidays. All three are needed. Families are told they can change it
+  later.
+- CLG admins can change it for a family (Matching shows it, with a Change
+  link).
+- When CLG offers a time (Matching, or Book a session), the last date is
+  the family's date. If the family hasn't answered, it is left blank for the
+  admin to fill in. The app no longer fills in 10 weeks.
+- A new booking copies the family's holiday answers (skip_holidays and
+  skip_public_holidays). Renewals keep their own choice.
+- Beside every last-date box there is a list of the student's term dates
+  (from their school calendar, the private school calendar or their own
+  study periods), so the end of a term can be picked in one step.
+- Only the family, the student (with their own login) and CLG admins can
+  see a student's term dates (student_term_dates) or set the booking length
+  (set_booking_length).
+
+Research: matching tutoring blocks to school terms supports regular,
+sustained sessions, which the EEF and Evidence for Learning toolkits link
+to the strongest tutoring gains (EEF Teaching and Learning Toolkit, "Small
+group tuition" and "One to one tuition"). Under the Australian Consumer Law
+the family should know what they are booking (how long, and which weeks)
+before agreeing; asking them directly does that. No new personal
+information is collected beyond a date and two yes/no answers.

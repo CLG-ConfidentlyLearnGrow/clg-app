@@ -16,6 +16,7 @@ import {
   saveNoticeSettings,
   recordOutcome,
   requestBooking,
+  saveBookingLength,
   saveStudentPlaces,
   saveTutorPlaces,
   signOn,
@@ -28,6 +29,129 @@ import { BusyButton } from "@/components/busy-button";
 import { SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, placeLabel } from "@/lib/scheduling";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
+
+// How long the family wants to book for: a last date, and whether sessions
+// go ahead in school holidays and on public holidays. Needed before CLG
+// offers times. Families can change it later; CLG admins can change it too.
+export function BookingLengthForm({
+  studentId,
+  today,
+  terms,
+  until,
+  schoolHolidays,
+  publicHolidays,
+}: {
+  studentId: string;
+  today: string;
+  terms: StudentTerm[];
+  until: string;
+  schoolHolidays: boolean | null;
+  publicHolidays: boolean | null;
+}) {
+  const missing = !until || schoolHolidays === null || publicHolidays === null;
+  const yesNo = (name: string, label: string, current: boolean | null) => (
+    <fieldset className="space-y-1">
+      <legend className="text-sm font-medium text-zinc-800">{label}</legend>
+      <div className="flex gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input type="radio" name={name} value="yes" defaultChecked={current === true} required /> Yes
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name={name} value="no" defaultChecked={current === false} required /> No
+        </label>
+      </div>
+    </fieldset>
+  );
+  return (
+    <ActionForm action={saveBookingLength} submitLabel="Save">
+      <input type="hidden" name="student_id" value={studentId} />
+      {missing && (
+        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          Please fill this in. CLG needs it before offering session times.
+        </p>
+      )}
+      <LastDateField
+        name="book_until"
+        label="Book sessions until"
+        min={today}
+        defaultValue={until}
+        terms={terms}
+        hint="For example, the end of this term or the end of the school year (up to a year ahead)."
+      />
+      {yesNo("school_holidays", "Sessions during school holidays?", schoolHolidays)}
+      {yesNo("public_holidays", "Sessions on public holidays?", publicHolidays)}
+      <p className="text-xs text-zinc-600">You can change these later, here or by asking CLG.</p>
+    </ActionForm>
+  );
+}
+
+// A term or study period from the student's school calendar.
+export type StudentTerm = { label: string; starts_on: string; ends_on: string };
+
+function niceDate(d: string) {
+  return new Date(`${d}T00:00:00`).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// The last date of a booking. Never guessed: it is the family's own "book
+// until" date if they gave one, otherwise blank. The student's term dates
+// are listed so the right end of term can be picked.
+export function LastDateField({
+  min,
+  defaultValue,
+  terms,
+  bookUntil = null,
+  name = "last_date",
+  label = "Last date",
+  required = true,
+  hint,
+}: {
+  min: string;
+  defaultValue: string;
+  terms: StudentTerm[];
+  bookUntil?: string | null;
+  name?: string;
+  label?: string;
+  required?: boolean;
+  hint?: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const upcoming = terms.filter((t) => t.ends_on >= min);
+  return (
+    <div className="space-y-2">
+      <Field
+        label={label}
+        name={name}
+        type="date"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        min={min}
+        required={required}
+        hint={
+          hint ??
+          (bookUntil
+            ? `The family asked to book until ${niceDate(bookUntil)}.`
+            : "Bookings can run across terms, up to a year.")
+        }
+      />
+      {upcoming.length > 0 && (
+        <Select
+          label="Or pick the end of a term"
+          name="term_pick"
+          value=""
+          onChange={(e) => e.target.value && setValue(e.target.value)}
+        >
+          <option value="">Student&apos;s term dates…</option>
+          {upcoming.map((t) => (
+            <option key={`${t.label}-${t.ends_on}`} value={t.ends_on}>
+              {t.label}: {niceDate(t.starts_on)} to {niceDate(t.ends_on)}
+            </option>
+          ))}
+        </Select>
+      )}
+    </div>
+  );
+}
+
 
 // A small form with its own buttons (for example Accept and Decline). The
 // button pressed is sent with the form.
@@ -68,14 +192,19 @@ const CHANGE_REASONS: [string, string][] = [
 export function BookForm({
   option,
   defaultFirst,
-  defaultLast,
+  defaultLast = "",
+  terms = [],
+  bookUntil = null,
   isAdmin = false,
   suggested,
   startOpen = false,
 }: {
   option: BookOption;
   defaultFirst: string;
-  defaultLast: string;
+  // Only the family's own "book until" date, never a guess.
+  defaultLast?: string;
+  terms?: StudentTerm[];
+  bookUntil?: string | null;
   isAdmin?: boolean;
   // The app's suggestion, when an admin is offering a time.
   suggested?: BookOption | null;
@@ -113,15 +242,7 @@ export function BookForm({
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
-          <Field
-            label="Last date"
-            name="last_date"
-            type="date"
-            defaultValue={defaultLast}
-            min={defaultFirst}
-            required
-            hint="Bookings can run across terms, up to a year."
-          />
+          <LastDateField min={defaultFirst} defaultValue={defaultLast} terms={terms} bookUntil={bookUntil} />
         </div>
         {isAdmin && suggested && !isSuggestion && (
           <>
@@ -178,7 +299,9 @@ export function OfferForm({
   libraries,
   suggested,
   defaultFirst,
-  defaultLast,
+  defaultLast = "",
+  terms = [],
+  bookUntil = null,
   startOpen = false,
 }: {
   student_id: string;
@@ -188,7 +311,9 @@ export function OfferForm({
   libraries: { id: string; name: string }[];
   suggested: BookOption | null;
   defaultFirst: string;
-  defaultLast: string;
+  defaultLast?: string;
+  terms?: StudentTerm[];
+  bookUntil?: string | null;
   startOpen?: boolean;
 }) {
   const [open, setOpen] = useState(startOpen);
@@ -286,15 +411,7 @@ export function OfferForm({
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
-          <Field
-            label="Last date"
-            name="last_date"
-            type="date"
-            defaultValue={defaultLast}
-            min={defaultFirst}
-            required
-            hint="Bookings can run across terms, up to a year."
-          />
+          <LastDateField min={defaultFirst} defaultValue={defaultLast} terms={terms} bookUntil={bookUntil} />
         </div>
         {suggested && !isSuggestion && (
           <>
@@ -327,7 +444,7 @@ export function ApproveForm({ bookingId }: { bookingId: string }) {
       {(pending) => (
         <>
           <input type="hidden" name="booking_id" value={bookingId} />
-          <TextArea label="Note for CLG (optional)" name="note" maxLength={1000} rows={2} />
+          <TextArea label="Note for CLG (needed if you decline: please say why)" name="note" maxLength={1000} rows={2} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Approve
@@ -348,7 +465,7 @@ export function AnswerForm({ bookingId }: { bookingId: string }) {
       {(pending) => (
         <>
           <input type="hidden" name="booking_id" value={bookingId} />
-          <TextArea label="Note to the family (optional)" name="note" maxLength={1000} rows={2} />
+          <TextArea label="Note to the family (needed if you decline: please say why)" name="note" maxLength={1000} rows={2} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Accept

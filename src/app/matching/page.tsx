@@ -11,7 +11,7 @@ import { CHECK_NAMES, STATES, type CheckKind } from "@/lib/checks";
 import { WEEKDAY_NAMES, addDays, clockTime, localToday, placeLabel, shortDate } from "@/lib/scheduling";
 import { YEAR_LEVELS } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
-import { OfferForm, type OfferChoice } from "../schedule/forms";
+import { OfferForm, type OfferChoice, type StudentTerm } from "../schedule/forms";
 import { CourseDetails, type CourseUnit } from "@/components/course-details";
 import { CourseOverviewForm } from "../admin/course-overview-form";
 import { ADMIN_SECTIONS } from "../admin/sections";
@@ -293,7 +293,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
 // ---------------------------------------------------------------------------
 async function StudentPanel({ studentId, subject, nextHref }: { studentId: string; subject: string; nextHref: string | null }) {
   const supabase = await createClient();
-  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes] = await Promise.all([
+  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes] = await Promise.all([
     supabase
       .from("students")
       .select("id, full_name, family_id, year_level, school, state, goals, learning_needs, program")
@@ -306,12 +306,13 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       .order("added_at"),
     supabase
       .from("student_places")
-      .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences")
+      .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until, include_school_holidays, include_public_holidays")
       .eq("student_id", studentId)
       .maybeSingle(),
     supabase.from("libraries").select("id, name, active, confirmed_at").order("name"),
     supabase.rpc("matching_shortlist", { p_student: studentId, p_subject: subject }),
     supabase.rpc("matching_not_offered", { p_student: studentId, p_subject: subject }),
+    supabase.rpc("student_term_dates", { p_student: studentId }),
   ]);
   const student = studentRes.data as {
     id: string;
@@ -339,7 +340,11 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
     preferred_parts: string[] | null;
     preferred_school_hours: boolean;
     tutor_preferences: string | null;
+    book_until: string | null;
+    include_school_holidays: boolean | null;
+    include_public_holidays: boolean | null;
   } | null;
+  const terms = (termsRes.data ?? []) as StudentTerm[];
   const libraryName = new Map((librariesRes.data ?? []).map((l) => [l.id as string, l.name as string]));
   const shortlist = (shortlistRes.data ?? []) as Shortlist[];
   const notOffered = (notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[];
@@ -423,6 +428,20 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
           <Detail label="Goal">{student.goals || "None given"}</Detail>
           <Detail label="Learning needs">{student.learning_needs || "None given"}</Detail>
           <Detail label="Tutor preferences">{places?.tutor_preferences || "None given"}</Detail>
+          <Detail label="How long to book">
+            {places?.book_until ? (
+              <>
+                Until {shortDate(places.book_until)}
+                {places.include_school_holidays !== null &&
+                  `, ${places.include_school_holidays ? "including" : "not in"} school holidays`}
+                {places.include_public_holidays !== null &&
+                  `, ${places.include_public_holidays ? "including" : "not on"} public holidays`}
+              </>
+            ) : (
+              <span className="text-amber-800">Family hasn&apos;t said yet</span>
+            )}{" "}
+            <TextLink href={`/schedule?section=booking-length&student=${student.id}`}>Change</TextLink>
+          </Detail>
           <Detail label="Places">
             {places
               ? [places.online ? "Online" : null, ...places.library_ids.map((id) => libraryName.get(id) ?? "a library")]
@@ -514,7 +533,9 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
                     libraries={confirmedLibraries}
                     suggested={top ? optionFor(top) : null}
                     defaultFirst={first}
-                    defaultLast={addDays(first, 70)}
+                    defaultLast={places?.book_until ?? ""}
+                    terms={terms}
+                    bookUntil={places?.book_until ?? null}
                     startOpen={t === top}
                   />
                 )}

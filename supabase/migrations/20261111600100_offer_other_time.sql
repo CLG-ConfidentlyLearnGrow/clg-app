@@ -27,6 +27,7 @@ declare
     select 1 from public.find_session_times(';
 begin
   v_def := pg_get_functiondef('public.request_booking(uuid, text, uuid, smallint, time, integer, public.session_delivery, uuid, date, date, text)'::regprocedure);
+  v_def := replace(v_def, chr(13), ''); -- line endings from pasting on Windows
   if strpos(v_def, 'clg.offer_other_time') > 0 then
     return; -- already done
   end if;
