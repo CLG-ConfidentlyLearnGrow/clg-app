@@ -474,3 +474,17 @@ Research: checking a venue's availability before regular sessions start
 avoids missed sessions, and consistent attendance is one of the strongest
 drivers of tutoring impact (EEF, "Making a difference with effective
 tutoring", 2021). No personal information is involved.
+
+## Numbers on tabs that need action, 11 Nov 2026
+
+Carla asked for a number on every tab or section that needs something
+done, for example "Matching (4)" when 4 subjects need a tutor.
+
+- Admin menu: Matching shows how many student subjects are waiting for a
+  tutor (on the admin pages and on Matching itself).
+- Sessions menu: "How long to book" shows how many of the family's children
+  still need it filled in; Libraries shows the libraries on the to-do list.
+  Bookings (offers to answer), Notices (unread) and Next term already had
+  numbers.
+- The counts come from one database call (scheduling_counts) that only
+  returns what the viewer is allowed to see.

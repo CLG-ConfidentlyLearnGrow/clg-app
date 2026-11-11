@@ -113,6 +113,8 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   ]);
   const counts = (countsRes.data ?? []) as StageCount[];
   const rows = (queueRes.data ?? []) as QueueRow[];
+  // Shown on the side menu, e.g. "Matching 4": subjects waiting for a tutor.
+  const needTutor = Number(counts.find((c) => c.stage === "needs_tutor")?.subjects ?? 0);
   const total = rows[0]?.total ?? 0;
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -141,7 +143,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
         label="Admin"
         role="admin"
         section="matching"
-        sections={adminSections.map((s) => ({ id: s.id, label: s.label }))}
+        sections={adminSections.map((s) => ({ id: s.id, label: s.label, count: s.id === "matching" ? needTutor || undefined : undefined }))}
       >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

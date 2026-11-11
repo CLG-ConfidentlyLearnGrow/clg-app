@@ -21,6 +21,7 @@ import { AddOnsSection } from "./add-ons-section";
 import { LeavingSection } from "./leaving-section";
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { schedulingCounts } from "@/lib/scheduling-counts";
 import { redirect } from "next/navigation";
 import { checkName, type AuState } from "@/lib/checks";
 import {
@@ -306,6 +307,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     })[]
   ).map((l) => ({ ...l, parent: l.parent?.account ?? null }));
 
+  // Matching: subjects waiting for a tutor, shown as a number on the menu.
+  const schedCounts = await schedulingCounts(await createClient());
+
   return (
     <>
       <RoleTabs roles={viewer.roles} active="admin" />
@@ -325,7 +329,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   ? drafts.length
                   : s.id === "records"
                     ? dueRows.length
-                    : undefined,
+                    : s.id === "matching"
+                      ? schedCounts.matching || undefined
+                      : undefined,
         }))}
       >
         <p className="text-sm text-zinc-600">

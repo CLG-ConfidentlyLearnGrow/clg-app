@@ -64,3 +64,20 @@ delete from public.libraries where id = :'lib';
 delete from public.session_notices where title in ('Library opening hours needed', 'First sessions at a library');
 
 \echo '  scheduling library checks: all checks passed'
+
+-- Numbers on tabs (Carla, 11 Nov 2026).
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
+set role authenticated;
+select tests.eq((select count(*) from public.scheduling_counts() where key in ('matching', 'libraries')), 2::bigint, 'admins get matching and library counts');
+reset role;
+select tests.claims('00000000-0000-0000-0000-000000000003');
+set role authenticated;
+select tests.eq((select n from public.scheduling_counts() where key = 'booking-length'), 1, 'a family with an unanswered "How long to book" sees 1');
+select tests.eq((select count(*) from public.scheduling_counts() where key = 'matching'), 0::bigint, 'families don''t get the matching count');
+select public.set_booking_length(:'sam', current_date + 30, true, true);
+select tests.eq((select n from public.scheduling_counts() where key = 'booking-length'), 0, 'answered: 0');
+reset role;
+select tests.claims(null);
+delete from public.student_places where student_id = :'sam';
+
+\echo '  scheduling tab counts: all checks passed'
