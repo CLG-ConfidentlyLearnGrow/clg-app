@@ -11,7 +11,7 @@ import { CHECK_NAMES, STATES, type CheckKind } from "@/lib/checks";
 import { WEEKDAY_NAMES, addDays, clockTime, localToday, placeLabel, shortDate } from "@/lib/scheduling";
 import { YEAR_LEVELS } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
-import { BookForm } from "../schedule/forms";
+import { OfferForm, type OfferChoice } from "../schedule/forms";
 import { CourseDetails, type CourseUnit } from "@/components/course-details";
 import { CourseOverviewForm } from "../admin/course-overview-form";
 import { ADMIN_SECTIONS } from "../admin/sections";
@@ -308,7 +308,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences")
       .eq("student_id", studentId)
       .maybeSingle(),
-    supabase.from("libraries").select("id, name"),
+    supabase.from("libraries").select("id, name, active, confirmed_at").order("name"),
     supabase.rpc("matching_shortlist", { p_student: studentId, p_subject: subject }),
     supabase.rpc("matching_not_offered", { p_student: studentId, p_subject: subject }),
   ]);
@@ -344,8 +344,8 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
   const notOffered = (notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[];
   const thisSubject = subjects.find((s) => s.subject.toLowerCase() === subject.toLowerCase());
 
-  // Siblings and past tutors.
-  const [siblingsRes, pastRes] = await Promise.all([
+  // Siblings, past tutors, and every suitable time for each tutor.
+  const [siblingsRes, pastRes, optionsRes] = await Promise.all([
     student.family_id
       ? supabase.from("students").select("id, full_name").eq("family_id", student.family_id).neq("id", student.id)
       : Promise.resolve({ data: [] as { id: string; full_name: string }[] }),
@@ -354,7 +354,23 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       .select("subject, ends_on, accounts:tutor_id (full_name)")
       .eq("student_id", student.id)
       .lt("ends_on", localToday()),
+    supabase.rpc("offer_options", {
+      p_student: student.id,
+      p_subject: subject,
+      p_minutes: 60,
+      p_online: places?.online ?? true,
+      p_libraries: places?.library_ids ?? [],
+    }),
   ]);
+  const choicesFor = new Map<string, OfferChoice[]>();
+  for (const o of (optionsRes.data ?? []) as (OfferChoice & { tutor_id: string })[]) {
+    const list = choicesFor.get(o.tutor_id) ?? [];
+    list.push(o);
+    choicesFor.set(o.tutor_id, list);
+  }
+  const confirmedLibraries = ((librariesRes.data ?? []) as { id: string; name: string; active: boolean; confirmed_at: string | null }[])
+    .filter((l) => l.active && l.confirmed_at)
+    .map((l) => ({ id: l.id, name: l.name }));
   const siblings = (siblingsRes.data ?? []) as { id: string; full_name: string }[];
   const past = (pastRes.data ?? []) as unknown as { subject: string; ends_on: string; accounts: { full_name: string } | null }[];
 
@@ -483,20 +499,23 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
                   </p>
                 )}
                 {t.times > 0 && t.best_weekday && t.best_start && t.best_end && (
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <span>
-                      Best time: {WEEKDAY_NAMES[t.best_weekday - 1]} {clockTime(t.best_start)} to {clockTime(t.best_end)} ·{" "}
-                      {placeLabel(t.best_delivery ?? "online", t.best_library_name)}
-                    </span>
-                    <BookForm
-                      option={optionFor(t)}
-                      defaultFirst={first}
-                      defaultLast={addDays(first, 70)}
-                      isAdmin
-                      startOpen={t === top}
-                      suggested={top ? optionFor(top) : null}
-                    />
-                  </div>
+                  <p className="mt-2">
+                    Best time: {WEEKDAY_NAMES[t.best_weekday - 1]} {clockTime(t.best_start)} to {clockTime(t.best_end)} ·{" "}
+                    {placeLabel(t.best_delivery ?? "online", t.best_library_name)}
+                  </p>
+                )}
+                {!t.at_max && (
+                  <OfferForm
+                    student_id={student.id}
+                    subject={subject}
+                    tutor_id={t.tutor_id}
+                    choices={choicesFor.get(t.tutor_id) ?? []}
+                    libraries={confirmedLibraries}
+                    suggested={top ? optionFor(top) : null}
+                    defaultFirst={first}
+                    defaultLast={addDays(first, 70)}
+                    startOpen={t === top}
+                  />
                 )}
               </li>
             ))}

@@ -25,6 +25,7 @@ import { ActionForm } from "@/components/action-form";
 import { Button, Field, FormMessage, Select, TextArea } from "@/components/ui";
 import { initialFormState, type FormState } from "@/lib/forms";
 import { BusyButton } from "@/components/busy-button";
+import { SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, placeLabel } from "@/lib/scheduling";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
@@ -142,6 +143,177 @@ export function BookForm({
           {isAdmin
             ? "The tutor and family each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes."
             : "This books the time each week, subject to the tutor confirming within 48 hours."}
+        </p>
+      </ActionForm>
+    </div>
+  );
+}
+
+// One of a tutor's suitable times, for the Matching card.
+export type OfferChoice = {
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  delivery: string;
+  library_id: string | null;
+  library_name: string | null;
+  preferred: boolean;
+};
+
+const sameOption = (a: BookOption, b: BookOption) =>
+  a.tutor_id === b.tutor_id &&
+  a.weekday === b.weekday &&
+  a.start_time.slice(0, 5) === b.start_time.slice(0, 5) &&
+  a.delivery === b.delivery &&
+  (a.library_id ?? "") === (b.library_id ?? "");
+
+// CLG offers a tutor to a family: the best time is chosen, and the admin can
+// switch to any of the tutor's other suitable times, or type another time or
+// place. Anything but the app's suggestion asks for a reason.
+export function OfferForm({
+  student_id,
+  subject,
+  tutor_id,
+  choices,
+  libraries,
+  suggested,
+  defaultFirst,
+  defaultLast,
+  startOpen = false,
+}: {
+  student_id: string;
+  subject: string;
+  tutor_id: string;
+  choices: OfferChoice[];
+  libraries: { id: string; name: string }[];
+  suggested: BookOption | null;
+  defaultFirst: string;
+  defaultLast: string;
+  startOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(startOpen);
+  const [pick, setPick] = useState(choices.length ? "0" : "other");
+  const [weekday, setWeekday] = useState(1);
+  const [start, setStart] = useState("16:00");
+  const [minutes, setMinutes] = useState(60);
+  const [place, setPlace] = useState("online");
+  if (!open) {
+    return (
+      <button type="button" className={quietButton} onClick={() => setOpen(true)}>
+        Offer this tutor
+      </button>
+    );
+  }
+  const other = pick === "other";
+  const chosen = other ? null : choices[Number(pick)];
+  const option: BookOption = chosen
+    ? {
+        student_id,
+        subject,
+        tutor_id,
+        weekday: chosen.weekday,
+        start_time: chosen.start_time,
+        minutes: 60,
+        delivery: chosen.delivery,
+        library_id: chosen.library_id,
+      }
+    : {
+        student_id,
+        subject,
+        tutor_id,
+        weekday,
+        start_time: start,
+        minutes,
+        delivery: place === "online" ? "online" : "library",
+        library_id: place === "online" ? null : place,
+      };
+  const isSuggestion = !!suggested && !other && sameOption(suggested, option);
+  return (
+    <div className="mt-3 w-full rounded-xl bg-zinc-50 p-4">
+      <ActionForm action={requestBooking} submitLabel="Send to tutor and family">
+        {Object.entries(option).map(([k, v]) => (
+          <input key={k} type="hidden" name={k} value={v ?? ""} />
+        ))}
+        {other && <input type="hidden" name="other" value="1" />}
+        {suggested && (
+          <>
+            <input type="hidden" name="suggested_tutor" value={suggested.tutor_id} />
+            <input type="hidden" name="suggested_weekday" value={suggested.weekday} />
+            <input type="hidden" name="suggested_start" value={suggested.start_time} />
+            <input type="hidden" name="suggested_delivery" value={suggested.delivery} />
+            <input type="hidden" name="suggested_library" value={suggested.library_id ?? ""} />
+          </>
+        )}
+        <Select label="Time and place" name="pick" value={pick} onChange={(e) => setPick(e.target.value)}>
+          {choices.map((c, i) => (
+            <option key={i} value={String(i)}>
+              {WEEKDAY_NAMES[c.weekday - 1]} {clockTime(c.start_time)} to {clockTime(c.end_time)} · {placeLabel(c.delivery, c.library_name)}
+              {c.preferred ? " (preferred)" : ""}
+            </option>
+          ))}
+          <option value="other">Another time or place…</option>
+        </Select>
+        {other && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Select label="Day" name="other_weekday" value={String(weekday)} onChange={(e) => setWeekday(Number(e.target.value))}>
+              {WEEKDAY_NAMES.map((d, i) => (
+                <option key={d} value={String(i + 1)}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+            <Field label="Start time" name="other_start" type="time" step={300} value={start} onChange={(e) => setStart(e.target.value)} required />
+            <Select label="Length" name="other_minutes" value={String(minutes)} onChange={(e) => setMinutes(Number(e.target.value))}>
+              {SESSION_LENGTHS.map((m) => (
+                <option key={m} value={String(m)}>
+                  {m % 60 === 0 ? `${m / 60} hr` : `${Math.floor(m / 60)}.5 hr`}
+                </option>
+              ))}
+            </Select>
+            <Select label="Place" name="other_place" value={place} onChange={(e) => setPlace(e.target.value)}>
+              <option value="online">Online</option>
+              {libraries.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-zinc-600 sm:col-span-2">
+              This time isn&apos;t in the tutor&apos;s availability, so check with them first. The app still checks their weekly
+              maximum and other bookings.
+            </p>
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
+          <Field
+            label="Last date"
+            name="last_date"
+            type="date"
+            defaultValue={defaultLast}
+            min={defaultFirst}
+            required
+            hint="Bookings can run across terms, up to a year."
+          />
+        </div>
+        {suggested && !isSuggestion && (
+          <>
+            <Select label="Why not the suggested time?" name="change_reason" required defaultValue="">
+              <option value="" disabled>
+                Choose…
+              </option>
+              {CHANGE_REASONS.map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Field label="More detail (optional)" name="change_note" maxLength={500} hint="Helps CLG improve the suggestions." />
+          </>
+        )}
+        <TextArea label="Note for the tutor and family (optional)" name="note" maxLength={1000} rows={2} />
+        <p className="text-xs text-zinc-600">
+          The tutor and family each have 3 days to approve, with a reminder after 2 days. It&apos;s confirmed once both say yes.
         </p>
       </ActionForm>
     </div>
