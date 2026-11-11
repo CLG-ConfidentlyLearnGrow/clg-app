@@ -425,3 +425,27 @@ library, or online and one library. Never several libraries in one time.
 Research: giving each slot a fixed place cuts travel between sites and
 keeps sessions regular, which supports the consistent, scheduled tutoring
 the EEF links to better outcomes. No new personal information is collected.
+
+## Loading SA libraries, and addresses on suggestions, 11 Nov 2026
+
+Carla asked to load the SA Government list of libraries. That data set
+("Public Libraries location map") only covers the City of Onkaparinga, and
+no statewide file is published, so the list comes from OpenStreetMap
+instead (free, Open Database Licence; the credit is shown on the Libraries
+page).
+
+- Schedule > Libraries has "Load SA libraries". It adds every SA library
+  OpenStreetMap knows that isn't listed yet, with its address and map
+  location (used for the sign-on check). University, TAFE, school and other
+  non-public libraries are left out by name; admins can hide any others.
+- Libraries already listed keep their details; only a missing address or
+  map location is filled in. Loading again adds nothing twice.
+- Loaded libraries can be chosen straight away. Opening hours are asked for
+  only once a tutor or family picks a library.
+- Admins can still add one library by hand (Schedule > Libraries > Add a
+  library).
+- Tutors suggesting a library must give its street address as well as its
+  name. CLG still confirms it.
+
+Legal: library names and addresses are public business information, not
+personal information. OpenStreetMap's licence needs the credit line.

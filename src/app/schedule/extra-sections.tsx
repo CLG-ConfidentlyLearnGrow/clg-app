@@ -14,6 +14,7 @@ import {
   CloseRequestForm,
   ConfirmLibraryForm,
   LibraryHoursForm,
+  LoadLibrariesForm,
   OfferOneOffForm,
   OwnTermForm,
   SessionRequestForm,
@@ -405,13 +406,14 @@ export async function BlocksSection({
 export async function LibrariesAdminSection() {
   const supabase = await createClient();
   const [libsRes, hoursRes] = await Promise.all([
-    supabase.from("libraries").select("id, name, suburb, active, confirmed_at, suggested_by").order("name"),
+    supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by").order("name"),
     supabase.from("library_hours").select("library_id, weekday, opens, closes").order("weekday").order("opens"),
   ]);
   const libraries = (libsRes.data ?? []) as {
     id: string;
     name: string;
     suburb: string | null;
+    address: string | null;
     active: boolean;
     confirmed_at: string | null;
   }[];
@@ -433,6 +435,7 @@ export async function LibrariesAdminSection() {
                 <div className="flex items-center justify-between gap-3">
                   <span className={l.active ? "" : "text-zinc-400"}>
                     <span className="font-medium">{l.name}</span>
+                    {l.address && ` · ${l.address}`}
                     {l.suburb && ` · ${l.suburb}`}
                     {!l.active && " (hidden)"}
                     {!l.confirmed_at && <span className="ml-2 text-xs text-amber-800">to confirm</span>}
@@ -469,8 +472,14 @@ export async function LibrariesAdminSection() {
           })}
         </ul>
       )}
+      <SubHeading>Load all South Australian libraries</SubHeading>
+      <LoadLibrariesForm />
       <SubHeading>Add a library</SubHeading>
       <LibraryForm />
+      <p className="mt-4 text-xs text-zinc-500">
+        Library details loaded from OpenStreetMap: © OpenStreetMap contributors, available under the Open Database
+        Licence (openstreetmap.org/copyright).
+      </p>
     </Card>
   );
 }

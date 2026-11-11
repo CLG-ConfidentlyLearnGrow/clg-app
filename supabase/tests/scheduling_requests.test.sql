@@ -212,7 +212,8 @@ delete from public.match_blocks;
 -- ---------------------------------------------------------------------------
 select tests.claims(:'sam_tutor', 'aal2');
 set role authenticated;
-select public.suggest_library('Stirling Library', 'Stirling') as lib \gset
+select tests.fails($$select public.suggest_library('Stirling Library', 'Stirling', '')$$, 'a suggestion needs the address');
+select public.suggest_library('Stirling Library', 'Stirling', '5 Mount Barker Road') as lib \gset
 reset role;
 select tests.claims(null);
 select tests.eq((select count(*) from public.libraries where id = :'lib' and confirmed_at is null), 1, 'suggested library waits for CLG');
