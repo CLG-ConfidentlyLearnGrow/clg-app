@@ -50,8 +50,7 @@ function shape(source, fileName) {
     } // End of the markup words case.
     out.push(ts.SyntaxKind[node.kind]); // Writes the kind of part (e.g. "IfStatement").
     if (node.kind < ts.SyntaxKind.FirstNode) out.push(JSON.stringify(node.getText(file))); // For single words and values, writes the exact text.
-    let children = 0; // Counts the parts inside this one.
-    ts.forEachChild(node, (child) => { children++; walk(child); }); // Visits each inner part.
+    ts.forEachChild(node, walk); // Visits each inner part.
     out.push(")"); // Marks the end of this part.
   }; // End of walk.
   walk(file); // Starts at the top of the file.
