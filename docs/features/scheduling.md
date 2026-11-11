@@ -449,3 +449,28 @@ page).
 
 Legal: library names and addresses are public business information, not
 personal information. OpenStreetMap's licence needs the credit line.
+
+## Library opening hours when needed, and holiday checks, 11 Nov 2026
+
+Carla asked that admins add opening hours only once a library is wanted,
+that regular hours are re-checked, and that admins check holiday hours the
+first time sessions are booked at a library.
+
+- The first time a tutor adds a library (to their libraries or to a weekly
+  time) or CLG sets it as a student's place, admins get one notice asking
+  for its opening hours.
+- Schedule > Libraries has a "To do" list of libraries in use that need
+  something: confirming (tutor suggestions), opening hours, or a re-check
+  because the hours were last checked more than 6 months ago. "Hours still
+  right" clears a re-check; entering or changing hours counts as checking.
+- For libraries loaded from OpenStreetMap, "Fill hours from OpenStreetMap"
+  fills in simple weekly hours for the admin to check against the library's
+  website. Complicated or missing hours are entered by hand.
+- The first time sessions are booked at a library, admins get a notice to
+  check whether it closes on public holidays or changes hours in the school
+  holidays, and to call the library if its website doesn't say.
+
+Research: checking a venue's availability before regular sessions start
+avoids missed sessions, and consistent attendance is one of the strongest
+drivers of tutoring impact (EEF, "Making a difference with effective
+tutoring", 2021). No personal information is involved.

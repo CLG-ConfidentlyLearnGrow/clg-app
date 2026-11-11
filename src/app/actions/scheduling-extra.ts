@@ -10,6 +10,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { parseOsmHours } from "@/lib/osm-hours";
 
 function plainError(error: { message: string } | null, fallback: string): string {
   if (!error) return fallback;
@@ -312,6 +313,57 @@ export async function removeLibraryHours(formData: FormData) {
   if (!v.success) return;
   const supabase = await createClient();
   await supabase.from("library_hours").delete().eq("library_id", v.data);
+  revalidatePath("/schedule");
+}
+
+// Fill a library's opening hours from OpenStreetMap, for an admin to check.
+export async function fillHoursFromOsm(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  if (!viewer.roles.includes("admin")) return { error: "Only CLG admins can change opening hours." };
+  const v = id.safeParse(formData.get("library_id"));
+  if (!v.success) return { error: "Something went wrong. Please refresh the page." };
+  const supabase = await createClient();
+  const [{ data: lib }, { count }] = await Promise.all([
+    supabase.from("libraries").select("osm_ref").eq("id", v.data).maybeSingle(),
+    supabase.from("library_hours").select("id", { count: "exact", head: true }).eq("library_id", v.data),
+  ]);
+  if ((count ?? 0) > 0) return { error: "This library already has hours. Clear them first to fill them again." };
+  const ref = (lib?.osm_ref as string | null | undefined) ?? "";
+  const m = ref.match(/^(node|way|relation)\/(\d+)$/);
+  if (!m) return { error: "This library wasn't loaded from OpenStreetMap. Please add its hours by hand." };
+  let hoursText: string | undefined;
+  try {
+    const res = await fetch(`https://api.openstreetmap.org/api/0.6/${m[1]}/${m[2]}.json`, {
+      headers: { "User-Agent": "clg-app library hours" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    const body = (await res.json()) as { elements?: { tags?: Record<string, string> }[] };
+    hoursText = body.elements?.[0]?.tags?.opening_hours;
+  } catch {
+    return { error: "Couldn't reach OpenStreetMap just now. Please try again, or add the hours by hand." };
+  }
+  const rows = parseOsmHours(hoursText);
+  if (!rows) {
+    return {
+      error: hoursText
+        ? `OpenStreetMap lists the hours as "${hoursText}", which is too complicated to fill in. Please add them by hand.`
+        : "OpenStreetMap doesn't list hours for this library. Please add them by hand.",
+    };
+  }
+  const { error } = await supabase.from("library_hours").insert(rows.map((r) => ({ library_id: v.data, ...r })));
+  if (error) return { error: "Couldn't save the hours." };
+  return done("Hours filled in from OpenStreetMap. Please check them against the library's website.");
+}
+
+// An admin says a library's hours are still right.
+export async function markHoursChecked(formData: FormData) {
+  await requireViewer();
+  const v = id.safeParse(formData.get("library_id"));
+  if (!v.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("mark_library_hours_checked", { p_library: v.data });
   revalidatePath("/schedule");
 }
 

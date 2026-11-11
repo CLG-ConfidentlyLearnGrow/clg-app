@@ -18,6 +18,7 @@ import {
   setTerm4LastDay,
   suggestLibrary,
   loadSaLibraries,
+  fillHoursFromOsm,
 } from "@/app/actions/scheduling-extra";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
@@ -260,6 +261,15 @@ export function SuggestLibraryForm() {
         <Field label="Suburb" name="suburb" maxLength={100} />
       </div>
       <Field label="Street address" name="address" required minLength={5} maxLength={300} placeholder="e.g. 5 Mount Barker Road" />
+    </ActionForm>
+  );
+}
+
+// Admins: fill a library's hours from OpenStreetMap, to check by hand.
+export function FillHoursForm({ libraryId }: { libraryId: string }) {
+  return (
+    <ActionForm action={fillHoursFromOsm} submitLabel="Fill hours from OpenStreetMap">
+      <input type="hidden" name="library_id" value={libraryId} />
     </ActionForm>
   );
 }

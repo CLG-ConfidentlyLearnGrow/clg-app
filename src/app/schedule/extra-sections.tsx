@@ -2,7 +2,7 @@
 // requests and public holidays, blocks, and libraries with opening hours.
 // The database decides what each person can see.
 
-import { removeLibraryHours, removeOwnTerm, liftBlock } from "@/app/actions/scheduling-extra";
+import { markHoursChecked, removeLibraryHours, removeOwnTerm, liftBlock } from "@/app/actions/scheduling-extra";
 import { setLibraryActive } from "@/app/actions/scheduling";
 import { Card, Empty, SubHeading } from "@/components/ui";
 import { WEEKDAY_NAMES, clockTime, localToday, shortDate } from "@/lib/scheduling";
@@ -15,6 +15,7 @@ import {
   ConfirmLibraryForm,
   LibraryHoursForm,
   LoadLibrariesForm,
+  FillHoursForm,
   OfferOneOffForm,
   OwnTermForm,
   SessionRequestForm,
@@ -405,10 +406,12 @@ export async function BlocksSection({
 // ---------------------------------------------------------------------------
 export async function LibrariesAdminSection() {
   const supabase = await createClient();
-  const [libsRes, hoursRes] = await Promise.all([
-    supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by").order("name"),
+  const [libsRes, hoursRes, checksRes] = await Promise.all([
+    supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by, osm_ref").order("name"),
     supabase.from("library_hours").select("library_id, weekday, opens, closes").order("weekday").order("opens"),
+    supabase.rpc("library_checks"),
   ]);
+  const checks = (checksRes.data ?? []) as { library_id: string; name: string; suburb: string | null; problem: string }[];
   const libraries = (libsRes.data ?? []) as {
     id: string;
     name: string;
@@ -416,6 +419,7 @@ export async function LibrariesAdminSection() {
     address: string | null;
     active: boolean;
     confirmed_at: string | null;
+    osm_ref: string | null;
   }[];
   const hours = (hoursRes.data ?? []) as { library_id: string; weekday: number; opens: string; closes: string }[];
   const hoursOf = (id: string) => hours.filter((h) => h.library_id === id);
@@ -424,6 +428,35 @@ export async function LibrariesAdminSection() {
       title="Libraries"
       description="Public libraries for in-person sessions. Confirm each library and add its opening hours: sessions are only offered at confirmed libraries, inside opening hours."
     >
+      {checks.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="mb-2 text-sm font-medium text-amber-900">To do ({checks.length})</p>
+          <ul className="space-y-2 text-sm">
+            {checks.map((c) => (
+              <li key={c.library_id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  <a href={`#lib-${c.library_id}`} className="font-medium underline">
+                    {c.name}
+                  </a>
+                  {c.suburb && ` · ${c.suburb}`}: {c.problem}
+                </span>
+                {c.problem.startsWith("Check") && (
+                  <form action={markHoursChecked}>
+                    <input type="hidden" name="library_id" value={c.library_id} />
+                    <BusyButton type="submit" className="text-xs text-teal-800 underline">
+                      Hours still right
+                    </BusyButton>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-amber-900">
+            Only libraries a tutor or family has chosen are listed. Hours are re-checked every 6 months, and whenever
+            sessions are first booked at a library, check its public holiday and school holiday hours.
+          </p>
+        </div>
+      )}
       {libraries.length === 0 ? (
         <Empty>No libraries yet.</Empty>
       ) : (
@@ -431,7 +464,7 @@ export async function LibrariesAdminSection() {
           {libraries.map((l) => {
             const h = hoursOf(l.id);
             return (
-              <li key={l.id} className="space-y-2 py-4 first:pt-0">
+              <li key={l.id} id={`lib-${l.id}`} className="space-y-2 py-4 first:pt-0">
                 <div className="flex items-center justify-between gap-3">
                   <span className={l.active ? "" : "text-zinc-400"}>
                     <span className="font-medium">{l.name}</span>
@@ -462,7 +495,8 @@ export async function LibrariesAdminSection() {
                 )}
                 <details>
                   <summary className="cursor-pointer text-xs text-teal-800 underline">Add opening hours</summary>
-                  <div className="mt-2">
+                  <div className="mt-2 space-y-3">
+                    {l.osm_ref && h.length === 0 && <FillHoursForm libraryId={l.id} />}
                     <LibraryHoursForm libraryId={l.id} />
                   </div>
                 </details>
