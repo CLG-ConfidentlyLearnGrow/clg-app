@@ -2,7 +2,8 @@
 // to what the code does. For every changed code file, it reads the old and
 // new versions into a tree of their working parts (ignoring comments, and
 // the empty {/* */} holders used for comments inside page markup) and checks
-// the two trees are identical.
+// the two trees are identical. Database (.sql) files are compared word by
+// word instead, skipping -- and /* */ comments but keeping every quoted text exactly.
 // Run it with: node scripts/check-comments-only.mjs [branch to compare with]
 
 // Lets this script use the TypeScript tool (which can read code into a tree).
@@ -17,7 +18,7 @@ const ts = createRequire(import.meta.url)("typescript");
 // The version to compare against: the branch named when running, or main.
 const base = process.argv[2] ?? "origin/main";
 // Asks git which code files differ from that version.
-const changed = execSync(`git diff --name-only ${base} -- "*.ts" "*.tsx" "*.js" "*.mjs"`, { encoding: "utf8" })
+const changed = execSync(`git diff --name-only ${base} -- "*.ts" "*.tsx" "*.js" "*.mjs" "*.sql"`, { encoding: "utf8" })
   .split("\n") // One file name per line.
   .filter(Boolean); // Drops the blank line at the end.
 
@@ -58,6 +59,65 @@ function shape(source, fileName) {
   return out.join(" "); // Hands back the whole description.
 } // End of shape.
 
+// Writes out a database file's working words as one long line, skipping
+// comments and spacing. Quoted text ('...' and "...") is kept exactly, so a
+// comment marker typed inside quotes counts as a change. Function bodies
+// between $$ marks are read the same way, since they are database code too.
+function sqlShape(source) {
+  const out = []; // The words written out so far.
+  let i = 0; // Where the reading has got to.
+  while (i < source.length) { // Reads to the end of the file:
+    const c = source[i]; // the next letter,
+    if (/\s/.test(c)) { i++; continue; } // spacing is skipped,
+    if (c === "\\") { // a backslash starts a psql command (such as \gset), which runs to the end of the line,
+      const end = source.indexOf("\n", i); // so it finds the end of the line,
+      const stop = end < 0 ? source.length : end; // (or the end of the file),
+      out.push(`psql(${source.slice(i, stop).trim()})`); // keeps the rest of the line exactly (a comment there would be read by psql),
+      i = stop; // and moves past it.
+      continue; // Carries on reading.
+    } // End of the psql command case.
+    if (source.startsWith("--", i)) { // A -- comment:
+      while (i < source.length && source[i] !== "\n") i++; // skips to the end of the line.
+      continue; // Carries on reading.
+    } // End of the -- comment case.
+    if (source.startsWith("/*", i)) { // A /* */ comment (these can sit inside each other):
+      let depth = 1; // how many are open,
+      i += 2; // moves past the opening mark,
+      while (i < source.length && depth > 0) { // until all are closed:
+        if (source.startsWith("/*", i)) { depth++; i += 2; } // another opens,
+        else if (source.startsWith("*/", i)) { depth--; i += 2; } // one closes,
+        else i++; // or moves on one letter.
+      } // End of the comment.
+      continue; // Carries on reading.
+    } // End of the /* */ comment case.
+    if (c === "'" || c === '"') { // Quoted text:
+      let j = i + 1; // starts after the opening quote,
+      while (j < source.length) { // looks for the closing quote:
+        if (source[j] === c && source[j + 1] === c) { j += 2; continue; } // a doubled quote is part of the text,
+        if (source[j] === c) break; // a single one ends it,
+        j++; // otherwise moves on one letter.
+      } // End of the search.
+      out.push(source.slice(i, j + 1)); // Keeps the quoted text exactly.
+      i = j + 1; // Moves past it.
+      continue; // Carries on reading.
+    } // End of the quoted text case.
+    const dollar = /^\$([A-Za-z_][A-Za-z0-9_]*)?\$/.exec(source.slice(i, i + 100)); // A $$ or $name$ mark?
+    if (dollar) { // A function body or $$ text:
+      const tag = dollar[0]; // the exact mark,
+      const end = source.indexOf(tag, i + tag.length); // finds the matching closing mark,
+      const stop = end < 0 ? source.length : end; // (or the end of the file),
+      out.push(tag, sqlShape(source.slice(i + tag.length, stop)), tag); // reads the inside the same way,
+      i = stop + tag.length; // and moves past the closing mark.
+      continue; // Carries on reading.
+    } // End of the $$ case.
+    const word = /^[A-Za-z0-9_]+/.exec(source.slice(i, i + 200)); // A word or number?
+    const token = word ? word[0] : c; // The word, or else the single letter or sign.
+    out.push(token); // Keeps it.
+    i += token.length; // Moves past it.
+  } // End of reading.
+  return out.join(" "); // Hands back the whole description.
+} // End of sqlShape.
+
 let problems = 0; // Counts files whose code changed.
 for (const file of changed) { // Checks each changed file in turn.
   if (!existsSync(file)) { // The file was deleted:
@@ -73,7 +133,8 @@ for (const file of changed) { // Checks each changed file in turn.
     continue; // and moves on.
   } // End of reading the old version.
   const after = readFileSync(file, "utf8"); // Reads the new version from disk.
-  const same = shape(before, file) === shape(after, file); // True if the working parts are identical.
+  const read = file.endsWith(".sql") ? sqlShape : (src) => shape(src, file); // Database files are read word by word; code files as a tree.
+  const same = read(before) === read(after); // True if the working parts are identical.
   console.log(`${same ? "comments only" : "CODE CHANGED "} ${file}`); // Reports the result for this file.
   if (!same) problems++; // Counts a code change as a problem.
 } // End of the loop over files.
