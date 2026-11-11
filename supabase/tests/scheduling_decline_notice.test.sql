@@ -9,9 +9,10 @@ values (:'sam', '00000000-0000-0000-0000-000000000013', 'General Maths', 6, '10:
         now() + interval '2 days', '00000000-0000-0000-0000-0000000000a0')
 returning id as offer \gset
 
--- The tutor declines with a reason.
+-- The tutor must give a reason to decline.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2');
 set role authenticated;
+select tests.fails(format($$select public.respond_to_booking(%L, false, '  ')$$, :'offer'), 'a tutor can''t decline without a reason');
 select public.respond_to_booking(:'offer', false, 'Saturday mornings are taken');
 reset role;
 
@@ -25,6 +26,23 @@ select tests.eq((select count(*) from public.session_notices
 
 delete from public.session_notices where booking_id = :'offer';
 delete from public.bookings where id = :'offer';
+
+-- A family must give a reason to decline a time CLG offered.
+insert into public.bookings (student_id, tutor_id, subject, weekday, start_time, minutes, delivery, first_date, last_date, tutor_reply_by, requested_by, needs_family_ok)
+values (:'sam', '00000000-0000-0000-0000-000000000013', 'General Maths', 6, '10:00', 60, 'online', current_date + 14, current_date + 42,
+        now() + interval '2 days', '00000000-0000-0000-0000-0000000000a0', true)
+returning id as fam \gset
+select tests.claims('00000000-0000-0000-0000-000000000003');
+set role authenticated;
+select tests.fails(format($$select public.approve_booking(%L, false, null)$$, :'fam'), 'a family can''t decline without a reason');
+select public.approve_booking(:'fam', false, 'Saturdays are sport');
+reset role;
+select tests.claims(null);
+select tests.eq((select count(*) from public.session_notices
+  where account_id = '00000000-0000-0000-0000-0000000000a0' and booking_id = :'fam' and body like '%Reason: Saturdays are sport%'), 1::bigint,
+  'CLG admin is told when a family declines, with the reason');
+delete from public.session_notices where booking_id = :'fam';
+delete from public.bookings where id = :'fam';
 
 -- A declined offer doesn't restart a waiting student's count.
 insert into public.student_subjects (student_id, subject) values (:'sam', 'Chemistry');

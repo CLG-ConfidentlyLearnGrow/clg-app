@@ -29,6 +29,74 @@ import { SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, placeLabel } from "@/lib/sch
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
+// A term or study period from the student's school calendar.
+export type StudentTerm = { label: string; starts_on: string; ends_on: string };
+
+function niceDate(d: string) {
+  return new Date(`${d}T00:00:00`).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// The last date of a booking. Never guessed: it is the family's own "book
+// until" date if they gave one, otherwise blank. The student's term dates
+// are listed so the right end of term can be picked.
+export function LastDateField({
+  min,
+  defaultValue,
+  terms,
+  bookUntil = null,
+  name = "last_date",
+  label = "Last date",
+  required = true,
+  hint,
+}: {
+  min: string;
+  defaultValue: string;
+  terms: StudentTerm[];
+  bookUntil?: string | null;
+  name?: string;
+  label?: string;
+  required?: boolean;
+  hint?: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const upcoming = terms.filter((t) => t.ends_on >= min);
+  return (
+    <div className="space-y-2">
+      <Field
+        label={label}
+        name={name}
+        type="date"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        min={min}
+        required={required}
+        hint={
+          hint ??
+          (bookUntil
+            ? `The family asked to book until ${niceDate(bookUntil)}.`
+            : "Bookings can run across terms, up to a year.")
+        }
+      />
+      {upcoming.length > 0 && (
+        <Select
+          label="Or pick the end of a term"
+          name="term_pick"
+          value=""
+          onChange={(e) => e.target.value && setValue(e.target.value)}
+        >
+          <option value="">Student&apos;s term dates…</option>
+          {upcoming.map((t) => (
+            <option key={`${t.label}-${t.ends_on}`} value={t.ends_on}>
+              {t.label}: {niceDate(t.starts_on)} to {niceDate(t.ends_on)}
+            </option>
+          ))}
+        </Select>
+      )}
+    </div>
+  );
+}
+
+
 // A small form with its own buttons (for example Accept and Decline). The
 // button pressed is sent with the form.
 function ButtonsForm({ action, children }: { action: Action; children: (pending: boolean) => ReactNode }) {
@@ -68,14 +136,19 @@ const CHANGE_REASONS: [string, string][] = [
 export function BookForm({
   option,
   defaultFirst,
-  defaultLast,
+  defaultLast = "",
+  terms = [],
+  bookUntil = null,
   isAdmin = false,
   suggested,
   startOpen = false,
 }: {
   option: BookOption;
   defaultFirst: string;
-  defaultLast: string;
+  // Only the family's own "book until" date, never a guess.
+  defaultLast?: string;
+  terms?: StudentTerm[];
+  bookUntil?: string | null;
   isAdmin?: boolean;
   // The app's suggestion, when an admin is offering a time.
   suggested?: BookOption | null;
@@ -113,15 +186,7 @@ export function BookForm({
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
-          <Field
-            label="Last date"
-            name="last_date"
-            type="date"
-            defaultValue={defaultLast}
-            min={defaultFirst}
-            required
-            hint="Bookings can run across terms, up to a year."
-          />
+          <LastDateField min={defaultFirst} defaultValue={defaultLast} terms={terms} bookUntil={bookUntil} />
         </div>
         {isAdmin && suggested && !isSuggestion && (
           <>
@@ -178,7 +243,9 @@ export function OfferForm({
   libraries,
   suggested,
   defaultFirst,
-  defaultLast,
+  defaultLast = "",
+  terms = [],
+  bookUntil = null,
   startOpen = false,
 }: {
   student_id: string;
@@ -188,7 +255,9 @@ export function OfferForm({
   libraries: { id: string; name: string }[];
   suggested: BookOption | null;
   defaultFirst: string;
-  defaultLast: string;
+  defaultLast?: string;
+  terms?: StudentTerm[];
+  bookUntil?: string | null;
   startOpen?: boolean;
 }) {
   const [open, setOpen] = useState(startOpen);
@@ -286,15 +355,7 @@ export function OfferForm({
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="First week from" name="first_date" type="date" defaultValue={defaultFirst} min={defaultFirst} required />
-          <Field
-            label="Last date"
-            name="last_date"
-            type="date"
-            defaultValue={defaultLast}
-            min={defaultFirst}
-            required
-            hint="Bookings can run across terms, up to a year."
-          />
+          <LastDateField min={defaultFirst} defaultValue={defaultLast} terms={terms} bookUntil={bookUntil} />
         </div>
         {suggested && !isSuggestion && (
           <>
@@ -327,7 +388,7 @@ export function ApproveForm({ bookingId }: { bookingId: string }) {
       {(pending) => (
         <>
           <input type="hidden" name="booking_id" value={bookingId} />
-          <TextArea label="Note for CLG (optional)" name="note" maxLength={1000} rows={2} />
+          <TextArea label="Note for CLG (needed if you decline: please say why)" name="note" maxLength={1000} rows={2} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Approve
@@ -348,7 +409,7 @@ export function AnswerForm({ bookingId }: { bookingId: string }) {
       {(pending) => (
         <>
           <input type="hidden" name="booking_id" value={bookingId} />
-          <TextArea label="Note to the family (optional)" name="note" maxLength={1000} rows={2} />
+          <TextArea label="Note to the family (needed if you decline: please say why)" name="note" maxLength={1000} rows={2} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" name="answer" value="accept" disabled={pending}>
               Accept
@@ -750,6 +811,9 @@ export function StudentPlacesForm({
   schoolHours = false,
   showPlaces = true,
   tutorPreferences = "",
+  bookUntil = "",
+  terms = [],
+  today,
 }: {
   studentId: string;
   libraries: { id: string; name: string; suburb: string | null }[];
@@ -761,6 +825,9 @@ export function StudentPlacesForm({
   // Admins choose places; families only give preferred times.
   showPlaces?: boolean;
   tutorPreferences?: string;
+  bookUntil?: string;
+  terms?: StudentTerm[];
+  today: string;
 }) {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const box = "flex items-start gap-2 text-sm";
@@ -821,6 +888,15 @@ export function StudentPlacesForm({
           it doesn&apos;t suit.
         </p>
       </fieldset>
+      <LastDateField
+        name="book_until"
+        label="Book sessions until (optional)"
+        min={today}
+        defaultValue={bookUntil}
+        terms={terms}
+        required={false}
+        hint="How long you'd like to book for, for example to the end of this term or the school year. CLG uses this as the last date when offering times."
+      />
       <TextArea
         label="Tutor preferences (optional)"
         name="tutor_preferences"

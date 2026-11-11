@@ -122,6 +122,7 @@ export async function answerBooking(_prev: FormState, formData: FormData): Promi
   await requireViewer();
   const parsed = answerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose accept or decline." };
+  if (parsed.data.answer === "decline" && !parsed.data.note?.trim()) return { error: "Please give a reason for declining." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("respond_to_booking", {
@@ -144,6 +145,7 @@ export async function approveBooking(_prev: FormState, formData: FormData): Prom
   await requireViewer();
   const parsed = answerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Choose approve or decline." };
+  if (parsed.data.answer === "decline" && !parsed.data.note?.trim()) return { error: "Please give a reason for declining." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("approve_booking", {
     p_booking: parsed.data.booking_id,
@@ -614,6 +616,8 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   } else if (!online && libraryIds.length === 0) {
     return { error: "Choose online, at least one library, or both." };
   }
+  const bookUntil = z.union([z.iso.date(), z.literal("")]).safeParse(String(formData.get("book_until") ?? ""));
+  if (!bookUntil.success) return { error: "Please enter the \"book until\" date as a date." };
   const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
   const PARTS = ["morning", "midday", "afternoon", "evening"];
   const parts = formData.getAll("preferred_part").map(String).filter((p) => PARTS.includes(p));
@@ -629,7 +633,8 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
     preferred_to: null,
     preferred_school_hours: formData.get("preferred_school_hours") === "on",
     tutor_preferences: String(formData.get("tutor_preferences") ?? "").trim().slice(0, 1000) || null,
+    book_until: bookUntil.data || null,
   });
-  if (error) return { error: "Couldn't save the places." };
+  if (error) return { error: error.code === "23514" ? "The \"book until\" date must be from today and within a year." : "Couldn't save the places." };
   return done("Saved. Offers will start from these places and preferences.");
 }
