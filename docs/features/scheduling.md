@@ -352,3 +352,21 @@ reason, matches the brief's "people decide, the app suggests" approach and
 lets CLG see where the suggestions fall short (EEF guidance on using data
 to improve implementation). No new personal information is collected.
 
+
+## Declined offers, 11 Nov 2026
+
+Carla found that a declined session sent CLG no notice, and that the
+student's waiting time restarted after a decline.
+
+- When a tutor or family declines a session time, CLG's owner and
+  operations admins get a notice under Schedule. It says who declined, gives
+  any reason, and points to Matching.
+- A student who was never taken on keeps their waiting time. Only sessions
+  that were confirmed (went ahead) restart the count when they finish.
+  Declined or expired offers don't.
+- Tutors can't book sessions themselves. Booking is open to CLG admins,
+  parents (for their own children) and students with their own login.
+
+Research: tracking how long each learner has waited, without resets, keeps
+the queue fair and shows where CLG needs more tutors (the brief's "longest
+waiting first" rule). No new personal information is collected.
