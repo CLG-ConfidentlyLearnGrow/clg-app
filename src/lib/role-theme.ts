@@ -1,3 +1,7 @@
+// Summary: the colour and heading for each role's dashboard, so it's always
+// obvious which profile (admin, tutor, parent, student) you're in.
+
+// The list of role names, for type checking only.
 import type { Role } from "@/lib/auth";
 
 // The colour and heading for each dashboard, so it's obvious which profile
@@ -12,47 +16,48 @@ export type RoleTheme = {
   strongBg: string; // filled background in the deep shade (white text on top)
   tintBg: string; // pale background
   hoverTint: string; // pale background on hover
-};
+}; // End of the theme shape.
 
+// The actual colours and heading for each role.
 export const ROLE_THEME: Record<Role, RoleTheme> = {
-  admin: {
-    title: "Admin dashboard",
-    accent: "bg-admin-accent",
-    accentBorder: "border-admin-accent",
-    accentTopBorder: "border-t-admin-accent",
-    strongText: "text-admin-strong",
-    strongBg: "bg-admin-strong",
-    tintBg: "bg-admin-tint",
-    hoverTint: "hover:bg-admin-tint",
-  },
-  tutor: {
-    title: "Tutor dashboard",
-    accent: "bg-tutor-accent",
-    accentBorder: "border-tutor-accent",
-    accentTopBorder: "border-t-tutor-accent",
-    strongText: "text-tutor-strong",
-    strongBg: "bg-tutor-strong",
-    tintBg: "bg-tutor-tint",
-    hoverTint: "hover:bg-tutor-tint",
-  },
-  parent: {
-    title: "Parent dashboard",
-    accent: "bg-parent-accent",
-    accentBorder: "border-parent-accent",
-    accentTopBorder: "border-t-parent-accent",
-    strongText: "text-parent-strong",
-    strongBg: "bg-parent-strong",
-    tintBg: "bg-parent-tint",
-    hoverTint: "hover:bg-parent-tint",
-  },
-  student: {
-    title: "Student dashboard",
-    accent: "bg-student-accent",
-    accentBorder: "border-student-accent",
-    accentTopBorder: "border-t-student-accent",
-    strongText: "text-student-strong",
-    strongBg: "bg-student-strong",
-    tintBg: "bg-student-tint",
-    hoverTint: "hover:bg-student-tint",
-  },
-};
+  admin: { // The admin dashboard's look.
+    title: "Admin dashboard", // Heading shown above the page title.
+    accent: "bg-admin-accent", // Accent-coloured background.
+    accentBorder: "border-admin-accent", // Accent-coloured border.
+    accentTopBorder: "border-t-admin-accent", // Accent-coloured top border.
+    strongText: "text-admin-strong", // Deep-shade text.
+    strongBg: "bg-admin-strong", // Deep-shade filled background.
+    tintBg: "bg-admin-tint", // Pale background.
+    hoverTint: "hover:bg-admin-tint", // Pale background when hovered.
+  }, // End of this role's look.
+  tutor: { // The tutor dashboard's look.
+    title: "Tutor dashboard", // Heading shown above the page title.
+    accent: "bg-tutor-accent", // Accent-coloured background.
+    accentBorder: "border-tutor-accent", // Accent-coloured border.
+    accentTopBorder: "border-t-tutor-accent", // Accent-coloured top border.
+    strongText: "text-tutor-strong", // Deep-shade text.
+    strongBg: "bg-tutor-strong", // Deep-shade filled background.
+    tintBg: "bg-tutor-tint", // Pale background.
+    hoverTint: "hover:bg-tutor-tint", // Pale background when hovered.
+  }, // End of this role's look.
+  parent: { // The parent dashboard's look.
+    title: "Parent dashboard", // Heading shown above the page title.
+    accent: "bg-parent-accent", // Accent-coloured background.
+    accentBorder: "border-parent-accent", // Accent-coloured border.
+    accentTopBorder: "border-t-parent-accent", // Accent-coloured top border.
+    strongText: "text-parent-strong", // Deep-shade text.
+    strongBg: "bg-parent-strong", // Deep-shade filled background.
+    tintBg: "bg-parent-tint", // Pale background.
+    hoverTint: "hover:bg-parent-tint", // Pale background when hovered.
+  }, // End of this role's look.
+  student: { // The student dashboard's look.
+    title: "Student dashboard", // Heading shown above the page title.
+    accent: "bg-student-accent", // Accent-coloured background.
+    accentBorder: "border-student-accent", // Accent-coloured border.
+    accentTopBorder: "border-t-student-accent", // Accent-coloured top border.
+    strongText: "text-student-strong", // Deep-shade text.
+    strongBg: "bg-student-strong", // Deep-shade filled background.
+    tintBg: "bg-student-tint", // Pale background.
+    hoverTint: "hover:bg-student-tint", // Pale background when hovered.
+  }, // End of this role's look.
+}; // End of the role themes.
