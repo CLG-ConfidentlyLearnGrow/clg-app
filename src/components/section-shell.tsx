@@ -10,16 +10,23 @@ import { PageTitle } from "@/components/ui"; // The page heading.
 import type { Role } from "@/lib/auth"; // The list of role names, for type checking only.
 import { ROLE_THEME } from "@/lib/role-theme"; // The colours for each role.
 
-type Section = { id: string; label: string; count?: number }; // One menu section: its id, its words, and an optional count of things to do.
+// One menu section: its id, its words, an optional count of things to do,
+// an optional address (when it opens another page, e.g. Sessions or Billing),
+// and optional smaller sections shown under it while it's open.
+export type Section = { id: string; label: string; count?: number; href?: string; items?: Section[] }; // (the shape described above)
 
 // Dashboard layout: side headings for each section, which can be hidden to
 // give the page more room. On phones the menu opens from a button at the top.
 // "role" colours the menu and heading in that dashboard's colour.
+// A section with its own smaller sections (e.g. Sessions: Overview,
+// Bookings, Notices) shows them indented under it while it's open;
+// "subSection" says which of those is open.
 export function SectionShell({
   basePath, // The page's address, e.g. "/admin".
   label, // The dashboard's name, used in menu labels.
   role, // Which dashboard it is (for its colours), if any.
   section, // The section currently open.
+  subSection, // The smaller section open inside it, if it has any.
   sections, // Every section in the menu.
   children, // The open section's contents.
 }: { // The settings' types:
@@ -27,6 +34,7 @@ export function SectionShell({
   label: string; // name is text,
   role?: Role; // role is optional,
   section: string; // open section is text,
+  subSection?: string; // open smaller section is optional text,
   sections: Section[]; // sections is a list,
   children: ReactNode; // contents can be anything shown.
 }) { // End of the settings.
@@ -45,31 +53,49 @@ export function SectionShell({
   } // End of toggle.
 
   const current = sections.find((s) => s.id === section); // The open section's details.
+  const currentSub = current?.items?.find((s) => s.id === subSection); // The open smaller section's details (if any).
+  const heading = currentSub ? `${current?.label}: ${currentSub.label}` : (current?.label ?? label); // The page heading, e.g. "Sessions: Bookings".
+
+  // One menu link (used for sections and for the smaller sections under them).
+  function itemLink(s: Section, active: boolean, small: boolean) {
+    return ( // Shows:
+      <Link // a link:
+        href={s.href ?? `${basePath}?section=${s.id}`} // to its own address, or to this section of the page,
+        onClick={() => setPhoneOpen(false)} // closing the phone menu when tapped,
+        aria-current={active ? "page" : undefined} // telling screen readers it's the current page when open,
+        className={`flex items-center justify-between gap-2 rounded-md px-3 ${small ? "py-1.5 text-[13px]" : "py-2 text-sm"} ${ // in a row with words on the left and count on the right (a little smaller for smaller sections), with:
+          active ? activeItem : idleItem // the open look or the normal look.
+        }`} // (end of the look)
+      >{/* (end of the link's settings) */}
+        <span>{s.label}</span>{/* The section's words. */}
+        {s.count ? ( // If there's a count:
+          <span // a small rounded badge:
+            className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`} // in the open or normal count look,
+          >{/* (end of the badge's settings) */}
+            {s.count}{/* showing the number. */}
+          </span> // End of the badge.
+        ) : null}{/* Otherwise nothing. */}
+      </Link> // End of the link.
+    ); // End of what's shown.
+  } // End of itemLink.
 
   const links = ( // The list of menu links, used in both the side and phone menus:
     <nav aria-label={`${label} sections`}>{/* a navigation area named for screen readers, */}
       <ul className="space-y-1">{/* a list with space between items, */}
         {sections.map((s) => { // for each section:
-          const active = s.id === section; // whether it's the open one.
+          const open = s.id === section; // whether it's the open one,
+          const subs = open ? (s.items ?? []) : []; // its smaller sections (shown only while it's open),
+          const active = open && !subs.some((x) => x.id === subSection); // filled in only when none of its smaller sections is the open one.
           return ( // Shows:
             <li key={s.id}>{/* a list item: */}
-              <Link // a link:
-                href={`${basePath}?section=${s.id}`} // to this section of the page,
-                onClick={() => setPhoneOpen(false)} // closing the phone menu when tapped,
-                aria-current={active ? "page" : undefined} // telling screen readers it's the current page when open,
-                className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${ // in a row with words on the left and count on the right, with:
-                  active ? activeItem : idleItem // the open look or the normal look.
-                }`} // (end of the look)
-              >{/* (end of the link's settings) */}
-                <span>{s.label}</span>{/* The section's words. */}
-                {s.count ? ( // If there's a count:
-                  <span // a small rounded badge:
-                    className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`} // in the open or normal count look,
-                  >{/* (end of the badge's settings) */}
-                    {s.count}{/* showing the number. */}
-                  </span> // End of the badge.
-                ) : null}{/* Otherwise nothing. */}
-              </Link>{/* End of the link. */}
+              {itemLink(s, active, false)}{/* the section's link, */}
+              {subs.length > 0 && ( // and, if it has smaller sections open:
+                <ul className={`mt-1 ml-3 space-y-0.5 border-l-2 pl-2 ${theme ? theme.accentBorder : "border-teal-700"}`}>{/* an indented list with a coloured line on its left: */}
+                  {subs.map((x) => ( // for each smaller section:
+                    <li key={x.id}>{itemLink(x, x.id === subSection, true)}</li> // its link (filled in when open).
+                  ))}{/* End of the smaller sections. */}
+                </ul> // End of the indented list.
+              )}{/* End of this part. */}
             </li> // End of the list item.
           ); // End of what's shown for this section.
         })}{/* End of the loop. */}
@@ -107,14 +133,14 @@ export function SectionShell({
             className="flex w-full items-center justify-between rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm" // full width, bordered,
           >{/* (end of the button's settings) */}
             <span>{/* The words: */}
-              {label} menu: <strong>{current?.label}</strong>{/* e.g. "Admin menu: Families". */}
+              {label} menu: <strong>{currentSub?.label ?? current?.label}</strong>{/* e.g. "Admin menu: Families". */}
             </span>{/* End of the words. */}
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>{/* An up or down arrow (hidden from screen readers). */}
           </button>{/* End of the button. */}
           {phoneOpen && <div className={`mt-2 ${menuBox}`}>{links}</div>}{/* The menu links in their box, when open. */}
         </div>{/* End of the phone block. */}
 
-        <PageTitle title={current?.label ?? label} role={role} />{/* The heading: the open section's name (or the dashboard's), in the role's colour. */}
+        <PageTitle title={heading} role={role} />{/* The heading: the open section's name (or the dashboard's), in the role's colour. */}
         <div className="space-y-6">{children}</div>{/* The section's contents, with space between parts. */}
       </div>{/* End of the page area. */}
     </div> // End of the row.

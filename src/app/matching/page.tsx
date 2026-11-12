@@ -14,10 +14,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 import { OfferForm, type OfferChoice, type StudentTerm } from "../schedule/forms"; // The offer form and its types.
 import { CourseDetails, type CourseUnit } from "@/components/course-details"; // University and TAFE unit details, and their type.
 import { CourseOverviewForm } from "../admin/course-overview-form"; // The admin's course overview form.
-import { ADMIN_SECTIONS } from "../admin/sections"; // The admin side menu's sections.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
-import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null }; // How many subjects are at each stage, and the longest wait.
 type QueueRow = { // One student-subject in the queue:
@@ -114,8 +111,6 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   ]); // End of the reads.
   const counts = (countsRes.data ?? []) as StageCount[]; // The stage counts.
   const rows = (queueRes.data ?? []) as QueueRow[]; // The queue rows.
-  // Numbers on the admin menu, the same as on the other admin pages.
-  const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
   const total = rows[0]?.total ?? 0; // How many in the whole list.
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1); // How many pages.
 
@@ -130,22 +125,10 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   const next = currentIndex >= 0 ? rows[currentIndex + 1] : undefined; // The next student (if any).
   const current = STAGES.find((s) => s.id === stage)!; // The current stage.
 
-  // Same admin side menu as the rest of the admin area, so admins can move
-  // between sections without leaving Matching. It can be hidden.
-  const adminSections = isFull // The admin sections this admin sees:
-    ? ADMIN_SECTIONS // all of them for full admins,
-    : ADMIN_SECTIONS.filter((s) => s.id === "families" || s.id === "matching"); // otherwise just families and matching.
-
   return ( // Shows:
     <>{/* (a group) */}
-      <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, with Admin open, */}
-      <SectionShell // the page frame:
-        basePath="/admin" // under the admin address,
-        label="Admin" // labelled "Admin",
-        role="admin" // in the admin colours,
-        section="matching" // on the matching section,
-        sections={adminSections.map((s) => ({ id: s.id, label: s.label, count: todo.get("admin", s.id) }))} // with each section's to-do number on the menu.
-      >{/* (end of the frame's settings) */}
+      {/* The same admin menu as the rest of the admin area, so admins can move between tabs without leaving Matching: */}
+      <DashboardFrame role="admin" roles={viewer.roles} current="matching">{/* (admin dashboard, on Matching) */}
         <div className="flex flex-wrap items-end justify-between gap-3">{/* the top row: */}
           <div>{/* (a group) */}
             <p className="text-sm text-zinc-600">{/* a grey line: */}
@@ -286,7 +269,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
             </div>{/* End of the columns. */}
           </> // End of the group.
         )}{/* End of this part. */}
-      </SectionShell>{/* End of the page frame. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of MatchingPage.
@@ -408,8 +391,8 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
         title={`${student.full_name} · ${subject}`} // the name and subject,
         description={ // links under the title:
           <span className="flex flex-wrap gap-3">{/* (a row) */}
-            <TextLink href={`/schedule?section=child-places&student=${student.id}`}>Session places</TextLink>{/* to their session places, */}
-            <TextLink href={`/schedule?${new URLSearchParams({ section: "book", student: student.id, subject, auto: "1" }).toString()}`}>{/* to all available times: */}
+            <TextLink href={`/schedule?as=admin&section=child-places&student=${student.id}`}>Session places</TextLink>{/* to their session places, */}
+            <TextLink href={`/schedule?${new URLSearchParams({ as: "admin", section: "book", student: student.id, subject, auto: "1" }).toString()}`}>{/* to all available times: */}
               All available times{/* its words, */}
             </TextLink>{/* end of the link. */}
             {nextHref && <TextLink href={nextHref}>Next student →</TextLink>}{/* to the next student (if any). */}
@@ -443,7 +426,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
             ) : ( // otherwise:
               <span className="text-amber-800">Family hasn&apos;t said yet</span> // not said yet, in amber.
             )}{" "}{/* End of this part, then a space. */}
-            <TextLink href={`/schedule?section=booking-length&student=${student.id}`}>Change</TextLink>{/* a link to change it. */}
+            <TextLink href={`/schedule?as=admin&section=booking-length&student=${student.id}`}>Change</TextLink>{/* a link to change it. */}
           </Detail>{/* End of this detail. */}
           <Detail label="Places">{/* places: */}
             {places // if set,

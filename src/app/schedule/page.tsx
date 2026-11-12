@@ -1,12 +1,18 @@
 // Summary: the Sessions page: sessions, bookings, booking, session places, how
 // long to book, away dates, requests, blocks, notices, next term, waitlist,
 // where tutors teach, times to check, tutor availability and libraries.
+// It shows as the Sessions tab inside one dashboard at a time (Carla,
+// 12 Nov 2026): "?as=tutor" shows the tutor's sessions in the tutor
+// dashboard, "?as=parent" the family's in the parent dashboard, and so on.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
 import { leaveWaitlist, markNoticesRead, removeAwayDates } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates.
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, field, drop-down, small heading and text link.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
+import { ROLE_ORDER } from "@/lib/roles"; // The order of the dashboards.
+import { sessionsHref } from "@/lib/dashboard-menu"; // The address of a dashboard's Sessions tab.
 import { // The extra sections:
   BlocksSection, // blocks,
   LibrariesAdminSection, // libraries (admins),
@@ -87,6 +93,7 @@ type Booking = { // A weekly booking as listed:
 type Session = { // One session as listed:
   id: string; // its id,
   status: string; // its status,
+  student_id: string; // the student,
   student_name: string; // the student's name,
   tutor_id: string; // the tutor,
   tutor_name: string; // their name,
@@ -126,35 +133,61 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   // Admin levels: full admins (owner, operations) get every tool; support
   // admins can book, cancel and see sessions for any family.
   const adminLevel = viewer.roles.includes("admin") ? await getAdminLevel() : null; // Their admin level, if they're an admin.
-  const isAdmin = adminLevel !== null && FULL_ADMIN.includes(adminLevel); // Whether they're a full admin.
-  const isDesk = adminLevel !== null && FRONT_DESK.includes(adminLevel); // Whether they're a front-desk admin.
-  const isTutor = viewer.roles.includes("tutor"); // Whether they're a tutor.
-  const canBook = isDesk || viewer.roles.includes("parent") || viewer.roles.includes("student"); // Whether they can book (front desk, parents and students).
-  // Booking, searching for times and the waitlist are CLG staff jobs for now.
-  // Families see their sessions and approve the times CLG offers.
+  const deskLevel = adminLevel !== null && FRONT_DESK.includes(adminLevel); // Whether they're a front-desk admin.
+  const fullLevel = adminLevel !== null && FULL_ADMIN.includes(adminLevel); // Whether they're a full admin.
 
-  const sections = [ // The side menu's sections:
-    { id: "sessions", label: "Sessions" }, // sessions,
-    { id: "bookings", label: "Bookings" }, // bookings,
-    ...(isDesk ? [{ id: "book", label: "Book a session" }] : []), // book a session (front desk),
-    // Admins set where each student can have sessions; families give
-    // preferred times and study dates only (Carla, 2 Nov 2026).
-    ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []), // session places (admins) or preferred times (families),
-    ...(canBook ? [{ id: "booking-length", label: "How long to book" }] : []), // how long to book (those who can book),
-    { id: "away", label: "Away dates" }, // away dates,
-    ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []), // requests (those who can book, and tutors),
-    { id: "blocks", label: "Blocks" }, // blocks,
-    { id: "notices", label: "Notices" }, // notices,
-    ...(canBook ? [{ id: "next-term", label: "Next term" }] : []), // next term (those who can book),
-    ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []), // waitlist (front desk),
-    ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []), // where you teach (tutors),
-    ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []), // times to check (admins),
-    ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []), // tutor availability (admins),
-    ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []), // libraries (admins).
-  ]; // End of the sections.
+  // Which dashboards have a Sessions tab for this person: admin (front desk
+  // only; finance admins work in Billing), tutor, parent and student.
+  const mine = ROLE_ORDER.filter((r) => (r === "admin" ? deskLevel : viewer.roles.includes(r))); // Their dashboards with Sessions, in tab order.
+  if (mine.length === 0) redirect("/dashboard"); // None: back to their dashboard.
+
+  // The menu's sections for one dashboard. Each dashboard sees only the
+  // parts that fit it: admins everything, tutors their schedule, offers and
+  // notices, families booking, their schedule and notices.
+  const sectionsFor = (r: Role) => { // Takes the dashboard:
+    const isAdmin = r === "admin" && fullLevel; // a full admin in the admin dashboard,
+    const isDesk = r === "admin" && deskLevel; // a front-desk admin in the admin dashboard,
+    const isTutor = r === "tutor"; // the tutor dashboard,
+    const canBook = isDesk || r === "parent" || r === "student"; // dashboards that can book (front desk and families; tutors can't).
+    return [ // The side menu's sections:
+      { id: "sessions", label: "Overview" }, // the overview (upcoming sessions),
+      { id: "bookings", label: "Bookings" }, // bookings,
+      ...(isDesk ? [{ id: "book", label: "Book a session" }] : []), // book a session (front desk),
+      // Admins set where each student can have sessions; families give
+      // preferred times and study dates only (Carla, 2 Nov 2026).
+      ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []), // session places (admins) or preferred times (families),
+      ...(canBook ? [{ id: "booking-length", label: "How long to book" }] : []), // how long to book (those who can book),
+      { id: "away", label: "Away dates" }, // away dates,
+      ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []), // requests (those who can book, and tutors),
+      { id: "blocks", label: "Blocks" }, // blocks,
+      { id: "notices", label: "Notices" }, // notices,
+      ...(canBook ? [{ id: "next-term", label: "Next term" }] : []), // next term (those who can book),
+      ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []), // waitlist (front desk),
+      ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []), // where you teach (tutors),
+      ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []), // times to check (admins),
+      ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []), // tutor availability (admins),
+      ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []), // libraries (admins).
+    ]; // End of the sections.
+  }; // End of sectionsFor.
   // Matching has its own tab now.
   if (params.section === "matching") redirect("/matching"); // Matching asked for: goes to its page.
-  const section = sections.find((s) => s.id === params.section)?.id ?? "sessions"; // The open section (sessions if none or unknown).
+
+  // The dashboard this page shows in: the one in the address ("as"), or,
+  // for an old link without one, the first dashboard that has the section asked for.
+  const asked = one(params.as) as Role; // The dashboard in the address, if any.
+  const role: Role = mine.includes(asked) // If they have that dashboard:
+    ? asked // use it,
+    : (mine.find((r) => sectionsFor(r).some((s) => s.id === params.section)) ?? mine[0]); // otherwise the first one with that section (or their first).
+  const isAdmin = role === "admin" && fullLevel; // Whether this is the admin dashboard of a full admin.
+  const isDesk = role === "admin" && deskLevel; // Whether this is the admin dashboard of a front-desk admin.
+  const isTutor = role === "tutor"; // Whether this is the tutor dashboard.
+  const isFamily = role === "parent" || role === "student"; // Whether this is a family dashboard (parent or student).
+  const canBook = isDesk || isFamily; // Whether they can book here (front desk and families).
+  // Booking, searching for times and the waitlist are CLG staff jobs for now.
+  // Families see their sessions and approve the times CLG offers.
+  const sections = sectionsFor(role); // This dashboard's sections.
+  const section = sections.find((s) => s.id === params.section)?.id ?? "sessions"; // The open section (the overview if none or unknown).
+  const here = (sec: string) => sessionsHref(role, sec); // The address of one section in this dashboard.
 
   const supabase = await createClient(); // Connects to the database.
   const unreadRes = await supabase // Counts unread notices:
@@ -183,8 +216,22 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     supabase.rpc("list_bookings"), // the bookings they can see,
     supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }), // and sessions from 2 weeks ago to 10 weeks ahead.
   ]); // End of the reads.
-  const bookings = (bookingsRes.data ?? []) as Booking[]; // The bookings.
-  const sessions = (sessionsRes.data ?? []) as Session[]; // The sessions.
+  // Each dashboard shows only its own: all of them for admins, the tutor's
+  // own in the tutor dashboard, and the family's children in a family one
+  // (so an admin who is also a parent sees just their own children there).
+  const familyIds = new Set<string>(); // The students this family dashboard is for.
+  if (role === "parent") { // In the parent dashboard:
+    const links = await supabase.from("parent_student_links").select("student_id").eq("parent_id", viewer.id); // their children,
+    for (const l of links.data ?? []) familyIds.add(l.student_id as string); // added to the list.
+  } // End of the parent part.
+  if (role === "student") { // In the student dashboard:
+    const own = await supabase.from("students").select("id").eq("account_id", viewer.id); // their own student record,
+    for (const o of own.data ?? []) familyIds.add(o.id as string); // added to the list.
+  } // End of the student part.
+  const ours = (tutorId: string, studentId: string) => // Whether a booking or session belongs in this dashboard:
+    role === "admin" || (role === "tutor" ? tutorId === viewer.id : familyIds.has(studentId)); // admins all, tutors theirs, families their children's.
+  const bookings = ((bookingsRes.data ?? []) as Booking[]).filter((b) => ours(b.tutor_id, b.student_id)); // The bookings for this dashboard.
+  const sessions = ((sessionsRes.data ?? []) as Session[]).filter((x) => ours(x.tutor_id, x.student_id)); // The sessions for this dashboard.
   // Sign-on details for the tutor's own sessions.
   const mySessionIds = sessions.filter((s) => s.tutor_id === viewer.id).map((s) => s.id); // The tutor's own sessions.
   const signRes = mySessionIds.length // If there are any, reads:
@@ -207,7 +254,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     ), // (end of the list)
   ); // End of approvals.
   const waitingForMe = bookings.filter( // Requests waiting for this tutor:
-    (b) => b.status === "requested" && !b.expired && b.tutor_id === viewer.id && !approvals.get(b.id)?.tutor_ok_at, // requested, not expired, theirs, not yet accepted by them.
+    (b) => isTutor && b.status === "requested" && !b.expired && b.tutor_id === viewer.id && !approvals.get(b.id)?.tutor_ok_at, // in the tutor dashboard: requested, not expired, theirs, not yet accepted by them.
   ); // End of the filter.
   // What a tutor sees before accepting: first name, year level, subject,
   // goal, place and time. The rest opens once they and the family accept.
@@ -219,7 +266,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   ); // End of goalOf.
   const familyToApprove = bookings.filter((b) => { // Offers waiting for the family:
     const a = approvals.get(b.id); // the request's approvals,
-    return b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id; // requested, not expired, needs the family, not yet approved by them, and not this tutor's.
+    return isFamily && b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id; // in a family dashboard: requested, not expired, needs the family, not yet approved by them, and not this tutor's.
   }); // End of the filter.
 
   // Numbers on tabs that need action ("How long to book", Libraries).
@@ -230,6 +277,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const weekAgo = now - 7 * 24 * 3600 * 1000; // A week ago.
   const recentMine = sessions.filter( // The tutor's sessions from the last week:
     (s) => // each session:
+      isTutor && // in the tutor dashboard,
       s.tutor_id === viewer.id && // theirs,
       s.status === "completed" && // completed,
       new Date(s.ends_at).getTime() < now && // already ended,
@@ -240,15 +288,17 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   ); // End of the filter.
 
   return ( // Shows:
-    <SectionShell // the page frame:
-      basePath="/schedule" // at this address,
-      label="Scheduling" // labelled "Scheduling",
-      section={section} // on the open section,
-      sections={sections.map((s) => ({ // each section with:
+    <DashboardFrame // the dashboard tabs and side menu:
+      role={role} // for this dashboard,
+      roles={viewer.roles} // with the person's roles (for the tabs and numbers),
+      current="sessions" // with the Sessions tab open,
+      sub={section} // on the open section,
+      items={sections.map((s) => ({ // with Sessions' sections under it, each with:
         ...s, // its details,
+        href: here(s.id), // its address in this dashboard,
         count: // its number:
-          s.id === "bookings" && waitingForMe.length + (isDesk ? 0 : familyToApprove.length) // for bookings, requests and offers waiting,
-            ? waitingForMe.length + (isDesk ? 0 : familyToApprove.length) // that number,
+          s.id === "bookings" && waitingForMe.length + familyToApprove.length // for bookings, requests and offers waiting,
+            ? waitingForMe.length + familyToApprove.length // that number,
             : s.id === "notices" && unread // for notices, unread ones,
               ? unread // that number,
               : s.id === "next-term" && renewalsToAnswer // for next term, questions to answer,
@@ -272,13 +322,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           {!isDesk && familyToApprove.length > 0 && ( // For families with offers to approve:
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber notice: */}
               CLG has offered {familyToApprove.length === 1 ? "a session time" : `${familyToApprove.length} session times`}{" "}{/* how many, then, */}
-              for you to approve. <TextLink href="/schedule?section=bookings">See offers</TextLink>{/* a link to see them. */}
+              for you to approve. <TextLink href={here("bookings")}>See offers</TextLink>{/* a link to see them. */}
             </p> // End of the notice.
           )}{/* End of this part. */}
           {waitingForMe.length > 0 && ( // If the tutor has requests to answer:
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber notice: */}
               You have {waitingForMe.length} booking request{waitingForMe.length > 1 ? "s" : ""} to answer.{" "}{/* how many, then, */}
-              <TextLink href="/schedule?section=bookings">See requests</TextLink>{/* a link to see them. */}
+              <TextLink href={here("bookings")}>See requests</TextLink>{/* a link to see them. */}
             </p> // End of the notice.
           )}{/* End of this part. */}
           {toRecord.length > 0 && ( // If sessions need recording:
@@ -340,7 +390,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                 {isDesk ? ( // for front desk:
                   <>{/* (a group) */}
                     {" "}{/* a space, */}
-                    <TextLink href="/schedule?section=book">Book a session</TextLink>{/* a link to book one. */}
+                    <TextLink href={here("book")}>Book a session</TextLink>{/* a link to book one. */}
                   </> // End of the group.
                 ) : ( // otherwise:
                   canBook && " CLG will send you a time to approve." // for families, that CLG will send a time.
@@ -364,7 +414,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                     </span>{/* End of the group. */}
                     {s.status === "scheduled" ? ( // if it's still on:
                       <span className="flex flex-wrap items-center gap-3">{/* a row of actions: */}
-                        {s.tutor_id === viewer.id && // for the tutor's own session,
+                        {isTutor && // in the tutor dashboard,
+                          s.tutor_id === viewer.id && // for the tutor's own session,
                           new Date(s.starts_at).getTime() - 30 * 60 * 1000 <= now && // from 30 minutes before it starts:
                           (signOf.get(s.id)?.signed_on_at ? ( // if signed on,
                             <span className="rounded-full bg-teal-50 px-3 py-0.5 text-xs text-teal-900">Signed on</span> // a "Signed on" tag,
@@ -490,7 +541,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}{/* The session places section. */}
       {section === "booking-length" && canBook && <BookingLengthSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}{/* The how long to book section. */}
-    </SectionShell> // End of the page frame.
+    </DashboardFrame> // End of the dashboard frame.
   ); // End of what's shown.
 } // End of SchedulePage.
 
@@ -592,6 +643,7 @@ async function BookSection({ // Takes:
           </Empty> // End of the line.
         ) : ( // otherwise:
           <form method="get" action="/schedule" className="space-y-5">{/* the search form (stays on this page): */}
+            <input type="hidden" name="as" value="admin" />{/* the admin dashboard (hidden; only front desk books), */}
             <input type="hidden" name="section" value="book" />{/* this section (hidden), */}
             <input type="hidden" name="go" value="1" />{/* marks the search button pressed (hidden), */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* two columns: */}

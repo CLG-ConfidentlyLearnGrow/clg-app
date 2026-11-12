@@ -2,9 +2,8 @@
 // prices and settings, and the Stripe and Xero connections.
 //
 import { approveInvoice, removeSplit } from "@/app/actions/billing"; // The billing actions: approve an invoice, remove a split payer.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, small heading, table and text link.
 import { FINANCE, PAY, requireAdminLevel } from "@/lib/auth"; // Admin levels that can see billing and staff pay, and the level check.
 import { stripeIsTestMode, stripeKey, xeroConfig } from "@/lib/billing/config"; // Stripe and Xero setting readers.
@@ -146,17 +145,15 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
 
   return ( // Shows:
     <>{/* (a group) */}
-      <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, with Admin open, */}
-      <SectionShell // the page frame:
-        basePath="/admin/billing" // at this address,
-        label="Billing" // labelled "Billing",
-        role="admin" // in the admin colours,
-        section={section} // on the open section,
-        sections={SECTIONS.map((s) => ({ ...s, count: todo.get("billing", s.id) }))} // with each section's to-do number on the menu.
+      {/* The dashboard tabs and admin menu, with this page's own sections shown under its tab: */}
+      <DashboardFrame // the dashboard frame:
+        role="admin" // the admin dashboard,
+        roles={viewer.roles} // the person's roles (for the tabs and numbers),
+        current="billing" // this page's tab open,
+        sub={section} // on the open section,
+        items={SECTIONS.map((s) => ({ ...s, href: `/admin/billing?section=${s.id}`, count: todo.get("billing", s.id) }))} // with this page's sections (and their numbers) under the tab.
       >{/* (end of the frame's settings) */}
-        <p className="text-sm">{/* a line of links: */}
-          <TextLink href="/admin">Back to admin</TextLink>{/* back to admin, */}
-          {" · "}{/* a dot between, */}
+        <p className="text-sm">{/* a line: */}
           <TextLink href="/admin/staff">Staff directory</TextLink>{/* the staff directory. */}
         </p>{/* End of the line. */}
 
@@ -415,7 +412,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
             </Card>{/* End of the card. */}
           </> // End of the group.
         )}{/* End of the connections section. */}
-      </SectionShell>{/* End of the page frame. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of AdminBillingPage.

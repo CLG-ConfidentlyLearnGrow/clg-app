@@ -4,10 +4,9 @@
 import { requireFamilyAgreement } from "@/lib/consent"; // Sends the person to agree to the family terms first if they haven't.
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { Card, Empty, TextLink } from "@/components/ui"; // Shared page parts: a card, an empty-state line and a text link.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
-import { CountBadge } from "@/components/count-badge"; // The small to-do number badge.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import { PARENT_SECTIONS } from "@/lib/dashboard-menu"; // The parent dashboard's own sections.
 import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { requireViewer } from "@/lib/auth"; // Gets the signed-in person (or sends them to sign in).
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -36,10 +35,7 @@ async function loadSubjects(supabase: Awaited<ReturnType<typeof createClient>>):
   return (core.data ?? []) as SubjectRow[]; // Returns those.
 } // End of loadSubjects.
 
-const SECTIONS = [ // The side menu's sections:
-  { id: "children", label: "Your children" }, // the children list,
-  { id: "add", label: "Add a child" }, // the add-a-child form.
-] as const; // End of the sections.
+const SECTIONS = PARENT_SECTIONS; // The parent dashboard's own sections (shared with the side menu).
 
 export default async function ParentDashboard({ searchParams }: PageProps<"/dashboard/parent">) { // The page itself (reads the address's settings).
   const viewer = await requireViewer(); // The signed-in person.
@@ -89,14 +85,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
 
   return ( // Shows:
     <>{/* (a group) */}
-      <RoleTabs roles={viewer.roles} active="parent" />{/* the dashboard tabs, with Parent open, */}
-      <SectionShell // the page frame:
-        basePath="/dashboard/parent" // at this address,
-        label="Parent" // labelled "Parent",
-        role="parent" // in the parent colours,
-        section={section} // on the open section,
-        sections={SECTIONS.map((s) => ({ ...s, count: s.id === "children" ? todo.get("parent", "children") : undefined }))} // with the children's to-do number on the menu.
-      >{/* (end of the frame's settings) */}
+      <DashboardFrame role="parent" roles={viewer.roles} current={section}>{/* the dashboard tabs and parent menu, on the open section: */}
         {/* Session times to approve, and new notices, on every section so they aren't missed. */}
         <SessionAnswersCard waiting={offers.as_family} notices={todo.get("sessions", "notices") ?? 0} who="family" />
         {section === "children" && ( // The children section:
@@ -123,11 +112,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                 <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>{/* Nothing else to do for now. */}
               </Card> // End of the card.
             )}{/* End of this part. */}
-            <NewUpdates studentIds={[...mine]} />{/* New updates, about their own children only. */}
-            <p className="text-sm">{/* a line: */}
-              <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>{" "}{/* a link to billing, then a space, */}
-              <CountBadge n={todo.get("family", "billing")} className="bg-parent-strong text-white" />{/* and its to-do number. */}
-            </p>{/* End of the line. */}
+            <NewUpdates studentIds={[...mine]} />{/* New updates, about their own children only (Billing is a tab in the menu now). */}
             <Card title="Your children">{/* the "Your children" card: */}
               {students.length === 0 ? ( // if no children yet:
                 <Empty>{/* a line: */}
@@ -196,7 +181,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
             Want to learn with CLG yourself? <TextLink href="/dashboard/learn">Add a student profile</TextLink>{/* offering to add a student profile for themselves. */}
           </p> // End of the line.
         )}{/* End of this part. */}
-      </SectionShell>{/* End of the page frame. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of ParentDashboard.

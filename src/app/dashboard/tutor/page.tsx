@@ -4,9 +4,9 @@
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { removeAvailability, removeTeaching } from "@/app/actions/tutor"; // The tutor actions: remove an available time, remove a subject.
 import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty line, small heading, table and text link.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import { TUTOR_SECTIONS } from "@/lib/dashboard-menu"; // The tutor dashboard's own sections.
 import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Whether two-step sign-in is still needed, and the signed-in person.
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks"; // State names, weekday names, check names, and the state type.
@@ -16,12 +16,7 @@ import { addDays, currentTime, sessionWhen, shortDate } from "@/lib/scheduling";
 import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms"; // The tutor forms.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
 
-const SECTIONS = [ // The side menu's sections:
-  { id: "students", label: "Your students" }, // their students,
-  { id: "teaching", label: "What you teach" }, // what they teach,
-  { id: "checks", label: "Child safety checks" }, // their checks,
-  { id: "hours", label: "Hours and availability" }, // hours and availability.
-] as const; // End of the sections.
+const SECTIONS = TUTOR_SECTIONS; // The tutor dashboard's own sections (shared with the side menu).
 
 type DueNote = { session_id: string; tutor_id: string; student_id: string; student_name: string; starts_at: string; hours_since_end: number }; // A session note still to write: session, tutor, student, start time and hours since it ended.
 type Caseload = { // A student's progress summary:
@@ -161,21 +156,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
 
   return ( // Shows:
     <>{/* (a group) */}
-      <RoleTabs roles={viewer.roles} active="tutor" />{/* the dashboard tabs, with Tutor open, */}
-      <SectionShell // the page frame:
-        basePath="/dashboard/tutor" // at this address,
-        label="Tutor" // labelled "Tutor",
-        role="tutor" // in the tutor colours,
-        section={section} // on the open section,
-        sections={SECTIONS.map((s) => ({ ...s, count: todo.get("tutor", s.id) }))} // with each section's to-do number on the menu.
-      >{/* (end of the frame's settings) */}
+      <DashboardFrame role="tutor" roles={viewer.roles} current={section}>{/* the dashboard tabs and tutor menu, on the open section: */}
         {/* Session times to accept or decline, and new notices, on every section so they aren't missed. */}
         <SessionAnswersCard waiting={offers.as_tutor} notices={todo.get("sessions", "notices") ?? 0} who="tutor" />
-        <p className="text-sm">{/* a line of links: */}
-          <TextLink href="/pay">My pay</TextLink>{/* their pay, */}
-          {" · "}{/* a dot between, */}
-          <TextLink href="/materials">CLG materials</TextLink>{/* CLG materials. */}
-        </p>{/* End of the line. */}
         {section === "students" && pauses.length > 0 && ( // On the students section, if there are on hold notices:
           <Card title="Sessions on hold or back on" description="From the last 2 weeks. Your schedule shows what's on.">{/* a card: */}
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
@@ -435,7 +418,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
             </ul>{/* End of the list. */}
             <AvailabilityForm libraries={(libsRes.data ?? []) as { id: string; name: string; suburb: string | null }[]} />{/* the add-a-time form, with the libraries. */}
             <p className="mt-3 text-sm text-zinc-600">{/* a line: */}
-              Library not in the list? Suggest it under <TextLink href="/schedule?section=places">Where you teach</TextLink>.{/* where to suggest a library. */}
+              Library not in the list? Suggest it under <TextLink href="/schedule?as=tutor&section=places">Where you teach</TextLink>.{/* where to suggest a library. */}
             </p>{/* End of the line. */}
           </Card> // End of the card.
         )}{/* End of the hours section. */}
@@ -444,7 +427,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
             Want to learn with CLG yourself? <TextLink href="/dashboard/learn">Add a student profile</TextLink>{/* offering to add a student profile for themselves. */}
           </p> // End of the line.
         )}{/* End of this part. */}
-      </SectionShell>{/* End of the page frame. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of TutorDashboard.

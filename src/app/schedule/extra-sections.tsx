@@ -102,7 +102,7 @@ export async function StudyDatesToCheck() { // The admin list of study dates sti
                 {" "}{/* a space, */}
                 · {STUDY_PERIOD_NAMES[r.calendar] ?? r.calendar} · {r.problem}{/* their study period and what's missing. */}
               </span>{" "}{/* End of the grey part, then a space. */}
-              <a className="text-xs text-teal-800 underline" href={`/schedule?section=child-places&student=${r.student_id}`}>{/* a link to their study dates: */}
+              <a className="text-xs text-teal-800 underline" href={`/schedule?as=admin&section=child-places&student=${r.student_id}`}>{/* a link to their study dates: */}
                 Open{/* its words, */}
               </a>{/* end of the link. */}
             </li> // End of the row.
