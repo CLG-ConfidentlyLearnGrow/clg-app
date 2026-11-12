@@ -4,85 +4,86 @@
 -- Science Years 1 to 6), parent P1 ...01 (Cara's parent).
 -- Cleans up after itself so later tests see the same data as before.
 
+-- Keeps Cara's student id as cara.
 select id as cara from public.students where full_name = 'Cara One' \gset
 
 -- A small confirmed curriculum to tag with, plus one draft curriculum.
-insert into public.curriculum_frameworks (id, code, name, version, confirmed_at) values
-  ('00000000-0000-0000-0000-00000000f601', 'MATT', 'Materials test', '1', now()),
-  ('00000000-0000-0000-0000-00000000f602', 'MATD', 'Materials draft', '1', null);
-insert into public.curriculum_skills (id, framework_id, subject, level_band, code, description) values
-  ('00000000-0000-0000-0000-00000000c601', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Year 5', 'MT5-1', 'Compare fractions'),
-  ('00000000-0000-0000-0000-00000000c602', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Year 9', 'MT9-1', 'Solve linear equations'),
-  ('00000000-0000-0000-0000-00000000c603', '00000000-0000-0000-0000-00000000f601', 'English', 'Year 5', 'ET5-1', 'Persuasive writing'),
-  ('00000000-0000-0000-0000-00000000c604', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Years 3 and 4', 'MT34-1', 'Times tables'),
-  ('00000000-0000-0000-0000-00000000c605', '00000000-0000-0000-0000-00000000f602', 'Mathematics', 'Year 5', 'MD5-1', 'Draft skill');
+insert into public.curriculum_frameworks (id, code, name, version, confirmed_at) values -- Adds two test curricula:
+  ('00000000-0000-0000-0000-00000000f601', 'MATT', 'Materials test', '1', now()), -- one confirmed,
+  ('00000000-0000-0000-0000-00000000f602', 'MATD', 'Materials draft', '1', null); -- one still a draft.
+insert into public.curriculum_skills (id, framework_id, subject, level_band, code, description) values -- Adds five skills:
+  ('00000000-0000-0000-0000-00000000c601', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Year 5', 'MT5-1', 'Compare fractions'), -- Year 5 comparing fractions,
+  ('00000000-0000-0000-0000-00000000c602', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Year 9', 'MT9-1', 'Solve linear equations'), -- Year 9 linear equations,
+  ('00000000-0000-0000-0000-00000000c603', '00000000-0000-0000-0000-00000000f601', 'English', 'Year 5', 'ET5-1', 'Persuasive writing'), -- Year 5 persuasive writing,
+  ('00000000-0000-0000-0000-00000000c604', '00000000-0000-0000-0000-00000000f601', 'Mathematics', 'Years 3 and 4', 'MT34-1', 'Times tables'), -- Years 3 and 4 times tables,
+  ('00000000-0000-0000-0000-00000000c605', '00000000-0000-0000-0000-00000000f602', 'Mathematics', 'Year 5', 'MD5-1', 'Draft skill'); -- and a skill in the draft curriculum.
 
 -- Reading curriculum levels.
-select tests.eq((private.level_band_ranks('Year 5'))[1], 6, 'Year 5 is rank 6');
-select tests.eq((private.level_band_ranks('Year 11 (Stage 1)'))[2], 12, 'Stage 1 note ignored');
-select tests.eq((private.level_band_ranks('Years 3 and 4'))[2], 5, 'two-year band');
-select tests.eq((private.level_band_ranks('Foundation'))[1], 1, 'Foundation');
-select tests.eq((private.level_band_ranks('Unit 3') is null)::int, 0, 'number read from unit');
-select tests.eq((private.level_band_ranks('Adults') is null)::int, 1, 'unknown level');
+select tests.eq((private.level_band_ranks('Year 5'))[1], 6, 'Year 5 is rank 6'); -- Checks: Year 5 is rank 6.
+select tests.eq((private.level_band_ranks('Year 11 (Stage 1)'))[2], 12, 'Stage 1 note ignored'); -- Checks: Stage 1 note ignored.
+select tests.eq((private.level_band_ranks('Years 3 and 4'))[2], 5, 'two-year band'); -- Checks: two-year band.
+select tests.eq((private.level_band_ranks('Foundation'))[1], 1, 'Foundation'); -- Checks: Foundation.
+select tests.eq((private.level_band_ranks('Unit 3') is null)::int, 0, 'number read from unit'); -- Checks: number read from unit.
+select tests.eq((private.level_band_ranks('Adults') is null)::int, 1, 'unknown level'); -- Checks: unknown level.
 
 -- ===========================================================================
 -- Only admins add and tag materials
 -- ===========================================================================
 
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Mine', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'tutor adds a material');
-select tests.fails($$insert into storage.objects (bucket_id, name) values ('materials', 'view/x.pdf')$$, 'tutor uploads a file');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Mine', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'tutor adds a material'); -- Checks this is refused: tutor adds a material.
+select tests.fails($$insert into storage.objects (bucket_id, name) values ('materials', 'view/x.pdf')$$, 'tutor uploads a file'); -- Checks this is refused: tutor uploads a file.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal1');
-set role authenticated;
-select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('No 2-step', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'admin without two-step login');
-reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal1'); -- Signs in as test account ...a0.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('No 2-step', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'admin without two-step login'); -- Checks this is refused: admin without two-step login.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
-set role authenticated;
-insert into storage.objects (bucket_id, name) values ('materials', 'view/00000000-0000-0000-0000-00000000e601.pdf');
-insert into public.materials (id, title, kind, subject, from_level, to_level, file_path, file_type, file_bytes) values
-  ('00000000-0000-0000-0000-00000000e601', 'Fraction walls', 'worksheet', 'General Maths', 'Year 4', 'Year 6', 'view/00000000-0000-0000-0000-00000000e601.pdf', 'application/pdf', 1000),
-  ('00000000-0000-0000-0000-00000000e602', 'Equations starter', 'worksheet', 'General Maths', 'Year 8', 'Year 10', 'view/00000000-0000-0000-0000-00000000e602.pdf', 'application/pdf', 1000),
-  ('00000000-0000-0000-0000-00000000e603', 'Persuasive essay plan', 'lesson_plan', 'English', 'Year 5', 'Year 6', 'view/00000000-0000-0000-0000-00000000e603.pdf', 'application/pdf', 1000),
-  ('00000000-0000-0000-0000-00000000e604', 'Study timetable', 'reference', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-00000000e604.png', 'image/png', 1000);
-select tests.eq((select count(*) from public.materials where created_by = '00000000-0000-0000-0000-0000000000a0' and status = 'draft'), 4, 'drafts stamped with admin');
-select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Backwards', 'General Maths', 'Year 9', 'Year 4', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'year range backwards');
-select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Bad path', 'General Maths', 'Year 4', 'Year 4', '../secret.pdf', 'application/pdf', 100)$$, 'odd file path');
-select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Too big', 'General Maths', 'Year 4', 'Year 4', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 5000000)$$, 'file over 4 MB');
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+insert into storage.objects (bucket_id, name) values ('materials', 'view/00000000-0000-0000-0000-00000000e601.pdf'); -- Adds one file to storage, as if uploaded.
+insert into public.materials (id, title, kind, subject, from_level, to_level, file_path, file_type, file_bytes) values -- Adds four materials:
+  ('00000000-0000-0000-0000-00000000e601', 'Fraction walls', 'worksheet', 'General Maths', 'Year 4', 'Year 6', 'view/00000000-0000-0000-0000-00000000e601.pdf', 'application/pdf', 1000), -- a fractions worksheet for Years 4 to 6,
+  ('00000000-0000-0000-0000-00000000e602', 'Equations starter', 'worksheet', 'General Maths', 'Year 8', 'Year 10', 'view/00000000-0000-0000-0000-00000000e602.pdf', 'application/pdf', 1000), -- an equations worksheet for Years 8 to 10,
+  ('00000000-0000-0000-0000-00000000e603', 'Persuasive essay plan', 'lesson_plan', 'English', 'Year 5', 'Year 6', 'view/00000000-0000-0000-0000-00000000e603.pdf', 'application/pdf', 1000), -- a persuasive essay lesson plan,
+  ('00000000-0000-0000-0000-00000000e604', 'Study timetable', 'reference', 'General Maths', 'Year 5', 'Year 5', 'view/00000000-0000-0000-0000-00000000e604.png', 'image/png', 1000); -- and a study timetable picture.
+select tests.eq((select count(*) from public.materials where created_by = '00000000-0000-0000-0000-0000000000a0' and status = 'draft'), 4, 'drafts stamped with admin'); -- Checks: drafts stamped with admin.
+select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Backwards', 'General Maths', 'Year 9', 'Year 4', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 100)$$, 'year range backwards'); -- Checks this is refused: year range backwards.
+select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Bad path', 'General Maths', 'Year 4', 'Year 4', '../secret.pdf', 'application/pdf', 100)$$, 'odd file path'); -- Checks this is refused: odd file path.
+select tests.fails($$insert into public.materials (title, subject, from_level, to_level, file_path, file_type, file_bytes) values ('Too big', 'General Maths', 'Year 4', 'Year 4', 'view/00000000-0000-0000-0000-000000000001.pdf', 'application/pdf', 5000000)$$, 'file over 4 MB'); -- Checks this is refused: file over 4 MB.
 
 -- The skill picker lists matching skills in confirmed curricula only.
-select tests.eq((select count(*) from public.skills_for_material('General Maths', 'Year 4', 'Year 6')), 2, 'maths skills for Years 4 to 6 (fractions, times tables)');
-select tests.eq((select count(*) from public.skills_for_material('General Maths', 'Year 4', 'Year 6', 'fraction')), 1, 'search words');
-select tests.eq((select count(*) from public.skills_for_material('English', 'Year 5', 'Year 5')), 1, 'English skills');
+select tests.eq((select count(*) from public.skills_for_material('General Maths', 'Year 4', 'Year 6')), 2, 'maths skills for Years 4 to 6 (fractions, times tables)'); -- Checks: maths skills for Years 4 to 6 (fractions, times tables).
+select tests.eq((select count(*) from public.skills_for_material('General Maths', 'Year 4', 'Year 6', 'fraction')), 1, 'search words'); -- Checks: search words.
+select tests.eq((select count(*) from public.skills_for_material('English', 'Year 5', 'Year 5')), 1, 'English skills'); -- Checks: English skills.
 
 -- Publishing needs skills (or a reason).
-select tests.fails($$update public.materials set status = 'published' where id = '00000000-0000-0000-0000-00000000e601'$$, 'publish without skills');
-insert into public.material_skills (material_id, skill_id) values
-  ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000c601'),
-  ('00000000-0000-0000-0000-00000000e602', '00000000-0000-0000-0000-00000000c602'),
-  ('00000000-0000-0000-0000-00000000e603', '00000000-0000-0000-0000-00000000c603');
-select tests.fails($$insert into public.material_skills (material_id, skill_id) values ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000c605')$$, 'tag with a draft curriculum skill');
-update public.materials set status = 'published' where id in (
-  '00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000e602', '00000000-0000-0000-0000-00000000e603');
-select tests.eq((select count(*) from public.materials where status = 'published' and published_at is not null), 3, 'published with date');
-update public.materials set status = 'published', no_skills_reason = 'Study skills: no curriculum' where id = '00000000-0000-0000-0000-00000000e604';
-select tests.eq((select count(*) from public.materials where status = 'published'), 4, 'published with a reason instead of skills');
-select tests.fails($$delete from public.material_skills where material_id = '00000000-0000-0000-0000-00000000e601'$$, 'remove the last skill of a published material');
-select tests.fails($$update public.materials set status = 'draft' where id = '00000000-0000-0000-0000-00000000e601'$$, 'published back to draft');
-update public.materials set created_by = '00000000-0000-0000-0000-000000000011' where id = '00000000-0000-0000-0000-00000000e601';
-select tests.eq((select count(*) from public.materials where id = '00000000-0000-0000-0000-00000000e601' and created_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'creator kept');
-delete from public.materials where id = '00000000-0000-0000-0000-00000000e602';
-select tests.eq((select count(*) from public.materials where id = '00000000-0000-0000-0000-00000000e602'), 1, 'published material cannot be deleted');
-reset role;
+select tests.fails($$update public.materials set status = 'published' where id = '00000000-0000-0000-0000-00000000e601'$$, 'publish without skills'); -- Checks this is refused: publish without skills.
+insert into public.material_skills (material_id, skill_id) values -- Tags three of them with skills:
+  ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000c601'), -- fractions worksheet with comparing fractions,
+  ('00000000-0000-0000-0000-00000000e602', '00000000-0000-0000-0000-00000000c602'), -- equations worksheet with linear equations,
+  ('00000000-0000-0000-0000-00000000e603', '00000000-0000-0000-0000-00000000c603'); -- essay plan with persuasive writing.
+select tests.fails($$insert into public.material_skills (material_id, skill_id) values ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000c605')$$, 'tag with a draft curriculum skill'); -- Checks this is refused: tag with a draft curriculum skill.
+update public.materials set status = 'published' where id in ( -- Publishes those three:
+  '00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-00000000e602', '00000000-0000-0000-0000-00000000e603'); -- (their ids).
+select tests.eq((select count(*) from public.materials where status = 'published' and published_at is not null), 3, 'published with date'); -- Checks: published with date.
+update public.materials set status = 'published', no_skills_reason = 'Study skills: no curriculum' where id = '00000000-0000-0000-0000-00000000e604'; -- Publishes the timetable, with a reason it has no skills.
+select tests.eq((select count(*) from public.materials where status = 'published'), 4, 'published with a reason instead of skills'); -- Checks: published with a reason instead of skills.
+select tests.fails($$delete from public.material_skills where material_id = '00000000-0000-0000-0000-00000000e601'$$, 'remove the last skill of a published material'); -- Checks this is refused: remove the last skill of a published material.
+select tests.fails($$update public.materials set status = 'draft' where id = '00000000-0000-0000-0000-00000000e601'$$, 'published back to draft'); -- Checks this is refused: published back to draft.
+update public.materials set created_by = '00000000-0000-0000-0000-000000000011' where id = '00000000-0000-0000-0000-00000000e601'; -- Marks the fractions worksheet as made by tutor T1.
+select tests.eq((select count(*) from public.materials where id = '00000000-0000-0000-0000-00000000e601' and created_by = '00000000-0000-0000-0000-0000000000a0'), 1, 'creator kept'); -- Checks: creator kept.
+delete from public.materials where id = '00000000-0000-0000-0000-00000000e602'; -- Tries to delete the equations worksheet.
+select tests.eq((select count(*) from public.materials where id = '00000000-0000-0000-0000-00000000e602'), 1, 'published material cannot be deleted'); -- Checks: published material cannot be deleted.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Parent and student logins: no skill picker.
-select tests.claims('00000000-0000-0000-0000-000000000001', 'aal2');
-set role authenticated;
-select tests.fails($$select * from public.skills_for_material('General Maths', 'Year 4', 'Year 6')$$, 'parent uses skill picker');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000001', 'aal2'); -- Signs in as test account ...01 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails($$select * from public.skills_for_material('General Maths', 'Year 4', 'Year 6')$$, 'parent uses skill picker'); -- Checks this is refused: parent uses skill picker.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ===========================================================================
 -- Who sees what
@@ -90,125 +91,126 @@ reset role;
 
 -- T1 teaches General Maths Years 3 to 6: fractions and the study timetable,
 -- not equations (Years 8 to 10) or English.
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials), 2, 'T1 sees maths for the years they teach');
-select tests.eq((select count(*) from public.material_skills), 1, 'T1 sees the tags of those');
-select tests.eq((select count(*) from storage.objects where bucket_id = 'materials'), 0, 'tutor cannot read files directly');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials), 2, 'T1 sees maths for the years they teach'); -- Checks: T1 sees maths for the years they teach.
+select tests.eq((select count(*) from public.material_skills), 1, 'T1 sees the tags of those'); -- Checks: T1 sees the tags of those.
+select tests.eq((select count(*) from storage.objects where bucket_id = 'materials'), 0, 'tutor cannot read files directly'); -- Checks: tutor cannot read files directly.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal1');
-set role authenticated;
-select tests.eq((select count(*) from public.materials), 0, 'no materials without two-step login');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal1'); -- Signs in as test account ...11.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials), 0, 'no materials without two-step login'); -- Checks: no materials without two-step login.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- T2 teaches General Maths Years 1 to 12.
-select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials), 3, 'T2 sees all three maths materials');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2'); -- Signs in as test account ...12 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials), 3, 'T2 sees all three maths materials'); -- Checks: T2 sees all three maths materials.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-000000000001', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials), 0, 'parent sees none');
-select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e601')$$, 'parent opens a material');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000001', 'aal2'); -- Signs in as test account ...01 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials), 0, 'parent sees none'); -- Checks: parent sees none.
+select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e601')$$, 'parent opens a material'); -- Checks this is refused: parent opens a material.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims(null);
-set role anon;
-select tests.fails($$select * from public.materials$$, 'anon');
-reset role;
+select tests.claims(null); -- Signs out, so no one is signed in.
+set role anon; -- Acts as someone who is not signed in.
+select tests.fails($$select * from public.materials$$, 'anon'); -- Checks this is refused: anon.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- A draft is hidden from tutors; a retired one too.
-select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
-set role authenticated;
-update public.materials set status = 'retired' where id = '00000000-0000-0000-0000-00000000e604';
-reset role;
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials), 1, 'retired material hidden');
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+update public.materials set status = 'retired' where id = '00000000-0000-0000-0000-00000000e604'; -- Retires the timetable.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials), 1, 'retired material hidden'); -- Checks: retired material hidden.
 
 -- ===========================================================================
 -- Opening: logged, limited, stamped with the tutor's details
 -- ===========================================================================
 
-select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e601') where title = 'Fraction walls'), 1, 'T1 opens fractions');
-select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e602')$$, 'T1 opens equations (not their years)');
-select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e603')$$, 'T1 opens English (not their subject)');
-select tests.eq((select count(*) from public.material_opens), 0, 'tutor cannot read the open log');
-select tests.fails($$insert into public.material_opens (material_id, account_id) values ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-000000000011')$$, 'tutor writes the open log');
-select tests.fails($$select * from public.material_open_summary(7)$$, 'tutor reads the summary');
-reset role;
-select tests.eq((select count(*) from public.material_opens where account_id = '00000000-0000-0000-0000-000000000011'), 1, 'open logged');
+select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e601') where title = 'Fraction walls'), 1, 'T1 opens fractions'); -- Checks: T1 opens fractions.
+select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e602')$$, 'T1 opens equations (not their years)'); -- Checks this is refused: T1 opens equations (not their years).
+select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-00000000e603')$$, 'T1 opens English (not their subject)'); -- Checks this is refused: T1 opens English (not their subject).
+select tests.eq((select count(*) from public.material_opens), 0, 'tutor cannot read the open log'); -- Checks: tutor cannot read the open log.
+select tests.fails($$insert into public.material_opens (material_id, account_id) values ('00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-000000000011')$$, 'tutor writes the open log'); -- Checks this is refused: tutor writes the open log.
+select tests.fails($$select * from public.material_open_summary(7)$$, 'tutor reads the summary'); -- Checks this is refused: tutor reads the summary.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.eq((select count(*) from public.material_opens where account_id = '00000000-0000-0000-0000-000000000011'), 1, 'open logged'); -- Checks: open logged.
 
 -- Daily limit: 30 different materials in 24 hours. Opening the same one
 -- again doesn't count.
-insert into public.material_opens (material_id, account_id, opened_at)
-  select '00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-000000000011', now() from generate_series(1, 5);
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e601')), 1, 'same material again is fine');
-reset role;
+insert into public.material_opens (material_id, account_id, opened_at) -- Records tutor T1 opening the fractions worksheet:
+  select '00000000-0000-0000-0000-00000000e601', '00000000-0000-0000-0000-000000000011', now() from generate_series(1, 5); -- five times now.
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e601')), 1, 'same material again is fine'); -- Checks: same material again is fine.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 -- Make T1 look like they opened 30 other materials today.
-insert into public.materials (id, title, subject, from_level, to_level, file_path, file_type, file_bytes, status, no_skills_reason)
-  select ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0'))::uuid, 'Bulk ' || g, 'General Maths', 'Year 5', 'Year 5',
-         'view/' || ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0')) || '.pdf', 'application/pdf', 10, 'published', 'test'
-  from generate_series(1, 31) g;
-insert into public.material_opens (material_id, account_id)
-  select ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0'))::uuid, '00000000-0000-0000-0000-000000000011'
-  from generate_series(1, 29) g;
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
+insert into public.materials (id, title, subject, from_level, to_level, file_path, file_type, file_bytes, status, no_skills_reason) -- Adds 31 published materials at once:
+  select ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0'))::uuid, 'Bulk ' || g, 'General Maths', 'Year 5', 'Year 5', -- (each with its own id and name),
+         'view/' || ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0')) || '.pdf', 'application/pdf', 10, 'published', 'test' -- (each with its own file path),
+  from generate_series(1, 31) g; -- (numbered 1 to 31).
+insert into public.material_opens (material_id, account_id) -- Records tutor T1 opening 29 of them:
+  select ('00000000-0000-0000-0000-0000000e' || lpad(g::text, 4, '0'))::uuid, '00000000-0000-0000-0000-000000000011' -- (one open each),
+  from generate_series(1, 29) g; -- (numbered 1 to 29).
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 -- Fractions + 29 bulk = 30 different, so a new one is refused.
-select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-0000000e0031')$$, 'more than 30 different materials in a day');
-select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-0000000e0001')), 1, 'one already opened today still opens');
-reset role;
+select tests.fails($$select * from public.open_material('00000000-0000-0000-0000-0000000e0031')$$, 'more than 30 different materials in a day'); -- Checks this is refused: more than 30 different materials in a day.
+select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-0000000e0001')), 1, 'one already opened today still opens'); -- Checks: one already opened today still opens.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 -- Opens from yesterday don't count.
-update public.material_opens set opened_at = now() - interval '25 hours' where account_id = '00000000-0000-0000-0000-000000000011';
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-0000000e0031')), 1, 'limit resets after 24 hours');
-reset role;
+update public.material_opens set opened_at = now() - interval '25 hours' where account_id = '00000000-0000-0000-0000-000000000011'; -- Makes tutor T1's opens 25 hours old.
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-0000000e0031')), 1, 'limit resets after 24 hours'); -- Checks: limit resets after 24 hours.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Admins see who opened what, and have no limit.
-select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.material_opens), 38, 'admin reads the open log');
-select tests.eq((select different_materials from public.material_open_summary(7) where account_id = '00000000-0000-0000-0000-000000000011'), 31, 'summary counts different materials');
-select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e603')), 1, 'admin opens any material');
-reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.material_opens), 38, 'admin reads the open log'); -- Checks: admin reads the open log.
+select tests.eq((select different_materials from public.material_open_summary(7) where account_id = '00000000-0000-0000-0000-000000000011'), 31, 'summary counts different materials'); -- Checks: summary counts different materials.
+select tests.eq((select count(*) from public.open_material('00000000-0000-0000-0000-00000000e603')), 1, 'admin opens any material'); -- Checks: admin opens any material.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Old opens are cleared after 2 years.
-update public.material_opens set opened_at = now() - interval '3 years' where material_id = '00000000-0000-0000-0000-0000000e0002';
-select tests.eq(private.clear_old_material_opens(), 1, 'old opens cleared');
+update public.material_opens set opened_at = now() - interval '3 years' where material_id = '00000000-0000-0000-0000-0000000e0002'; -- Makes the opens of one material 3 years old.
+select tests.eq(private.clear_old_material_opens(), 1, 'old opens cleared'); -- Checks: old opens cleared.
 
 -- ===========================================================================
 -- Suggestions from a student's goals
 -- ===========================================================================
 
-insert into public.learning_goals (id, student_id, subject, title)
-  values ('00000000-0000-0000-0000-00000000a601', :'cara', 'General Maths', 'Compare fractions confidently');
-insert into public.goal_skills (goal_id, skill_id) values
-  ('00000000-0000-0000-0000-00000000a601', '00000000-0000-0000-0000-00000000c601');
-select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials_for_my_students() where material_id = '00000000-0000-0000-0000-00000000e601'), 1, 'fractions suggested for Cara''s goal');
-reset role;
-select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.materials_for_my_students() where student_name = 'Cara One'), 0, 'other tutor gets no suggestions for Cara');
-reset role;
+insert into public.learning_goals (id, student_id, subject, title) -- Adds a goal for Cara:
+  values ('00000000-0000-0000-0000-00000000a601', :'cara', 'General Maths', 'Compare fractions confidently'); -- (comparing fractions).
+insert into public.goal_skills (goal_id, skill_id) values -- Adds a skill to the goal:
+  ('00000000-0000-0000-0000-00000000a601', '00000000-0000-0000-0000-00000000c601'); -- comparing fractions.
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials_for_my_students() where material_id = '00000000-0000-0000-0000-00000000e601'), 1, 'fractions suggested for Cara''s goal'); -- Checks: fractions suggested for Cara's goal.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2'); -- Signs in as test account ...12 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.materials_for_my_students() where student_name = 'Cara One'), 0, 'other tutor gets no suggestions for Cara'); -- Checks: other tutor gets no suggestions for Cara.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ===========================================================================
 -- Clean up
 -- ===========================================================================
 
-select tests.claims(null);
-delete from public.goal_skills where goal_id = '00000000-0000-0000-0000-00000000a601';
-delete from public.learning_goals where id = '00000000-0000-0000-0000-00000000a601';
-delete from public.materials;
-delete from storage.objects where bucket_id = 'materials';
-delete from public.curriculum_skills where framework_id in ('00000000-0000-0000-0000-00000000f601', '00000000-0000-0000-0000-00000000f602');
-delete from public.curriculum_frameworks where id in ('00000000-0000-0000-0000-00000000f601', '00000000-0000-0000-0000-00000000f602');
+select tests.claims(null); -- Signs out, so no one is signed in.
+delete from public.goal_skills where goal_id = '00000000-0000-0000-0000-00000000a601'; -- Removes the goal's skill.
+delete from public.learning_goals where id = '00000000-0000-0000-0000-00000000a601'; -- Removes the goal.
+delete from public.materials; -- Removes the test materials.
+delete from storage.objects where bucket_id = 'materials'; -- Clears the test files from storage.
+delete from public.curriculum_skills where framework_id in ('00000000-0000-0000-0000-00000000f601', '00000000-0000-0000-0000-00000000f602'); -- Removes the test skills.
+delete from public.curriculum_frameworks where id in ('00000000-0000-0000-0000-00000000f601', '00000000-0000-0000-0000-00000000f602'); -- Removes the test curricula.
 
+-- Prints that every check in this file passed.
 \echo '  materials: all checks passed'

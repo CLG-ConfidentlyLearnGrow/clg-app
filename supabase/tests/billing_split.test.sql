@@ -3,140 +3,156 @@
 -- here. Runs after billing.test.sql. Everything is rolled back at the end
 -- so later tests see the people as they were.
 
+-- Keeps psql quiet so only problems are printed.
 \set QUIET on
-begin;
+begin; -- Starts a transaction, so everything below can be undone at the end.
 -- Runs the split migration again: it must be safe to run twice (and
 -- billing.test.sql re-ran the first billing file, which this one updates).
+-- Runs the database change 20261028230400_billing_split_payments.sql first, as this test needs it.
 \ir ../migrations/20261028230400_billing_split_payments.sql
+-- Runs the database change 20261102230100_billing_partial_pause.sql first, as this test needs it.
 \ir ../migrations/20261102230100_billing_partial_pause.sql
 -- Re-running an older billing file resets its rules, so apply admin levels again.
+-- Runs the database change 20261029900200_admin_levels.sql first, as this test needs it.
 \ir ../migrations/20261029900200_admin_levels.sql
 
+-- Keeps Cal's student id as cal and his family id as fam2.
 select id as cal, family_id as fam2 from public.students where full_name = 'Cal Two' \gset
+-- Keeps the first of a month about four months away as m.
 select date_trunc('month', private.billing_today() + 120)::date as m \gset
-create function tests.session(p_student uuid, p_day date, p_start time, p_minutes int)
-returns uuid language sql as $$
-  insert into public.sessions (student_id, tutor_id, family_id, subject, level_kind, delivery, starts_at, ends_at)
-  select p_student, '00000000-0000-0000-0000-000000000011', s.family_id, 'General Maths', 'school', 'online',
-         (p_day + p_start) at time zone 'Australia/Adelaide',
-         (p_day + p_start + make_interval(mins => p_minutes)) at time zone 'Australia/Adelaide'
-  from public.students s where s.id = p_student
-  returning id
-$$;
-insert into public.parent_student_links (parent_id, student_id) values ('00000000-0000-0000-0000-000000000001', :'cal');
+create function tests.session(p_student uuid, p_day date, p_start time, p_minutes int) -- A test helper that adds a session with tutor T1 and gives back its id. It takes the student, day, start and minutes:
+returns uuid language sql as $$ -- (gives back the new session's id)
+  insert into public.sessions (student_id, tutor_id, family_id, subject, level_kind, delivery, starts_at, ends_at) -- Adds the session:
+  select p_student, '00000000-0000-0000-0000-000000000011', s.family_id, 'General Maths', 'school', 'online', -- for this student with tutor T1, General Maths, school, online,
+         (p_day + p_start) at time zone 'Australia/Adelaide', -- starting at the given time in Adelaide,
+         (p_day + p_start + make_interval(mins => p_minutes)) at time zone 'Australia/Adelaide' -- ending the given minutes later,
+  from public.students s where s.id = p_student -- (using the student's family),
+  returning id -- and hands back its id.
+$$; -- (end of the helper)
+insert into public.parent_student_links (parent_id, student_id) values ('00000000-0000-0000-0000-000000000001', :'cal'); -- Links parent P1 to Cal as a second parent.
 -- billing.test.sql clears billing accounts when it finishes.
-insert into public.billing_accounts (family_id, bill_payer_id, plan) values (:'fam2', '00000000-0000-0000-0000-000000000002', 'monthly')
-on conflict (family_id) do update set bill_payer_id = excluded.bill_payer_id, plan = excluded.plan;
+insert into public.billing_accounts (family_id, bill_payer_id, plan) values (:'fam2', '00000000-0000-0000-0000-000000000002', 'monthly') -- Sets up monthly billing for Cal's family, paid by parent P2:
+on conflict (family_id) do update set bill_payer_id = excluded.bill_payer_id, plan = excluded.plan; -- (or updates it if already set up).
 
 -- ---------------------------------------------------------------------------
 -- Setting a split
 -- ---------------------------------------------------------------------------
-select tests.claims('00000000-0000-0000-0000-000000000002');
-set role authenticated;
-select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000001', 40)$$, :'fam2'), 'parent sets a split');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000001', 40)$$, :'fam2'), 'parent sets a split'); -- Checks this is refused: parent sets a split.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
-set role authenticated;
-select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000002', 40)$$, :'fam2'), 'main payer added as an extra payer');
-select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000011', 40)$$, :'fam2'), 'tutor added as a payer');
-select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000001', 100)$$, :'fam2'), 'share of 100%');
-select tests.fails(format($$insert into public.billing_payers (family_id, account_id, share_percent) values (%L, '00000000-0000-0000-0000-000000000001', 40)$$, :'fam2'), 'payer added by hand');
-select public.billing_set_split(:'fam2', '00000000-0000-0000-0000-000000000001', 30);
-select public.billing_set_split(:'fam2', '00000000-0000-0000-0000-000000000001', 40);
-select tests.eq((select count(*) from public.billing_payers where share_percent = 40), 1, 'admin sets and changes a split');
-reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000002', 40)$$, :'fam2'), 'main payer added as an extra payer'); -- Checks this is refused: main payer added as an extra payer.
+select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000011', 40)$$, :'fam2'), 'tutor added as a payer'); -- Checks this is refused: tutor added as a payer.
+select tests.fails(format($$select public.billing_set_split(%L, '00000000-0000-0000-0000-000000000001', 100)$$, :'fam2'), 'share of 100%'); -- Checks this is refused: share of 100 percent.
+select tests.fails(format($$insert into public.billing_payers (family_id, account_id, share_percent) values (%L, '00000000-0000-0000-0000-000000000001', 40)$$, :'fam2'), 'payer added by hand'); -- Checks this is refused: payer added by hand.
+select public.billing_set_split(:'fam2', '00000000-0000-0000-0000-000000000001', 30); -- The admin sets a 30/70 split with parent P1.
+select public.billing_set_split(:'fam2', '00000000-0000-0000-0000-000000000001', 40); -- Changes it to 40/60.
+select tests.eq((select count(*) from public.billing_payers where share_percent = 40), 1, 'admin sets and changes a split'); -- Checks: admin sets and changes a split.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
 -- An invoice split 40 / 60
 -- ---------------------------------------------------------------------------
-select tests.claims(null);
+select tests.claims(null); -- Signs out, so no one is signed in.
+-- A 1-hr session on day 8, kept as s1.
 select tests.session(:'cal', :'m'::date + 8, '15:00', 60) as s1 \gset
+-- A 1.5-hr session on day 15, kept as s2.
 select tests.session(:'cal', :'m'::date + 15, '15:00', 90) as s2 \gset
+-- Builds the monthly invoice, kept as inv.
 select public.billing_build_invoice(:'fam2', :'m', (:'m'::date + interval '1 month - 1 day')::date) as inv \gset
+-- Keeps the invoice total as total.
 select total_cents as total from public.billing_invoices where id = :'inv' \gset
-select tests.eq((select count(*) from public.billing_invoice_shares where invoice_id = :'inv'), 2, 'two shares');
-select tests.eq((select sum(amount_cents) from public.billing_invoice_shares where invoice_id = :'inv'), :total, 'shares add up to the total');
-select tests.eq((select amount_cents from public.billing_invoice_shares where invoice_id = :'inv' and payer_id = '00000000-0000-0000-0000-000000000001'),
-  floor(:total * 0.4)::int, 'second parent pays 40%');
+select tests.eq((select count(*) from public.billing_invoice_shares where invoice_id = :'inv'), 2, 'two shares'); -- Checks: two shares.
+select tests.eq((select sum(amount_cents) from public.billing_invoice_shares where invoice_id = :'inv'), :total, 'shares add up to the total'); -- Checks: shares add up to the total.
+select tests.eq((select amount_cents from public.billing_invoice_shares where invoice_id = :'inv' and payer_id = '00000000-0000-0000-0000-000000000001'), -- Checks the second parent pays 40 percent:
+  floor(:total * 0.4)::int, 'second parent pays 40%'); -- (rounded down).
+-- Keeps parent P1's share as p1_owes.
 select amount_cents as p1_owes from public.billing_invoice_shares where invoice_id = :'inv' and payer_id = '00000000-0000-0000-0000-000000000001' \gset
+-- Keeps parent P2's share as p2_owes.
 select amount_cents as p2_owes from public.billing_invoice_shares where invoice_id = :'inv' and payer_id = '00000000-0000-0000-0000-000000000002' \gset
-select public.billing_approve_invoice(:'inv');
+select public.billing_approve_invoice(:'inv'); -- Approves the invoice.
 
 -- Each payer sees only their own share and payment details.
-select tests.claims('00000000-0000-0000-0000-000000000001');
-set role authenticated;
-select tests.eq((select count(*) from public.billing_invoice_payers(:'inv')), 1, 'second parent sees one share');
-select tests.eq((select share_percent from public.billing_invoice_payers(:'inv')), 40, 'their own share');
-select tests.eq((select count(*) from public.billing_invoices where id = :'inv'), 1, 'second parent sees the invoice');
-select tests.eq((select count(*) from public.billing_invoice_shares), 1, 'second parent sees own share row only');
-select tests.fails($$select stripe_customer_id from public.billing_payers$$, 'payer reads Stripe references');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.billing_invoice_payers(:'inv')), 1, 'second parent sees one share'); -- Checks: second parent sees one share.
+select tests.eq((select share_percent from public.billing_invoice_payers(:'inv')), 40, 'their own share'); -- Checks: their own share.
+select tests.eq((select count(*) from public.billing_invoices where id = :'inv'), 1, 'second parent sees the invoice'); -- Checks: second parent sees the invoice.
+select tests.eq((select count(*) from public.billing_invoice_shares), 1, 'second parent sees own share row only'); -- Checks: second parent sees own share row only.
+select tests.fails($$select stripe_customer_id from public.billing_payers$$, 'payer reads Stripe references'); -- Checks this is refused: payer reads Stripe references.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-000000000002');
-set role authenticated;
-select tests.eq((select share_percent from public.billing_invoice_payers(:'inv')), 60, 'main payer sees their 60%');
-select tests.eq((select count(*) from public.billing_payers), 1, 'main payer sees the split');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select share_percent from public.billing_invoice_payers(:'inv')), 60, 'main payer sees their 60%'); -- Checks: main payer sees their 60 percent.
+select tests.eq((select count(*) from public.billing_payers), 1, 'main payer sees the split'); -- Checks: main payer sees the split.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
-set role authenticated;
-select tests.eq((select count(*) from public.billing_invoice_payers(:'inv')), 2, 'admin sees both shares');
-reset role;
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.billing_invoice_payers(:'inv')), 2, 'admin sees both shares'); -- Checks: admin sees both shares.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
 -- Payments and pauses
 -- ---------------------------------------------------------------------------
-select tests.claims(null);
+select tests.claims(null); -- Signs out, so no one is signed in.
+-- Keeps the due date as due.
 select due_on as due from public.billing_invoices where id = :'inv' \gset
-select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000001', 'stripe', 'pi_split_1', 'card', :p1_owes, 'succeeded');
-select tests.eq((select count(*) from public.billing_invoices where id = :'inv' and status = 'open'), 1, 'one share paid: invoice still open');
-select tests.eq((select paid_cents from public.billing_invoice_payers(:'inv') where payer_id = '00000000-0000-0000-0000-000000000001'), :p1_owes, 'share marked paid');
+select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000001', 'stripe', 'pi_split_1', 'card', :p1_owes, 'succeeded'); -- Parent P1 pays their share in full.
+select tests.eq((select count(*) from public.billing_invoices where id = :'inv' and status = 'open'), 1, 'one share paid: invoice still open'); -- Checks: one share paid: invoice still open.
+select tests.eq((select paid_cents from public.billing_invoice_payers(:'inv') where payer_id = '00000000-0000-0000-0000-000000000001'), :p1_owes, 'share marked paid'); -- Checks: share marked paid.
 -- The 40% paid covers the first session (the discount counts too), so the
 -- pause waits until the second session, the first one not paid for.
-select tests.eq((private.billing_first_unpaid_day(:'inv') = :'m'::date + 15)::int, 1, 'first session not paid for is the second one');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 0, 'overdue share: paid-for session still goes ahead');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 14)::int, 0, 'not paused before the first unpaid session');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'paused from the first unpaid session');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date)::int, 0, 'not paused on the due date');
-select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_2', 'bank_debit', :p2_owes, 'failed', 'Declined');
-select tests.eq(private.billing_family_paused(:'fam2')::int, 0, 'failed share: paid-for session still goes ahead');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'failed share pauses from the first unpaid session');
+select tests.eq((private.billing_first_unpaid_day(:'inv') = :'m'::date + 15)::int, 1, 'first session not paid for is the second one'); -- Checks: first session not paid for is the second one.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 0, 'overdue share: paid-for session still goes ahead'); -- Checks: overdue share: paid-for session still goes ahead.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 14)::int, 0, 'not paused before the first unpaid session'); -- Checks: not paused before the first unpaid session.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'paused from the first unpaid session'); -- Checks: paused from the first unpaid session.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date)::int, 0, 'not paused on the due date'); -- Checks: not paused on the due date.
+select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_2', 'bank_debit', :p2_owes, 'failed', 'Declined'); -- Parent P2's bank debit fails.
+select tests.eq(private.billing_family_paused(:'fam2')::int, 0, 'failed share: paid-for session still goes ahead'); -- Checks: failed share: paid-for session still goes ahead.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'m'::date + 15)::int, 1, 'failed share pauses from the first unpaid session'); -- Checks: failed share pauses from the first unpaid session.
 
-select tests.claims('00000000-0000-0000-0000-000000000001');
-set role authenticated;
-select tests.eq((select count(*) from public.billing_payments where invoice_id = :'inv'), 1, 'second parent sees only their own payment');
-reset role;
-select tests.claims('00000000-0000-0000-0000-000000000001');
-set role authenticated;
-select tests.fails(format($$select public.billing_record_payer_payment(%L, null, 'stripe', 'pi_fake', 'card', 1, 'succeeded')$$, :'inv'), 'browser records a payment');
-select tests.fails(format($$select public.billing_save_payer_method(%L, '00000000-0000-0000-0000-000000000001', 'cus', 'pm', 'card')$$, :'fam2'), 'browser saves a payment method');
-reset role;
+select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.billing_payments where invoice_id = :'inv'), 1, 'second parent sees only their own payment'); -- Checks: second parent sees only their own payment.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails(format($$select public.billing_record_payer_payment(%L, null, 'stripe', 'pi_fake', 'card', 1, 'succeeded')$$, :'inv'), 'browser records a payment'); -- Checks this is refused: browser records a payment.
+select tests.fails(format($$select public.billing_save_payer_method(%L, '00000000-0000-0000-0000-000000000001', 'cus', 'pm', 'card')$$, :'fam2'), 'browser saves a payment method'); -- Checks this is refused: browser saves a payment method.
+reset role; -- Goes back to the all-powerful test user (access rules off).
 
-select tests.claims(null);
-select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_3', 'bank_debit', :p2_owes, 'processing');
-select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 0, 'both shares paid or on the way: not paused');
-select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_3', 'bank_debit', :p2_owes, 'succeeded');
-select tests.eq((select count(*) from public.billing_invoices where id = :'inv' and status = 'paid'), 1, 'both shares paid: invoice paid');
+select tests.claims(null); -- Signs out, so no one is signed in.
+select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_3', 'bank_debit', :p2_owes, 'processing'); -- Parent P2's bank debit starts again.
+select tests.eq(private.billing_refresh_pause(:'fam2', :'due'::date + 1)::int, 0, 'both shares paid or on the way: not paused'); -- Checks: both shares paid or on the way: not paused.
+select public.billing_record_payer_payment(:'inv', '00000000-0000-0000-0000-000000000002', 'stripe', 'pi_split_3', 'bank_debit', :p2_owes, 'succeeded'); -- It succeeds.
+select tests.eq((select count(*) from public.billing_invoices where id = :'inv' and status = 'paid'), 1, 'both shares paid: invoice paid'); -- Checks: both shares paid: invoice paid.
 
 -- Saving the second parent's card; weekly plans refuse bank debit.
-select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_p1', 'bank_debit', 'mandate_p1');
-select tests.eq((select count(*) from public.billing_payers where payment_ready and method = 'bank_debit'), 1, 'payer saves a bank debit');
-update public.billing_accounts set plan = 'weekly', method = 'card' where family_id = :'fam2';
-select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_card', 'card');
-select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_p2', 'bank_debit', 'mandate_p2');
-select tests.eq((select count(*) from public.billing_payers where method = 'card'), 1, 'weekly payer stays on card');
+select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_p1', 'bank_debit', 'mandate_p1'); -- Parent P1 saves a bank debit.
+select tests.eq((select count(*) from public.billing_payers where payment_ready and method = 'bank_debit'), 1, 'payer saves a bank debit'); -- Checks: payer saves a bank debit.
+update public.billing_accounts set plan = 'weekly', method = 'card' where family_id = :'fam2'; -- Changes the family to weekly, by card.
+select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_card', 'card'); -- Parent P1 saves a card.
+select public.billing_save_payer_method(:'fam2', '00000000-0000-0000-0000-000000000001', 'cus_p1', 'pm_p2', 'bank_debit', 'mandate_p2'); -- Parent P1 tries to swap back to bank debit.
+select tests.eq((select count(*) from public.billing_payers where method = 'card'), 1, 'weekly payer stays on card'); -- Checks: weekly payer stays on card.
 
 -- Removing the split: new invoices go to the main payer only.
-select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2');
-set role authenticated;
-select public.billing_remove_split(:'fam2', '00000000-0000-0000-0000-000000000001');
-reset role;
-select tests.claims(null);
+select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select public.billing_remove_split(:'fam2', '00000000-0000-0000-0000-000000000001'); -- The admin removes the split.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.claims(null); -- Signs out, so no one is signed in.
+-- Another session, kept as s3.
 select tests.session(:'cal', :'m'::date + 40, '15:00', 60) as s3 \gset
+-- Builds another invoice, kept as inv2.
 select public.billing_build_invoice(:'fam2', :'m'::date + 35, :'m'::date + 45) as inv2 \gset
-select tests.eq((select count(*) from public.billing_invoice_shares where invoice_id = :'inv2'), 0, 'no split after removing it');
-select tests.eq((select count(*) from public.billing_invoice_payers(:'inv2')), 1, 'main payer owes it all');
+select tests.eq((select count(*) from public.billing_invoice_shares where invoice_id = :'inv2'), 0, 'no split after removing it'); -- Checks: no split after removing it.
+select tests.eq((select count(*) from public.billing_invoice_payers(:'inv2')), 1, 'main payer owes it all'); -- Checks: main payer owes it all.
 
-rollback;
+rollback; -- Undoes everything this file did, leaving the test database as it was.
+-- Prints that every check in this file passed.
 \echo '  billing split payments: all checks passed'
