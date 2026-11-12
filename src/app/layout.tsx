@@ -5,6 +5,8 @@ import { Poppins } from "next/font/google";
 import { signOut } from "@/app/actions/auth";
 import { FRONT_DESK, getAdminLevel, getViewer } from "@/lib/auth";
 import { EmailLinkCatcher } from "@/components/email-link-catcher";
+import { CountBadge } from "@/components/count-badge";
+import { getToDoCounts } from "@/lib/to-do-counts";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -27,6 +29,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Matching is one of an admin's main jobs, so it sits in the top bar.
   const adminLevel = viewer?.roles.includes("admin") ? await getAdminLevel() : null;
   const canMatch = adminLevel !== null && FRONT_DESK.includes(adminLevel);
+  // Numbers next to Sessions and Matching when something there needs doing.
+  const todo = viewer ? await getToDoCounts(viewer.roles) : null;
   return (
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">
@@ -42,12 +46,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/dashboard" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Home
                 </Link>
-                <Link href="/schedule" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                <Link href="/schedule" className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                   Sessions
+                  <CountBadge n={todo?.sessions} className="bg-teal-700 text-white no-underline" />
                 </Link>
                 {canMatch && (
-                  <Link href="/matching" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
+                  <Link href="/matching" className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 hover:underline">
                     Matching
+                    <CountBadge n={todo?.get("admin", "matching")} className="bg-teal-700 text-white no-underline" />
                   </Link>
                 )}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">

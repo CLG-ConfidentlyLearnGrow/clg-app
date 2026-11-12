@@ -2,6 +2,8 @@ import { requireFamilyAgreement } from "@/lib/consent";
 import { redirect } from "next/navigation";
 import { Card, Empty, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
+import { CountBadge } from "@/components/count-badge";
+import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -71,10 +73,19 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
     .map((s) => ({ child: s, missing: missingDetails(s, subjectsOf(s.id).length) }))
     .filter((u) => u.missing.length > 0);
 
+  // Numbers where something needs doing: details to finish, billing to set up.
+  const todo = await getToDoCounts(viewer.roles);
+
   return (
     <>
       <RoleTabs roles={viewer.roles} active="parent" />
-      <SectionShell basePath="/dashboard/parent" label="Parent" role="parent" section={section} sections={[...SECTIONS]}>
+      <SectionShell
+        basePath="/dashboard/parent"
+        label="Parent"
+        role="parent"
+        section={section}
+        sections={SECTIONS.map((s) => ({ ...s, count: s.id === "children" ? todo.get("parent", "children") : undefined }))}
+      >
         {section === "children" && (
           <>
             {unfinished.map(({ child, missing }) => (
@@ -101,7 +112,8 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
             )}
             <NewUpdates />
             <p className="text-sm">
-              <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>
+              <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>{" "}
+              <CountBadge n={todo.get("family", "billing")} className="bg-parent-strong text-white" />
             </p>
             <Card title="Your children">
               {students.length === 0 ? (

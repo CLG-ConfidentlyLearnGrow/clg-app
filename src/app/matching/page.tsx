@@ -17,6 +17,7 @@ import { CourseOverviewForm } from "../admin/course-overview-form";
 import { ADMIN_SECTIONS } from "../admin/sections";
 import { RoleTabs } from "@/components/role-tabs";
 import { SectionShell } from "@/components/section-shell";
+import { getToDoCounts } from "@/lib/to-do-counts";
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null };
 type QueueRow = {
@@ -113,8 +114,8 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   ]);
   const counts = (countsRes.data ?? []) as StageCount[];
   const rows = (queueRes.data ?? []) as QueueRow[];
-  // Shown on the side menu, e.g. "Matching 4": subjects waiting for a tutor.
-  const needTutor = Number(counts.find((c) => c.stage === "needs_tutor")?.subjects ?? 0);
+  // Numbers on the admin menu, the same as on the other admin pages.
+  const todo = await getToDoCounts(viewer.roles);
   const total = rows[0]?.total ?? 0;
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -143,7 +144,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
         label="Admin"
         role="admin"
         section="matching"
-        sections={adminSections.map((s) => ({ id: s.id, label: s.label, count: s.id === "matching" ? needTutor || undefined : undefined }))}
+        sections={adminSections.map((s) => ({ id: s.id, label: s.label, count: todo.get("admin", s.id) }))}
       >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
