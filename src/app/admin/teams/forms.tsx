@@ -10,10 +10,12 @@ import { Field } from "@/components/ui"; // A labelled input box.
 export function TeamsSettingsForm({
   enabled, // whether links are turned on,
   organiser, // the account that owns the meetings,
+  organiserId, // that account's Microsoft Object ID,
   daysAhead, // how many days ahead to make links.
 }: { // (their types:)
   enabled: boolean; // on or off,
   organiser: string; // an email,
+  organiserId: string; // a long code (or empty),
   daysAhead: number; // a number.
 }) { // (end of the settings)
   return ( // Shows:
@@ -28,6 +30,13 @@ export function TeamsSettingsForm({
         defaultValue={organiser} // starting with the current account,
         placeholder="sessions@clgtutoring.com" // an example,
         hint="Must have a Teams licence, and be the account named in the access policy step." // and a hint about the licence.
+      />{/* (end of the box) */}
+      <Field // The Object ID box (Microsoft needs this code, not the email):
+        label="Object ID of that account" // its label,
+        name="organiser_id" // its field name,
+        defaultValue={organiserId} // starting with the current code,
+        placeholder="1a2b3c4d-1a2b-1a2b-1a2b-1a2b3c4d5e6f" // an example of its shape,
+        hint="In portal.azure.com, open Users, click the account, and copy its Object ID. (Not the app's Object ID.)" // and where to find it.
       />{/* (end of the box) */}
       <Field // The days ahead box:
         label="Make links this many days ahead" // its label,

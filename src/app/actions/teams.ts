@@ -27,6 +27,7 @@ function plain(error: { code?: string; message: string } | null, fallback: strin
 const settingsSchema = z.object({
   enabled: z.literal("on").optional(), // switched on (tick box),
   organiser_email: z.string().trim().max(320).optional(), // the organiser's Microsoft email (optional),
+  organiser_id: z.string().trim().max(100).optional(), // the organiser's Microsoft Object ID (optional; the database checks its shape),
   days_ahead: z.coerce.number().int().min(1, "Days ahead must be 1 to 28.").max(28, "Days ahead must be 1 to 28."), // how many days ahead to make links (1 to 28).
 }); // End of the rules.
 
@@ -39,6 +40,7 @@ export async function saveTeamsSettings(_prev: FormState, formData: FormData): P
   const { error } = await supabase.rpc("save_teams_settings", { // Asks the database to save:
     p_enabled: parsed.data.enabled === "on", // on or off,
     p_organiser: parsed.data.organiser_email || null, // the organiser email (or none),
+    p_organiser_id: parsed.data.organiser_id || null, // the organiser's Object ID (or none),
     p_days_ahead: parsed.data.days_ahead, // and the days ahead.
   }); // End of the save.
   if (error) return plain(error, "Couldn't save the Teams settings."); // Failed: plain message.
@@ -56,7 +58,7 @@ export async function runTeamsNow(): Promise<FormState> {
   revalidatePath(PAGE); // Refreshes the Teams page.
   revalidatePath("/schedule"); // Refreshes the schedule page.
   if (!s.ran && !s.problems.length) { // Nothing ran and no problems:
-    return { error: "Nothing ran. Check Teams links are switched on with an organiser email, or wait 10 seconds and try again." }; // explains why that might be.
+    return { error: "Nothing ran. Check Teams links are switched on with an organiser email and Object ID, or wait 10 seconds and try again." }; // explains why that might be.
   } // End of that case.
   const done = `Made ${s.made} link(s), deleted ${s.removed} finished or cancelled meeting(s).`; // What was done.
   return s.problems.length ? { error: `${done} Problems: ${[...new Set(s.problems)].join(" ")}` } : { message: done }; // Shows that with any problems (no repeats), or just what was done.

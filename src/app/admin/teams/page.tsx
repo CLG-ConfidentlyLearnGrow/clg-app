@@ -43,7 +43,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
   const supabase = await createClient(); // Connects to the database.
 
   const [settingsRes, sessionsRes, meetingsRes] = await Promise.all([ // Reads three things at once:
-    supabase.from("teams_settings").select("enabled, organiser_email, days_ahead, last_run_at").maybeSingle(), // the Teams settings,
+    supabase.from("teams_settings").select("enabled, organiser_email, organiser_id, days_ahead, last_run_at").maybeSingle(), // the Teams settings,
     supabase.rpc("list_sessions", { p_from: localToday(), p_to: addDays(localToday(), 28) }), // the sessions in the next 4 weeks,
     supabase.from("teams_meetings").select("session_id, status, last_error, attempts"), // and each session's meeting status.
   ]); // End of the reads.
@@ -66,7 +66,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
         sub={section} // on the open section,
         items={SECTIONS.map((s) => ({ ...s, href: `/admin/teams?section=${s.id}`, count: s.id === "sessions" ? failures.length || undefined : undefined }))} // with this page's sections (and their numbers) under the tab.
       >{/* (end of the frame's settings) */}
-        {(!connected || !settings?.enabled) && ( // If not switched on:
+        {(!connected || !settings?.enabled || !settings?.organiser_id) && ( // If not switched on (or the Object ID is missing):
           <Card title="Not switched on yet">{/* a card: */}
             <ul className="list-disc space-y-1 pl-5 text-sm">{/* a bulleted list: */}
               {!connected && ( // if the app details are missing:
@@ -75,6 +75,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
                 </li> // (end of the item)
               )}{/* End of that point. */}
               {!settings?.enabled && <li>Teams links are switched off in Settings.</li>}{/* If links are switched off, says so. */}
+              {settings?.enabled && !settings?.organiser_id && <li>Add the organiser account&apos;s Object ID in Settings. Microsoft needs it to make meetings.</li>}{/* If the Object ID is missing, says so. */}
             </ul>{/* End of the list. */}
             <p className="mt-3 text-sm text-zinc-600">Until then, you can paste a link for any session below.</p>{/* A note that links can still be pasted. */}
           </Card> // End of the card.
@@ -82,7 +83,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
 
         {section === "sessions" && ( // The sessions section:
           <>{/* (a group:) */}
-            {connected && settings?.enabled && ( // if switched on:
+            {connected && settings?.enabled && settings?.organiser_id && ( // if switched on with an Object ID:
               <Card title="Make links now">{/* a card: */}
                 <RunTeamsNowForm />{/* the "make links now" form, */}
                 {settings.last_run_at && ( // when it last ran:
@@ -154,6 +155,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
             <TeamsSettingsForm // The settings form:
               enabled={settings?.enabled ?? false} // on or off,
               organiser={settings?.organiser_email ?? ""} // the meetings account,
+              organiserId={settings?.organiser_id ?? ""} // its Object ID,
               daysAhead={settings?.days_ahead ?? 7} // and days ahead.
             />{/* (end of the form) */}
           </Card> // End of the card.
