@@ -31,7 +31,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, false, array[:'lib_a', :'lib_g']::uuid[], null, array[6]::smallint[]) -- Checks Saturday times are offered at the chosen library:
-  where tutor_id = '00000000-0000-0000-0000-000000000013' and library_id = :'lib_g'), 3::bigint, 'Saturday times at the chosen library'); -- (three start times at Gamma).
+  where tutor_id = '00000000-0000-0000-0000-000000000013' and library_id = :'lib_g'), 5::bigint, 'Saturday times at the chosen library'); -- (five start times at Gamma: 9am to 10am, every 15 min).
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, array[:'lib_a', :'lib_g']::uuid[], null, array[6]::smallint[]) -- Checks no times at the tutor's other library, and none online when online isn't ticked:
   where tutor_id = '00000000-0000-0000-0000-000000000013' and (library_id = :'lib_a' or delivery = 'online')), 0::bigint, -- (searching in person only, at Alpha or Gamma),
   'not at the tutor''s other library, and not online when online isn''t ticked'); -- (the label).

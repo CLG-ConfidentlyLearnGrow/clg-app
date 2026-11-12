@@ -18,7 +18,8 @@ import { // The scheduling actions these forms send to:
   setTerm4LastDay, // set the last day of Term 4,
   suggestLibrary, // suggest a library,
   loadSaLibraries, // load all SA libraries,
-  fillHoursFromOsm, // fill a library's hours from OpenStreetMap.
+  fillHoursFromOsm, // fill a library's hours from OpenStreetMap,
+  setSummaryMinutes, // set the summary time after each session.
 } from "@/app/actions/scheduling-extra"; // End of the list.
 import { ActionForm } from "@/components/action-form"; // A shared form that shows a save button and messages.
 import { Field, Select, TextArea } from "@/components/ui"; // Shared page parts: a field, a drop-down and a text area.
@@ -312,3 +313,16 @@ export function ConfirmLibraryForm({ libraryId }: { libraryId: string }) { // Th
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of ConfirmLibraryForm.
+
+// ---------------------------------------------------------------------------
+// Summary time after each session (Carla, 12 Nov 2026)
+// ---------------------------------------------------------------------------
+
+// The "time to write the session summary" setting, for owner and operations admins.
+export function SummaryMinutesForm({ current }: { current: number }) { // Takes the current number of minutes.
+  return ( // What's shown:
+    <ActionForm action={setSummaryMinutes} submitLabel="Save">{/* the form, saving with setSummaryMinutes: */}
+      <Field label="Minutes after each session" name="minutes" type="number" min={0} max={30} step={5} defaultValue={current} required />{/* the minutes, 0 to 30, starting at the current value. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of SummaryMinutesForm.

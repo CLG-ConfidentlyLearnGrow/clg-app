@@ -14,7 +14,7 @@ import { // The extra sections:
   StudyDatesToCheck, // study dates to check (admins),
   StudyPeriodBlock, // a child's study period.
 } from "./extra-sections"; // End of the list.
-import { SuggestLibraryForm } from "./extra-forms"; // The "suggest a library" form.
+import { SuggestLibraryForm, SummaryMinutesForm } from "./extra-forms"; // The "suggest a library" form and the summary time setting.
 import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Admin level groups, the level reader, two-step sign-in check, and the signed-in person.
 import { // Scheduling helpers:
   BOOKING_STATUS_NAMES, // booking status names,
@@ -456,6 +456,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       )}{/* End of the bookings section. */}
 
       {section === "book" && isDesk && <BookSection params={params} viewerId={viewer.id} isAdmin={isDesk} />}{/* The book section (front desk). */}
+      {section === "book" && isAdmin && <SummaryTimeCard />}{/* The summary time setting (owner and operations admins). */}
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}{/* The "where you teach" section (tutors). */}
 
@@ -1478,3 +1479,22 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
     </> // End of the group.
   ); // End of what's shown.
 } // End of NoticesSection.
+
+// The setting for time kept free after each tutor session to write the
+// session summary (Carla, 12 Nov 2026). Shown to owner and operations admins
+// under "Book a session"; the database also checks who may change it.
+async function SummaryTimeCard() { // The summary time card.
+  const supabase = await createClient(); // Connects to the database.
+  const { data } = await supabase.from("scheduling_settings").select("summary_minutes").maybeSingle(); // Reads the current setting.
+  const current = (data?.summary_minutes as number | undefined) ?? 15; // The minutes (15 if not found).
+  return ( // What's shown:
+    <Card // a card:
+      title="Time to write session summaries" // its title,
+      description={`Tutors are paid for ${current} min after each session to write the summary, so times offered leave that gap before a tutor's next session. Start times are every 15 min.`} // what it does,
+      collapsible // can be opened and closed,
+      defaultOpen={false} // starts closed, as it's rarely changed.
+    >{/* (end of the card's settings) */}
+      <SummaryMinutesForm current={current} />{/* the form to change it. */}
+    </Card> // End of the card.
+  ); // End of what's shown.
+} // End of SummaryTimeCard.
