@@ -34,28 +34,24 @@ export function SessionAnswersCard({
   const times = waiting === 1 ? "1 session time" : `${waiting} session times`; // "1 session time" or "3 session times".
   const ask = who === "tutor" ? "Please accept or decline" : "Please approve or decline"; // Tutors accept; families approve.
   return ( // What's shown:
-    <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="status">
-      {/* Amber box so it stands out; "status" lets screen readers announce it. */}
+    <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="status">{/* Amber box so it stands out; "status" lets screen readers announce it. */}
       {waiting > 0 && ( // Only when there are times to answer:
-        <p>
-          {/* Says how many, and what to do. */}
-          <span className="font-medium">{times} waiting for your answer.</span> {ask} before the time runs out.{" "}
-          {/* Link straight to the list of bookings. */}
-          <Link href="/schedule?section=bookings" className="font-medium underline">
-            Answer now
-          </Link>
-        </p>
-      )}
+        <p>{/* The first line: */}
+          <span className="font-medium">{times} waiting for your answer.</span>{/* how many, in bold, */}{" "}
+          {ask} before the time runs out.{/* what to do, */}{" "}
+          <Link href="/schedule?section=bookings" className="font-medium underline">{/* a link straight to the bookings list, */}
+            Answer now{/* with these words. */}
+          </Link>{/* (end of the link) */}
+        </p> // End of the first line.
+      )}{/* (end of the first line's check) */}
       {notices > 0 && ( // Only when there are unread notices:
-        <p className={waiting > 0 ? "mt-2" : undefined}>
-          {/* A gap above when both lines show. Says how many notices are new. */}
-          You have {notices === 1 ? "1 new session notice" : `${notices} new session notices`}.{" "}
-          {/* Link straight to the notices. */}
-          <Link href="/schedule?section=notices" className="font-medium underline">
-            Read them
-          </Link>
-        </p>
-      )}
+        <p className={waiting > 0 ? "mt-2" : undefined}>{/* The second line, with a gap above when both lines show: */}
+          You have {notices === 1 ? "1 new session notice" : `${notices} new session notices`}.{/* how many notices are new, */}{" "}
+          <Link href="/schedule?section=notices" className="font-medium underline">{/* a link straight to the notices, */}
+            Read them{/* with these words. */}
+          </Link>{/* (end of the link) */}
+        </p> // End of the second line.
+      )}{/* (end of the second line's check) */}
     </div> // End of the box.
   ); // End of what's shown.
 } // End of SessionAnswersCard.
