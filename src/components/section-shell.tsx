@@ -46,6 +46,10 @@ export function SectionShell({
   const menuBox = `rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm ${theme ? `border-t-4 ${theme.accentTopBorder}` : ""}`; // Look of the menu box: rounded, bordered, white, with a coloured top edge for a role.
   const [open, setOpen] = useState(true); // Whether the side menu is showing (starts showing).
   const [phoneOpen, setPhoneOpen] = useState(false); // Whether the phone menu is open (starts closed).
+  // Clicking an open heading that has smaller sections under it (e.g.
+  // Sessions) folds them away, and clicking it again unfolds them (Carla,
+  // 12 Nov 2026). This remembers which heading is folded (none to start).
+  const [foldedId, setFoldedId] = useState<string | null>(null); // The folded heading's id, or nothing.
 
   // Shows or hides the side menu.
   function toggle() {
@@ -57,17 +61,32 @@ export function SectionShell({
   const heading = currentSub ? `${current?.label}: ${currentSub.label}` : (current?.label ?? label); // The page heading, e.g. "Sessions: Bookings".
 
   // One menu link (used for sections and for the smaller sections under them).
-  function itemLink(s: Section, active: boolean, small: boolean) {
+  // "fold" is given for an open heading with smaller sections: it says
+  // whether they're showing, and clicking folds or unfolds them instead of
+  // reloading the page.
+  function itemLink(s: Section, active: boolean, small: boolean, fold?: { showing: boolean }) {
     return ( // Shows:
       <Link // a link:
         href={s.href ?? `${basePath}?section=${s.id}`} // to its own address, or to this section of the page,
-        onClick={() => setPhoneOpen(false)} // closing the phone menu when tapped,
+        onClick={(e) => { // when clicked:
+          if (fold) { // on an open heading with smaller sections:
+            e.preventDefault(); // stays on this page,
+            setFoldedId(fold.showing ? s.id : null); // and folds them away (or unfolds them if folded).
+            return; // (nothing else to do)
+          } // End of the fold part.
+          setFoldedId(null); // Moving to another section: nothing stays folded,
+          setPhoneOpen(false); // and the phone menu closes.
+        }} // (end of the click)
         aria-current={active ? "page" : undefined} // telling screen readers it's the current page when open,
+        aria-expanded={fold ? fold.showing : undefined} // telling screen readers whether its smaller sections are showing,
         className={`flex items-center justify-between gap-2 rounded-md px-3 ${small ? "py-1.5 text-[13px]" : "py-2 text-sm"} ${ // in a row with words on the left and count on the right (a little smaller for smaller sections), with:
           active ? activeItem : idleItem // the open look or the normal look.
         }`} // (end of the look)
       >{/* (end of the link's settings) */}
-        <span>{s.label}</span>{/* The section's words. */}
+        <span className="flex items-center gap-1.5">{/* The words (with an arrow for a heading that can fold): */}
+          {s.label}{/* the section's words, */}
+          {s.items?.length ? <span aria-hidden className="text-[10px] opacity-70">{fold?.showing ? "▾" : "▸"}</span> : null}{/* a small arrow: down while its smaller sections show, right otherwise (hidden from screen readers). */}
+        </span>{/* End of the words. */}
         {s.count ? ( // If there's a count:
           <span // a small rounded badge:
             className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`} // in the open or normal count look,
@@ -84,11 +103,12 @@ export function SectionShell({
       <ul className="space-y-1">{/* a list with space between items, */}
         {sections.map((s) => { // for each section:
           const open = s.id === section; // whether it's the open one,
-          const subs = open ? (s.items ?? []) : []; // its smaller sections (shown only while it's open),
-          const active = open && !subs.some((x) => x.id === subSection); // filled in only when none of its smaller sections is the open one.
+          const canFold = open && (s.items?.length ?? 0) > 0; // whether it's an open heading with smaller sections,
+          const subs = canFold && foldedId !== s.id ? (s.items ?? []) : []; // its smaller sections (shown while it's open and not folded),
+          const active = open && !subs.some((x) => x.id === subSection); // filled in when none of its showing smaller sections is the open one (so a folded heading shows where you are).
           return ( // Shows:
             <li key={s.id}>{/* a list item: */}
-              {itemLink(s, active, false)}{/* the section's link, */}
+              {itemLink(s, active, false, canFold ? { showing: subs.length > 0 } : undefined)}{/* the section's link (folding its smaller sections when it's open), */}
               {subs.length > 0 && ( // and, if it has smaller sections open:
                 <ul className={`mt-1 ml-3 space-y-0.5 border-l-2 pl-2 ${theme ? theme.accentBorder : "border-teal-700"}`}>{/* an indented list with a coloured line on its left: */}
                   {subs.map((x) => ( // for each smaller section:

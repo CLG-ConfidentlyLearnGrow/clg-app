@@ -170,19 +170,26 @@ export async function RequestsSection({ // The requests and public holidays sect
     isAdmin ? supabase.from("tutor_profiles").select("account_id, active, account:accounts(full_name)").eq("active", true) : Promise.resolve({ data: [] }), // the active tutors (admins only),
     supabase.from("libraries").select("id, name").eq("active", true).not("confirmed_at", "is", null).order("name"), // the confirmed libraries in use.
   ]); // End of the reads.
-  const requests = (reqRes.data ?? []) as SessionRequest[]; // The requests.
+  const mine = new Set(((linksRes.data ?? []) as { student_id: string }[]).map((l) => l.student_id)); // Their own children.
+  for (const s of (studentsRes.data ?? []) as { id: string; account_id: string | null }[]) if (s.account_id === viewerId) mine.add(s.id); // And themselves, if they're a student.
+  // Each dashboard shows only its own: everything for admins, the tutor's own
+  // students in the tutor dashboard, and their own children in a family one.
+  // (Someone who is also an admin is sent everything by the database.)
+  const forThisDashboard = (studentId: string, tutorId: string | null) => // Whether a row belongs on this dashboard:
+    isAdmin || (isTutor ? tutorId === viewerId : mine.has(studentId)); // admins all, tutors theirs, families their children's.
+  const requests = ((reqRes.data ?? []) as SessionRequest[]).filter((r) => forThisDashboard(r.student_id, r.tutor_id)); // The requests for this dashboard.
   const open = requests.filter((r) => r.status === "open" || r.status === "offered"); // The open ones.
   const closed = requests.filter((r) => !(r.status === "open" || r.status === "offered")); // The closed ones.
-  const holidays = (phRes.data ?? []) as { // The public holiday sessions:
+  const holidays = ((phRes.data ?? []) as { // The public holiday sessions:
     booking_id: string; // the booking,
+    student_id: string; // the student,
     student_name: string; // the student's name,
     subject: string; // the subject,
     holiday_on: string; // the holiday's date,
     holiday_name: string; // its name,
     skipping: boolean; // whether the booking skips holidays,
     session_id: string | null; // and the session that day (if any).
-  }[]; // (end of the type)
-  const mine = new Set(((linksRes.data ?? []) as { student_id: string }[]).map((l) => l.student_id)); // Their own children.
+  }[]).filter((h) => mine.has(h.student_id)); // (end of the type) Only their own children's (only families see this card).
   const children = ( // The children they can ask for:
     (studentsRes.data ?? []) as { id: string; full_name: string; account_id: string | null; student_subjects: { subject: string }[] }[] // from the students,
   ) // (end of the type)
@@ -306,6 +313,8 @@ export async function RequestsSection({ // The requests and public holidays sect
 // ---------------------------------------------------------------------------
 type Block = { // A block as listed:
   id: string; // its id,
+  tutor_id: string; // the tutor,
+  student_id: string; // the student,
   tutor_name: string; // the tutor's name,
   student_name: string; // the student's name,
   blocked_by_role: string; // who made it (tutor or family),
@@ -320,16 +329,28 @@ export async function BlocksSection({ // The blocks section, given:
   viewerId, // the signed-in person,
   isAdmin, // whether they're an admin,
   isTutor, // whether they're a tutor,
-  bookings, // and their bookings.
+  bookings, // their bookings,
+  familyStudentIds, // and, in a family dashboard, their own children (and themselves).
 }: { // The types of those:
   viewerId: string; // an id,
   isAdmin: boolean; // yes or no,
   isTutor: boolean; // yes or no,
-  bookings: { tutor_id: string; tutor_name: string; student_id: string; student_name: string }[]; // each booking's tutor and student.
+  bookings: { tutor_id: string; tutor_name: string; student_id: string; student_name: string }[]; // each booking's tutor and student,
+  familyStudentIds: string[] | null; // student ids (none outside a family dashboard).
 }) { // End of the types.
   const supabase = await createClient(); // Connects to the database.
   const { data } = await supabase.rpc("list_blocks"); // Reads the blocks they can see.
-  const blocks = (data ?? []) as Block[]; // The blocks.
+  // Each dashboard shows only its own blocks: the tutor's own in the tutor
+  // dashboard, the family's in a family one. (Someone who is also an admin is
+  // sent every block by the database, so this keeps admin work out of the
+  // Tutor and Parent tabs.)
+  const blocks = ((data ?? []) as Block[]).filter((b) => // The blocks for this dashboard:
+    isTutor // in the tutor dashboard,
+      ? b.blocked_by_role === "tutor" && b.tutor_id === viewerId // blocks they made;
+      : familyStudentIds // in a family dashboard,
+        ? b.blocked_by_role === "family" && familyStudentIds.includes(b.student_id) // blocks their family made;
+        : true, // in the admin dashboard, all of them.
+  ); // End of the blocks.
   // Who each person can block: tutors their students they have had; families
   // the tutors their children have had.
   const seen = new Set<string>(); // Tutor-student pairs already added.

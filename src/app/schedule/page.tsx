@@ -523,7 +523,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           viewerId={viewer.id} // the signed-in person,
           isAdmin={isAdmin} // whether they're an admin,
           isTutor={isTutor} // whether they're a tutor,
-          bookings={bookings.filter((b) => b.status !== "declined")} // and their bookings (not declined ones).
+          bookings={bookings.filter((b) => b.status !== "declined")} // their bookings (not declined ones),
+          familyStudentIds={isFamily ? [...familyIds] : null} // and, in a family dashboard, their own children (and themselves).
         /> // (end of the blocks)
       )}{/* End of this part. */}
 
@@ -533,7 +534,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "notices" && <NoticesSection viewerId={viewer.id} unread={unread} isAdmin={isAdmin} />}{/* The notices section (with the quiet hours setting for owner and operations admins). */}
 
-      {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}{/* The away dates section. */}
+      {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} familyStudentIds={isFamily ? [...familyIds] : null} />}{/* The away dates section (this dashboard's own). */}
 
       {section === "waitlist" && isDesk && <WaitlistSection isAdmin={isDesk} />}{/* The waitlist section (front desk). */}
 
@@ -880,9 +881,19 @@ async function PlacesSection({ viewerId }: { viewerId: string }) { // The "where
 // ---------------------------------------------------------------------------
 // Away dates: tutors for themselves, families for their children
 // ---------------------------------------------------------------------------
-async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; isAdmin: boolean; isTutor: boolean }) { // The away dates section.
+async function AwaySection({ // The away dates section, given:
+  viewerId, // the signed-in person,
+  isAdmin, // whether they're a full admin in the admin dashboard,
+  isTutor, // whether this is the tutor dashboard,
+  familyStudentIds, // and, in a family dashboard, their own children (and themselves).
+}: { // The types of those:
+  viewerId: string; // an id,
+  isAdmin: boolean; // yes or no,
+  isTutor: boolean; // yes or no,
+  familyStudentIds: string[] | null; // student ids (none outside a family dashboard).
+}) { // End of the types.
   const supabase = await createClient(); // Connects to the database.
-  const [awayRes, studentsRes, linksRes, tutorsRes] = await Promise.all([ // Reads four things at once:
+  const [awayRes, studentsRes, linksRes, tutorsRes, teachesRes] = await Promise.all([ // Reads five things at once:
     supabase // the away dates:
       .from("away_dates") // from away_dates,
       .select("id, tutor_id, student_id, from_date, to_date, reason") // these details,
@@ -890,8 +901,17 @@ async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; i
       .order("from_date"), // earliest first.
     supabase.from("students").select("id, full_name, account_id").order("full_name"), // the students, by name,
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId), // their own children,
-    isAdmin ? supabase.from("accounts").select("id, full_name") : Promise.resolve({ data: [] as { id: string; full_name: string }[] }), // and everyone's names (admins only).
+    isAdmin ? supabase.from("accounts").select("id, full_name") : Promise.resolve({ data: [] as { id: string; full_name: string }[] }), // everyone's names (admins only),
+    isTutor // and, in the tutor dashboard, the students they're matched with:
+      ? supabase.from("tutor_assignments").select("student_id, starts_on, ends_on").eq("tutor_id", viewerId) // their matches,
+      : Promise.resolve({ data: [] as { student_id: string; starts_on: string; ends_on: string | null }[] }), // (none otherwise).
   ]); // End of the reads.
+  const today = localToday(); // Today's date.
+  const teaches = new Set( // The students this tutor teaches now:
+    (teachesRes.data ?? []) // from their matches,
+      .filter((t) => t.starts_on <= today && (!t.ends_on || t.ends_on >= today)) // the current ones,
+      .map((t) => t.student_id as string), // by student.
+  ); // End of the list.
   const students = studentsRes.data ?? []; // The students.
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string)); // Their own children.
   const myChildren = students.filter((s) => mine.has(s.id) || s.account_id === viewerId); // Their own children's details (and themselves as a student).
@@ -903,7 +923,17 @@ async function AwaySection({ viewerId, isAdmin, isTutor }: { viewerId: string; i
     ...(isTutor ? [{ value: "me", label: "Me (as a tutor)" }] : []), // themselves (tutors),
     ...myChildren.map((s) => ({ value: `student:${s.id}`, label: s.full_name })), // and their children.
   ]; // End of the choices.
-  const away = awayRes.data ?? []; // The away dates.
+  // Each dashboard shows only its own: the tutor's own dates and their
+  // students' in the tutor dashboard, the family's in a family one, all of
+  // them in the admin dashboard. (Someone who is also an admin is sent every
+  // away date by the database, so this keeps admin work out of other tabs.)
+  const away = (awayRes.data ?? []).filter((a) => // The away dates for this dashboard:
+    isTutor // in the tutor dashboard,
+      ? a.tutor_id === viewerId || (!!a.student_id && teaches.has(a.student_id)) // their own, or a student they teach;
+      : familyStudentIds // in a family dashboard,
+        ? !!a.student_id && familyStudentIds.includes(a.student_id) // their own children's;
+        : true, // in the admin dashboard, all of them.
+  ); // End of the away dates.
 
   return ( // Shows:
     <>{/* (a group) */}

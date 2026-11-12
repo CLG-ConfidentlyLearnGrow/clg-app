@@ -3,6 +3,7 @@
 import { Card, TextLink } from "@/components/ui"; // The card and link style.
 import { sessionWhen } from "@/lib/scheduling"; // Session times in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
+import { loadBirthDates } from "@/lib/birth-dates"; // Reads students' birth dates through the database's check.
 
 // A student as the dashboards need it.
 export type Student = {
@@ -27,23 +28,31 @@ export type Assignment = {
 
 // Students and tutor assignments this person may see. The database decides
 // which rows come back.
-const STUDENT_FIELDS = "id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, program"; // The student fields to read.
+const STUDENT_FIELDS = "id, full_name, state, year_level, school, goals, extra_info, learning_needs, program"; // The student fields to read.
 // The fields every version of the database has. Used if a newer database
 // update hasn't been run yet, so families still see their children.
-const CORE_STUDENT_FIELDS = "id, full_name, date_of_birth, state, year_level, school, goals, extra_info"; // The fewer fields every database version has.
+const CORE_STUDENT_FIELDS = "id, full_name, state, year_level, school, goals, extra_info"; // The fewer fields every database version has.
 
 // Reads the students, falling back to fewer fields if the database is behind.
-async function loadStudents(supabase: Awaited<ReturnType<typeof createClient>>) {
+// Birth dates are read separately through the database's check (tutors
+// don't get them), then added to each student.
+async function loadStudents(supabase: Awaited<ReturnType<typeof createClient>>): Promise<Student[]> { // Takes a connection; gives the students with birth dates.
+  const [rows, birthDates] = await Promise.all([loadStudentRows(supabase), loadBirthDates(supabase)]); // Reads the students and the birth dates at once.
+  return rows.map((s) => ({ ...s, date_of_birth: birthDates.get(s.id) ?? null })); // Each student with their birth date (or none).
+} // End of loadStudents.
+
+// Reads the students' details (without birth dates), with the fallback.
+async function loadStudentRows(supabase: Awaited<ReturnType<typeof createClient>>): Promise<Omit<Student, "date_of_birth">[]> { // Takes a connection; gives the students without birth dates.
   const full = await supabase.from("students").select(STUDENT_FIELDS).order("full_name"); // Tries all the fields.
-  if (!full.error) return (full.data ?? []) as Student[]; // Worked: gives them back.
+  if (!full.error) return (full.data ?? []) as Omit<Student, "date_of_birth">[]; // Worked: gives them back.
   console.error("Loading students failed; trying the core fields. Has every database update been run?", full.error.code, full.error.message); // Didn't: notes it in the server log.
   const core = await supabase.from("students").select(CORE_STUDENT_FIELDS).order("full_name"); // Tries the core fields.
-  return ((core.data ?? []) as Omit<Student, "learning_needs" | "program">[]).map((s) => ({ // Gives them back,
+  return ((core.data ?? []) as Omit<Student, "learning_needs" | "program" | "date_of_birth">[]).map((s) => ({ // Gives them back,
     ...s, // with everything else,
     learning_needs: null, // no learning needs,
     program: null, // and no course.
   })); // (end of each student)
-} // End of loadStudents.
+} // End of loadStudentRows.
 
 // Reads the students and their tutors.
 export async function loadStudentsAndTutors() {
