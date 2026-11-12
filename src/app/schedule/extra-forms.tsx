@@ -17,6 +17,8 @@ import {
   setStudyPeriod,
   setTerm4LastDay,
   suggestLibrary,
+  loadSaLibraries,
+  fillHoursFromOsm,
 } from "@/app/actions/scheduling-extra";
 import { ActionForm } from "@/components/action-form";
 import { Field, Select, TextArea } from "@/components/ui";
@@ -253,11 +255,33 @@ export function BlockFollowUpForm({ id }: { id: string }) {
 // ---------------------------------------------------------------------------
 export function SuggestLibraryForm() {
   return (
-    <ActionForm action={suggestLibrary} submitLabel="Add library">
+    <ActionForm action={suggestLibrary} submitLabel="Suggest library">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Library name" name="name" required maxLength={200} />
         <Field label="Suburb" name="suburb" maxLength={100} />
       </div>
+      <Field label="Street address" name="address" required minLength={5} maxLength={300} placeholder="e.g. 5 Mount Barker Road" />
+    </ActionForm>
+  );
+}
+
+// Admins: fill a library's hours from OpenStreetMap, to check by hand.
+export function FillHoursForm({ libraryId }: { libraryId: string }) {
+  return (
+    <ActionForm action={fillHoursFromOsm} submitLabel="Fill hours from OpenStreetMap">
+      <input type="hidden" name="library_id" value={libraryId} />
+    </ActionForm>
+  );
+}
+
+// Admins: load all South Australian libraries in one go.
+export function LoadLibrariesForm() {
+  return (
+    <ActionForm action={loadSaLibraries} submitLabel="Load SA libraries">
+      <p className="text-sm text-zinc-600">
+        Adds every South Australian library from OpenStreetMap that isn&apos;t listed yet, with its address and map
+        location. Libraries already listed keep their details. Takes up to a minute.
+      </p>
     </ActionForm>
   );
 }

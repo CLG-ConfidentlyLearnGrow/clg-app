@@ -403,3 +403,88 @@ group tuition" and "One to one tuition"). Under the Australian Consumer Law
 the family should know what they are booking (how long, and which weeks)
 before agreeing; asking them directly does that. No new personal
 information is collected beyond a date and two yes/no answers.
+
+## A place for each availability time, 11 Nov 2026
+
+Carla asked that tutors give a place for each weekly time: online, one
+library, or online and one library. Never several libraries in one time.
+
+- The tutor's "Add time" form has an Online tick and a Library list (one
+  library). For another library on another day, they add another time.
+- The list shows libraries CLG has confirmed, plus any the tutor suggested
+  that CLG is still checking. The database refuses any other library.
+- Choosing a library for a time also adds it to the tutor's libraries under
+  "Where you teach", so lists of where each tutor works stay right.
+- Finding times offers a time only at its own library. Older times with "in
+  person" ticked but no library still use any of the tutor's libraries until
+  the tutor re-adds them. Where a tutor had only one library, it was filled
+  in for them.
+- The term availability check compares each booking with its own time's
+  library.
+
+Research: giving each slot a fixed place cuts travel between sites and
+keeps sessions regular, which supports the consistent, scheduled tutoring
+the EEF links to better outcomes. No new personal information is collected.
+
+## Loading SA libraries, and addresses on suggestions, 11 Nov 2026
+
+Carla asked to load the SA Government list of libraries. That data set
+("Public Libraries location map") only covers the City of Onkaparinga, and
+no statewide file is published, so the list comes from OpenStreetMap
+instead (free, Open Database Licence; the credit is shown on the Libraries
+page).
+
+- Schedule > Libraries has "Load SA libraries". It adds every SA library
+  OpenStreetMap knows that isn't listed yet, with its address and map
+  location (used for the sign-on check). University, TAFE, school and other
+  non-public libraries are left out by name; admins can hide any others.
+- Libraries already listed keep their details; only a missing address or
+  map location is filled in. Loading again adds nothing twice.
+- Loaded libraries can be chosen straight away. Opening hours are asked for
+  only once a tutor or family picks a library.
+- Admins can still add one library by hand (Schedule > Libraries > Add a
+  library).
+- Tutors suggesting a library must give its street address as well as its
+  name. CLG still confirms it.
+
+Legal: library names and addresses are public business information, not
+personal information. OpenStreetMap's licence needs the credit line.
+
+## Library opening hours when needed, and holiday checks, 11 Nov 2026
+
+Carla asked that admins add opening hours only once a library is wanted,
+that regular hours are re-checked, and that admins check holiday hours the
+first time sessions are booked at a library.
+
+- The first time a tutor adds a library (to their libraries or to a weekly
+  time) or CLG sets it as a student's place, admins get one notice asking
+  for its opening hours.
+- Schedule > Libraries has a "To do" list of libraries in use that need
+  something: confirming (tutor suggestions), opening hours, or a re-check
+  because the hours were last checked more than 6 months ago. "Hours still
+  right" clears a re-check; entering or changing hours counts as checking.
+- For libraries loaded from OpenStreetMap, "Fill hours from OpenStreetMap"
+  fills in simple weekly hours for the admin to check against the library's
+  website. Complicated or missing hours are entered by hand.
+- The first time sessions are booked at a library, admins get a notice to
+  check whether it closes on public holidays or changes hours in the school
+  holidays, and to call the library if its website doesn't say.
+
+Research: checking a venue's availability before regular sessions start
+avoids missed sessions, and consistent attendance is one of the strongest
+drivers of tutoring impact (EEF, "Making a difference with effective
+tutoring", 2021). No personal information is involved.
+
+## Numbers on tabs that need action, 11 Nov 2026
+
+Carla asked for a number on every tab or section that needs something
+done, for example "Matching (4)" when 4 subjects need a tutor.
+
+- Admin menu: Matching shows how many student subjects are waiting for a
+  tutor (on the admin pages and on Matching itself).
+- Sessions menu: "How long to book" shows how many of the family's children
+  still need it filled in; Libraries shows the libraries on the to-do list.
+  Bookings (offers to answer), Notices (unread) and Next term already had
+  numbers.
+- The counts come from one database call (scheduling_counts) that only
+  returns what the viewer is allowed to see.

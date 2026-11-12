@@ -25,7 +25,7 @@ export function MaxHoursForm({ current }: { current: number | null }) {
   );
 }
 
-export function AvailabilityForm() {
+export function AvailabilityForm({ libraries }: { libraries: { id: string; name: string; suburb: string | null }[] }) {
   return (
     <ActionForm action={addAvailability} submitLabel="Add time">
       <Select label="Day" name="weekday" defaultValue="1">
@@ -38,15 +38,22 @@ export function AvailabilityForm() {
       <Field label="From" name="starts_at" type="time" required />
       <Field label="To" name="ends_at" type="time" required />
       <fieldset className="space-y-2">
-        <legend className="mb-1 text-sm font-medium text-zinc-800">How you can teach in this time</legend>
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" name="in_person" defaultChecked className="mt-1" /> In person, at the libraries you
-          chose under &quot;Where you teach&quot;
-        </label>
+        <legend className="mb-1 text-sm font-medium text-zinc-800">Where you can teach in this time</legend>
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" name="online" defaultChecked className="mt-1" /> Online
         </label>
-        <p className="text-xs text-zinc-600">Tick both if either suits you.</p>
+        <Select label="Library (one per time)" name="library_id" defaultValue="">
+          <option value="">No library</option>
+          {libraries.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name}
+              {l.suburb ? ` (${l.suburb})` : ""}
+            </option>
+          ))}
+        </Select>
+        <p className="text-xs text-zinc-600">
+          Choose online, one library, or both. For a different library on another day, add another time.
+        </p>
       </fieldset>
     </ActionForm>
   );

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { parseOsmHours } from "@/lib/osm-hours";
 
 function plainError(error: { message: string } | null, fallback: string): string {
   if (!error) return fallback;
@@ -215,13 +216,78 @@ export async function liftBlock(formData: FormData) {
 export async function suggestLibrary(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer();
   const v = z
-    .object({ name: z.string().trim().min(3, "Enter the library's name.").max(200), suburb: optionalText(100) })
+    .object({
+      name: z.string().trim().min(3, "Enter the library's name.").max(200),
+      address: z.string().trim().min(5, "Enter the library's street address.").max(300),
+      suburb: optionalText(100),
+    })
     .safeParse(Object.fromEntries(formData));
   if (!v.success) return { error: v.error.issues[0].message };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("suggest_library", { p_name: v.data.name, p_suburb: v.data.suburb || null });
+  const { error } = await supabase.rpc("suggest_library", {
+    p_name: v.data.name,
+    p_suburb: v.data.suburb || null,
+    p_address: v.data.address,
+  });
   if (error) return { error: plainError(error, "Couldn't add the library.") };
   return done("Added. CLG will confirm the library and its opening hours before sessions can be booked there.");
+}
+
+// Admins load every South Australian library from OpenStreetMap (free map
+// data; credit shown on the Libraries page). University, TAFE and school
+// libraries are left out. Libraries already listed keep their details.
+const OVERPASS = "https://overpass-api.de/api/interpreter";
+const SA_LIBRARIES_QUERY =
+  '[out:json][timeout:60];area["ISO3166-2"="AU-SA"]->.sa;nwr[amenity=library](area.sa);out center tags;';
+const NOT_PUBLIC = /universit|tafe|college|school|campus|institute|hospital|archive|toy library/i;
+
+type OsmElement = {
+  type: string;
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+};
+
+export async function loadSaLibraries(_prev: FormState): Promise<FormState> {
+  const viewer = await requireViewer();
+  if (!viewer.roles.includes("admin")) return { error: "Only CLG admins can load libraries." };
+  let elements: OsmElement[];
+  try {
+    const res = await fetch(OVERPASS, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "clg-app library list" },
+      body: new URLSearchParams({ data: SA_LIBRARIES_QUERY }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(90_000),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    elements = ((await res.json()) as { elements?: OsmElement[] }).elements ?? [];
+  } catch {
+    return { error: "Couldn't reach OpenStreetMap just now. Please try again in a few minutes." };
+  }
+  const rows = elements
+    .filter((e) => e.tags?.name && !NOT_PUBLIC.test(`${e.tags.name} ${e.tags.operator ?? ""}`))
+    .map((e) => {
+      const t = e.tags ?? {};
+      const street = [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" ");
+      return {
+        name: t.name,
+        address: street,
+        suburb: t["addr:suburb"] || t["addr:city"] || "",
+        latitude: String(e.lat ?? e.center?.lat ?? ""),
+        longitude: String(e.lon ?? e.center?.lon ?? ""),
+        osm_ref: `${e.type}/${e.id}`,
+      };
+    });
+  if (rows.length === 0) return { error: "OpenStreetMap didn't return any libraries. Please try again later." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("import_libraries", { p_rows: rows, p_state: "SA" });
+  if (error) return { error: plainError(error, "Couldn't save the libraries.") };
+  return done(
+    `Done: ${data ?? 0} new libraries added (${rows.length} found). Hide any that aren't public libraries. Opening hours are asked for once a tutor or family chooses a library.`,
+  );
 }
 
 export async function addLibraryHours(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -247,6 +313,57 @@ export async function removeLibraryHours(formData: FormData) {
   if (!v.success) return;
   const supabase = await createClient();
   await supabase.from("library_hours").delete().eq("library_id", v.data);
+  revalidatePath("/schedule");
+}
+
+// Fill a library's opening hours from OpenStreetMap, for an admin to check.
+export async function fillHoursFromOsm(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  if (!viewer.roles.includes("admin")) return { error: "Only CLG admins can change opening hours." };
+  const v = id.safeParse(formData.get("library_id"));
+  if (!v.success) return { error: "Something went wrong. Please refresh the page." };
+  const supabase = await createClient();
+  const [{ data: lib }, { count }] = await Promise.all([
+    supabase.from("libraries").select("osm_ref").eq("id", v.data).maybeSingle(),
+    supabase.from("library_hours").select("id", { count: "exact", head: true }).eq("library_id", v.data),
+  ]);
+  if ((count ?? 0) > 0) return { error: "This library already has hours. Clear them first to fill them again." };
+  const ref = (lib?.osm_ref as string | null | undefined) ?? "";
+  const m = ref.match(/^(node|way|relation)\/(\d+)$/);
+  if (!m) return { error: "This library wasn't loaded from OpenStreetMap. Please add its hours by hand." };
+  let hoursText: string | undefined;
+  try {
+    const res = await fetch(`https://api.openstreetmap.org/api/0.6/${m[1]}/${m[2]}.json`, {
+      headers: { "User-Agent": "clg-app library hours" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    const body = (await res.json()) as { elements?: { tags?: Record<string, string> }[] };
+    hoursText = body.elements?.[0]?.tags?.opening_hours;
+  } catch {
+    return { error: "Couldn't reach OpenStreetMap just now. Please try again, or add the hours by hand." };
+  }
+  const rows = parseOsmHours(hoursText);
+  if (!rows) {
+    return {
+      error: hoursText
+        ? `OpenStreetMap lists the hours as "${hoursText}", which is too complicated to fill in. Please add them by hand.`
+        : "OpenStreetMap doesn't list hours for this library. Please add them by hand.",
+    };
+  }
+  const { error } = await supabase.from("library_hours").insert(rows.map((r) => ({ library_id: v.data, ...r })));
+  if (error) return { error: "Couldn't save the hours." };
+  return done("Hours filled in from OpenStreetMap. Please check them against the library's website.");
+}
+
+// An admin says a library's hours are still right.
+export async function markHoursChecked(formData: FormData) {
+  await requireViewer();
+  const v = id.safeParse(formData.get("library_id"));
+  if (!v.success) return;
+  const supabase = await createClient();
+  await supabase.rpc("mark_library_hours_checked", { p_library: v.data });
   revalidatePath("/schedule");
 }
 

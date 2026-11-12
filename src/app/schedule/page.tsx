@@ -30,6 +30,7 @@ import {
   shortDate,
 } from "@/lib/scheduling";
 import { createClient } from "@/lib/supabase/server";
+import { schedulingCounts } from "@/lib/scheduling-counts";
 import { runTeamsSyncQuietly } from "@/lib/teams/sync";
 import {
   AnswerForm,
@@ -217,6 +218,9 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     return b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id;
   });
 
+  // Numbers on tabs that need action ("How long to book", Libraries).
+  const counts = await schedulingCounts(supabase);
+
   const now = currentTime();
   const upcoming = sessions.filter((s) => new Date(s.ends_at).getTime() >= now);
   const weekAgo = now - 7 * 24 * 3600 * 1000;
@@ -245,7 +249,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               ? unread
               : s.id === "next-term" && renewalsToAnswer
                 ? renewalsToAnswer
-                : undefined,
+                : counts[s.id] || undefined,
       }))}
     >
       {section === "sessions" && (
