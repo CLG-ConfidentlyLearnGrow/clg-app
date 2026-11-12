@@ -20,6 +20,7 @@ are only for some levels.
 12. [Billing, prices and pay](#12-billing-prices-and-pay)
 13. [Recording why someone left](#13-recording-why-someone-left)
 14. [Staff, emergency access and privacy](#14-staff-emergency-access-and-privacy)
+15. [Reports (owner only)](#15-reports-owner-only)
 
 ## 1. Signing in
 
@@ -150,3 +151,24 @@ tutor or family blocks a match.
   admin can ask for owner access. It starts after 24 hours unless the owner
   approves it sooner or cancels it. The owner gets an email.
 - **Admin**, then **Privacy**: privacy requests (reply within 28 days).
+
+## 15. Reports (owner only)
+
+Reports show how long students wait for a tutor, how many new students book,
+how full each tutor's week is, why people left, and profit per tutoring hour.
+Only the owner sees them, because they include pay and profit.
+
+- **Reports** in the admin menu. A number shows when a new report is ready.
+- The app makes a **monthly** report on the 1st, a **quarterly** report after
+  each quarter, and a **financial year** report each July.
+- **Report for your dates**: choose a first and last day, or tap a common
+  range such as **Last month**. The report is saved so you can open it again.
+- **Download spreadsheet (CSV)** on any report opens in Excel or Google
+  Sheets.
+- **Settings**: super on wages (12%) and other running costs a month (rent,
+  software, insurance and so on), used for "profit after all costs".
+- If a report says some sessions have no pay worked out or aren't invoiced
+  yet, the profit figures will change once billing catches up. Make a new
+  report for the same dates to see the updated figures.
+
+> Screenshot to add: `screenshots/admins-15-reports.png`, a monthly report.
