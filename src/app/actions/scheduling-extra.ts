@@ -378,3 +378,17 @@ export async function confirmLibrary(_prev: FormState, formData: FormData): Prom
   if (error) return { error: plainError(error, "Couldn't confirm the library.") }; // Didn't work: says why.
   return done("Library confirmed. Sessions can now be booked there, inside its opening hours."); // Says it's confirmed.
 } // End of confirmLibrary.
+
+// Owner and operations admins set the time kept free after each tutor
+// session for writing the summary (Carla, 12 Nov 2026: 15 min now, likely
+// 5 min later). The database checks who may change it.
+export async function setSummaryMinutes(_prev: FormState, formData: FormData): Promise<FormState> { // Saves the summary time.
+  await requireViewer(); // Must be signed in.
+  const v = z.coerce.number().int().min(0).max(30).safeParse(formData.get("minutes")); // Checks it's a whole number from 0 to 30.
+  if (!v.success) return { error: "Please enter a number of minutes from 0 to 30." }; // Not right: says what's needed.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("set_summary_minutes", { p_minutes: v.data }); // Saves it (the database checks who may).
+  if (error) return { error: plainError(error, "Couldn't save the summary time.") }; // Didn't work: says why.
+  revalidatePath("/schedule"); // Refreshes the sessions page.
+  return done(`Saved. New times will leave ${v.data} min after each tutor session.`); // Says it's saved.
+} // End of setSummaryMinutes.

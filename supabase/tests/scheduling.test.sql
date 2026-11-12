@@ -83,11 +83,12 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
--- T3: 7 one-hour starts (3pm to 6pm) online + 7 at Alpha. T4: 3 at Beta.
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, array[:'lib_a', :'lib_b']::uuid[])), 17, 'all free times'); -- Checks: all free times.
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, false, array[:'lib_b']::uuid[])), 3, 'only the chosen library'); -- Checks: only the chosen library.
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}')), 7, 'online only (T4 is not online)'); -- Checks: online only (T4 is not online).
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}', null, null, '16:00', '18:00')), 3, 'family time window'); -- Checks: family time window.
+-- Start times are every 15 min (Carla, 12 Nov 2026).
+-- T3: 13 one-hour starts (3pm to 6pm) online + 13 at Alpha. T4: 5 at Beta.
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, array[:'lib_a', :'lib_b']::uuid[])), 31, 'all free times'); -- Checks: all free times.
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, false, array[:'lib_b']::uuid[])), 5, 'only the chosen library'); -- Checks: only the chosen library.
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}')), 13, 'online only (T4 is not online)'); -- Checks: online only (T4 is not online).
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}', null, null, '16:00', '18:00')), 5, 'family time window'); -- Checks: family time window.
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}', null, array[2]::smallint[])), 0, 'nobody free on Tuesdays'); -- Checks: nobody free on Tuesdays.
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'English', 60, true, '{}')), 0, 'nobody teaches English'); -- Checks: nobody teaches English.
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 240, true, '{}')), 0, 'four hours is over T3''s 3-hour weekly limit'); -- Checks: four hours is over T3's 3-hour weekly limit.
@@ -149,10 +150,12 @@ select tests.fails($$insert into public.bookings (student_id, tutor_id, subject,
 select public.request_booking(:'sam', 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'library', :'lib_a', :'first_day'::date, :'first_day'::date + 28, 'Prefers a quiet room') as booking_1 \gset
 select tests.eq((select extract(isodow from first_date)::int from public.bookings where id = :'booking_1'), 1, 'first session moved to a Monday'); -- Checks: first session moved to a Monday.
 select tests.eq((select count(*) from public.list_bookings() where id = :'booking_1' and tutor_name = 'Tara Three'), 1, 'family sees the tutor''s name on the request'); -- Checks: family sees the tutor's name on the request.
--- The time is now held. T3 is busy 4pm to 5pm and Sam can't be in two places.
+-- The time is now held. T3 is busy 4pm to 5pm, plus 15 min after it for the
+-- session summary (Carla, 12 Nov 2026), and Sam can't be in two places.
+-- Left: 5:15pm to 6pm starts (4).
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}')), 4, 'held time no longer offered'); -- Checks: held time no longer offered.
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}') where joins_other_sessions), 2, 'times next to the booking are marked'); -- Checks: times next to the booking are marked.
-select tests.eq((select count(*) from (select joins_other_sessions from public.find_session_times(:'sam', 'General Maths', 60, true, '{}') limit 2) x where joins_other_sessions), 2, 'and listed first'); -- Checks: and listed first.
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, '{}') where joins_other_sessions), 1, 'the time straight after the booking''s summary time is marked'); -- Checks: times next to the booking are marked.
+select tests.eq((select count(*) from (select joins_other_sessions from public.find_session_times(:'sam', 'General Maths', 60, true, '{}') limit 1) x where joins_other_sessions), 1, 'and listed first'); -- Checks: and listed first.
 select tests.fails(format($$select public.request_booking(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:30', 60, 'online', null, %L::date, %L::date + 28)$$, :'sam', :'first_day', :'first_day'), 'clashing time'); -- Checks this is refused: clashing time.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 

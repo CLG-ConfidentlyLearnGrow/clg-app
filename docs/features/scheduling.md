@@ -519,3 +519,31 @@ Research: prompt, visible reminders raise follow-through on agreed actions
 regular, personalised messages), and a quick re-offer keeps waiting time
 down, which matters because consistent, early tutoring drives impact (EEF,
 "Making a difference with effective tutoring", 2021).
+
+## Start times every 15 minutes, and summary time, 12 Nov 2026
+
+Carla asked for sessions to be bookable at 15-minute intervals. Tutors are
+paid for 15 minutes after each session to write the session summary (this
+is likely to drop to 5 minutes later).
+
+- Times offered by "Book a session" and the Matching tab now start every
+  15 minutes (was every 30). Session lengths stay 1 to 4 hr in half-hour
+  steps, as billing charges in half-hour steps with a 1-hr minimum.
+- After each of a tutor's sessions, the summary time is kept free before
+  their next session. The same rule applies when a time is offered,
+  changed, confirmed, renewed for next term, or booked as a one-off. A
+  student's own back-to-back sessions (with different tutors) don't need
+  the gap.
+- "Next to another session" (listed first, to group a tutor's sessions into
+  blocks) now means straight after the summary time.
+- Owner and operations admins change the summary time (0 to 30 min) under
+  Sessions > Book a session > "Time to write session summaries".
+- Tutor pay is billing's job and isn't changed here.
+
+Legal note: the setting is one number with no personal information. Paying
+tutors for summary time follows the award rule that required work time is
+paid time (Miscellaneous Award MA000104, Post-Secondary Award MA000075).
+
+Research: timely, specific feedback to families and students after each
+session supports learning (EEF, "Teacher Feedback to Improve Pupil
+Learning", 2021), and protected time makes it realistic to write.

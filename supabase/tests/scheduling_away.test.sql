@@ -130,7 +130,7 @@ select tests.claims(null); -- Signs out, so no one is signed in.
 update public.waitlist set created_at = now() - interval '30 days' where id = :'wait'; -- Makes the waitlist entry 30 days old.
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select times_now_free from public.list_waitlist() where id = :'wait'), 3, 'three Tuesday times now free'); -- Checks: three Tuesday times now free.
+select tests.eq((select times_now_free from public.list_waitlist() where id = :'wait'), 5, 'five Tuesday times now free'); -- Checks: five Tuesday start times are now free (3pm to 4pm, every 15 min).
 select tests.eq((select count(*) from public.list_waitlist() where waited_4_weeks), 1, 'waited 4 weeks'); -- Checks: waited 4 weeks.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
