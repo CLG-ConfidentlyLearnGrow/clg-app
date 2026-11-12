@@ -43,6 +43,8 @@ Tutoring work and guaranteed hours (2026-11-05, Carla): work tied to tutoring th
 - One employment type per person (Carla chose this 2026-11-05).
 - Migration: `20261105230100_billing_tutoring_hours.sql`. The award reading needs the adviser to confirm.
 
+Session summary pay (2026-11-12, Carla): tutors are paid for time after each completed session to write the session summary (15 min now, maybe 5 later). The app adds a "Session summary" pay line at the tutor's rate for that session's level. The minutes come from the scheduling setting `summary_minutes`, which billing only reads; until that setting exists, it uses 15. Cancelled sessions and no-shows don't get summary time. Migration: `20261112230100_billing_summary_pay.sql`.
+
 ## Split payments between payers (added 2026-10-28)
 
 - **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.

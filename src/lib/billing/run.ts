@@ -76,6 +76,10 @@ export async function runBilling(): Promise<Summary> {
   if (pay.error) summary.problems.push(`Tutor pay: ${pay.error.message}`); // Notes any problem,
   else summary.payLines = pay.data ?? 0; // or records how many lines were built.
 
+  // Summary-writing time after each completed session, at the tutor's rate.
+  const summaries = await db.rpc("billing_build_summary_pay", { p_from: from, p_to: yesterday }); // Asks the database to add session summary pay for the fortnight.
+  if (summaries.error) summary.problems.push(`Session summary pay: ${summaries.error.message}`); // Notes any problem.
+
   // Part-time and full-time staff: top up to their agreed hours once a pay
   // period ends. Top-ups wait for an admin to approve them.
   const topUps = await db.rpc("billing_check_guaranteed_hours", { p_day: yesterday }); // Asks the database to add any guaranteed-hours top-ups for yesterday's pay period.

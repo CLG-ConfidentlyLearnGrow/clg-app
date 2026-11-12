@@ -16,7 +16,7 @@ type Line = {
   account_id: string | null; // who (if known),
   staff_name: string; // their name,
   work_date: string; // the day worked,
-  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed"; // what kind of pay,
+  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary"; // what kind of pay,
   work_kind: string; // the kind of work (school, tertiary or admin),
   minutes: number; // minutes,
   rate_cents: number; // the rate in cents,
@@ -33,6 +33,7 @@ const KIND_LABELS: Record<Line["kind"], string> = { // Words for each kind of pa
   admin: "Office admin", // office admin,
   tutoring_work: "Tutoring work", // tutoring work,
   guaranteed: "Guaranteed hours top-up", // guaranteed hours top-up.
+  summary: "Session summary", // time to write the summary after a session.
 }; // End of the list.
 
 // Adds days to a date (written as YYYY-MM-DD).
