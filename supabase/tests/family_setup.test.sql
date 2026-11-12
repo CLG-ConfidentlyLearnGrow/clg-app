@@ -29,7 +29,7 @@ select tests.fails($$select public.admin_add_child('00000000-0000-0000-0000-0000
 -- Only the name: the family fills in the rest.
 -- Adds Gus with just a name, and keeps his id as gus.
 select public.admin_add_child('00000000-0000-0000-0000-000000000002', 'Gus Two', null, null, null, null, null) as gus \gset
-select tests.eq((select count(*) from public.students where id = :'gus' and date_of_birth is null and state is null and year_level is null and school is null), 1, 'child with only a name'); -- Checks: child with only a name.
+select tests.eq((select count(*) from public.students where id = :'gus' and id in (select student_id from public.student_birth_dates() where date_of_birth is null) and state is null and year_level is null and school is null), 1, 'child with only a name'); -- Checks: child with only a name (the birth date is read through student_birth_dates, as the app does).
 select tests.eq(private.student_details_complete(:'gus')::int, 0, 'details not finished'); -- Checks: details not finished.
 select tests.eq(private.student_details_complete(:'dana')::int, 1, 'full details are finished'); -- Checks: full details are finished.
 select tests.eq((select count(*) from public.admin_find_account('nobody@example.com')), 0, 'unknown email finds nothing'); -- Checks: unknown email finds nothing.
@@ -133,7 +133,7 @@ select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.fails(format($$update public.students set date_of_birth = current_date + 1 where id = %L$$, :'gus'), 'parent gives a future birthday'); -- Checks this is refused: parent gives a future birthday.
 update public.students set date_of_birth = (current_date - interval '8 years')::date, state = 'SA', year_level = 'Year 3', school = 'Hill PS' where id = :'gus'; -- Fills in Gus's details.
-select tests.eq((select count(*) from public.students where id = :'gus' and state = 'SA' and date_of_birth is not null), 1, 'parent fills in birthday and state'); -- Checks: parent fills in birthday and state.
+select tests.eq((select count(*) from public.students where id = :'gus' and state = 'SA' and id in (select student_id from public.student_birth_dates() where date_of_birth is not null)), 1, 'parent fills in birthday and state'); -- Checks: parent fills in birthday and state (birth date read through student_birth_dates).
 select tests.fails(format($$update public.students set date_of_birth = (current_date - interval '9 years')::date where id = %L$$, :'gus'), 'parent changes birthday once given'); -- Checks this is refused: parent changes birthday once given.
 select tests.fails(format($$update public.students set state = 'VIC' where id = %L$$, :'gus'), 'parent changes state once given'); -- Checks this is refused: parent changes state once given.
 select tests.fails(format($$update public.students set year_level = null where id = %L$$, :'gus'), 'parent clears the year level'); -- Checks this is refused: parent clears the year level.
