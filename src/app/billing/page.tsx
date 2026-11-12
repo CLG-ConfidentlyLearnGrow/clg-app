@@ -53,22 +53,35 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     .find(Boolean); // the first one found.
   const supabase = await createClient(); // Connects to the database.
 
-  const [accounts, families, invoices, onHold, splits, choices] = await Promise.all([ // Reads six things at once:
-    supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused"), // the billing accounts this person can see,
-    supabase.from("families").select("id, name"), // family names,
+  // This page is only ever about the person's own families. Someone who is
+  // also an admin can see every family's billing in the admin screens, so the
+  // reads below are limited to the families they pay for themselves.
+  const [choices, myShares] = await Promise.all([ // Reads two things at once:
+    supabase.rpc("billing_my_plan_choices"), // the families this person pays for (as a parent or adult learner), and their plan choice,
+    supabase.from("billing_payers").select("family_id").eq("account_id", viewer.id), // and any family where they pay a split share.
+  ]); // End of the reads.
+  const myFamilies = [ // The ids of this person's own families:
+    ...new Set([ // (each once)
+      ...((choices.data ?? []) as { family_id: string }[]).map((c) => c.family_id), // the families they pay for,
+      ...(myShares.data ?? []).map((r) => r.family_id), // plus the families where they pay a share.
+    ]), // (end of the set)
+  ]; // End of the list.
+
+  const [accounts, families, invoices, onHold, splits] = await Promise.all([ // Reads five things at once:
+    supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused").in("family_id", myFamilies), // their own families' billing accounts,
+    supabase.from("families").select("id, name").in("id", myFamilies), // their own families' names,
     supabase // the invoices:
       .from("billing_invoices") // (from the invoices table)
       .select( // (with these fields:)
         "id, number, family_id, status, due_on, charge_on, subtotal_cents, gst_cents, discount_cents, credit_applied_cents, total_cents, billing_invoice_lines(id, description, amount_cents, line_date, active), billing_payments(status)", // totals, lines and payments,
       ) // (end of the fields)
+      .in("family_id", myFamilies) // for their own families only,
       .neq("status", "void") // not cancelled,
       .order("due_on", { ascending: false }) // newest due date first,
       .limit(24), // at most 24;
     supabase.rpc("my_support_on_hold"), // whether this person's support is on hold,
     // Split payments: a payer sees their own row; the main payer sees the split.
-    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready"), // split payment shares,
-    // Families this person pays for, and whether they've chosen how often.
-    supabase.rpc("billing_my_plan_choices"), // and the families this person chooses a plan for.
+    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready").in("family_id", myFamilies), // and split payment shares in their own families.
   ]); // End of the reads.
   const choiceRows = (choices.data ?? []) as { family_id: string; family_name: string; plan: BillingPlan; chosen: boolean; can_change: boolean }[]; // The plan choices.
   const choiceOf = new Map(choiceRows.map((c) => [c.family_id, c])); // Each family's plan choice, by family.

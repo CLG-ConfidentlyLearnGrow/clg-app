@@ -49,12 +49,18 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "children"; // Which section is open (children if none or unknown).
 
   const supabase = await createClient(); // Connects to the database.
-  const { students, assignments } = await loadStudentsAndTutors(); // The children and their tutors.
+  const { students: visible, assignments: visibleAssignments } = await loadStudentsAndTutors(); // Every student (and their tutors) the database lets this person see.
   const [links, subjectRows, logins] = await Promise.all([ // Reads three things at once:
-    supabase.from("parent_student_links").select("student_id, verified_at"), // which children CLG has checked,
+    supabase.from("parent_student_links").select("student_id, verified_at").eq("parent_id", viewer.id), // this person's own parent links (which children are theirs, and which CLG has checked),
     loadSubjects(supabase), // the children's subjects,
     supabase.from("students").select("id, account_id"), // and which children have their own login.
   ]); // End of the reads.
+  // Only this person's own children. Someone who is also an admin or a tutor
+  // can see other students elsewhere in the app, but the Parent dashboard must
+  // only show children they added or that CLG has linked to them.
+  const mine = new Set((links.data ?? []).map((l) => l.student_id)); // The ids of the children linked to this parent.
+  const students = visible.filter((s) => mine.has(s.id)); // Keeps only their own children.
+  const assignments = visibleAssignments.filter((a) => mine.has(a.student_id)); // Keeps only their own children's tutors.
   const subjectsOf = (id: string) => // Gives one child's subjects:
     subjectRows // from all the subjects,
       .filter((r) => r.student_id === id) // just this child's,
@@ -117,7 +123,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                 <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>{/* Nothing else to do for now. */}
               </Card> // End of the card.
             )}{/* End of this part. */}
-            <NewUpdates />{/* New updates. */}
+            <NewUpdates studentIds={[...mine]} />{/* New updates, about their own children only. */}
             <p className="text-sm">{/* a line: */}
               <TextLink href="/billing">Billing: your plan, invoices and credit</TextLink>{" "}{/* a link to billing, then a space, */}
               <CountBadge n={todo.get("family", "billing")} className="bg-parent-strong text-white" />{/* and its to-do number. */}
