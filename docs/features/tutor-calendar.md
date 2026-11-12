@@ -83,5 +83,9 @@ weekly bookings - or at least integrate them into their own calendars."
 
 - Should the feed stop while a tutor's child safety check has lapsed?
 - Is it OK for Teams links to be in tutors' personal calendars (Google,
-  Outlook, Apple)? CLG's Teams meetings use a lobby, so a leaked link alone
-  shouldn't let anyone straight in, but it's worth confirming.
+  Outlook, Apple)? Note: CLG's Teams meetings are currently set so that
+  **everyone with the link skips the waiting room** (`src/lib/teams/graph.ts`),
+  so anyone who got hold of a calendar link could join a child's session.
+  Options: keep the Teams link in the feed (asked for), leave it out (tutors
+  tap through to the app to join), or turn the Teams waiting room on for
+  people outside CLG.
