@@ -63,8 +63,9 @@ automatic, like booking a doctor:
     (48 hr by default, each person can change it) and a final reminder 1 hr
     before. They also hear when a booking is requested, confirmed or
     declined, and when someone else cancels a session. Nothing arrives
-    between 8pm and 8am Adelaide time; it waits until 8am. A final reminder
-    for an early-morning session comes at 7:30pm the evening before.
+    between 9pm and 5am in each person's local time; it waits until 5am
+    (changed 12 Nov 2026; see sending-emails.md). A final reminder for a
+    session before about 5:15am comes at 8:30pm the evening before.
     Notices show in the app now; email and text use the same notices once
     CLG switches them on.
 
@@ -253,7 +254,7 @@ teaching the tutor has agreed to.
 
 See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
 
-- Quiet hours are 9pm to 6am. Notices are in the app only.
+- Quiet hours are 9pm to 6am (since 12 Nov 2026: 9pm to 5am, local time). Notices are in the app only.
 - Each student follows SA government terms, SA private terms (Term 2 a week
   shorter) or their own dates; each student's last day of Term 4 is
   confirmed. Families are asked about next term 3 weeks before their study
@@ -494,7 +495,7 @@ done, for example "Matching (4)" when 4 subjects need a tutor.
 Carla offered a session time from the Matching tab and saw no notification
 on the tutor profile. The notices were being made, but they only showed
 under Sessions > Notices, so they were easy to miss. Notices made between
-8pm and 8am also wait until 8am, so families aren't messaged overnight.
+9pm and 5am (local time) also wait until 5am, so families aren't messaged overnight.
 
 - The tutor and parent dashboards now show an amber box at the top, on
   every section, when session times are waiting for that person's answer

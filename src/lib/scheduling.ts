@@ -20,6 +20,11 @@ export function clockTime(value: string): string {
   return `${hour}:${String(m).padStart(2, "0")}${suffix}`; // Joins them, with minutes always two digits.
 } // End of clockTime.
 
+// Short clock wording for quiet hours: "21:00:00" -> "9pm", "05:30:00" -> "5:30am".
+export function shortClock(value: string): string { // Takes a time of day as text.
+  return clockTime(value).replace(":00", ""); // Uses the usual wording, without ":00" when it's on the hour.
+} // End of shortClock.
+
 // 90 -> "1.5 hr"
 export function lengthLabel(minutes: number): string {
   return `${minutes / 60} hr`; // Minutes divided by 60, followed by "hr".

@@ -152,6 +152,6 @@ still be logged, but please be on time.
 
 ## 14. Notices
 
-Notices are in the app only, never between 9pm and 6am. See them under
+Notices are in the app only, never between 9pm and 5am (your local time). See them under
 **Schedule**, then **Notices**. The **Sessions on hold or back on** card on
 your dashboard shows families whose sessions are paused for billing.

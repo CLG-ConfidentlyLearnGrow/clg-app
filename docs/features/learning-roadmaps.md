@@ -24,7 +24,7 @@ Sources opened: AERO "Tried and tested: spacing and retrieval practice" listing 
 - **Task sheet and rubric** (added 2026-10-28, Carla): when adding an assessment, the family can attach the task sheet and the rubric (marking guide). They are kept with the assessment, in the private upload store with the same access rules (migration `20261029500500_progress_assessment_files.sql`). Rubrics let the tutor and student plan against the marking criteria; EEF feedback guidance stresses clear success criteria.
 - **"Plan study steps for me"**: for an assessment, six steps spread from today to the day before (list the topics, self-test on hard parts, mixed practice, a timed practice test, fix mistakes, a last self-test). Under a week away, three steps. The tutor can change them.
 - **Who drives it**: families add upcoming assessments and goals; the steps come from the tutor (and each session's next step) and the plan button, and the student or parent ticks them off. Planning stays a conversation with the tutor in each session.
-- **One reminder** the afternoon before steps are due: to the student if they have their own login, otherwise to the parents who manage them. Never to the tutor. Nothing between 8pm and 8am.
+- **One reminder** the afternoon before steps are due: to the student if they have their own login, otherwise to the parents who manage them. Never to the tutor. Nothing between 9pm and 5am, local time.
 
 ## How we'll know it works
 

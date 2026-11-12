@@ -53,6 +53,10 @@ state's online register. RRHAN-EC is required in every state. You're told
 2. When you book for a family, it's an **offer**: the tutor and family each
    approve within 3 days. Whoever hasn't approved gets a reminder after
    2 days.
+3. Quiet hours: nothing reaches anyone between 9pm and 5am, in their own
+   local time; notices made then arrive at 5am. Owner and operations admins
+   can change these times under **Schedule**, then **Notices**, then
+   **Quiet hours (all of CLG)**.
 
 > Screenshot to add: `screenshots/admins-04-book.png`, booking for a family.
 

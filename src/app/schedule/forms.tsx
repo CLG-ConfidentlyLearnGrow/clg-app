@@ -757,9 +757,11 @@ export function ConfirmTimesForm({ id, date, from, to }: { id: string; date: str
 
 // The person's reminder setting: when the first reminder comes.
 export function NoticeSettingsForm({ // Its settings:
-  settings, // the current setting.
+  settings, // the current setting,
+  quiet, // and CLG's quiet hours, e.g. "9pm and 5am".
 }: { // The settings' types:
-  settings: { first_reminder_hours: number }; // hours before is a number.
+  settings: { first_reminder_hours: number }; // hours before is a number,
+  quiet: string; // the quiet hours are words.
 }) { // End of the settings.
   return ( // Shows:
     <ActionForm action={saveNoticeSettings} submitLabel="Save">{/* the form, sending to saveNoticeSettings, with a "Save" button, */}
@@ -771,7 +773,7 @@ export function NoticeSettingsForm({ // Its settings:
         ))}{/* End of the loop. */}
       </Select>{/* End of the drop-down. */}
       <p className="text-xs text-zinc-600">{/* A small note: */}
-        A final reminder always comes 1 hr before. Nothing arrives between 9pm and 6am. Reminders and notices
+        A final reminder always comes 1 hr before. Nothing arrives between {quiet}, your local time. Reminders and notices
         show here in the app; CLG doesn&apos;t send them by email.{/* (about the final reminder and quiet hours) */}
       </p>{/* End of the paragraph. */}
     </ActionForm> // End of the form.
