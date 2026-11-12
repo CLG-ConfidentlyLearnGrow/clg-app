@@ -548,3 +548,23 @@ paid time (Miscellaneous Award MA000104, Post-Secondary Award MA000075).
 Research: timely, specific feedback to families and students after each
 session supports learning (EEF, "Teacher Feedback to Improve Pupil
 Learning", 2021), and protected time makes it realistic to write.
+
+## Bookings list: newest first, with filters, 12 Nov 2026
+
+Carla asked for the Bookings list to show the most recent at the top, and
+to filter by status.
+
+- Bookings are listed by when they were asked for, newest first, in every
+  dashboard (admin, tutor, parent, student).
+- Filter buttons above the list: All, Waiting, Confirmed, Declined,
+  Expired, Withdrawn and Stopped, each with a count. Filters with nothing in
+  them are hidden.
+- The request times come from booking_request_times(), which only returns
+  bookings the viewer can already see in list_bookings().
+
+Legal note: no new personal information is shown; the same access rules
+apply (APP 11, security of personal information).
+
+Research: clear, ordered lists with simple filters cut the effort of
+finding what needs action, which matters for staff and families checking
+on their phones (Nielsen Norman Group usability guidance on filtering).
