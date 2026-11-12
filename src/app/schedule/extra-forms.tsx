@@ -19,7 +19,8 @@ import { // The scheduling actions these forms send to:
   suggestLibrary, // suggest a library,
   loadSaLibraries, // load all SA libraries,
   fillHoursFromOsm, // fill a library's hours from OpenStreetMap,
-  setSummaryMinutes, // set the summary time after each session.
+  setSummaryMinutes, // set the summary time after each session,
+  setQuietHours, // set CLG's quiet hours.
 } from "@/app/actions/scheduling-extra"; // End of the list.
 import { ActionForm } from "@/components/action-form"; // A shared form that shows a save button and messages.
 import { Field, Select, TextArea } from "@/components/ui"; // Shared page parts: a field, a drop-down and a text area.
@@ -326,3 +327,27 @@ export function SummaryMinutesForm({ current }: { current: number }) { // Takes 
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of SummaryMinutesForm.
+
+// Every half hour of the day, as "HH:MM" values with words like "9:30pm".
+const HALF_HOURS = Array.from({ length: 48 }, (_, i) => { // 48 half hours in a day:
+  const value = `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`; // the time, e.g. "21:30",
+  const h = Math.floor(i / 2) % 12 === 0 ? 12 : Math.floor(i / 2) % 12; // the 12-hour clock hour,
+  const label = `${h}${i % 2 ? ":30" : ""}${i < 24 ? "am" : "pm"}`; // and the words, e.g. "9:30pm".
+  return { value, label }; // Hands back both.
+}); // End of HALF_HOURS.
+
+// The owner or operations admin's form for CLG's quiet hours.
+export function QuietHoursForm({ starts, ends }: { starts: string; ends: string }) { // Takes the current times, e.g. "21:00" and "05:00".
+  return ( // What's shown:
+    <ActionForm action={setQuietHours} submitLabel="Save">{/* the form, saving with setQuietHours: */}
+      <div className="grid grid-cols-2 gap-4 sm:w-2/3">{/* a row of two drop-downs: */}
+        <Select label="Quiet from" name="starts" defaultValue={starts}>{/* when quiet hours start, */}
+          {HALF_HOURS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}{/* (every half hour) */}
+        </Select>{/* End of the start drop-down. */}
+        <Select label="Until" name="ends" defaultValue={ends}>{/* and when they end. */}
+          {HALF_HOURS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}{/* (every half hour) */}
+        </Select>{/* End of the end drop-down. */}
+      </div>{/* End of the row. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of QuietHoursForm.

@@ -40,7 +40,8 @@ progress updates only showed inside the app, and Supabase's sign-in emails
 
 - Each email is the same short text the app shows, plus one button to open
   the app. No long newsletters.
-- Quiet hours already apply: nothing between 8pm and 8am Adelaide time.
+- Quiet hours apply: nothing between 9pm and 5am in the person's own local
+  time (see "Quiet hours" below).
 - Each person can turn email off in their reminder settings (Schedule
   page). Notices still show in the app. The tutor pause email ignores this
   setting, because it is the only way a tutor hears about a pause.
@@ -111,3 +112,44 @@ Carla chose app notices only. Session, booking and billing notices are no
 longer emailed or texted, and the email and text settings are gone.
 Sign-in and password links, security alerts to the owner, and emergency
 access emails are still sent.
+
+## Quiet hours, 12 Nov 2026
+
+Carla asked for notices to be held from 9pm to 5am (they were 8pm to 8am
+until 2 Nov, then 9pm to 6am Adelaide time).
+
+**What changed**
+
+- One shared setting, `public.quiet_hours_settings` (9pm to 5am). Owner
+  and operations admins change it under Sessions > Notices > "Quiet hours
+  (all of CLG)", on the hour or half hour. Nothing else keeps its own copy.
+- The hours follow the person getting the notice: a student with their own
+  login uses their state, a parent uses their child's state, a tutor uses
+  their work state, and anyone else (office staff) uses Adelaide time. So
+  the Victorian tutor's quiet hours are 9pm to 5am Melbourne time.
+- One trigger on each notice table (`session_notices`, `progress_notices`)
+  checks every new notice as it is saved and holds anything due in quiet
+  hours until 5am local time. The older helper
+  `private.outside_quiet_hours(time)` now hands the time straight back, so
+  the functions that already call it keep working and the trigger is the
+  one place the rule lives.
+- A "session in 1 hr" reminder that would be held until less than 15 min
+  before its session (a session before about 5:15am) comes the evening
+  before, 30 min before quiet hours start (8:30pm).
+- Security alerts to the owner still ignore quiet hours.
+- Migration: `20261113100100_quiet_hours.sql`. Tests:
+  `supabase/tests/scheduling_quiet_hours.test.sql`.
+
+**Evidence and law**
+
+- Teenagers need 8 to 10 hr sleep a night, and phone use and alerts late
+  at night are linked to less and worse sleep (Sleep Health Foundation;
+  AERO's student wellbeing work treats sleep as part of readiness to
+  learn). Notices are in the app only, with no push alerts, so 5am delivery
+  only means a notice is waiting when the person next opens the app.
+- Privacy and child safety: the UK Age Appropriate Design Code and the
+  coming Australian Children's Online Privacy Code both expect services
+  used by children not to nudge them to keep using the service, including
+  at night. Holding notices overnight in each person's local time follows
+  that. No new personal information is collected: the time zone comes from
+  the state already held for matching and tutor checks.

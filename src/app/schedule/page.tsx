@@ -20,7 +20,7 @@ import { // The extra sections:
   StudyDatesToCheck, // study dates to check (admins),
   StudyPeriodBlock, // a child's study period.
 } from "./extra-sections"; // End of the list.
-import { SuggestLibraryForm, SummaryMinutesForm } from "./extra-forms"; // The "suggest a library" form and the summary time setting.
+import { QuietHoursForm, SuggestLibraryForm, SummaryMinutesForm } from "./extra-forms"; // The quiet hours setting, the "suggest a library" form and the summary time setting.
 import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Admin level groups, the level reader, two-step sign-in check, and the signed-in person.
 import { // Scheduling helpers:
   BOOKING_STATUS_NAMES, // booking status names,
@@ -37,6 +37,7 @@ import { // Scheduling helpers:
   localToday, // today's date,
   placeLabel, // place wording,
   sessionWhen, // session time wording,
+  shortClock, // short clock wording (e.g. "9pm"),
   shortDate, // short dates.
 } from "@/lib/scheduling"; // End of the helpers.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -530,7 +531,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "tutor-availability" && isAdmin && <TutorAvailabilitySection />}{/* The tutor availability section (admins). */}
 
-      {section === "notices" && <NoticesSection viewerId={viewer.id} unread={unread} />}{/* The notices section. */}
+      {section === "notices" && <NoticesSection viewerId={viewer.id} unread={unread} isAdmin={isAdmin} />}{/* The notices section (with the quiet hours setting for owner and operations admins). */}
 
       {section === "away" && <AwaySection viewerId={viewer.id} isAdmin={isAdmin} isTutor={isTutor} />}{/* The away dates section. */}
 
@@ -1477,9 +1478,9 @@ async function TimesSection() { // The times to check section (admins).
 // ---------------------------------------------------------------------------
 // Notices: reminders and booking news, and how each person wants them
 // ---------------------------------------------------------------------------
-async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: number }) { // The notices section (with the unread count).
+async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string; unread: number; isAdmin: boolean }) { // The notices section (with the unread count, and whether they can change quiet hours).
   const supabase = await createClient(); // Connects to the database.
-  const [noticesRes, settingsRes] = await Promise.all([ // Reads two things at once:
+  const [noticesRes, settingsRes, quietRes] = await Promise.all([ // Reads three things at once:
     supabase // their notices:
       .from("session_notices") // from session_notices,
       .select("id, title, body, deliver_at, read_at") // these details,
@@ -1490,8 +1491,15 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       .select("first_reminder_hours") // the first reminder time,
       .eq("account_id", viewerId) // for this person,
       .maybeSingle(), // if any.
+    supabase // CLG's quiet hours:
+      .from("quiet_hours_settings") // from the one shared setting,
+      .select("starts_at, ends_at") // when they start and end,
+      .maybeSingle(), // (one row).
   ]); // End of the reads.
   const notices = noticesRes.data ?? []; // The notices.
+  const quietStarts = ((quietRes.data?.starts_at as string | undefined) ?? "21:00:00").slice(0, 5); // When quiet hours start, e.g. "21:00" (9pm if not found).
+  const quietEnds = ((quietRes.data?.ends_at as string | undefined) ?? "05:00:00").slice(0, 5); // When they end, e.g. "05:00" (5am if not found).
+  const quietWords = `${shortClock(quietStarts)} and ${shortClock(quietEnds)}`; // In words, e.g. "9pm and 5am".
   return ( // Shows:
     <>{/* (a group) */}
       <Card title="Notices" description="Reminders before each session, and news about your bookings.">{/* the notices card: */}
@@ -1525,9 +1533,20 @@ async function NoticesSection({ viewerId, unread }: { viewerId: string; unread: 
       </Card>{/* End of the card. */}
       <Card collapsible defaultOpen={false} title="Reminder settings">{/* the reminder settings fold-up card: */}
         <NoticeSettingsForm // the settings form:
-          settings={settingsRes.data ?? { first_reminder_hours: 48 }} // their settings (or 48 hr before, if not set).
+          settings={settingsRes.data ?? { first_reminder_hours: 48 }} // their settings (or 48 hr before, if not set),
+          quiet={quietWords} // and the quiet hours in words.
         />{/* End of the form. */}
       </Card>{/* End of the card. */}
+      {isAdmin && ( // Owner and operations admins also see:
+        <Card // a card:
+          collapsible // that opens and closes,
+          defaultOpen={false} // starting closed, as it's rarely changed,
+          title="Quiet hours (all of CLG)" // its title,
+          description={`Nothing reaches families, tutors or staff between ${quietWords}, in each person's own local time. Anything due then arrives at ${shortClock(quietEnds)}. Security alerts to the owner still come straight away.`} // and what it does.
+        >{/* (end of the card's settings) */}
+          <QuietHoursForm starts={quietStarts} ends={quietEnds} />{/* the form to change them. */}
+        </Card> // End of the card.
+      )}{/* End of the quiet hours card. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of NoticesSection.

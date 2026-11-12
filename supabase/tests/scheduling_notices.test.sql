@@ -6,12 +6,13 @@ select tests.claims(null); -- Signs out, so no one is signed in.
 -- Keeps Sam's student id as sam.
 select id as sam from public.students where full_name = 'Sam Three' \gset
 
--- Quiet hours: nothing between 9pm and 6am Adelaide time.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 21:00 Australia/Adelaide') = timestamptz '2026-11-04 06:00 Australia/Adelaide')::int, 1, '9pm moves to 6am next day'); -- Checks: 9pm moves to 6am next day.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 20:30 Australia/Adelaide') = timestamptz '2026-11-03 20:30 Australia/Adelaide')::int, 1, '8:30pm is no longer quiet'); -- Checks: 8:30pm is no longer quiet.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 05:30 Australia/Adelaide') = timestamptz '2026-11-04 06:00 Australia/Adelaide')::int, 1, '5:30am moves to 6am'); -- Checks: 5:30am moves to 6am.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 06:30 Australia/Adelaide') = timestamptz '2026-11-04 06:30 Australia/Adelaide')::int, 1, '6:30am is no longer quiet'); -- Checks: 6:30am is no longer quiet.
-select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 15:00 Australia/Adelaide') = timestamptz '2026-11-04 15:00 Australia/Adelaide')::int, 1, 'daytime unchanged'); -- Checks: daytime unchanged.
+-- Quiet hours (the shared setting, 9pm to 5am): checked here in Adelaide time;
+-- scheduling_quiet_hours.test.sql checks other time zones and the setting.
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 21:00 Australia/Adelaide', 'Australia/Adelaide') = timestamptz '2026-11-04 05:00 Australia/Adelaide')::int, 1, '9pm moves to 5am next day'); -- Checks: 9pm moves to 5am next day.
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-03 20:30 Australia/Adelaide', 'Australia/Adelaide') = timestamptz '2026-11-03 20:30 Australia/Adelaide')::int, 1, '8:30pm is not quiet'); -- Checks: 8:30pm is not quiet.
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 04:30 Australia/Adelaide', 'Australia/Adelaide') = timestamptz '2026-11-04 05:00 Australia/Adelaide')::int, 1, '4:30am moves to 5am'); -- Checks: 4:30am moves to 5am.
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 05:30 Australia/Adelaide', 'Australia/Adelaide') = timestamptz '2026-11-04 05:30 Australia/Adelaide')::int, 1, '5:30am is no longer quiet'); -- Checks: 5:30am is no longer quiet (it was until 12 Nov 2026).
+select tests.eq((private.outside_quiet_hours(timestamptz '2026-11-04 15:00 Australia/Adelaide', 'Australia/Adelaide') = timestamptz '2026-11-04 15:00 Australia/Adelaide')::int, 1, 'daytime unchanged'); -- Checks: daytime unchanged.
 
 -- Notices from the earlier booking tests.
 select tests.eq(least((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' and kind = 'booking_requested'), 1), 1, 'tutor told about requests'); -- Checks: tutor told about requests.
@@ -50,8 +51,8 @@ select tests.eq((select count(*) from public.session_notices where session_id = 
   and account_id = '00000000-0000-0000-0000-000000000003' and deliver_at = :'afternoon'::timestamptz - interval '24 hours'), 1, 'parent''s first reminder at 24 hr'); -- (their setting).
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_pm' and kind = 'reminder_first' -- Checks the tutor's first reminder is 48 hr before:
   and account_id = '00000000-0000-0000-0000-000000000013' and deliver_at = :'afternoon'::timestamptz - interval '48 hours'), 1, 'tutor''s first reminder at 48 hr (default)'); -- (the default).
-select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_final' -- Checks a 6am session's final reminder comes at 8:30pm the night before:
-  and deliver_at = ((current_date + 2) + time '20:30') at time zone 'Australia/Adelaide'), 2, '6am session: final reminder 8:30pm the evening before'); -- (outside quiet hours).
+select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_final' -- Checks a 6am session's final reminder comes 1 hr before, at 5am:
+  and deliver_at = :'morning'::timestamptz - interval '1 hour'), 2, '6am session: final reminder at 5am, as quiet hours end at 5am'); -- (two, one each for parent and tutor).
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_first' -- Checks the first reminder for the 6am session stays at 6am:
   and account_id = '00000000-0000-0000-0000-000000000003' -- (for the parent)
   and deliver_at = ((current_date + 2) + time '06:00') at time zone 'Australia/Adelaide'), 1, 'first reminder 24 hr before a 6am session is outside quiet hours'); -- (6am is outside quiet hours).

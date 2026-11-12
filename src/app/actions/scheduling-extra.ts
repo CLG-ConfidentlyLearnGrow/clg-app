@@ -392,3 +392,20 @@ export async function setSummaryMinutes(_prev: FormState, formData: FormData): P
   revalidatePath("/schedule"); // Refreshes the sessions page.
   return done(`Saved. New times will leave ${v.data} min after each tutor session.`); // Says it's saved.
 } // End of setSummaryMinutes.
+
+// Owner and operations admins set CLG's quiet hours (Carla, 12 Nov 2026:
+// 9pm to 5am). Nothing reaches anyone between these times, in their own
+// local time; held notices arrive when quiet hours end. The database checks
+// who may change it and that the times make sense.
+const halfHour = z.string().regex(/^([01]\d|2[0-3]):(00|30)$/, "Choose a time on the hour or half hour."); // A time like "21:00" or "05:30".
+export async function setQuietHours(_prev: FormState, formData: FormData): Promise<FormState> { // Saves the quiet hours.
+  await requireViewer(); // Must be signed in.
+  const starts = halfHour.safeParse(formData.get("starts")); // Checks the start time.
+  const ends = halfHour.safeParse(formData.get("ends")); // Checks the end time.
+  if (!starts.success || !ends.success) return { error: "Please choose a start and end time on the hour or half hour." }; // Not right: says what's needed.
+  if (starts.data === ends.data) return { error: "Quiet hours must start and end at different times." }; // The same time: says why.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("set_quiet_hours", { p_starts: starts.data, p_ends: ends.data }); // Saves it (the database checks who may).
+  if (error) return { error: plainError(error, "Couldn't save the quiet hours.") }; // Didn't work: says why.
+  return done("Saved. New notices will wait until quiet hours end."); // Refreshes the page and says it's saved.
+} // End of setQuietHours.

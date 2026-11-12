@@ -57,5 +57,5 @@ the subject, the date of your test or exam, and any times that suit.
 
 ## 7. Notices
 
-Notices are in the app only, never between 9pm and 6am. See them under
+Notices are in the app only, never between 9pm and 5am (your local time). See them under
 **Schedule**, then **Notices**.

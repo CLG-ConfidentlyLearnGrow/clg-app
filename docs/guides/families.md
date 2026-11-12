@@ -143,7 +143,7 @@ Three weeks before your child's study period ends, you'll get a notice.
 ## 11. Notices
 
 CLG sends notices in the app only, not by email. Nothing arrives between
-9pm and 6am. Go to **Schedule**, then **Notices** to read them, and choose
+9pm and 5am, your local time. Go to **Schedule**, then **Notices** to read them, and choose
 when your first session reminder comes.
 
 > Screenshot to add: `screenshots/families-11-notices.png`, the Notices list.

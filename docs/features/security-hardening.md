@@ -62,7 +62,7 @@ guidance rather than education research:
    accounts within 1 hr (at most once every 6 hr), when someone is given
    tutor or admin access, and when someone's admin access is removed.
    Gathered into one email per run of the email sender (every 5 minutes at
-   most) with a link to the admin page. Alerts ignore the 8pm to 8am quiet
+   most) with a link to the admin page. Alerts ignore the 9pm to 5am quiet
    hours, because a security problem can't wait.
 5. **Timing-safe check of the nightly jobs' password** (`src/lib/cron-auth.ts`).
 
