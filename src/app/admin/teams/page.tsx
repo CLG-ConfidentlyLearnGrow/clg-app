@@ -1,8 +1,7 @@
 // Summary: the admin Teams links page: online sessions with their links, and settings.
 //
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard.
-import { SectionShell } from "@/components/section-shell"; // The page layout with section tabs.
-import { Card, Empty, TextLink } from "@/components/ui"; // The card, "nothing yet" note and link style.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import { Card, Empty } from "@/components/ui"; // The card and "nothing yet" note.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is an admin.
 import { addDays, currentTime, localToday, sessionWhen } from "@/lib/scheduling"; // Date and time helpers.
 import { graphConfig } from "@/lib/teams/graph"; // Reads the Microsoft app settings.
@@ -59,18 +58,14 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
 
   return ( // Shows:
     <>{/* (a group:) */}
-      <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, */}
-      <SectionShell // the page layout:
-        basePath="/admin/teams" // (its address)
-        label="Teams links" // labelled "Teams links",
-        role="admin" // in the admin colour,
-        section={section} // the open section,
-        sections={SECTIONS.map((s) => ({ ...s, count: s.id === "sessions" ? failures.length || undefined : undefined }))} // and the section tabs, with a count of failures.
-      >{/* (end of its settings) */}
-        <p className="text-sm">{/* A line: */}
-          <TextLink href="/admin">Back to admin</TextLink>{/* with a link back to admin. */}
-        </p>{/* End of the line. */}
-
+      {/* The dashboard tabs and admin menu, with this page's own sections shown under its tab: */}
+      <DashboardFrame // the dashboard frame:
+        role="admin" // the admin dashboard,
+        roles={viewer.roles} // the person's roles (for the tabs and numbers),
+        current="teams" // this page's tab open,
+        sub={section} // on the open section,
+        items={SECTIONS.map((s) => ({ ...s, href: `/admin/teams?section=${s.id}`, count: s.id === "sessions" ? failures.length || undefined : undefined }))} // with this page's sections (and their numbers) under the tab.
+      >{/* (end of the frame's settings) */}
         {(!connected || !settings?.enabled) && ( // If not switched on:
           <Card title="Not switched on yet">{/* a card: */}
             <ul className="list-disc space-y-1 pl-5 text-sm">{/* a bulleted list: */}
@@ -163,7 +158,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
             />{/* (end of the form) */}
           </Card> // End of the card.
         )}{/* End of the settings section. */}
-      </SectionShell>{/* End of the page layout. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // (end of the group)
   ); // End of what's shown.
 } // End of AdminTeamsPage.

@@ -1,15 +1,14 @@
 // Summary: the frame around every page: fonts, page title, the top bar
-// (logo, menu links with to-do numbers, who is signed in, sign out) and the footer.
+// (logo, Home and privacy links, who is signed in, sign out) and the footer.
+// Sessions and Matching are tabs in each dashboard's side menu now (Carla, 12 Nov 2026).
 //
 import type { Metadata, Viewport } from "next"; // Types for page details and screen settings.
 import Image from "next/image"; // Next.js picture tag (loads images quickly).
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { Poppins } from "next/font/google"; // Loads the Poppins font from Google.
 import { signOut } from "@/app/actions/auth"; // The sign-out action.
-import { FRONT_DESK, getAdminLevel, getViewer } from "@/lib/auth"; // Front-desk admin levels, and readers for the admin level and signed-in person.
+import { getViewer } from "@/lib/auth"; // Reads who is signed in.
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
-import { CountBadge } from "@/components/count-badge"; // The small to-do number badge.
-import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import "./globals.css"; // The app-wide styles.
 
 const poppins = Poppins({ // Sets up the Poppins font:
@@ -29,11 +28,6 @@ export const viewport: Viewport = { // Screen settings:
 
 export default async function RootLayout({ children }: LayoutProps<"/">) { // The frame itself, wrapped around each page.
   const viewer = await getViewer(); // The signed-in person (or nobody).
-  // Matching is one of an admin's main jobs, so it sits in the top bar.
-  const adminLevel = viewer?.roles.includes("admin") ? await getAdminLevel() : null; // Their admin level, if they are an admin.
-  const canMatch = adminLevel !== null && FRONT_DESK.includes(adminLevel); // Whether they can see Matching (front-desk admins only).
-  // Numbers next to Sessions and Matching when something there needs doing.
-  const todo = viewer ? await getToDoCounts(viewer.roles) : null; // The to-do numbers, if someone is signed in.
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
@@ -49,16 +43,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
                 <Link href="/dashboard" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the Home link: */}
                   Home{/* its words, */}
                 </Link>{/* end of the link. */}
-                <Link href="/schedule" className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the Sessions link: */}
-                  Sessions{/* its words, */}
-                  <CountBadge n={todo?.sessions} className="bg-teal-700 text-white no-underline" />{/* and its to-do number. */}
-                </Link>{/* End of the link. */}
-                {canMatch && ( // If they can match:
-                  <Link href="/matching" className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the Matching link: */}
-                    Matching{/* its words, */}
-                    <CountBadge n={todo?.get("admin", "matching")} className="bg-teal-700 text-white no-underline" />{/* and its to-do number. */}
-                  </Link> // End of the link.
-                )}{/* End of the Matching part. */}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
                   Your privacy{/* its words, */}
                 </Link>{/* end of the link. */}

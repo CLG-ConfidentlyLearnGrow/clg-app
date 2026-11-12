@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { withdrawMyHours } from "@/app/actions/pay"; // The server action that takes back logged hours.
 import { LogHoursForm } from "@/app/admin/billing/pay-forms"; // The form for logging hours.
-import { Button, Card, Empty, Page, Table } from "@/components/ui"; // The button, card, "nothing yet" note, page frame and table.
+import { Button, Card, Empty, Table } from "@/components/ui"; // The button, card, "nothing yet" note and table.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
 import { dollars, plainDate } from "@/lib/billing/money"; // Money as dollars, and dates in words.
 import { adelaideToday } from "@/lib/billing/run"; // Today's date in Adelaide.
@@ -23,10 +24,14 @@ const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`; // Minute
 
 // A tutor's or staff member's own pay: rates and the last 8 weeks of pay
 // lines, as worked out from their sign on and sign off times.
-export default async function MyPayPage() {
+export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { // Reads the address's settings ("as" says which dashboard it was opened from).
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
   if (!viewer.roles.includes("tutor") && !viewer.roles.includes("admin")) redirect("/dashboard"); // Not a tutor or admin: goes to the dashboard.
   if (needsTwoStep(viewer)) redirect("/mfa"); // Two-step login not set up: sends them to set it up.
+  // My pay is a tab on both the tutor and admin menus. Show it inside the
+  // dashboard it was opened from (tutor first when not said).
+  const { as } = await searchParams; // Which dashboard it was opened from, if said.
+  const role = as === "admin" && viewer.roles.includes("admin") ? "admin" : viewer.roles.includes("tutor") ? "tutor" : "admin"; // The dashboard to show it in.
   const supabase = await createClient(); // Connects to the database.
   const today = adelaideToday(); // Today's date.
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10); // The date 8 weeks ago.
@@ -56,7 +61,8 @@ export default async function MyPayPage() {
   const canAdmin = viewer.roles.includes("admin") && p?.admin_rate_cents != null; // True if they can log office admin (an admin with an admin rate).
 
   return ( // Shows:
-    <Page title="My pay" intro="Your pay from sessions and admin hours. CLG checks it in Xero before each pay run.">{/* a page titled "My pay", with a short explanation: */}
+    <DashboardFrame role={role} roles={viewer.roles} current="pay">{/* the dashboard tabs and menu, with My pay open: */}
+      <p className="text-sm text-zinc-600">Your pay from sessions and admin hours. CLG checks it in Xero before each pay run.</p>{/* a short explanation, */}
       <Card title="Your rates">{/* a card titled "Your rates": */}
         {p ? ( // if rates are set:
           <ul className="space-y-1 text-sm">{/* a list: */}
@@ -129,6 +135,6 @@ export default async function MyPayPage() {
           </Table> // End of the table.
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
-    </Page> // End of the page.
+    </DashboardFrame> // End of the dashboard frame.
   ); // End of what's shown.
 } // End of MyPayPage.

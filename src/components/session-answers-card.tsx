@@ -7,6 +7,7 @@
 import { cache } from "react"; // Lets the count load once per page, even if two dashboards ask.
 import Link from "next/link"; // The Next.js link, for moving between pages without a full reload.
 import { createClient } from "@/lib/supabase/server"; // Talks to the database as the signed-in person.
+import { sessionsHref } from "@/lib/dashboard-menu"; // The address of a dashboard's Sessions tab.
 
 type OfferCounts = { as_tutor: number; as_family: number }; // The two numbers the database sends back.
 
@@ -33,13 +34,14 @@ export function SessionAnswersCard({
   if (waiting === 0 && notices === 0) return null; // Nothing to answer or read: show nothing.
   const times = waiting === 1 ? "1 session time" : `${waiting} session times`; // "1 session time" or "3 session times".
   const ask = who === "tutor" ? "Please accept or decline" : "Please approve or decline"; // Tutors accept; families approve.
+  const role = who === "tutor" ? "tutor" : "parent"; // Which dashboard's Sessions tab the links open (tutor or parent).
   return ( // What's shown:
     <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="status">{/* Amber box so it stands out; "status" lets screen readers announce it. */}
       {waiting > 0 && ( // Only when there are times to answer:
         <p>{/* The first line: */}
           <span className="font-medium">{times} waiting for your answer.</span>{/* how many, in bold, */}{" "}
           {ask} before the time runs out.{/* what to do, */}{" "}
-          <Link href="/schedule?section=bookings" className="font-medium underline">{/* a link straight to the bookings list, */}
+          <Link href={sessionsHref(role, "bookings")} className="font-medium underline">{/* a link straight to the bookings list, */}
             Answer now{/* with these words. */}
           </Link>{/* (end of the link) */}
         </p> // End of the first line.
@@ -47,7 +49,7 @@ export function SessionAnswersCard({
       {notices > 0 && ( // Only when there are unread notices:
         <p className={waiting > 0 ? "mt-2" : undefined}>{/* The second line, with a gap above when both lines show: */}
           You have {notices === 1 ? "1 new session notice" : `${notices} new session notices`}.{/* how many notices are new, */}{" "}
-          <Link href="/schedule?section=notices" className="font-medium underline">{/* a link straight to the notices, */}
+          <Link href={sessionsHref(role, "notices")} className="font-medium underline">{/* a link straight to the notices, */}
             Read them{/* with these words. */}
           </Link>{/* (end of the link) */}
         </p> // End of the second line.

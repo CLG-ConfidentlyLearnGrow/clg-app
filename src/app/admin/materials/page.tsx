@@ -1,7 +1,6 @@
 // Summary: the admin materials page: add materials, the library list, and who opened what.
 //
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard.
-import { SectionShell } from "@/components/section-shell"; // The page layout with section tabs.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { Card, Empty, Table, TextLink } from "@/components/ui"; // The card, "nothing yet" note, table and link style.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is an admin.
 import { MATERIAL_KIND_NAMES, type MaterialKind, yearRange } from "@/lib/materials"; // Material kind names, the kind type, and year ranges in words.
@@ -91,18 +90,16 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps<"/a
 
   return ( // Shows:
     <>{/* (a group:) */}
-      <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, */}
-      <SectionShell // the page layout:
-        basePath="/admin/materials" // (its address)
-        label="Materials" // labelled "Materials",
-        role="admin" // in the admin colour,
-        section={section} // the open section,
-        sections={SECTIONS.map((s) => ({ ...s, count: s.id === "library" ? needs.length || undefined : undefined }))} // and the section tabs, with a count on the library.
-      >{/* (end of its settings) */}
-        <p className="text-sm">{/* A line of links: */}
-          <TextLink href="/admin">Back to admin</TextLink>{/* back to admin, */}
-          {" · "}{/* (a dot) */}
-          <TextLink href="/materials">See the library as tutors do</TextLink>{/* and the tutors' view. */}
+      {/* The dashboard tabs and admin menu, with this page's own sections shown under its tab: */}
+      <DashboardFrame // the dashboard frame:
+        role="admin" // the admin dashboard,
+        roles={viewer.roles} // the person's roles (for the tabs and numbers),
+        current="materials" // this page's tab open,
+        sub={section} // on the open section,
+        items={SECTIONS.map((s) => ({ ...s, href: `/admin/materials?section=${s.id}`, count: s.id === "library" ? needs.length || undefined : undefined }))} // with this page's sections (and their numbers) under the tab.
+      >{/* (end of the frame's settings) */}
+        <p className="text-sm">{/* A line: */}
+          <TextLink href="/materials">See the library as tutors do</TextLink>{/* a link to the tutors' view. */}
         </p>{/* End of the line. */}
 
         {section === "add" && ( // The add section:
@@ -214,7 +211,7 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps<"/a
             </Card>{/* End of the card. */}
           </> // (end of the group)
         )}{/* End of the opens section. */}
-      </SectionShell>{/* End of the page layout. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // (end of the group)
   ); // End of what's shown.
 } // End of AdminMaterialsPage.

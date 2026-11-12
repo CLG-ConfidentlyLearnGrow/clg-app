@@ -1,8 +1,8 @@
 // Summary: the tutors' materials library: suggestions for their students' goals, and a search.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard.
-import { Card, Empty, Page, SubHeading, TextLink } from "@/components/ui"; // The card, "nothing yet" note, page frame, small heading and link style.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import { Card, Empty, SubHeading } from "@/components/ui"; // The card, "nothing yet" note and small heading.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
 import { MATERIAL_KINDS, MATERIAL_KIND_NAMES, type MaterialKind, yearRange } from "@/lib/materials"; // Material kinds and names, the kind type, and year ranges in words.
 import { YEAR_LEVELS } from "@/lib/students"; // The list of year levels.
@@ -98,15 +98,10 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
   const materialsRole = viewer.roles.includes("tutor") ? "tutor" : "admin"; // Which dashboard colour to use.
   return ( // Shows:
     <>{/* (a group:) */}
-      <RoleTabs roles={viewer.roles} active={materialsRole} />{/* the dashboard tabs, */}
-      <Page // a page:
-        role={materialsRole} // in that colour,
-        title="Materials" // titled "Materials",
-        intro="CLG's own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and don't share, upload or keep copies." // with the rules for using them.
-      >{/* (end of the page's settings) */}
-        <p className="text-sm">{/* A line: */}
-          <TextLink href="/dashboard/tutor">Back to Home</TextLink>{/* with a link back to Home. */}
-        </p>{/* End of the line. */}
+      <DashboardFrame role={materialsRole} roles={viewer.roles} current="materials">{/* the dashboard tabs and menu, with Materials open: */}
+        <p className="text-sm text-zinc-600">{/* the rules for using them: */}
+          CLG&apos;s own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and don&apos;t share, upload or keep copies.
+        </p>{/* End of the rules. */}
 
         {byStudent.size > 0 && ( // If there are suggestions:
           <Card title="For your students' goals" description="Materials tagged with skills in your students' current goals.">{/* a card: */}
@@ -201,7 +196,7 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
             </ul> // End of the list.
           )}{/* End of the choice. */}
         </Card>{/* End of the card. */}
-      </Page>{/* End of the page. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // (end of the group)
   ); // End of what's shown.
 } // End of MaterialsPage.

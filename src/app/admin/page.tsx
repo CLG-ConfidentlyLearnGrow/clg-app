@@ -11,8 +11,7 @@ import { confirmAllCurricula, confirmCurriculum, discardCurriculum } from "@/app
 import { AcaraImportForm } from "./acara-import"; // The Australian Curriculum loader form.
 import { CurriculumFileForm } from "./curriculum-file-import"; // The curriculum file upload form.
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, small heading, table and text link.
-import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
-import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { ADMIN_SECTIONS, sectionFrom } from "./sections"; // The admin sections, and a reader for the section in the address.
 import { FamilySetupForm } from "./family-setup-form"; // The "set up a family" form.
 import { RemoveRoleForm } from "./remove-role-form"; // The "remove a role" form.
@@ -311,21 +310,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     })[] // (end of the type)
   ).map((l) => ({ ...l, parent: l.parent?.account ?? null })); // each with the parent's name brought up a level.
 
-  // Numbers on the menu where something needs doing (one list for the whole app).
+  // Numbers where something needs doing (one list for the whole app; the menu reads its own).
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
-  const billingToDo = [todo.get("billing", "families"), todo.get("billing", "invoices"), todo.get("billing", "pay")] // Billing's total: families, invoices and pay,
-    .reduce<number>((t, n) => t + (n ?? 0), 0); // added up.
 
   return ( // Shows:
     <>{/* (a group) */}
-      <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, with Admin open, */}
-      <SectionShell // the page frame:
-        basePath="/admin" // at this address,
-        label="Admin" // labelled "Admin",
-        role="admin" // in the admin colours,
-        section={section} // on the open section,
-        sections={visibleSections.map((s) => ({ ...s, count: todo.get("admin", s.id) }))} // with each section's to-do number on the menu.
-      >{/* (end of the frame's settings) */}
+      <DashboardFrame role="admin" roles={viewer.roles} current={section}>{/* the dashboard tabs and admin menu (with Sessions, Billing, Teams links and Materials as tabs), on the open section: */}
         <p className="text-sm text-zinc-600">{/* a grey line: */}
           Your admin level: <strong>{ADMIN_LEVEL_NAMES[viewer.level]}</strong>{/* their admin level, */}
           {savedLevel === "operations" && viewer.level === "owner" ? " (emergency owner access)" : ""}{/* noting emergency owner access (if on), */}
@@ -338,20 +328,6 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             {!emergencyRunning && <EmergencyApproveForm id={emergency.id} />}{/* the approve form (if not started), */}
             <EmergencyCancelForm id={emergency.id} label={emergencyRunning ? "End it now" : "Cancel the request"} />{/* the cancel form. */}
           </Card> // End of the card.
-        )}{/* End of this part. */}
-        {isFull ? ( // For full admins:
-          <p className="text-sm">{/* a line: */}
-            <TextLink href="/admin/billing">Billing: invoices, payments, credits and pauses</TextLink>{" "}{/* the billing link, then a space, */}
-            <CountBadge n={billingToDo} className="bg-admin-strong text-white" />{/* billing's to-do number, */}
-            {" · "}{/* a dot, */}
-            <TextLink href="/admin/teams">Teams links for online sessions</TextLink>{/* the Teams links link, */}
-            {" · "}{/* a dot, */}
-            <TextLink href="/admin/materials">Materials library</TextLink>{/* the materials library link. */}
-          </p> // End of the line.
-        ) : ( // otherwise:
-          <p className="text-sm">{/* a line: */}
-            <TextLink href="/schedule">Bookings and sessions for every family</TextLink>{/* a link to bookings and sessions. */}
-          </p> // End of the line.
         )}{/* End of this part. */}
         {section === "families" && ( // The families section:
           <>{/* (a group) */}
@@ -967,7 +943,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             )}{/* End of this part. */}
           </> // End of the group.
         )}{/* End of the records section. */}
-      </SectionShell>{/* End of the page frame. */}
+      </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of AdminPage.

@@ -2,6 +2,8 @@
 //
 import { payInvoiceNow, setUpAutomaticPayment } from "@/app/actions/billing"; // The server actions to pay an invoice and set up automatic payment.
 import { Button, Card, Empty, Page, Table } from "@/components/ui"; // The button, card, "nothing yet" note, page frame and table.
+import type { ReactNode } from "react"; // The type for "anything that can be shown".
+import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
 import { METHOD_LABELS, PLAN_LABELS, PLAN_SCOPE_NOTE, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money"; // Billing words and helpers: methods, plans, statuses, dollars, dates, and their types.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -97,8 +99,21 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       }), // (end of each invoice)
   ); // (end of the work)
 
-  return ( // Shows:
-    <Page title="Billing" intro="Your plan, invoices and credit with CLG.">{/* a page titled "Billing": */}
+  // Billing is a tab on the parent menu (or the student menu for an adult
+  // learner), so it shows inside that dashboard. Anyone else gets a plain page.
+  const role = viewer.roles.includes("parent") ? "parent" : viewer.roles.includes("student") ? "student" : null; // The dashboard to show it in, if any.
+  const frame = (children: ReactNode) => // Puts the page's contents in a frame:
+    role ? ( // for a parent or student:
+      <DashboardFrame role={role} roles={viewer.roles} current="billing">{/* the dashboard tabs and menu, with Billing open: */}
+        <p className="text-sm text-zinc-600">Your plan, invoices and credit with CLG.</p>{/* a short explanation, */}
+        {children}{/* and the contents. */}
+      </DashboardFrame> // End of the dashboard frame.
+    ) : ( // otherwise:
+      <Page title="Billing" intro="Your plan, invoices and credit with CLG.">{children}</Page> // a plain page titled "Billing".
+    ); // End of the frame.
+
+  return frame( // Shows, in the frame (dashboard or plain page):
+    <>{/* (a group) */}
       {note && <p className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">{note}</p>}{/* the message, if any, */}
 
       {onHold.data === true && accountRows.length === 0 && ( // on hold with no billing of their own (e.g. a student):
@@ -262,6 +277,6 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
           </div> // End of the block.
         ); // End of what's shown for this account.
       })}{/* End of the accounts loop. */}
-    </Page> // End of the page.
+    </> // End of the group.
   ); // End of what's shown.
 } // End of BillingPage.
