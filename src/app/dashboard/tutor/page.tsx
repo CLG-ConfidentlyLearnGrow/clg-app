@@ -7,6 +7,7 @@ import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // S
 import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Whether two-step sign-in is still needed, and the signed-in person.
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks"; // State names, weekday names, check names, and the state type.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -156,6 +157,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   // Numbers on the menu: notes, reviews and uploads to look at, what you
   // teach if it's empty, and checks to renew.
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
+  const offers = await getOffersToAnswer(); // Session times waiting for this tutor's answer.
 
   return ( // Shows:
     <>{/* (a group) */}
@@ -167,6 +169,8 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         section={section} // on the open section,
         sections={SECTIONS.map((s) => ({ ...s, count: todo.get("tutor", s.id) }))} // with each section's to-do number on the menu.
       >{/* (end of the frame's settings) */}
+        {/* Session times to accept or decline, and new notices, on every section so they aren't missed. */}
+        <SessionAnswersCard waiting={offers.as_tutor} notices={todo.get("sessions", "notices") ?? 0} who="tutor" />
         <p className="text-sm">{/* a line of links: */}
           <TextLink href="/pay">My pay</TextLink>{/* their pay, */}
           {" · "}{/* a dot between, */}

@@ -8,6 +8,7 @@ import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboar
 import { CountBadge } from "@/components/count-badge"; // The small to-do number badge.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { SectionShell } from "@/components/section-shell"; // The page frame with a side menu.
+import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { requireViewer } from "@/lib/auth"; // Gets the signed-in person (or sends them to sign in).
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { AddChildForm } from "../add-child-form"; // The "add a child" form.
@@ -78,6 +79,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
 
   // Numbers where something needs doing: details to finish, billing to set up.
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
+  const offers = await getOffersToAnswer(); // Session times waiting for this parent's approval.
 
   return ( // Shows:
     <>{/* (a group) */}
@@ -89,6 +91,8 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
         section={section} // on the open section,
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "children" ? todo.get("parent", "children") : undefined }))} // with the children's to-do number on the menu.
       >{/* (end of the frame's settings) */}
+        {/* Session times to approve, and new notices, on every section so they aren't missed. */}
+        <SessionAnswersCard waiting={offers.as_family} notices={todo.get("sessions", "notices") ?? 0} who="family" />
         {section === "children" && ( // The children section:
           <>{/* (a group) */}
             {unfinished.map(({ child, missing }) => ( // for each child with details to finish:

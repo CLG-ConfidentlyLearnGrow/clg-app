@@ -488,3 +488,34 @@ done, for example "Matching (4)" when 4 subjects need a tutor.
   numbers.
 - The counts come from one database call (scheduling_counts) that only
   returns what the viewer is allowed to see.
+
+## Seeing session times to answer, and times that run out, 12 Nov 2026
+
+Carla offered a session time from the Matching tab and saw no notification
+on the tutor profile. The notices were being made, but they only showed
+under Sessions > Notices, so they were easy to miss. Notices made between
+8pm and 8am also wait until 8am, so families aren't messaged overnight.
+
+- The tutor and parent dashboards now show an amber box at the top, on
+  every section, when session times are waiting for that person's answer
+  ("2 session times waiting for your answer. Answer now") or they have new
+  session notices ("Read them").
+- When an offer is first made, the tutor (and the family, for a time CLG
+  found) get a notice straight away (unchanged). For a time CLG found there
+  is a reminder at 48 hr to whoever hasn't answered (unchanged); it stays
+  open 72 hr.
+- New: when the answer time runs out with no answer, the tutor and the
+  family are told the time has lapsed, and CLG's admins are told who didn't
+  answer and that the student is back in Matching. Checked every 15
+  minutes; sent once per booking.
+
+Legal note: notices go only to the people on that booking (the tutor, the
+student's linked parents, an adult student) and CLG's admins, as before.
+The dashboard count only counts the viewer's own children, even for an
+admin who can see every child (APP 6, use only for the purpose collected).
+
+Research: prompt, visible reminders raise follow-through on agreed actions
+(EEF, "Working with parents to support children's learning", 2021, on
+regular, personalised messages), and a quick re-offer keeps waiting time
+down, which matters because consistent, early tutoring drives impact (EEF,
+"Making a difference with effective tutoring", 2021).
