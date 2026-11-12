@@ -137,7 +137,7 @@ until 2 Nov, then 9pm to 6am Adelaide time).
   before its session (a session before about 5:15am) comes the evening
   before, 30 min before quiet hours start (8:30pm).
 - Security alerts to the owner still ignore quiet hours.
-- Migration: `20261113100100_quiet_hours.sql`. Tests:
+- Migration: `20261113200100_quiet_hours.sql`. Tests:
   `supabase/tests/scheduling_quiet_hours.test.sql`.
 
 **Evidence and law**
