@@ -5,6 +5,7 @@ import { RoleTabs } from "@/components/role-tabs";
 import { CountBadge } from "@/components/count-badge";
 import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
+import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "../add-child-form";
@@ -75,6 +76,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
 
   // Numbers where something needs doing: details to finish, billing to set up.
   const todo = await getToDoCounts(viewer.roles);
+  const offers = await getOffersToAnswer(); // Session times waiting for this parent's approval.
 
   return (
     <>
@@ -86,6 +88,8 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: s.id === "children" ? todo.get("parent", "children") : undefined }))}
       >
+        {/* Session times to approve, and new notices, on every section so they aren't missed. */}
+        <SessionAnswersCard waiting={offers.as_family} notices={todo.get("sessions", "notices") ?? 0} who="family" />
         {section === "children" && (
           <>
             {unfinished.map(({ child, missing }) => (

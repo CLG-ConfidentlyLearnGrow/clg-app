@@ -4,6 +4,7 @@ import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui";
 import { RoleTabs } from "@/components/role-tabs";
 import { getToDoCounts } from "@/lib/to-do-counts";
 import { SectionShell } from "@/components/section-shell";
+import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { needsTwoStep, requireViewer } from "@/lib/auth";
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks";
 import { createClient } from "@/lib/supabase/server";
@@ -153,6 +154,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   // Numbers on the menu: notes, reviews and uploads to look at, what you
   // teach if it's empty, and checks to renew.
   const todo = await getToDoCounts(viewer.roles);
+  const offers = await getOffersToAnswer(); // Session times waiting for this tutor's answer.
 
   return (
     <>
@@ -164,6 +166,8 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         section={section}
         sections={SECTIONS.map((s) => ({ ...s, count: todo.get("tutor", s.id) }))}
       >
+        {/* Session times to accept or decline, and new notices, on every section so they aren't missed. */}
+        <SessionAnswersCard waiting={offers.as_tutor} notices={todo.get("sessions", "notices") ?? 0} who="tutor" />
         <p className="text-sm">
           <TextLink href="/pay">My pay</TextLink>
           {" · "}
