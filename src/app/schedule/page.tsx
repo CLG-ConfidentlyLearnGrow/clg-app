@@ -5,6 +5,7 @@
 // 12 Nov 2026): "?as=tutor" shows the tutor's sessions in the tutor
 // dashboard, "?as=parent" the family's in the parent dashboard, and so on.
 //
+import Link from "next/link"; // The Next.js link, for moving between pages without a full reload.
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
 import { leaveWaitlist, markNoticesRead, removeAwayDates } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates.
@@ -212,9 +213,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         .maybeSingle() // if any.
     : null; // otherwise none.
   const myCheck = myCheckRes?.data as { id: string } | null | undefined; // The check (if any).
-  const [bookingsRes, sessionsRes] = await Promise.all([ // Reads two things at once:
+  const [bookingsRes, sessionsRes, requestTimesRes] = await Promise.all([ // Reads three things at once:
     supabase.rpc("list_bookings"), // the bookings they can see,
-    supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }), // and sessions from 2 weeks ago to 10 weeks ahead.
+    supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }), // sessions from 2 weeks ago to 10 weeks ahead,
+    supabase.rpc("booking_request_times"), // and when each booking was asked for (to show the newest first).
   ]); // End of the reads.
   // Each dashboard shows only its own: all of them for admins, the tutor's
   // own in the tutor dashboard, and the family's children in a family one
@@ -230,7 +232,15 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   } // End of the student part.
   const ours = (tutorId: string, studentId: string) => // Whether a booking or session belongs in this dashboard:
     role === "admin" || (role === "tutor" ? tutorId === viewer.id : familyIds.has(studentId)); // admins all, tutors theirs, families their children's.
-  const bookings = ((bookingsRes.data ?? []) as Booking[]).filter((b) => ours(b.tutor_id, b.student_id)); // The bookings for this dashboard.
+  const askedAt = new Map( // When each booking was asked for, by booking:
+    ((requestTimesRes.data ?? []) as { id: string; requested_at: string }[]).map((r) => [r.id, r.requested_at]), // (id, time) pairs.
+  ); // End of the map.
+  const bookings = ((bookingsRes.data ?? []) as Booking[]) // The bookings for this dashboard:
+    .filter((b) => ours(b.tutor_id, b.student_id)) // only this dashboard's,
+    .sort((a, b) => (askedAt.get(b.id) ?? "").localeCompare(askedAt.get(a.id) ?? "")); // most recently asked for first (Carla, 12 Nov 2026).
+  // Filter for the Bookings list (Carla, 12 Nov 2026): "?show=confirmed" etc.
+  const show = BOOKING_FILTERS.some((f) => f.key === one(params.show)) ? one(params.show) : "all"; // The chosen filter (all if none or unknown).
+  const shownBookings = show === "all" ? bookings : bookings.filter((b) => bookingFilterKey(b) === show); // The bookings that match it.
   const sessions = ((sessionsRes.data ?? []) as Session[]).filter((x) => ours(x.tutor_id, x.student_id)); // The sessions for this dashboard.
   // Sign-on details for the tutor's own sessions.
   const mySessionIds = sessions.filter((s) => s.tutor_id === viewer.id).map((s) => s.id); // The tutor's own sessions.
@@ -441,12 +451,30 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       )}{/* End of the sessions section. */}
 
       {section === "bookings" && ( // The bookings section:
-        <Card title="Bookings" description="Each booking is the same time every week, up to its last date.">{/* a card: */}
-          {bookings.length === 0 ? ( // if none:
-            <Empty>No bookings yet.</Empty> // says so.
+        <Card title="Bookings" description="Each booking is the same time every week, up to its last date. Newest first.">{/* a card: */}
+          {bookings.length > 0 && ( // when there are bookings, filter buttons:
+            <nav aria-label="Show bookings" className="mb-4 flex flex-wrap gap-2 text-sm">{/* a row of filter links: */}
+              {BOOKING_FILTERS.map((f) => { // for each filter:
+                const n = f.key === "all" ? bookings.length : bookings.filter((b) => bookingFilterKey(b) === f.key).length; // how many bookings it has,
+                if (n === 0 && f.key !== show) return null; // hidden when it has none (unless it's the one chosen),
+                return ( // shows:
+                  <Link // a link:
+                    key={f.key} // (its key in the list)
+                    href={f.key === "all" ? here("bookings") : `${here("bookings")}&show=${f.key}`} // to the list with this filter,
+                    aria-current={f.key === show ? "page" : undefined} // marked as current when chosen,
+                    className={`rounded-full border px-3 py-1 ${f.key === show ? "border-zinc-800 bg-zinc-800 text-white" : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"}`} // dark when chosen, outlined otherwise.
+                  >{/* (end of the link's settings) */}
+                    {f.label} ({n}){/* the filter's name and count. */}
+                  </Link> // End of the link.
+                ); // End of what's shown.
+              })}{/* End of the filters. */}
+            </nav> // End of the filter row.
+          )}{/* (end of the filter check) */}
+          {shownBookings.length === 0 ? ( // if none to show:
+            <Empty>{bookings.length === 0 ? "No bookings yet." : "No bookings with this status."}</Empty> // says so.
           ) : ( // otherwise:
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
-              {bookings.map((b) => { // for each booking:
+              {shownBookings.map((b) => { // for each booking shown:
                 const live = b.status === "confirmed" || (b.status === "requested" && !b.expired); // whether it's still running or waiting,
                 const approval = approvals.get(b.id); // its approvals,
                 const forMe = waitingForMe.some((w) => w.id === b.id); // whether the tutor must answer it,
@@ -1550,3 +1578,23 @@ async function SummaryTimeCard() { // The summary time card.
     </Card> // End of the card.
   ); // End of what's shown.
 } // End of SummaryTimeCard.
+
+// The filters on the Bookings list, in the order shown (Carla, 12 Nov 2026).
+const BOOKING_FILTERS = [ // Each filter's key (in the address) and label:
+  { key: "all", label: "All" }, // every booking,
+  { key: "waiting", label: "Waiting" }, // asked for, not yet answered by everyone,
+  { key: "confirmed", label: "Confirmed" }, // agreed and running,
+  { key: "declined", label: "Declined" }, // the tutor or family said no,
+  { key: "expired", label: "Expired" }, // not answered in time,
+  { key: "withdrawn", label: "Withdrawn" }, // the family withdrew it,
+  { key: "stopped", label: "Stopped" }, // regular sessions finished.
+]; // End of the filters.
+
+// Which filter a booking belongs to, from its status (and whether its
+// answer time has run out).
+function bookingFilterKey(b: { status: string; expired: boolean }): string { // Takes a booking's status and expiry.
+  if (b.status === "requested") return b.expired ? "expired" : "waiting"; // Asked for: expired once its time ran out, otherwise waiting.
+  if (b.status === "cancelled") return "withdrawn"; // Cancelled by the family: withdrawn.
+  if (b.status === "ended") return "stopped"; // Ended: stopped.
+  return b.status; // Confirmed and declined keep their own names.
+} // End of bookingFilterKey.
