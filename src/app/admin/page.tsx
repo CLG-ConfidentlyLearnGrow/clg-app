@@ -45,6 +45,7 @@ import { // The curriculum forms:
   StudentFrameworkForm, // set a student's curriculum.
 } from "./curriculum-forms"; // End of the forms.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
+import { loadBirthDates } from "@/lib/birth-dates"; // Reads students' birth dates through the database's check.
 
 type PendingLink = { // A parent's link to a child waiting for CLG:
   parent_id: string; // the parent,
@@ -118,7 +119,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       supabase // parent links waiting:
         .from("parent_student_links") // from parent_student_links,
         .select( // with these details:
-          "parent_id, student_id, relationship, parent:parent_profiles(account:accounts(full_name)), student:students(full_name, date_of_birth)", // the parent's and student's names,
+          "parent_id, student_id, relationship, parent:parent_profiles(account:accounts(full_name)), student:students(id, full_name)", // the parent's and student's names (birth dates come from loadBirthDates),
         ) // (end of the details)
         .is("verified_at", null), // not yet confirmed.
       supabase // each tutor's check standing:
@@ -127,7 +128,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .order("full_name"), // by name.
       supabase // the students:
         .from("students") // from students,
-        .select("id, account_id, full_name, date_of_birth, state, year_level, school, goals, extra_info, learning_needs, student_subjects(subject, working_level)") // their details and subjects,
+        .select("id, account_id, full_name, state, year_level, school, goals, extra_info, learning_needs, student_subjects(subject, working_level)") // their details and subjects (birth dates come from loadBirthDates),
         .order("full_name"), // by name.
       supabase // the tutors:
         .from("tutor_profiles") // from tutor_profiles,
@@ -285,11 +286,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   ) // (end of the rows)
     .map((t) => ({ id: t.account_id, name: t.account?.full_name ?? "Tutor" })) // each as an id and name,
     .sort((a, b) => a.name.localeCompare(b.name)); // by name.
-  const studentRows = (students.data ?? []) as { // The students:
+  const birthDates = await loadBirthDates(supabase); // Each student's birth date, read through the database's check (admins see them all).
+  const studentRows = ((students.data ?? []) as { // The students:
     id: string; // each has an id,
     account_id: string | null; // their own login (if any),
     full_name: string; // their name,
-    date_of_birth: string | null; // birth date (if known),
     state: AuState | null; // state (if known),
     year_level: string | null; // year level (if known),
     school: string | null; // school (if known),
@@ -297,7 +298,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     extra_info: string | null; // extra information (if any),
     learning_needs: string | null; // learning needs (if any),
     student_subjects: { subject: string; working_level: string | null }[]; // and their subjects with levels.
-  }[]; // (end of the type)
+  }[]).map((s) => ({ ...s, date_of_birth: birthDates.get(s.id) ?? null })); // (end of the type) Each with their birth date added.
   // Students 16 or over still on a parent's account can get their own login.
   const sixteenAgo = new Date(); // Today's date,
   sixteenAgo.setFullYear(sixteenAgo.getFullYear() - 16); // moved back 16 years.
@@ -305,10 +306,15 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     .filter((s) => !s.account_id && s.date_of_birth && s.date_of_birth <= sixteenAgo.toISOString().slice(0, 10)) // no login yet and born at least 16 years ago,
     .map((s) => ({ id: s.id, name: s.full_name })); // each as an id and name.
   const pendingLinks = ( // The parent links waiting:
-    (pending.data ?? []) as unknown as (Omit<PendingLink, "parent"> & { // from the rows:
+    (pending.data ?? []) as unknown as (Omit<PendingLink, "parent" | "student"> & { // from the rows:
       parent: { account: { full_name: string } | null } | null; // the type, with the parent's name inside an account,
+      student: { id: string; full_name: string } | null; // and the child's id and name (birth date added below),
     })[] // (end of the type)
-  ).map((l) => ({ ...l, parent: l.parent?.account ?? null })); // each with the parent's name brought up a level.
+  ).map((l) => ({ // each with:
+    ...l, // its details,
+    parent: l.parent?.account ?? null, // the parent's name brought up a level,
+    student: l.student ? { full_name: l.student.full_name, date_of_birth: birthDates.get(l.student_id) ?? "" } : null, // and the child's name and birth date.
+  })); // End of each link.
 
   // Numbers where something needs doing (one list for the whole app; the menu reads its own).
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
