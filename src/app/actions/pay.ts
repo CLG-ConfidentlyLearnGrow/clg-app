@@ -242,3 +242,36 @@ export async function declineHours(_prev: FormState, formData: FormData): Promis
   revalidatePath("/pay"); // Refreshes the staff pay page.
   return { message: "Declined. They can see your reason on their pay page." }; // Confirms, noting the reason is shown to them.
 } // End of declineHours.
+
+// Saves a year's award minimum rates from an uploaded file (or pasted text).
+// Each line: work, employment, hourly rate, award name. For example:
+//   school,casual,33.50,Miscellaneous Award MA000104 Level 1 casual
+// Staff below the new minimum are raised on the start date.
+export async function uploadAwardRates(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(PAY); // Only the owner and Finance admins.
+  const effective = day.safeParse(formData.get("effective_from")); // Reads and checks the start date.
+  if (!effective.success) return { error: "Choose the date the new rates start (usually 1 July)." }; // Problem: asks for the date.
+  const file = formData.get("file"); // The uploaded file, if any.
+  const pasted = String(formData.get("csv") ?? ""); // Any pasted text.
+  const text = file instanceof File && file.size > 0 ? await file.text() : pasted; // Uses the file if there is one, otherwise the pasted text.
+  if (text.length > 20000) return { error: "That file is too big. It should be a short list of rates." }; // Guards against the wrong file.
+  const rows: { work_kind: string; employment: string; rate_cents: number; award: string }[] = []; // The rates found.
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean); // Each non-empty line.
+  for (const [i, line] of lines.entries()) { // Goes through the lines one by one.
+    const parts = line.split(",").map((p) => p.trim().replace(/^"|"$/g, "")); // Splits on commas and drops any quote marks.
+    if (i === 0 && /work/i.test(parts[0] ?? "")) continue; // Skips the heading line.
+    const [work, employment, amount, ...award] = parts; // The four columns (the award name may contain commas).
+    const cents = parseDollars((amount ?? "").replace("$", "")); // Turns the rate into cents.
+    if (!work || !employment || cents === null) { // A line that doesn't make sense:
+      return { error: `Line ${i + 1} isn't right: "${line}". Each line needs work, employment, hourly rate and award name.` }; // says which line.
+    } // End of that check.
+    rows.push({ work_kind: work.toLowerCase(), employment: employment.toLowerCase().replace("-", "_").replace(" ", "_"), rate_cents: cents, award: award.join(", ") }); // Adds the rate.
+  } // End of the lines.
+  if (rows.length === 0) return { error: "The file has no rates in it." }; // Nothing found.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { data, error } = await supabase.rpc("billing_upload_award_rates", { p_effective: effective.data, p_rows: rows }); // Saves the rates (and raises staff now if the date has come).
+  if (error) return plain(error, "Couldn't save the award rates."); // Failed: plain message.
+  revalidatePath(PAGE); // Refreshes the page so it shows the change.
+  const raised = data ?? 0; // How many staff rates went up now.
+  return { message: `${rows.length} award rate(s) saved from ${effective.data}.${raised > 0 ? ` ${raised} staff rate(s) raised to the new minimum.` : " Staff below the new minimum are raised on that date."}` }; // Tells the admin what happened.
+} // End of uploadAwardRates.

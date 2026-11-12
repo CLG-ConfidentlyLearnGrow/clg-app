@@ -17,7 +17,7 @@ const KIND_LABELS: Record<string, string> = { // Each kind of pay line's words:
   admin: "Office admin", // office admin,
   tutoring_work: "Tutoring work", // tutoring work outside sessions,
   guaranteed: "Guaranteed hours top-up", // the guaranteed hours top-up.
-  summary: "Session summary", // time to write the summary after a session.
+  summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
 }; // End of the list.
 
 const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`; // Minutes written as hours, e.g. "1.5 hr".

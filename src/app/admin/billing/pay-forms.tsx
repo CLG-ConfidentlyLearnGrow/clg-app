@@ -2,7 +2,7 @@
 //
 "use client"; // Runs in the browser, so the forms can show their result straight away.
 
-import { addAdminTime, declineHours, logMyHours, savePayPeriod, saveStaffPay, sendTimesheetsNow, workOutPay } from "@/app/actions/pay"; // The server actions for these forms.
+import { addAdminTime, declineHours, logMyHours, savePayPeriod, saveStaffPay, sendTimesheetsNow, uploadAwardRates, workOutPay } from "@/app/actions/pay"; // The server actions for these forms.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field, Select } from "@/components/ui"; // The input box and drop-down list.
 
@@ -233,3 +233,27 @@ export function LogHoursForm({ today, canTutor, canAdmin }: { today: string; can
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of LogHoursForm.
+
+// Upload form for a year's award minimum rates: the start date, and a CSV
+// file (or pasted lines). templateCsv is this year's rates, to download,
+// change and upload again.
+export function AwardRatesForm({ nextJuly, templateCsv }: { nextJuly: string; templateCsv: string }) {
+  return ( // The form:
+    <ActionForm action={uploadAwardRates} submitLabel="Upload award rates">{/* sends to the upload action */}
+      <Field label="New rates start on" name="effective_from" type="date" required defaultValue={nextJuly} />{/* the start date (next 1 July by default) */}
+      <label className="block text-sm">{/* the file picker: */}
+        <span className="mb-1 block font-medium">Rates file (CSV)</span>{/* its label */}
+        <input type="file" name="file" accept=".csv,text/csv,text/plain" className="block text-sm" />{/* choose a .csv file */}
+      </label>{/* end of the file picker */}
+      <label className="block text-sm">{/* or paste the lines: */}
+        <span className="mb-1 block font-medium">Or paste the lines</span>{/* its label */}
+        <textarea name="csv" rows={5} className="w-full rounded-lg border border-zinc-300 p-2 font-mono text-xs" placeholder="school,casual,33.50,Miscellaneous Award MA000104 Level 1 casual" />{/* the paste box */}
+      </label>{/* end of the paste box */}
+      <p className="text-xs text-zinc-600">{/* help text: */}
+        One line per rate: work (school, tertiary or admin), employment (casual, part_time or full_time), hourly rate, award name.{" "}
+        <a className="underline" href={`data:text/csv;charset=utf-8,${encodeURIComponent(templateCsv)}`} download="clg-award-rates.csv">Download this year&apos;s rates</a>{/* a ready-made file to change */}
+        {" "}to change and upload. Anyone below the new minimum for their employment type is raised on the start date; rates already above it aren&apos;t changed.
+      </p>{/* end of the help text */}
+    </ActionForm> // End of the form.
+  ); // End of what it shows.
+} // End of AwardRatesForm.
