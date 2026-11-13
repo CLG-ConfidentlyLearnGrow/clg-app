@@ -2,9 +2,10 @@
 //
 import { Card, SubHeading, Table } from "@/components/ui"; // The card, small heading and table.
 import { RECOMMENDATION_NAMES, levelName } from "@/lib/progress"; // Recommendation names, and skill level names.
-import { addDays, shortDate } from "@/lib/scheduling"; // Adds days to a date, and dates in short form.
+import { addDays, localToday, shortDate } from "@/lib/scheduling"; // Adds days to a date, today's date, and dates in short form.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { TermReviewForm, TermReviewReplyForm } from "./forms"; // The forms for writing a review and replying.
+import { dollars } from "@/lib/billing/money"; // Shows cents as dollars.
+import { TermReviewForm, TermReviewOfferForm, TermReviewReplyForm } from "./forms"; // The forms for writing a review, answering an offer, and replying.
 
 // A term review as the database gives it.
 export type Review = {
@@ -12,6 +13,7 @@ export type Review = {
   tutor_id: string | null; // the tutor who writes it,
   term_label: string; // the term's name,
   term_ends_on: string; // the term's last day,
+  due_on: string | null; // when the tutor should send it (blank for older reviews),
   summary: string | null; // how the term went,
   next_focus: string | null; // the focus for next term,
   recommendation: string | null; // the recommendation,
@@ -33,7 +35,7 @@ type GoalRow = {
 }; // End of the shape.
 
 export const REVIEW_FIELDS = // The review fields to read:
-  "id, tutor_id, term_label, term_ends_on, summary, next_focus, recommendation, recommendation_note, status, returned_reason, family_reply, wants_call, family_replied_at"; // (the list).
+  "id, tutor_id, term_label, term_ends_on, due_on, summary, next_focus, recommendation, recommendation_note, status, returned_reason, family_reply, wants_call, family_replied_at"; // (the list).
 
 // Each goal's skills at the start of the term and now.
 export async function ReviewGoals({ reviewId }: { reviewId: string }) {
@@ -107,7 +109,7 @@ export async function TermReviewCard({
     return ( // Shows:
       <Card // a card:
         title={`${mine.term_label} review`} // titled with the term,
-        description={`Please send it by ${shortDate(addDays(mine.term_ends_on, -14))}, so CLG can check it before the family is asked about next term.`} // with the date it's due by (2 weeks before term ends).
+        description={`Please send it by ${shortDate(mine.due_on ?? addDays(mine.term_ends_on, -14))}, so CLG can check it before it goes to the family.`} // with the date it's due by (its own due date, or 2 weeks before the end for older reviews).
       >{/* (end of the card's settings) */}
         <ReviewGoals reviewId={mine.id} />{/* The goals table, */}
         {mine.status === "returned" && mine.returned_reason && ( // if CLG sent it back:
@@ -151,3 +153,54 @@ export async function TermReviewCard({
   } // End of the family case.
   return null; // Anyone else: shows nothing.
 } // End of TermReviewCard.
+
+// An offer of a paid term review, as the database gives it.
+type Offer = {
+  id: string; // its id,
+  period_label: string; // what it's the end of, for example "Term 4 2026",
+  period_ends_on: string; // the last day (also the last day to answer),
+  price_cents: number; // the price, including any GST,
+  gst_applies: boolean; // whether that price includes GST,
+  answer: "waiting" | "yes" | "no"; // the answer so far.
+}; // End of the shape.
+
+// On the progress page, for the family member who answers (a managing
+// parent, or a student who manages their own account): the latest offer of
+// a paid term review that is still open, with the price and a yes or no.
+// The database shows offers only to them and CLG admins, never to tutors.
+export async function TermReviewOfferCard({ studentId, isFamily }: { studentId: string; isFamily: boolean }) {
+  if (!isFamily) return null; // Only in the family view.
+  const supabase = await createClient(); // Connects to the database.
+  const res = await supabase // Reads the offer:
+    .from("term_review_offers") // from the offers table,
+    .select("id, period_label, period_ends_on, price_cents, gst_applies, answer") // with its details,
+    .eq("student_id", studentId) // for this student,
+    .gte("period_ends_on", localToday()) // still open (not past its end),
+    .order("period_ends_on", { ascending: false }) // latest first,
+    .limit(1) // just one,
+    .maybeSingle(); // (or none).
+  const offer = res.data as Offer | null; // The offer, if any.
+  if (!offer) return null; // None: shows nothing.
+  const price = `${dollars(offer.price_cents)}${offer.gst_applies ? " including GST" : ""}`; // The price in words.
+  return ( // Shows:
+    <Card title={`Term review for ${offer.period_label}?`} description={`A written review from your tutor. ${price}.`}>{/* a card with the period and price: */}
+      <p className="mb-4 text-sm text-zinc-700">{/* a line saying what's in it: */}
+        It covers how it went, each goal&apos;s skills at the start and now, and what to focus on next. CLG checks it
+        before you see it, and you can reply or ask for a call.{/* (what the review includes) */}
+      </p>{/* End of the line. */}
+      {offer.answer === "yes" ? ( // If they've said yes:
+        <p className="text-sm text-zinc-600">Booked. Your tutor is writing it, and you&apos;ll see it here once CLG has checked it.</p> // says it's booked.
+      ) : ( // Otherwise:
+        <>{/* (a group:) */}
+          {offer.answer === "no" && ( // if they said no:
+            <p className="mb-3 text-sm text-zinc-600">You said no thanks. You can change your mind until {shortDate(offer.period_ends_on)}.</p> // says they can still change their mind,
+          )}{/* (end of that line) */}
+          <p className="mb-3 text-sm text-zinc-600">{/* a line: */}
+            Please answer by {shortDate(offer.period_ends_on)}. If you don&apos;t answer, no review is written and nothing is charged.{/* the last day, and that silence costs nothing. */}
+          </p>{/* End of the line. */}
+          <TermReviewOfferForm studentId={studentId} offerId={offer.id} staff={false} />{/* The yes or no form. */}
+        </> // (end of the group)
+      )}{/* End of the choice. */}
+    </Card> // End of the card.
+  ); // End of what's shown.
+} // End of TermReviewOfferCard.

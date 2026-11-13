@@ -9,6 +9,7 @@ import { useRef, type ReactNode } from "react"; // React tools: a value that sur
 import { // The server actions these forms send to:
   addEvidence, // add an upload,
   addSeniorSubject, // add a senior subject,
+  answerTermReviewOffer, // answer an offer of a paid term review,
   addGoal, // add a goal,
   addRoadmapStep, // add a roadmap step,
   addRoadmapTarget, // add a roadmap target,
@@ -454,6 +455,25 @@ export function TermReviewReplyForm({ studentId, reviewId }: { studentId: string
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of TermReviewReplyForm.
+
+// Yes or no to an offer of a paid term review. CLG admins (staff) also see
+// "yes, at no charge" (the database lets only finance admins use it).
+export function TermReviewOfferForm({ studentId, offerId, staff }: { studentId: string; offerId: string; staff: boolean }) { // (takes the student, the offer, and whether it's CLG staff answering)
+  return ( // Shows:
+    <ActionForm action={answerTermReviewOffer} submitLabel="Save answer">{/* the form, sending to answerTermReviewOffer, with a "Save answer" button, */}
+      <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
+      <input type="hidden" name="offer_id" value={offerId} />{/* the offer (hidden), */}
+      <Select label={staff ? "Family's answer" : "Would you like a review?"} name="answer" defaultValue="" required>{/* a required drop-down for the answer: */}
+        <option value="" disabled>{/* a blank first choice that can't be picked: */}
+          Choose…{/* "Choose…". */}
+        </option>{/* End of the choice. */}
+        <option value="yes">Yes, please (it goes on an invoice)</option>{/* yes, */}
+        <option value="no">No, thanks</option>{/* no, */}
+        {staff && <option value="free">Yes, at no charge (CLG gives it)</option>}{/* and, for staff, yes at no charge. */}
+      </Select>{/* End of the drop-down. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of TermReviewOfferForm.
 
 // CLG approves a term review or sends it back to the tutor.
 export function CheckTermReviewForm({ reviewId }: { reviewId: string }) { // (takes the review)

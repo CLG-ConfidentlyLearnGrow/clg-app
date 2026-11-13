@@ -86,7 +86,7 @@ export function TutorList({ assignments }: { assignments: Assignment[] }) {
 type Update = { id: string; student_id: string; title: string; body: string; deliver_at: string }; // An update: its id, student, title, words and when it was sent.
 
 // What's new since the family last looked: session notes (next step and the
-// tip for home), steps due tomorrow, and term reviews (monthly summaries stopped on 2 Nov 2026; old ones still show).
+// tip for home), steps due tomorrow, term reviews, and offers of a paid term review (no monthly summaries, Carla 12 Nov 2026).
 // Opening the progress page marks them as seen. Shows nothing when there is
 // nothing new.
 export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {
@@ -94,7 +94,7 @@ export async function NewUpdates({ studentIds }: { studentIds?: string[] }) {
   const res = await supabase // Reads the updates:
     .from("progress_notices") // from the progress notices table,
     .select("id, student_id, title, body, deliver_at") // with their details,
-    .in("kind", ["session_update", "review_ready", "monthly_summary", "step_due"]) // of the kinds families see,
+    .in("kind", ["session_update", "review_ready", "review_offer", "step_due"]) // of the kinds families see,
     .is("read_at", null) // not yet read,
     .order("deliver_at", { ascending: false }) // newest first,
     .limit(10); // at most 10.

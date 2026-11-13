@@ -1,4 +1,4 @@
--- Term reviews and monthly summaries. Runs after progress_roadmaps.test.sql
+-- Summary: term reviews and monthly summaries. Runs after progress_roadmaps.test.sql
 -- and reuses its people: owner ...a0 (admin), tutor T1 ...11 (teaches Cara
 -- One), tutor T2 ...12, parent P1 ...01 (Cara's parent), parent P2 ...02.
 
@@ -9,6 +9,9 @@
 -- (paid opt-in, no monthly summaries) again.
 -- Runs the database change 20261103000800_progress_term_review_add_on.sql first, as this test needs it.
 \ir ../migrations/20261103000800_progress_term_review_add_on.sql
+-- Then the 12 Nov 2026 change (reviews only when the family says yes to a paid offer).
+-- Runs the database change 20261113900100_paid_term_reviews.sql first, as this test needs it.
+\ir ../migrations/20261113900100_paid_term_reviews.sql
 
 select tests.claims(null); -- Signs out, so no one is signed in.
 -- Keeps Cara's student id as cara.
@@ -26,22 +29,25 @@ insert into public.school_terms (state, year, term, starts_on, ends_on) -- Adds 
 -- ===========================================================================
 -- Reviews are made three weeks before the term ends
 -- ===========================================================================
--- Only for students whose family opted in (the paid add-on).
-select tests.eq(private.queue_term_reviews(), 0, 'no reviews while the add-on is off'); -- Checks: no reviews while the add-on is off.
-update public.add_ons set mode = 'paid', price_cents = 2500 where code = 'term_reviews'; -- Makes term reviews a paid add-on at $25.
-select tests.eq(private.queue_term_reviews(), 0, 'no reviews for students without the add-on'); -- Checks: no reviews for students without the add-on.
-insert into public.add_on_members (add_on, student_id, note) values ('term_reviews', :'cara', 'Family opted in'); -- Adds Cara to the term reviews add-on.
-select private.queue_term_reviews(); -- Queues the term reviews.
-select private.queue_term_reviews(); -- Queues them again (should not repeat).
+-- Only when the family says yes to a paid offer (12 Nov 2026).
+select tests.eq((select count(*) from public.term_reviews where student_id = :'cara'), 0, 'no review without a yes'); -- Checks: nothing is made until the family says yes.
+insert into public.term_review_offers (id, student_id, period_kind, period_label, period_starts_on, period_ends_on, price_cents) -- Adds an offer for Cara's term:
+  values ('00000000-0000-0000-0000-0000000f0101', :'cara', 'term', 'Term 4', :'today'::date - 40, :'today'::date + 10, 4000); -- ending in 10 days, at $40.
+select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as parent P1 (Cara's parent).
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select public.answer_term_review_offer('00000000-0000-0000-0000-0000000f0101', true); -- The parent says yes.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+select tests.claims(null); -- Signs out, so no one is signed in.
+select private.queue_term_reviews(); -- Runs the daily job (should not repeat the draft).
 select tests.eq((select count(*) from public.progress_notices where kind = 'review_due' and body like '%AI tools%'), 1, 'tutor reminded not to use AI tools'); -- Checks: tutor reminded not to use AI tools.
-select tests.eq((select count(*) from public.term_reviews where student_id = :'cara' -- Checks there's one review per student and tutor:
-  and tutor_id = '00000000-0000-0000-0000-000000000011' and status = 'draft'), 1, 'one review per student and tutor'); -- (a draft for tutor T1).
+select tests.eq((select count(*) from public.term_reviews where student_id = :'cara' -- Checks there's one review for the paid offer:
+  and tutor_id = '00000000-0000-0000-0000-000000000011' and status = 'draft'), 1, 'one review per paid offer'); -- (a draft for tutor T1).
 -- Keeps the review's id as review.
 select id as review from public.term_reviews where student_id = :'cara' \gset
 select tests.eq((select count(*) from public.progress_notices where review_id = :'review' and kind = 'review_due' -- Checks the tutor is told a review is due:
   and account_id = '00000000-0000-0000-0000-000000000011'), 1, 'tutor told a review is due'); -- (one notice).
-select tests.eq((select count(*) from public.term_reviews where tutor_id = '00000000-0000-0000-0000-000000000012'), 0, -- Checks there's no review where there were no sessions this term:
-  'no review where there were no sessions this term'); -- (none for tutor T2).
+select tests.eq((select count(*) from public.term_reviews where tutor_id = '00000000-0000-0000-0000-000000000012'), 0, -- Checks the other tutor gets no review:
+  'no review for a tutor who doesn''t write it'); -- (none for tutor T2).
 update public.progress_notices set deliver_at = now() - interval '1 minute' where review_id is not null; -- Makes the review notices due now.
 
 -- ===========================================================================
@@ -136,8 +142,8 @@ select tests.eq(private.queue_monthly_summaries(current_date), 0, 'monthly summa
 select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary'), 0, 'no monthly summary sent'); -- Checks: no monthly summary sent.
 
 -- Put the real terms back, and the add-on as it was.
-delete from public.add_on_members where add_on = 'term_reviews'; -- Clears the add-on members.
-update public.add_ons set mode = 'off', price_cents = null where code = 'term_reviews'; -- Turns term reviews off again.
+delete from public.term_reviews where offer_id = '00000000-0000-0000-0000-0000000f0101'; -- Clears the test review.
+delete from public.term_review_offers where id = '00000000-0000-0000-0000-0000000f0101'; -- Clears the test offer.
 delete from public.school_terms where state = 'SA'; -- Clears the test term.
 insert into public.school_terms select * from saved_terms; -- Puts the SA term dates back.
 
