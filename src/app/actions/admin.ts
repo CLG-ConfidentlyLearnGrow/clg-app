@@ -202,7 +202,9 @@ export async function unlockAccount(_prev: FormState, formData: FormData): Promi
 
   const { error } = await supabase.rpc("admin_unlock_account", { p_account: account.data.account_id }); // Asks the database to unlock it.
   if (error) return { error: "Couldn't unlock the account." }; // Failed: plain message.
-  return { message: "Account unlocked." }; // Confirms it.
+  // Unlocking sends no email, so the admin is told to let the person know
+  // themselves, and where to send a password link if they've forgotten it.
+  return { message: "Account unlocked. No email is sent for this: let them know they can sign in now with their usual password. If they've forgotten it, use \"Send a password link\" on the Staff page, or they can use \"Forgot your password?\" on the sign-in page." }; // Confirms it and explains what happens next.
 } // End of unlockAccount.
 
 // The rules for a tutor's work state:

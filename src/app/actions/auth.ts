@@ -77,7 +77,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
   const v = parsed.data; // The checked values.
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
-  const { error } = await supabase.auth.signUp({ // Asks Supabase to make the account:
+  const { data, error } = await supabase.auth.signUp({ // Asks Supabase to make the account:
     email: v.email, // with this email,
     password: v.password, // and password,
     options: { // and these options:
@@ -103,6 +103,16 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
         "We couldn't create that account. If CLG invited you to join as staff, please use the link in your invitation email.", // suggests invited staff use their invitation link.
     }; // End of the message.
   } // End of the failure case.
+
+  // If this email already has a confirmed account, Supabase quietly makes
+  // nothing and sends no email (so sign-up can't be used to find out who has
+  // an account). It shows this by returning a user with no sign-in methods.
+  // Without help the person waits for an email that never comes, so we send
+  // them a password reset link instead. The page they see is the same either
+  // way, which keeps who has an account private.
+  if (data.user && data.user.identities?.length === 0) { // The email already has an account:
+    await sendPasswordResetEmail(v.email); // sends them a link to set a new password and sign in.
+  } // End of the existing-account case.
 
   redirect("/check-email"); // Worked: asks them to check their email.
 } // End of signUp.
@@ -190,11 +200,10 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   redirect("/dashboard"); // Goes to the dashboard.
 } // End of signIn.
 
-// Sends a password reset email.
-export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
-  const parsed = email.safeParse(formData.get("email")); // Checks the email.
-  if (!parsed.success) return { error: "Enter a valid email address." }; // Problem: asks for a valid email.
-
+// Asks Supabase to email a password reset link to this address. Used by the
+// "Forgot your password?" form, and by sign-up when the email already has an
+// account. Kept out of the exported actions so it can't be called directly.
+async function sendPasswordResetEmail(address: string): Promise<void> {
   // The reset link must work on any device or browser, including when it
   // was asked for in the installed app and opens in a browser. So it carries
   // its own sign-in in the address (after the "#"), which EmailLinkCatcher
@@ -203,9 +212,18 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
   const supabase = createPlainClient(supabaseUrl(), supabasePublishableKey(), { // Makes a plain connection:
     auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, // that puts the sign-in in the link itself, and saves nothing here.
   }); // End of the connection.
-  await supabase.auth.resetPasswordForEmail(parsed.data, { // Asks Supabase to send the reset email:
+  const { error } = await supabase.auth.resetPasswordForEmail(address, { // Asks Supabase to send the reset email:
     redirectTo: `${siteUrl()}/login`, // the link lands on the login page.
   }); // End of the request.
+  if (error) console.error("Password reset email failed:", error.code ?? error.name, error.message); // Notes a failure in the server log (the person still sees the same message).
+} // End of sendPasswordResetEmail.
+
+// Sends a password reset email.
+export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = email.safeParse(formData.get("email")); // Checks the email.
+  if (!parsed.success) return { error: "Enter a valid email address." }; // Problem: asks for a valid email.
+
+  await sendPasswordResetEmail(parsed.data); // Asks Supabase to send the reset email.
 
   // Same answer whether or not the account exists, so the form can't be
   // used to discover who has an account.
