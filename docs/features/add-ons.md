@@ -65,3 +65,9 @@ These stay part of tutoring, whatever the switch says:
 
 A second add-on, `term_reviews`, is set up "off" with a per-term price
 to be set. See [term-reviews.md](term-reviews.md).
+
+## Changes, 12 Nov 2026
+
+The `term_reviews` add-on is removed. Term reviews are now a billing price
+item that families say yes to one review at a time. See
+[term-reviews.md](term-reviews.md).

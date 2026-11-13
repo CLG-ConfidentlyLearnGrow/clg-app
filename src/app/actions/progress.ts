@@ -436,6 +436,37 @@ export async function replyTermReview(_prev: FormState, formData: FormData): Pro
   return { message: "Thanks! CLG and the tutor will see this." }; // Thanks them.
 } // End of replyTermReview.
 
+// The family (or a CLG admin for them) answers an offer of a paid term
+// review: yes, no, or (finance admins only) yes at no charge. A "yes" makes
+// an invoice and the tutor's draft; the database checks who may answer.
+export async function answerTermReviewOffer(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z // Checks the form:
+    .object({ student_id: z.uuid(), offer_id: z.uuid(), answer: z.enum(["yes", "no", "free"], "Choose yes or no.") }) // the student, the offer, and the answer,
+    .safeParse(Object.fromEntries(formData)); // (from the form's fields).
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const v = parsed.data; // The checked values.
+  const supabase = await createClient(); // Connects to the database.
+  const { data, error } = await supabase.rpc("answer_term_review_offer", { // Asks the database to record the answer:
+    p_offer: v.offer_id, // which offer,
+    p_yes: v.answer !== "no", // yes (paid or free) or no,
+    p_no_charge: v.answer === "free", // and whether CLG gives it at no charge.
+  }); // End of the request.
+  if (error) { // It failed:
+    const plain = ["22023", "42501"].includes(error.code ?? ""); // true for the database's own plain refusals,
+    return { error: plain ? error.message : "Couldn't save your answer. Please try again." }; // shows that message, or a general one.
+  } // End of the failure case.
+  revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page,
+  revalidatePath("/admin"); // and the admin pages.
+  if (v.answer === "no") return { message: "Thanks. No review will be written and nothing is charged." }; // Confirms a "no".
+  if (v.answer === "free") return { message: "Booked at no charge. The tutor has been asked to write it." }; // Confirms a free review.
+  return { // Confirms a "yes":
+    message: data // with the invoice number if one was made,
+      ? `Booked. The tutor has been asked to write it, and it's on invoice ${data}.` // (naming the invoice),
+      : "Booked. The tutor has been asked to write it, and CLG will send the invoice.", // or saying CLG will bill it.
+  }; // End of the reply.
+} // End of answerTermReviewOffer.
+
 // ---------------------------------------------------------------------------
 // Evidence of learning: school reports, NAPLAN, marked work, work samples.
 // ---------------------------------------------------------------------------

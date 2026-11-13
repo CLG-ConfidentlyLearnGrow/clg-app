@@ -108,3 +108,12 @@ See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
   still be logged and are flagged for the approving admin.
 - Payment plans (per year, term, month or week) are for ongoing tutoring
   only.
+
+## Changes, 12 Nov 2026: term review price item
+
+A "Term review" price item (charged once) is added, off at $0 until the
+owner sets it. When a family says yes to a paid term review, billing makes
+an invoice with that one line, at the price the family was shown, using
+credit first and the bank-debit discount as usual. An unpaid review
+invoice counts like any other unpaid invoice. See
+[term-reviews.md](term-reviews.md).

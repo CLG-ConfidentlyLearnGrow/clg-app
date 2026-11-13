@@ -5,8 +5,22 @@ import { Button, Card, Empty, Field, SubHeading, Table, TextLink } from "@/compo
 import { NOTE_OVERDUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo, minutesAndSeconds } from "@/lib/progress"; // Progress settings and helpers: overdue hours, stalled sessions, "hours ago" and minutes in words.
 import { addDays, localToday, sessionWhen, shortDate } from "@/lib/scheduling"; // Date helpers.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { CheckTermReviewForm } from "@/app/students/[id]/progress/forms"; // The form for approving or returning a term review.
+import { CheckTermReviewForm, TermReviewOfferForm } from "@/app/students/[id]/progress/forms"; // The forms for checking a term review and answering an offer.
+import { dollars } from "@/lib/billing/money"; // Shows cents as dollars.
 import { REVIEW_FIELDS, ReviewGoals, ReviewText, type Review } from "@/app/students/[id]/progress/term-review"; // The review fields, the review's goals table and words, and the review type.
+
+// An offer of a paid term review, with the student's name and invoice number, for admins.
+type AdminOffer = {
+  id: string; // its id,
+  student_id: string; // the student,
+  period_label: string; // what it's the end of,
+  period_ends_on: string; // the last day (and last day to answer),
+  price_cents: number; // the price offered,
+  answer: "waiting" | "yes" | "no"; // the answer so far,
+  no_charge: boolean; // whether CLG gave it free,
+  student: { full_name: string } | null; // the student's name,
+  invoice: { number: string } | null; // and the invoice (if any, and if this admin may see invoices).
+}; // End of the shape.
 
 type AdminReview = Review & { student_id: string; student: { full_name: string } | null; tutor: { account: { full_name: string } | null } | null }; // A term review with the student's and tutor's names, for admins.
 
@@ -65,7 +79,7 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
   const from = isDate(fromParam) ? fromParam : addDays(to, -27); // The first day: the one asked for, or 4 weeks before.
 
   const supabase = await createClient(); // Connects to the database.
-  const [measuresRes, dueRes, checkRes, recentRes, reviewsRes] = await Promise.all([ // Reads five things at once:
+  const [measuresRes, dueRes, checkRes, recentRes, reviewsRes, offersRes] = await Promise.all([ // Reads six things at once:
     supabase.rpc("progress_measures", { p_from: from, p_to: to }), // each tutor's measures for these dates,
     supabase.rpc("list_notes_due"), // notes still due,
     supabase.rpc("progress_students_to_check"), // students to check,
@@ -82,8 +96,15 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
       .select(`${REVIEW_FIELDS}, student_id, student:students(full_name), tutor:tutor_profiles(account:accounts(full_name))`) // with names,
       .or("status.eq.submitted,family_replied_at.not.is.null") // waiting to be checked, or replied to,
       .order("term_ends_on", { ascending: false }) // latest term first,
-      .limit(50), // at most 50.
+      .limit(50), // at most 50;
+    supabase // and offers of paid term reviews:
+      .from("term_review_offers") // (from the offers table)
+      .select("id, student_id, period_label, period_ends_on, price_cents, answer, no_charge, student:students(full_name), invoice:billing_invoices(number)") // with names and invoice numbers,
+      .gte("period_ends_on", addDays(today, -28)) // still open, or ended in the last 4 weeks,
+      .order("period_ends_on") // soonest first,
+      .limit(100), // at most 100.
   ]); // End of the reads.
+  const offers = (offersRes.data ?? []) as unknown as AdminOffer[]; // The offers.
   const reviews = (reviewsRes.data ?? []) as unknown as AdminReview[]; // The reviews.
   const toCheckReviews = reviews.filter((r) => r.status === "submitted"); // Reviews waiting to be checked.
   const replies = reviews.filter((r) => r.family_replied_at); // Reviews the family replied to.
@@ -150,6 +171,39 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
               the timer. Families and tutors never see these figures.{/* what the figures mean, and who sees them. */}
             </p>{/* End of the note. */}
           </> // (end of the group)
+        )}{/* End of the choice. */}
+      </Card>{/* End of the card. */}
+
+      <Card // A card:
+        collapsible // that can be opened and closed,
+        title="Paid term review offers" // titled "Paid term review offers",
+        description="Families are offered a review 4 weeks before a term, semester or booking ends, at the price under Billing > Prices. Record an answer here if a family tells you directly." // with how offers work.
+      >{/* (end of the card's settings) */}
+        {offers.length === 0 ? ( // If there are none:
+          <Empty>No offers right now. Offers start once the term review price is set and in use.</Empty> // says so.
+        ) : ( // Otherwise:
+          <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+            {offers.map((o) => ( // for each offer:
+              <li key={o.id} className="py-3 first:pt-0">{/* a list item: */}
+                <p className="font-medium">{/* a line: */}
+                  <TextLink href={`/students/${o.student_id}/progress`}>{o.student?.full_name ?? "Student"}</TextLink>{/* a link to the student's progress, */}
+                  <span className="font-normal text-zinc-600">{/* grey details: */}
+                    {" "}· {o.period_label} · ends {shortDate(o.period_ends_on)} · {dollars(o.price_cents)}{/* the period, end date and price, */}
+                  </span>{/* End of the details. */}
+                </p>{/* End of the line. */}
+                <p className="mt-1 text-zinc-700">{/* a line with the answer: */}
+                  {o.answer === "waiting" && "Waiting for the family."}{/* waiting, */}
+                  {o.answer === "no" && "The family said no thanks."}{/* no, */}
+                  {o.answer === "yes" && (o.no_charge ? "Booked at no charge." : o.invoice ? `Booked, on invoice ${o.invoice.number}.` : "Booked. No invoice yet: bill it by hand if the family has no billing account.")}{/* or yes, and how it's paid. */}
+                </p>{/* End of the line. */}
+                {o.answer !== "yes" && o.period_ends_on >= today && ( // still open and not booked:
+                  <div className="mt-3 max-w-sm">{/* a narrow block: */}
+                    <TermReviewOfferForm studentId={o.student_id} offerId={o.id} staff />{/* the answer form, with "no charge". */}
+                  </div> // End of the block.
+                )}{/* End of the form. */}
+              </li> // End of the list item.
+            ))}{/* End of the loop. */}
+          </ul> // End of the list.
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
 

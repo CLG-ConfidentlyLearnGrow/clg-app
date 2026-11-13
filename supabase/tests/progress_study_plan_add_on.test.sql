@@ -25,7 +25,7 @@ select tests.eq((select count(*) from public.add_ons where code = 'study_plans' 
 
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.add_ons where code in ('study_plans', 'term_reviews')), 2, 'families can see the add-ons'); -- Checks: families can see the add-ons.
+select tests.eq((select count(*) from public.add_ons where code = 'study_plans'), 1, 'families can see the add-ons'); -- Checks: families can see the add-ons (term reviews became a billing price on 12 Nov 2026).
 select tests.eq((select count(*) from public.add_on_for_student('study_plans', :'cara') where has_it = true), 1, 'free: Cara has study plans'); -- Checks: free: Cara has study plans.
 insert into public.roadmap_targets (id, student_id, kind, title, due_on) -- Adds a test assessment to Cara's roadmap:
   values ('00000000-0000-0000-0000-0000000ad001', :'cara', 'assessment', 'Free plan test', :'today'::date + 14); -- due in two weeks.
