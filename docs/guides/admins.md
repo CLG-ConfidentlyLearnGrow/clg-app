@@ -176,3 +176,29 @@ Only the owner sees them, because they include pay and profit.
   report for the same dates to see the updated figures.
 
 > Screenshot to add: `screenshots/admins-15-reports.png`, a monthly report.
+
+## 16. Problem reports
+
+Anyone signed in can tap **Report a problem** in the top bar, say what went
+wrong and add up to 6 screenshots. Nothing is fixed automatically: a person
+checks every report.
+
+- **Problem reports** in the admin menu shows for the owner and the admins
+  the owner chooses. A number shows how many new reports are waiting.
+- **Who checks reports** (owner only): add or remove admins. Only admins can
+  be added, because screenshots may show children's details.
+- Open a report to see what was written, the page, and the screenshots. Set
+  the **Status** (New, Being checked, Approved to fix, Fixed, Closed) and
+  **Priority**, write a **Reply** the reporter will see, and keep **Private
+  notes** for reviewers.
+- **The fix, for the developer**: describe the problem and what should
+  happen, with no names or personal details.
+- **Send to GitHub** (owner only, once the report is Approved to fix): makes
+  a GitHub issue from the fix summary so a developer (for example Claude) can
+  fix it. Needs `GITHUB_ISSUES_TOKEN` and `GITHUB_ISSUES_REPO` set in Vercel.
+- Screenshots are deleted 90 days after a report is fixed or closed; reports
+  2 years after that. The owner can delete a report straight away.
+- A worry about a child's safety never goes through this form: follow the
+  child safe policy.
+
+> Screenshot to add: `screenshots/admins-16-problem-reports.png`, an open report.

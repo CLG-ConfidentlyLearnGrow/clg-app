@@ -36,6 +36,8 @@ const PUBLIC_PATHS = [
   "/api/email/cron", // The email sending job.
   // The daily reports run (checks the same secret).
   "/api/reports/cron", // The monthly, quarterly and yearly reports job.
+  // The daily problem reports tidy-up (checks the same secret).
+  "/api/problems/cron", // Removes old problem report screenshots and reports.
 ]; // End of the public pages list.
 
 // Keeps the Supabase session fresh on every request and sends signed-out

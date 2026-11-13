@@ -7,6 +7,20 @@ import type { Section } from "@/components/section-shell"; // The shape of one m
 import { ADMIN_SECTIONS } from "@/app/admin/sections"; // The admin page's own sections.
 import { FINANCE, FRONT_DESK, FULL_ADMIN, getAdminLevel, type Role } from "@/lib/auth"; // Admin level groups, the level reader, and the role type.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
+import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person (for the problem reports number).
+
+// Whether this admin checks problem reports (the owner, or on the reviewer
+// list), and how many new reports are waiting. Gives back null for anyone
+// else, so they don't see the tab.
+async function problemReportsTab(isOwner: boolean, accountId: string): Promise<{ count?: number } | null> { // Takes whether they're the owner, and their id.
+  const supabase = await createClient(); // Connects to the database.
+  if (!isOwner) { // Not the owner:
+    const { count } = await supabase.from("problem_reviewers").select("account_id", { count: "exact", head: true }).eq("account_id", accountId); // checks they're on the list (only reviewers can read it),
+    if (!count) return null; // not on it: no tab.
+  } // End of the list check.
+  const { count } = await supabase.from("problem_reports").select("id", { count: "exact", head: true }).eq("status", "new"); // Counts new reports.
+  return { count: count || undefined }; // Hands back the number (none when zero).
+} // End of problemReportsTab.
 
 // The tutor dashboard's own sections (the page reads these to know which is open).
 export const TUTOR_SECTIONS = [ // Each section's id and its name on screen:
@@ -69,6 +83,9 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     const billingToDo = ["families", "invoices", "pay"].reduce((t, id) => t + (todo.get("billing", id) ?? 0), 0); // Billing's total: families, invoices and pay.
     if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined }); // Billing (owner, operations and finance),
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: todo.get("admin", "reports") }); // Reports (owner only, because they include pay and profit), with new reports counted,
+    const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
+    const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
+    if (problems) items.push({ id: "problems", label: "Problem reports", href: "/admin/problems", count: problems.count }); // Problem reports (owner and chosen reviewers), with new reports counted,
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
