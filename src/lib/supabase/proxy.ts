@@ -78,7 +78,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url); // and sends the browser there.
   } // End of the stray link check.
 
-  if (!signedIn && !PUBLIC_PATHS.includes(path)) { // Signed out and the page isn't public:
+  // Tutors' private calendar links: calendar apps can't sign in, so these
+  // are open, and each checks its own long secret (Carla, 12 Nov 2026).
+  const isCalendarLink = path.startsWith("/api/calendar/"); // True for a calendar link address.
+  if (!signedIn && !PUBLIC_PATHS.includes(path) && !isCalendarLink) { // Signed out and the page isn't public:
     const url = request.nextUrl.clone(); // Copies the address,
     url.pathname = "/login"; // points it at the login page,
     url.search = ""; // drops anything after "?",
