@@ -1,5 +1,6 @@
 // Summary: the staff directory module: job titles, adding and removing
-// roles, and sending staff sign-in or invitation links.
+// roles, removing someone who has left CLG, and sending staff sign-in or
+// invitation links.
 //
 "use server"; // Marks every function in this file as a server action (it runs only on the server).
 
@@ -109,6 +110,50 @@ export async function removeRole(_prev: FormState, formData: FormData): Promise<
 } // End of removeRole.
 
 // ---------------------------------------------------------------------------
+// Leaving CLG
+// ---------------------------------------------------------------------------
+
+// The reasons someone may leave, as the database expects them.
+const LEAVING_REASONS = ["own_study_or_work", "moved", "pay", "hours", "workload", "personal", "contract_ended", "clg_ended", "other"] as const; // The fixed list of reasons.
+
+// The rules for removing someone from the team:
+const leaveSchema = z.object({
+  account_id: z.uuid(), // whose account,
+  left_on: z.iso.date("Enter their last day."), // their last day (a real date),
+  reason: z.enum(LEAVING_REASONS, "Choose why they left."), // why they left (from the list),
+  details: z.string().trim().max(1000, "Keep the note to 1,000 characters or fewer.").optional(), // an optional short note,
+  confirm_name: z.string().trim().min(1, "Type the person's full name to confirm."), // their full name typed to confirm.
+}); // End of the rules.
+
+// The owner removes someone who has left CLG: their tutor and admin access
+// ends, they're signed out, and their last day and reason are written down.
+// Records CLG must keep (pay, sessions, checks) stay. The database does
+// every step together and checks the owner again. See
+// docs/features/staff-leaving.md.
+export async function removeFromTeam(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(["owner"]); // Owner only.
+  const parsed = leaveSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const { account_id, left_on, reason, details, confirm_name } = parsed.data; // The checked values.
+
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("staff_leave", { // Asks the database to remove them:
+    p_account: account_id, // this person,
+    p_left_on: left_on, // their last day,
+    p_reason: reason, // why they left,
+    p_details: details || null, // the note (or none),
+    p_confirm_name: confirm_name, // and the typed name as a check.
+  }); // End of the request.
+  if (error) { // It failed:
+    const plain = ["42501", "22023", "23514"].includes(error.code ?? ""); // true for the database's own plain refusals,
+    return { error: plain ? `${error.message}.` : "Couldn't remove them from the team. Please try again." }; // shows that message, or a general one.
+  } // End of the failure case.
+  revalidatePath("/admin/staff"); // Refreshes the staff page.
+  revalidatePath("/admin"); // Refreshes the admin pages.
+  return { message: "Done. They've been removed from the team and signed out. Their records are kept for 7 years." }; // Confirms what happened.
+} // End of removeFromTeam.
+
+// ---------------------------------------------------------------------------
 // Links
 // ---------------------------------------------------------------------------
 
@@ -125,10 +170,11 @@ export async function sendStaffLoginLink(_prev: FormState, formData: FormData): 
   // Checked with the admin's own access first: only staff in the directory.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data } = await supabase.rpc("staff_directory"); // Reads the staff directory (only staff the admin can see).
-  const person = ((data ?? []) as { account_id: string; full_name: string; email: string | null }[]).find( // Finds this person in it:
+  const person = ((data ?? []) as { account_id: string; full_name: string; email: string | null; left_on: string | null }[]).find( // Finds this person in it:
     (p) => p.account_id === parsed.data.account_id, // by account id.
   ); // End of the search.
   if (!person) return { error: "That person isn't in the staff directory." }; // Not found: says so.
+  if (person.left_on) return { error: `${person.full_name} has left CLG. Add a role first to bring them back, then send a link.` }; // Former staff get no sign-in link.
   if (!person.email) return { error: `We don't have an email for ${person.full_name}.` }; // No email: says so.
   const email = person.email; // Their email.
 
