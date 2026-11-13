@@ -5,6 +5,7 @@
     { "path": "/api/billing/cron", "schedule": "30 20 * * *" },
     { "path": "/api/teams/cron", "schedule": "0 19 * * *" },
     { "path": "/api/progress/cron", "schedule": "0 17 * * *" },
-    { "path": "/api/reports/cron", "schedule": "30 21 * * *" }
+    { "path": "/api/reports/cron", "schedule": "30 21 * * *" },
+    { "path": "/api/problems/cron", "schedule": "15 17 * * *" }
   ]
 }
