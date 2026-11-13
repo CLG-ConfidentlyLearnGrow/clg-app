@@ -46,3 +46,79 @@ See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
 - The tutor writes the review. The form and the notice say not to put any
   student information into AI tools.
 - Monthly summaries are removed (no new ones are made).
+
+## Changes, 12 Nov 2026: paid reviews, offered to each family
+
+Carla: no monthly summaries, and term reviews only when the family pays
+for one. The offer comes towards the end of each term (end of semester for
+tertiary students), or towards the end of the booked sessions when those
+don't line up with term dates.
+
+### How it works
+
+- **Price**: a "Term review" item in Admin > Billing > Prices (charged once
+  per review). It starts off at $0. Nothing is offered until the owner sets
+  a price and ticks "in use". The old "Term reviews" add-on is removed
+  (only if no student had been given it).
+- **When**: the daily job offers a review 4 weeks before the end of the
+  student's term, private school term or tertiary study period, if their
+  bookings reach to at least 2 weeks before that end. If their last booked
+  session isn't within 2 weeks of any term's end, the offer comes 4 weeks
+  before that last session instead. Only students with a current tutor who
+  has written a session note in the period are offered one, and not while
+  the family is on hold for an unpaid invoice.
+- **Who answers**: the parent who manages the student, or a student who
+  manages their own account. They see the price (including GST if it
+  applies) on the progress page and choose yes or no. No answer means no
+  review and no charge. A "no" can change to "yes" until the end date.
+- **CLG can answer for them** in Admin > Progress > Paid term review
+  offers. Owner, operations and finance admins can give a review at no
+  charge (for example on hardship).
+- **On yes**: billing makes an invoice with one line ("Term review, Term 4
+  2026, Cara") at the price the family saw, using any credit first. If the
+  family has no billing account yet, admins are told to bill it by hand.
+  The student's tutor gets a draft (the tutor with the most notes in the
+  period, if there are several), due 2 weeks before the end, or 5 days
+  after the yes if that's later. Checking and replying work as before.
+- **Monthly summaries**: none are made, and old ones no longer show on the
+  family dashboard.
+
+### What the evidence says
+
+- **Feedback** (EEF Teaching and Learning Toolkit, +6 months) and
+  **parental engagement** (EEF, +4 months, strongest when personalised):
+  the review keeps both, written by the student's own tutor. Asking first
+  means reviews go to families who want them, which suits the EEF's
+  caution that feedback costs staff time.
+- **One to one tuition** (EEF, +5 months) works best when monitored and
+  adjusted; timing the review to the student's real end (term or booking)
+  keeps it a decision point at the moment the family decides what next.
+- **Equity**: EEF guidance on the disadvantage gap warns that paid extras
+  can widen gaps, so finance admins can give a review at no charge.
+- Monthly summaries were app-written statistics, which the parental
+  engagement evidence rates as less useful than personal messages; session
+  updates after each note still go to families.
+
+### Legal rules it touches
+
+- **Australian Consumer Law**: the price shown is the total price
+  including any GST (s 48), the family opts in themselves (nothing is
+  pre-ticked, and silence is a "no"), and the invoice uses the price they
+  were shown even if the price changes later. Add paid term reviews to the
+  Client Terms before turning the price on.
+- **Children's Online Privacy Code** (draft) and the APPs: offers and
+  prices go only to the paying adult (a managing parent, or a student who
+  manages their own account), never to a child who is managed by a parent,
+  and never to tutors (Carla's 12 Nov rule that tutors see no financial
+  information). No new personal information is collected.
+- **Records**: offers are deleted with the student under the retention
+  rules; the invoice stays for 7 years for tax, like session invoices.
+  Every change is in the audit log.
+- Keep in mind for later: UK and EU cooling-off rules for services bought
+  online (14 days) before offering this outside Australia.
+
+### Files
+
+- Migration `supabase/migrations/20261113900100_paid_term_reviews.sql`.
+- Tests `supabase/tests/progress_term_review_offers.test.sql` (and updates
+  to the term review, study plan add-on and billing tests).

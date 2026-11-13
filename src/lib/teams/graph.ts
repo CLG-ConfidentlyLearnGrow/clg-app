@@ -67,7 +67,10 @@ async function plainProblem(res: Response, doing: string): Promise<string> {
   if (/application access policy/i.test(message)) { // The access policy step isn't finished:
     return `${doing}: Microsoft 365 hasn't allowed the app to make meetings for this account yet. Finish the access policy step (it can take 30 minutes to work).`; // explains what to do.
   } // End of the access policy case.
-  if (res.status === 404) return `${doing}: Microsoft couldn't find the organiser account. Check the email address in the Teams settings.`; // Account not found.
+  if (/valid GUID/i.test(message)) { // Microsoft was given an email where it needs the Object ID:
+    return `${doing}: Microsoft needs the organiser account's Object ID, not its email. Add it in Teams links > Settings.`; // explains what to do.
+  } // End of the Object ID case.
+  if (res.status === 404) return `${doing}: Microsoft couldn't find the organiser account. Check the Object ID in the Teams settings.`; // Account not found.
   if (res.status === 401 || res.status === 403) { // Not allowed:
     return `${doing}: Microsoft refused (${res.status}). Check the app has the OnlineMeetings.ReadWrite.All permission with admin consent. ${message}`.trim(); // explains the permission needed.
   } // End of the not-allowed case.

@@ -2,7 +2,7 @@
 // report form (with screenshots) and a list of the person's own reports,
 // showing where each is up to and any reply from CLG.
 //
-import { Card, Empty, Page, Table } from "@/components/ui"; // Shared page parts: card, empty note, page frame and table.
+import { Card, Empty, Page, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty note, page frame, table and text link.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
 import { safeNextPath } from "@/lib/forms"; // Keeps a page address inside the app (ignores outside links).
 import { PROBLEM_STATUS_LABELS, type ProblemStatus } from "@/lib/problem-reports"; // The words for each status.
@@ -36,7 +36,7 @@ export default async function ReportProblemPage({ searchParams }: PageProps<"/re
     >{/* (end of the frame's settings) */}
       <Card // the form card:
         title="What's the problem?" // its title,
-        description="For a worry about a child's safety, don't use this form: contact CLG's Child Safety Officer straight away." // a note sending safety concerns elsewhere.
+        description={<>For a worry about a child&apos;s safety, don&apos;t use this form: use <TextLink href="/safety">Child safety</TextLink> in the top bar instead.</>} // a note sending safety concerns to the Child safety page.
       >{/* (end of the card's settings) */}
         <ReportProblemForm page={from} />{/* the form, knowing which page they came from. */}
       </Card>{/* End of the form card. */}

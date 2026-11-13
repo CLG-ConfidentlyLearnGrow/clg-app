@@ -97,6 +97,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     return [ // hands back:
       first, // Your students,
       ...sessions, // Sessions,
+      { id: "calendar", label: "Weekly calendar", href: "/dashboard/tutor/calendar" }, // their week at a glance, and the link for their own calendar (Carla, 12 Nov 2026),
       ...rest, // the other tutor sections,
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.

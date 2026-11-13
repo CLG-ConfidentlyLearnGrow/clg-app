@@ -1,6 +1,8 @@
 // Summary: the frame around every page: fonts, page title, the top bar
-// (logo, Home, privacy and "Report a problem" links, who is signed in,
-// sign out) and the footer.
+// (logo, Home, Child safety, privacy and "Report a problem" links, who is
+// signed in, sign out) and the footer.
+// "Child safety" is on every page for everyone signed in, so a concern can
+// always be raised quickly (Carla, 12 Nov 2026).
 // Sessions and Matching are tabs in each dashboard's side menu now (Carla, 12 Nov 2026).
 //
 import type { Metadata, Viewport } from "next"; // Types for page details and screen settings.
@@ -9,6 +11,8 @@ import Link from "next/link"; // Next.js link tag (moves between pages without r
 import { Poppins } from "next/font/google"; // Loads the Poppins font from Google.
 import { signOut } from "@/app/actions/auth"; // The sign-out action.
 import { getViewer } from "@/lib/auth"; // Reads who is signed in.
+import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (for new child safety concerns).
+import { CountBadge } from "@/components/count-badge"; // The small number badge.
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
 import { ReportProblemLink } from "@/components/report-problem-link"; // The "Report a problem" link (remembers the page you were on).
 import { Suspense } from "react"; // Lets part of the page wait for the address details without holding up the rest.
@@ -31,6 +35,7 @@ export const viewport: Viewport = { // Screen settings:
 
 export default async function RootLayout({ children }: LayoutProps<"/">) { // The frame itself, wrapped around each page.
   const viewer = await getViewer(); // The signed-in person (or nobody).
+  const newConcerns = viewer ? (await getToDoCounts(viewer.roles)).get("safety", "concerns") : undefined; // New child safety concerns sent to this person (only the officer and deputy ever have any).
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
@@ -45,6 +50,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
               <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1">{/* the menu on the right: */}
                 <Link href="/dashboard" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the Home link: */}
                   Home{/* its words, */}
+                </Link>{/* end of the link. */}
+                <Link // the Child safety link, in red so it stands out:
+                  href={newConcerns ? "/safety/concerns" : "/safety"} // to new concerns if there are any (officer or deputy), otherwise the concern page,
+                  className="inline-flex items-center gap-1.5 rounded-full border border-red-700 px-3 py-0.5 text-sm font-semibold text-red-800 transition hover:bg-red-50" // a red outlined pill,
+                >{/* (end of the link's settings) */}
+                  Child safety{/* its words, */}
+                  <CountBadge n={newConcerns} className="bg-red-700 text-white" />{/* and the number of new concerns, if any. */}
                 </Link>{/* end of the link. */}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
                   Your privacy{/* its words, */}

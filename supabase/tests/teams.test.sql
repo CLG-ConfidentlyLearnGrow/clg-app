@@ -35,7 +35,7 @@ returning id as s_far \gset
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select public.save_teams_settings(true, 'meet@clg.example', 7)$$, 'parent changes Teams settings'); -- Checks this is refused: parent changes Teams settings.
+select tests.fails($$select public.save_teams_settings(true, 'meet@clg.example', 7, '11111111-2222-3333-4444-555555555555')$$, 'parent changes Teams settings'); -- Checks this is refused: parent changes Teams settings.
 select tests.fails(format($$select public.set_session_meeting_url(%L, 'https://evil.example/x')$$, :'s_online'), 'parent sets a link'); -- Checks this is refused: parent sets a link.
 select tests.fails($$select * from public.teams_claim_sessions(10)$$, 'parent runs the job'); -- Checks this is refused: parent runs the job.
 select tests.fails($$select public.teams_start_run()$$, 'parent starts a run'); -- Checks this is refused: parent starts a run.
@@ -52,14 +52,16 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- Admin without two-step login can't change settings.
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal1'); -- Signs in as test account ...a0.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select public.save_teams_settings(true, 'meet@clg.example', 7)$$, 'admin without two-step login'); -- Checks this is refused: admin without two-step login.
+select tests.fails($$select public.save_teams_settings(true, 'meet@clg.example', 7, '11111111-2222-3333-4444-555555555555')$$, 'admin without two-step login'); -- Checks this is refused: admin without two-step login.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select public.save_teams_settings(true, null, 7)$$, 'switching on with no organiser'); -- Checks this is refused: switching on with no organiser.
-select tests.fails($$select public.save_teams_settings(false, 'not an email', 7)$$, 'bad organiser email'); -- Checks this is refused: bad organiser email.
-select tests.fails($$select public.save_teams_settings(false, 'meet@clg.example', 60)$$, 'too many days ahead'); -- Checks this is refused: too many days ahead.
+select tests.fails($$select public.save_teams_settings(true, null, 7, '11111111-2222-3333-4444-555555555555')$$, 'switching on with no organiser'); -- Checks this is refused: switching on with no organiser.
+select tests.fails($$select public.save_teams_settings(true, 'meet@clg.example', 7, null)$$, 'switching on with no Object ID'); -- Checks this is refused: switching on with no Object ID (Microsoft needs it).
+select tests.fails($$select public.save_teams_settings(false, 'meet@clg.example', 7, 'meet@clg.example')$$, 'an email as the Object ID'); -- Checks this is refused: an email typed where the Object ID goes.
+select tests.fails($$select public.save_teams_settings(false, 'not an email', 7, '11111111-2222-3333-4444-555555555555')$$, 'bad organiser email'); -- Checks this is refused: bad organiser email.
+select tests.fails($$select public.save_teams_settings(false, 'meet@clg.example', 60, '11111111-2222-3333-4444-555555555555')$$, 'too many days ahead'); -- Checks this is refused: too many days ahead.
 select tests.fails($$select * from public.teams_claim_sessions(10)$$, 'admin runs the server job directly'); -- Checks this is refused: admin runs the server job directly.
 select tests.fails(format($$select public.set_session_meeting_url(%L, 'https://example.com/x')$$, :'s_library'), 'link on a library session'); -- Checks this is refused: link on a library session.
 select tests.fails(format($$select public.set_session_meeting_url(%L, 'http://example.com/x')$$, :'s_online'), 'link without https'); -- Checks this is refused: link without https.
@@ -73,8 +75,8 @@ select tests.eq((select count(*) from public.teams_claim_sessions(10)), 0, 'noth
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select public.save_teams_settings(true, ' Meet@CLG.example ', 7); -- Turns Teams links on, with the organiser email (untidy) and 7 days ahead.
-select tests.eq((select count(*) from public.teams_settings where enabled and organiser_email = 'meet@clg.example'), 1, 'admin switches Teams links on'); -- Checks: admin switches Teams links on.
+select public.save_teams_settings(true, ' Meet@CLG.example ', 7, ' 11111111-2222-3333-4444-555555555555 '); -- Turns Teams links on, with the organiser email and Object ID (both untidy) and 7 days ahead.
+select tests.eq((select count(*) from public.teams_settings where enabled and organiser_email = 'meet@clg.example' and organiser_id = '11111111-2222-3333-4444-555555555555'), 1, 'admin switches Teams links on'); -- Checks: admin switches Teams links on.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
@@ -87,8 +89,8 @@ select tests.eq((public.teams_start_run())::int, 0, 'second run straight after i
 -- Only the online session within 7 days, with no pasted link, is claimed.
 create temp table claimed as select * from public.teams_claim_sessions(10) where session_id in (:'s_online', :'s_pasted', :'s_library', :'s_far'); -- Claims sessions that need a link, keeping them in a short-lived table.
 select tests.eq((select count(*) from claimed), 1, 'one session needs a meeting'); -- Checks: one session needs a meeting.
-select tests.eq((select count(*) from claimed where session_id = :'s_online' and organiser_email = 'meet@clg.example' -- Checks the online session is claimed, titled without names:
-  and subject = 'CLG session: Teams Test Maths'), 1, 'the online session, titled without names'); -- (from the organiser email).
+select tests.eq((select count(*) from claimed where session_id = :'s_online' and organiser_email = '11111111-2222-3333-4444-555555555555' -- Checks the online session is claimed with the Object ID (what Microsoft needs), titled without names:
+  and subject = 'CLG session: Teams Test Maths'), 1, 'the online session, titled without names'); -- (the Object ID is what the job sends to Microsoft).
 -- Keeps its meeting id as m_online.
 select meeting_id as m_online from claimed \gset
 select tests.eq((select count(*) from public.teams_claim_sessions(10) where session_id = :'s_online'), 0, 'not claimed twice'); -- Checks: not claimed twice.
@@ -152,8 +154,14 @@ select tests.eq((select count(*) from public.list_sessions(current_date, current
 select public.set_session_meeting_url(:'s_far', '  '); -- Clears it (blank).
 select tests.eq((select count(*) from public.sessions where id = :'s_far' and meeting_url is null), 1, 'admin clears a link'); -- Checks: admin clears a link.
 select tests.eq((select count(*) from public.teams_meetings where session_id in (:'s_online', :'s_retry', :'s_race')), 3, 'admin sees the Teams meetings'); -- Checks: admin sees the Teams meetings.
-select public.save_teams_settings(false, 'meet@clg.example', 7); -- Turns Teams links off.
+select public.save_teams_settings(false, 'meet@clg.example', 7, '11111111-2222-3333-4444-555555555555'); -- Turns Teams links off.
 reset role; -- Goes back to the all-powerful test user (access rules off).
+
+-- Switched on from before the Object ID existed (as on CLG's live site): the job waits for the Object ID.
+select tests.claims(null); -- Signs out, so the next lines run as the server.
+update public.teams_settings set enabled = true, organiser_id = null where id; -- Switched on, but no Object ID (as the server, which skips the access rules).
+select tests.eq((public.teams_start_run(interval '0 seconds'))::int, 0, 'no run without an Object ID'); -- Checks: no run without an Object ID.
+select tests.eq((select count(*) from public.teams_claim_sessions(10)), 0, 'nothing claimed without an Object ID'); -- Checks: nothing handed out without an Object ID.
 
 -- Leave the test sessions out of later tests.
 select tests.claims(null); -- Signs out, so no one is signed in.

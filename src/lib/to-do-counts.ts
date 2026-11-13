@@ -10,7 +10,7 @@ import { ROLE_ORDER } from "@/lib/roles"; // The order of the dashboards (for wh
 // call (to_do_counts), so the side menus and the dashboard tabs
 // always show the same numbers. See docs/features/to-do-counts.md.
 
-export type ToDoArea = "admin" | "billing" | "privacy" | "tutor" | "parent" | "student" | "family" | "sessions"; // The areas the numbers belong to.
+export type ToDoArea = "admin" | "billing" | "privacy" | "tutor" | "parent" | "student" | "family" | "sessions" | "safety"; // The areas the numbers belong to ("safety" is new child safety concerns, shown in the top bar).
 
 export type ToDoCounts = { // What the page code gets back:
   // The number for one menu item, or undefined when there's nothing to do

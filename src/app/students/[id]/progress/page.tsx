@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 import { Roadmap } from "./roadmap"; // The roadmap card.
 import { EvidenceCard } from "./evidence"; // The uploads (evidence) card.
 import { SeniorCertificateCard } from "./senior-certificate"; // The senior certificate card.
-import { TermReviewCard } from "./term-review"; // The term review card.
+import { TermReviewCard, TermReviewOfferCard } from "./term-review"; // The term review card, and the paid review offer card.
 import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms"; // The forms on this page, and the types they use.
 import { StudentMaterialsCard, type StudentMaterial } from "./materials"; // The materials card, and the type for a material.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while it sends.
@@ -326,6 +326,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         isStudentSelf={student.data.account_id === viewer.id} // and whether the viewer is the student.
       />{/* (end of the roadmap) */}
 
+      <TermReviewOfferCard studentId={id} isFamily={isFamily} />{/* The offer of a paid term review (family view). */}
       <TermReviewCard studentId={id} viewerId={viewer.id} isStaff={isStaff} isFamily={isFamily} />{/* The term review card. */}
 
       <EvidenceCard // The uploads card:

@@ -45,6 +45,17 @@ Tutoring work and guaranteed hours (2026-11-05, Carla): work tied to tutoring th
 
 Session summary pay (2026-11-12, Carla): tutors are paid for time after each completed session to write the session summary (15 min now, maybe 5 later). The app adds a "Session summary" pay line at the tutor's rate for that session's level. The minutes come from the scheduling setting `summary_minutes`, which billing only reads; until that setting exists, it uses 15. Cancelled sessions and no-shows don't get summary time. Migration: `20261112230100_billing_summary_pay.sql`.
 
+Award rates each year (2026-11-12, Carla):
+- On Admin > Billing > Staff pay > Award rates, the owner or Finance uploads the new award minimums (a CSV file, or pasted lines) along with their start date, usually 1 July. Earlier years are kept.
+- On the start date, the daily run raises any staff rate that is below the new minimum for that person's employment type, and logs the change.
+- Work done before the start date is still paid at the old rate. Rates already above the minimum are left alone.
+- Migration: `20261113230100_billing_award_rates.sql`.
+- Legal: Fair Work Act and modern awards. Minimum rates change on 1 July after the Annual Wage Review. Check each year's figures on the Fair Work pay guides.
+
+Summary and planning time (2026-11-12): the 15 min after each session is 5 min session summary plus 10 min planning the next session. The pay line now says "session summary and next session planning".
+
+Invoice reminders (2026-11-12, Carla): when the app starts sending its own invoice reminder emails, Xero's invoice reminders must be turned off for those invoices, so families don't get both. Xero's reminders are switched on and off for the whole organisation (Xero > Invoice settings > Invoice reminders), so turn them off there when the app's reminders go live.
+
 ## Split payments between payers (added 2026-10-28)
 
 - **What.** An admin can split a family's invoices between the bill payer and another parent or adult learner in the family, as whole percentages (for example 50/50 or 60/40). The bill payer pays what is left. Each invoice keeps the split it was made with, so changing the split only affects new invoices.
@@ -108,3 +119,12 @@ See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
   still be logged and are flagged for the approving admin.
 - Payment plans (per year, term, month or week) are for ongoing tutoring
   only.
+
+## Changes, 12 Nov 2026: term review price item
+
+A "Term review" price item (charged once) is added, off at $0 until the
+owner sets it. When a family says yes to a paid term review, billing makes
+an invoice with that one line, at the price the family was shown, using
+credit first and the bank-debit discount as usual. An unpaid review
+invoice counts like any other unpaid invoice. See
+[term-reviews.md](term-reviews.md).

@@ -8,7 +8,7 @@ import { dollars, plainDate } from "@/lib/billing/money"; // Money as dollars, a
 import { listXeroEarningsRates, listXeroEmployees } from "@/lib/billing/payroll"; // Reads Xero Payroll's employees and earnings rates.
 import { xeroConnection } from "@/lib/billing/xero"; // Reads the saved Xero connection.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { AdminTimeForm, DeclineHoursForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, type StaffPay } from "./pay-forms"; // The pay forms, and the pay details type.
+import { AdminTimeForm, AwardRatesForm, DeclineHoursForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, type StaffPay } from "./pay-forms"; // The pay forms, and the pay details type.
 
 // A pay line as the database gives it.
 type Line = {
@@ -33,7 +33,7 @@ const KIND_LABELS: Record<Line["kind"], string> = { // Words for each kind of pa
   admin: "Office admin", // office admin,
   tutoring_work: "Tutoring work", // tutoring work,
   guaranteed: "Guaranteed hours top-up", // guaranteed hours top-up.
-  summary: "Session summary", // time to write the summary after a session.
+  summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
 }; // End of the list.
 
 // Adds days to a date (written as YYYY-MM-DD).
@@ -95,6 +95,19 @@ export async function PaySection({
     return `${roleNames}${p ? ` · ${p.employment.replace("_", "-")}` : ""} · ${parts.join(" · ")}`; // e.g. "Tutor · casual · tutor school $40, tertiary $45".
   } // End of summary.
   const staffList = [...staff].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)); // The staff list, by name.
+
+  // Award minimum rates (every year kept) and the rates the app raised.
+  const [awardRes, changeRes] = await Promise.all([ // Reads two things at once:
+    supabase.from("billing_award_rates").select("work_kind, employment, min_rate_cents, award, effective_from").order("effective_from", { ascending: false }), // award rates, newest first,
+    supabase.from("billing_staff_rate_changes").select("id, account_id, work_kind, old_cents, new_cents, effective_from").order("created_at", { ascending: false }).limit(20), // and the last 20 automatic raises.
+  ]); // End of the reads.
+  const awardRows = (awardRes.data ?? []) as { work_kind: string; employment: string; min_rate_cents: number; award: string; effective_from: string }[]; // The award rates.
+  const awardDates = [...new Set(awardRows.map((a) => a.effective_from))]; // Each start date, newest first.
+  const currentDate = awardDates.find((d) => d <= start) ?? awardDates[awardDates.length - 1]; // The start date in force for this pay period.
+  const templateCsv = ["work,employment,hourly_rate,award", ...awardRows.filter((a) => a.effective_from === currentDate).map((a) => `${a.work_kind},${a.employment},${(a.min_rate_cents / 100).toFixed(2)},${a.award}`)].join("\n"); // This year's rates as a file to download and change.
+  const yearNow = Number(start.slice(0, 4)); // The pay period's year.
+  const nextJuly = `${start.slice(5) >= "07-01" ? yearNow + 1 : yearNow}-07-01`; // The next 1 July.
+  const WORK_LABELS: Record<string, string> = { school: "School tutoring", tertiary: "Tertiary tutoring", admin: "Admin" }; // Plain names for the kinds of work.
   const payOf = new Map(((pay.data ?? []) as StaffPay[]).map((p) => [p.account_id, p])); // Each person's pay details, by id.
   const lineRows = (lines.data ?? []) as Line[]; // The pay lines.
   const byPerson = new Map<string, Line[]>(); // The pay lines grouped by person.
@@ -262,6 +275,35 @@ export async function PaySection({
           </div> // End of the block.
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
+
+      <Card title="Award rates" collapsible defaultOpen={false} description="The award minimum hourly rates, by work and employment type. Upload next year's rates before 1 July; anyone below the new minimum is raised on the start date, and work before that date is still paid at the old rate.">{/* A card for the yearly award rates: */}
+        {awardDates.length === 0 ? <Empty>No award rates yet.</Empty> : awardDates.slice(0, 3).map((d) => ( // The three most recent years:
+          <div key={d} className="mb-4">{/* one year: */}
+            <SubHeading>{d > start ? `Starting ${plainDate(d)} (coming up)` : d === currentDate ? `From ${plainDate(d)} (in force now)` : `From ${plainDate(d)} (earlier)`}</SubHeading>{/* its start date and whether it's current */}
+            <Table headings={["Work", "Employment", "Minimum", "Award"]}>{/* a table of its rates: */}
+              {awardRows.filter((a) => a.effective_from === d).map((a) => ( // each rate:
+                <tr key={`${a.work_kind}-${a.employment}`}>{/* a row: */}
+                  <td>{WORK_LABELS[a.work_kind] ?? a.work_kind}</td>{/* the work, */}
+                  <td>{a.employment.replace("_", "-")}</td>{/* the employment type, */}
+                  <td>{dollars(a.min_rate_cents)}/hr</td>{/* the minimum, */}
+                  <td>{a.award}</td>{/* and the award. */}
+                </tr> // End of the row.
+              ))}
+            </Table>{/* end of the table */}
+          </div> // End of the year.
+        ))}
+        {(changeRes.data ?? []).length > 0 && ( // If the app has raised any rates:
+          <div className="mb-4">{/* the list of raises: */}
+            <SubHeading>Rates raised automatically</SubHeading>{/* its heading */}
+            <ul className="space-y-1 text-sm">{/* one line each: */}
+              {(changeRes.data ?? []).map((c) => ( // each raise:
+                <li key={c.id}>{staff.get(c.account_id) ?? "Staff"}: {WORK_LABELS[c.work_kind] ?? c.work_kind} {dollars(c.old_cents)} to {dollars(c.new_cents)}/hr from {plainDate(c.effective_from)}</li> // who, which rate, old and new, and when.
+              ))}
+            </ul>{/* end of the list */}
+          </div> // End of the raises.
+        )}
+        {canEdit && <AwardRatesForm nextJuly={nextJuly} templateCsv={templateCsv} />}{/* the upload form, for the owner and Finance */}
+      </Card>{/* End of the award rates card. */}
 
       {isOwner && settings.data && ( // For the owner:
         <Card title="Pay period and casual minimum" collapsible defaultOpen={false}>{/* a closed card: */}

@@ -1,4 +1,5 @@
-// Summary: the job that sends waiting security emails (owner access requests and security alerts).
+// Summary: the job that sends waiting security emails (owner access requests and security alerts)
+// and child safety concern alerts.
 //
 import { isCronRequest } from "@/lib/cron-auth"; // Checks the request really comes from the scheduler.
 import { createAdminClient } from "@/lib/supabase/admin"; // Connects to the database with full access (server only).
@@ -15,7 +16,8 @@ import { emailIsSetUp, sendEmails, type OutgoingEmail } from "@/lib/email/send";
 // database; add them back here to turn those emails on again.
 const SOURCES = [ // Each kind of email: how to collect it, and how to put it back:
   { claim: "emergency_access_emails_claim", release: "emergency_access_emails_release" }, // emergency owner access emails,
-  { claim: "security_alert_emails_claim", release: "security_alert_emails_release" }, // security alert emails.
+  { claim: "security_alert_emails_claim", release: "security_alert_emails_release" }, // security alert emails,
+  { claim: "safety_concern_emails_claim", release: "safety_concern_emails_release" }, // child safety concern alerts (no details, just "open the app").
 ] as const; // End of the list (fixed).
 
 // Collects each kind of waiting email and sends it.

@@ -91,6 +91,24 @@ only.
 
 > Screenshot to add: `screenshots/tutors-07-sign-on.png`, signing on to a session.
 
+### Your week, and adding sessions to your own calendar
+
+- **Weekly calendar** (in the tutor side menu) shows one week at a time,
+  Monday to Sunday, with each session's time, student, subject, place and
+  a **Join on Teams** link for online sessions. Use **Last week** and
+  **Next week** to move around. Times are on your own clock (the state you
+  work in).
+- To see your sessions in Google, Outlook or Apple calendar, choose
+  **Make my calendar link** on that page, then **Add to Google Calendar**,
+  **Add to Apple or phone calendar**, or copy the link into Outlook
+  (Add calendar > Subscribe from web).
+- The link is shown only once. It shows only each student's first name,
+  the subject, time, place and Teams link. Keep it to yourself. If you
+  lose it or share it by mistake, choose **Make a new link** (the old one
+  stops straight away) or **Turn off my link**.
+- Calendar apps update every few hours (Google can take up to a day), so
+  check the app for last-minute changes.
+
 ## 8. Away dates
 
 1. Go to **Schedule**, then **Away dates**.
