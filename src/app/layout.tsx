@@ -32,7 +32,10 @@ export const viewport: Viewport = { // Screen settings:
 
 export default async function RootLayout({ children }: LayoutProps<"/">) { // The frame itself, wrapped around each page.
   const viewer = await getViewer(); // The signed-in person (or nobody).
-  const newConcerns = viewer ? (await getToDoCounts(viewer.roles)).get("safety", "concerns") : undefined; // New child safety concerns sent to this person (only the officer and deputy ever have any).
+  const counts = viewer ? await getToDoCounts(viewer.roles) : undefined; // The to-do numbers (for the Child safety button).
+  const newConcerns = counts?.get("safety", "concerns"); // New child safety concerns sent to this person (only the officer and deputy ever have any).
+  const newFlags = counts?.get("safety", "word_flags"); // Flagged words not yet reviewed (only the officer and deputy ever have any).
+  const safetyCount = (newConcerns ?? 0) + (newFlags ?? 0) || undefined; // Both added together for the badge (nothing when zero).
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
@@ -49,11 +52,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
                   Home{/* its words, */}
                 </Link>{/* end of the link. */}
                 <Link // the Child safety link, in red so it stands out:
-                  href={newConcerns ? "/safety/concerns" : "/safety"} // to new concerns if there are any (officer or deputy), otherwise the concern page,
+                  href={newConcerns ? "/safety/concerns" : newFlags ? "/safety/flags" : "/safety"} // to new concerns first, then flagged words (officer or deputy), otherwise the concern page,
                   className="inline-flex items-center gap-1.5 rounded-full border border-red-700 px-3 py-0.5 text-sm font-semibold text-red-800 transition hover:bg-red-50" // a red outlined pill,
                 >{/* (end of the link's settings) */}
                   Child safety{/* its words, */}
-                  <CountBadge n={newConcerns} className="bg-red-700 text-white" />{/* and the number of new concerns, if any. */}
+                  <CountBadge n={safetyCount} className="bg-red-700 text-white" />{/* and the number of new concerns and flags, if any. */}
                 </Link>{/* end of the link. */}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
                   Your privacy{/* its words, */}

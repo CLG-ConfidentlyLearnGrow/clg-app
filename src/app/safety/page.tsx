@@ -57,6 +57,17 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
           <Link href="/safety/concerns" className="font-medium text-teal-800 underline underline-offset-4">{/* and links to them: */}
             Open concerns sent to you{/* the link's words. */}
           </Link>{/* End of the link. */}
+          {" · "}{/* a separator, */}
+          <Link href="/safety/flags" className="font-medium text-teal-800 underline underline-offset-4">{/* and links to the flagged words: */}
+            Flagged words{/* the link's words. */}
+          </Link>{/* End of the link. */}
+        </p> // End of the box.
+      )}{/* End of that part. */}
+      {!isContact && level === "owner" && ( // If they're the owner but don't receive concerns:
+        <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">{/* a small box: */}
+          <Link href="/safety/flags" className="font-medium text-teal-800 underline underline-offset-4">{/* a link to the word list: */}
+            Words and phrases the app watches for{/* the link's words. */}
+          </Link>{/* End of the link. */}
         </p> // End of the box.
       )}{/* End of that part. */}
 
