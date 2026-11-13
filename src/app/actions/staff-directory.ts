@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache"; // Lets the code refresh pages afte
 import { z } from "zod"; // The form-checking library.
 import { inviteStaff } from "@/app/actions/admin"; // Sends staff invitation links.
 import { requireAdmin, requireAdminLevel } from "@/lib/auth"; // Makes sure the person is a full admin, or an admin at the right level.
-import { siteUrl } from "@/lib/env"; // The app's web address, for links in emails.
+import { emailSignInLink } from "@/lib/email/sign-in-link"; // Emails a sign-in link to someone who already has an account.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { createAdminClient } from "@/lib/supabase/admin"; // The all-powerful database helper (secret key).
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -135,31 +135,28 @@ export async function sendStaffLoginLink(_prev: FormState, formData: FormData): 
   const admin = createAdminClient(); // Connects with full access.
   const user = await admin.auth.admin.getUserById(person.account_id); // Reads their sign-in account.
   if (user.error || !user.data.user) return { error: "We couldn't check that account. Please try again." }; // Couldn't read it: plain message.
-  const confirmed = Boolean(user.data.user.email_confirmed_at); // True once they've confirmed their email.
   const neverSignedIn = !user.data.user.last_sign_in_at; // True if they've never signed in.
-  const redirectTo = `${siteUrl()}/login`; // After choosing a password, they land on the login page.
 
-  const sent = confirmed // Sends the right email:
-    ? await admin.auth.resetPasswordForEmail(email, { redirectTo }) // a password reset if confirmed,
-    : await admin.auth.admin.inviteUserByEmail(email, { redirectTo }); // otherwise a fresh invitation.
-  if (!sent.error) { // It sent:
+  // Sent through Resend like staff invitations (not Supabase's own email),
+  // with a fresh link every time, so it can be re-sent as often as needed.
+  const sent = await emailSignInLink( // Emails the link:
+    email, // to their address,
+    neverSignedIn ? "Your link to sign in to the CLG app" : "Set a new password for the CLG app", // with a subject to match,
+    neverSignedIn // and a message to match:
+      ? "Use the button to choose your password and sign in to the CLG app." // for someone who's never signed in,
+      : "Use the button to choose a new password and sign in to the CLG app. This also unlocks your account if it was locked.", // for everyone else.
+  ); // End of sending.
+  if (sent.sent) { // It sent:
     return { // tells the admin:
       message: neverSignedIn // if never signed in,
-        ? `We've emailed ${email} a new link to choose a password and sign in.` // a new link to choose a password,
-        : `We've emailed ${email} a link to set a new password.`, // otherwise a link to set a new password.
+        ? `We've emailed ${email} a new link to choose a password and sign in. It can take a few minutes; ask them to check junk or spam too.` // a new link to choose a password,
+        : `We've emailed ${email} a link to set a new password. It can take a few minutes; ask them to check junk or spam too.`, // otherwise a link to set a new password.
     }; // End of the message.
   } // End of the sent case.
-  console.error("Staff login link email failed:", sent.error.code ?? sent.error.name, sent.error.message); // Notes the email failure in the server log.
-
-  const made = await admin.auth.admin.generateLink( // Makes the link without emailing it:
-    confirmed ? { type: "recovery", email, options: { redirectTo } } : { type: "invite", email, options: { redirectTo } }, // a reset link if confirmed, otherwise an invitation link.
-  ); // End of making the link.
-  if (made.error || !made.data.properties?.action_link) { // That failed too:
-    console.error("Staff login link failed:", made.error?.code, made.error?.message); // notes it in the server log,
-    return { error: "We couldn't make a new link. Please try again." }; // and tells the admin plainly.
-  } // End of the failure case.
+  console.error("Staff login link email failed:", sent.problem); // Notes the email failure in the server log.
+  if (!sent.link) return { error: "We couldn't make a new link. Please try again." }; // No link either: tells the admin plainly.
   return { // Gives the admin the link to send themselves:
-    message: `The email couldn't be sent. Copy this link and send it to ${email} yourself (for example by Teams). It works once, for a short time: ${made.data.properties.action_link}`, // (the message, with the link)
+    message: `The email couldn't be sent. Copy this link and send it to ${email} yourself (for example by Teams). It works once, for one hour: ${sent.link}`, // (the message, with the link)
   }; // End of the message.
 } // End of sendStaffLoginLink.
 

@@ -812,7 +812,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               )}{/* End of this part. */}
             </Card>{/* End of the card. */}
 
-            <Card title="Unlock an account">{/* the unlock card: */}
+            <Card // the unlock card:
+              title="Unlock an account" // its title,
+              description="Lets someone sign in straight away after too many wrong tries, instead of waiting 30 minutes. This doesn't send them an email." // its help text, saying no email is sent.
+            >{/* (end of the card's settings) */}
               <UnlockForm />{/* the form. */}
             </Card>{/* End of the card. */}
           </> // End of the group.

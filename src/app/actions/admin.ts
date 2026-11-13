@@ -12,6 +12,7 @@ import { CHECK_KINDS, STATES } from "@/lib/checks"; // The check kinds and Austr
 import { siteUrl } from "@/lib/env"; // The app's web address, for invitation links.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { emailIsSetUp, sendEmails } from "@/lib/email/send"; // Checks email is set up, and sends emails.
+import { emailSignInLink } from "@/lib/email/sign-in-link"; // Emails a sign-in link to someone who already has an account.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
 // Every action re-checks admin access here, and the database checks again.
@@ -39,15 +40,34 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   // Someone who already has a CLG account (for example a parent who also
   // tutors) gets the role straight away instead of an invitation.
   const existing = await supabase.rpc("grant_staff_role", { p_email: email, p_role: role, p_level: level }); // Gives the role now if they already have an account.
+  const roleNow = role === "admin" ? `an admin (${ADMIN_LEVEL_NAMES[level ?? "operations"]})` : "a tutor"; // Their role in words, e.g. "a tutor".
+  // Adding someone who already has this role used to stop with an error and
+  // send nothing. Now it always emails them a fresh sign-in link instead, so
+  // an admin can send to anyone as often as needed.
+  if (existing.error?.code === "23505") { // They already have this role:
+    const sent = await emailSignInLink( // emails them a sign-in link:
+      email, // to their address,
+      "Your CLG app sign-in link", // with this subject,
+      `You already have a CLG app account as ${roleNow}. Use the button to choose a new password and sign in. If you remember your password, you can also just sign in as usual.`, // and this message.
+    ); // End of sending.
+    return signInLinkReply(email, sent, `${email} already has a CLG account as ${roleNow}, so we've emailed them a fresh link to set a password and sign in.`); // Tells the admin what happened.
+  } // End of that case.
   if (existing.error) { // It failed:
     const plain = ["42501", "22023", "23505"].includes(existing.error.code ?? ""); // true for the database's own plain refusals,
     return { error: plain ? `${existing.error.message}.` : "Couldn't add them. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   if (existing.data === true) { // They already had an account:
     revalidatePath("/admin"); // refreshes the admin pages,
-    return { // and tells the admin:
-      message: `${email} already had a CLG account, so they are now ${role === "admin" ? `an admin (${ADMIN_LEVEL_NAMES[level ?? "operations"]})` : "a tutor"}. They'll see the new tools next time they sign in, after setting up two-step login.`, // what they now are, and what they'll see next.
-    }; // End of the message.
+    const sent = await emailSignInLink( // emails them so they know (this used to send nothing):
+      email, // to their address,
+      `You've been added to the CLG app as ${roleNow}`, // with this subject,
+      `CLG Tutoring has added you to the CLG app as ${roleNow}. Sign in with your usual password, or use the button to choose a new one. Next you'll set up two-step login if you haven't already.`, // and this message.
+    ); // End of sending.
+    return signInLinkReply( // and tells the admin:
+      email, // who,
+      sent, // whether the email went,
+      `${email} already had a CLG account, so they are now ${roleNow}. We've emailed them to let them know, with a link to sign in. They'll see the new tools after setting up two-step login.`, // what they now are, and that they've been emailed.
+    ); // End of the reply.
   } // End of that case.
 
   // Everyone else gets CLG's own invite link: for this email and role only,
@@ -62,7 +82,7 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
   const link = `${siteUrl()}/join?t=${made.data}`; // The full invite link.
   revalidatePath("/admin"); // Refreshes the admin pages.
 
-  const roleWords = role === "admin" ? `an admin (${ADMIN_LEVEL_NAMES[level ?? "operations"]})` : "a tutor"; // Their role in words, e.g. "a tutor".
+  const roleWords = roleNow; // Their role in words, e.g. "a tutor".
   const problem = emailIsSetUp() // Sends the invitation email if email is set up:
     ? await sendEmails([ // sending one email:
         { // (the email:)
@@ -88,9 +108,20 @@ export async function inviteStaff(_prev: FormState, formData: FormData): Promise
     }; // End of the message.
   } // End of that case.
   return { // The email went:
-    message: `Invitation sent to ${email}. The link works once, for 7 days. When they join, they're ${roleWords} straight away. If it gets lost, add them again to send a new link (the old one stops working).`, // confirms it and explains how the link works.
+    message: `Invitation sent to ${email}. The link works once, for 7 days. When they join, they're ${roleWords} straight away. If it gets lost, add them again to send a new link (the old one stops working). It can take a few minutes; ask them to check their junk or spam folder too.`, // confirms it, explains how the link works, and mentions junk mail.
   }; // End of the message.
 } // End of inviteStaff.
+
+// Turns the result of emailing a sign-in link into the admin's reply: the
+// success words if it went, or the link to pass on if it didn't.
+function signInLinkReply(email: string, sent: Awaited<ReturnType<typeof emailSignInLink>>, ok: string): FormState {
+  if (sent.sent) return { message: `${ok} It can take a few minutes; ask them to check their junk or spam folder too.` }; // It went: the success words, plus a junk-mail tip.
+  console.error("Sign-in link email failed:", sent.problem); // Notes why in the server log.
+  if (sent.link) { // A link was made, so the admin can pass it on:
+    return { message: `The email couldn't be sent. Copy this link and send it to ${email} yourself (for example by Teams). It works once, for one hour: ${sent.link}` }; // (the message, with the link)
+  } // End of that case.
+  return { error: "We couldn't make a sign-in link. Please try again." }; // No link either: plain message.
+} // End of signInLinkReply.
 
 const cancelSchema = z.object({ id: z.uuid() }); // The rules: one invitation id.
 
@@ -202,7 +233,9 @@ export async function unlockAccount(_prev: FormState, formData: FormData): Promi
 
   const { error } = await supabase.rpc("admin_unlock_account", { p_account: account.data.account_id }); // Asks the database to unlock it.
   if (error) return { error: "Couldn't unlock the account." }; // Failed: plain message.
-  return { message: "Account unlocked." }; // Confirms it.
+  // Unlocking sends no email, so the admin is told to let the person know
+  // themselves, and where to send a password link if they've forgotten it.
+  return { message: "Account unlocked. No email is sent for this: let them know they can sign in now with their usual password. If they've forgotten it, use \"Send a password link\" on the Staff page, or they can use \"Forgot your password?\" on the sign-in page." }; // Confirms it and explains what happens next.
 } // End of unlockAccount.
 
 // The rules for a tutor's work state:
