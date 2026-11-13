@@ -104,7 +104,7 @@ the database tests run, and the owner checks it before it goes live.
 
 ## 6. How it's built
 
-- Migration `20261113700100_problem_reports.sql` (module: problem_reports):
+- Migration `20261113800100_problem_reports.sql` (module: problem_reports):
   tables `problem_reports`, `problem_report_screenshots`, `problem_reviewers`,
   `problem_screenshot_removals`; file store `problem-screenshots`.
 - Pages: `/report-problem` (everyone), `/admin/problems` (reviewers).

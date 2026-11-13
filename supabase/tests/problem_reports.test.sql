@@ -10,7 +10,7 @@
 -- Starts a transaction so nothing here is kept.
 begin;
 -- Runs the problem reports database change again (checks it can run twice).
-\ir ../migrations/20261113700100_problem_reports.sql
+\ir ../migrations/20261113800100_problem_reports.sql
 
 -- The two screenshot paths used below, in the parent's own folder.
 \set shot1 '00000000-0000-0000-0000-000000000001/11111111-1111-1111-1111-111111111111.png'
