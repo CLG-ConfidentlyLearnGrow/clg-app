@@ -145,3 +145,7 @@ removing access promptly as roles change, and reviewing who has which
 access. Seeing every role next to each person makes that review easy.
 
 **Privacy.** The only new item shown is the last sign-in date, to admins.
+
+## Part 3: staff who leave (14 Nov 2026)
+
+The owner can remove someone who has left CLG from the Manage panel. Former staff show under "Left CLG" and can be brought back by adding a role. See [staff-leaving.md](staff-leaving.md).

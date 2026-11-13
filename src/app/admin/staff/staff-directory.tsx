@@ -1,11 +1,13 @@
 // Summary: the staff directory: search and filter staff and invitations, and (for owner and
-// operations admins) manage each person's job title, links and roles.
+// operations admins) manage each person's job title, links and roles. The
+// owner can also remove someone who has left CLG, and anyone who left can be
+// brought back by adding a role again.
 //
 "use client"; // Runs in the browser, so search and filters work as you type.
 
 import { useActionState, useMemo, useState } from "react"; // Lets the page remember searches, filters and form replies.
 import { cancelInvitation } from "@/app/actions/admin"; // The server action that cancels an invitation.
-import { addRole, removeRole, resendStaffInvite, sendStaffLoginLink, setJobTitle } from "@/app/actions/staff-directory"; // The server actions for roles, links and job titles.
+import { addRole, removeFromTeam, removeRole, resendStaffInvite, sendStaffLoginLink, setJobTitle } from "@/app/actions/staff-directory"; // The server actions for roles, leaving, links and job titles.
 import { Empty } from "@/components/ui"; // The "nothing yet" note.
 import { initialFormState, type FormState } from "@/lib/forms"; // The starting (empty) form reply, and the reply type.
 import { SetLevelForm } from "../level-forms"; // The drop-down for changing an admin's level.
@@ -25,7 +27,11 @@ export type StaffMember = {
   tutor_active: boolean | null; // whether they still tutor (if a tutor),
   work_state: string | null; // the state they work from (if set),
   subjects: string[]; // the subjects they teach,
-  last_sign_in_at: string | null; // and when they last signed in (if ever).
+  last_sign_in_at: string | null; // when they last signed in (if ever),
+  left_on: string | null; // their last day, if they've left CLG (blank for current staff),
+  leaving_reason: string | null; // why they left (only shown to the owner and operations admins),
+  upcoming_bookings: number; // how many bookings they have coming up (tutors),
+  current_students: number; // and how many students they're matched with now (tutors).
 }; // End of the shape.
 
 // A waiting invitation.
@@ -49,10 +55,35 @@ const SUGGESTED_TITLES = ["Director", "Child Safety Officer", "Operations coordi
 
 const NO_TITLE = "__none__"; // The filter value for "no job title yet".
 
-// A tutor who has finished with CLG and has no admin role.
-function isFinished(p: StaffMember) {
+// Why someone left, in plain words (the database's codes on the left).
+const LEAVING_REASON_WORDS: Record<string, string> = { // The words for each reason:
+  own_study_or_work: "Study, or another job", // study or work,
+  moved: "Moved away", // moved,
+  pay: "Pay", // pay,
+  hours: "Hours (too few or too many)", // hours,
+  workload: "Workload", // workload,
+  personal: "Personal or family reasons", // personal,
+  contract_ended: "Their agreed time with CLG finished", // contract ended,
+  clg_ended: "CLG ended their employment", // CLG ended it,
+  other: "Something else", // other.
+}; // End of the list.
+
+// Someone who has left CLG (removed from the team), or a tutor who has
+// finished and has no admin role.
+function isAway(p: StaffMember) {
+  if (p.left_on && !p.is_admin && !p.is_tutor) return true; // Left CLG and holds no staff role now.
   return !p.is_admin && p.is_tutor && p.tutor_active === false; // True if not an admin, a tutor, and no longer tutoring.
-} // End of isFinished.
+} // End of isAway.
+
+// Someone removed from the team who hasn't been brought back.
+function hasLeft(p: StaffMember) {
+  return Boolean(p.left_on) && !p.is_admin && !p.is_tutor; // True if they have a last day and no staff role now.
+} // End of hasLeft.
+
+// Today's date in Adelaide, as YYYY-MM-DD (the format date boxes use).
+function todayInAdelaide() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Adelaide" }); // Canadian English writes dates as YYYY-MM-DD.
+} // End of todayInAdelaide.
 
 // What the person does in the app, in plain words.
 function appRoles(p: StaffMember): string[] {
@@ -61,6 +92,7 @@ function appRoles(p: StaffMember): string[] {
   if (p.is_tutor) out.push(p.tutor_active === false ? "Tutor (finished)" : "Tutor"); // Tutors: whether they've finished.
   if (p.is_parent) out.push("Parent"); // Parents.
   if (p.is_student) out.push("Student"); // Students.
+  if (hasLeft(p) && p.left_on) out.push(`Left CLG ${plainDate(p.left_on)}`); // Former staff: when they left.
   return out; // Gives back the list.
 } // End of appRoles.
 
@@ -160,8 +192,8 @@ export function StaffDirectory({
 
   const shown = staff.filter((p) => { // The staff to show:
     if (status === "invited") return false; // none when showing only invitations,
-    if (status === "current" && isFinished(p)) return false; // "working now" hides those finished,
-    if (status === "finished" && !isFinished(p)) return false; // "finished" shows only those finished,
+    if (status === "current" && isAway(p)) return false; // "working now" hides those who have left or finished,
+    if (status === "finished" && !isAway(p)) return false; // "left CLG" shows only those who have left or finished,
     if (status === "never" && p.last_sign_in_at) return false; // "never signed in" hides anyone who has,
     if (role === "tutor" && !p.is_tutor) return false; // the tutor filter,
     if (role === "admin" && !p.is_admin) return false; // the admin filter,
@@ -243,7 +275,7 @@ export function StaffDirectory({
             <option value="current">Working now</option>{/* working now, */}
             {canEdit && <option value="invited">Invited, not joined yet</option>}{/* invited (only for editors), */}
             <option value="never">Never signed in</option>{/* never signed in, */}
-            <option value="finished">Finished</option>{/* finished, */}
+            <option value="finished">Left CLG</option>{/* left CLG (or finished tutoring), */}
             <option value="all">Everyone</option>{/* everyone. */}
           </FilterSelect>{/* End of the status filter. */}
           <FilterSelect label="Works in (tutors)" value={state} onChange={setState}>{/* Works in: */}
@@ -397,9 +429,16 @@ function StaffCard({
       )}{/* End of that part. */}
       {open && ( // If the panel is open:
         <div className="mt-4 space-y-5 border-t border-zinc-100 pt-4">{/* a block: */}
-          <JobTitleForm person={p} />{/* the job title form, */}
-          <LoginLinkForm person={p} />{/* the login link form, */}
-          <RolesPanel person={p} isOwner={isOwner} isMe={isMe} />{/* and the roles panel. */}
+          {hasLeft(p) ? ( // If they've left CLG:
+            <BringBackPanel person={p} isOwner={isOwner} /> // the panel for bringing them back,
+          ) : ( // otherwise:
+            <>{/* (a group:) */}
+              <JobTitleForm person={p} />{/* the job title form, */}
+              <LoginLinkForm person={p} />{/* the login link form, */}
+              <RolesPanel person={p} isOwner={isOwner} isMe={isMe} />{/* the roles panel, */}
+              {isOwner && !isMe && p.admin_level !== "owner" && <LeaveTeamPanel person={p} />}{/* and, for the owner, the "left CLG" panel (not for themselves or another owner). */}
+            </> // (end of the group)
+          )}{/* End of the choice. */}
         </div> // End of the block.
       )}{/* End of the panel. */}
     </li> // End of the card.
@@ -540,13 +579,13 @@ function HeldRole({
 } // End of HeldRole.
 
 // The form for adding a role a person doesn't have yet.
-function AddRoleForm({ person: p, isOwner }: { person: StaffMember; isOwner: boolean }) {
+function AddRoleForm({ person: p, isOwner, staffOnly = false }: { person: StaffMember; isOwner: boolean; staffOnly?: boolean }) {
   const [state, formAction, pending] = useActionState(addRole, initialFormState); // The reply, the action to send, and whether it's sending.
   const [role, setRole] = useState(""); // The chosen role (blank to start).
   const options: { value: string; label: string }[] = []; // The roles that can be added.
   if (!p.is_tutor) options.push({ value: "tutor", label: "Tutor" }); // Tutor, if they aren't one.
   if (!p.is_admin && isOwner) options.push({ value: "admin", label: "Admin" }); // Admin, if they aren't one and this is the owner.
-  if (!p.is_parent) options.push({ value: "parent", label: "Parent" }); // Parent, if they aren't one.
+  if (!p.is_parent && !staffOnly) options.push({ value: "parent", label: "Parent" }); // Parent, if they aren't one (not when bringing staff back).
   const choices = options; // The choices.
   if (choices.length === 0) return null; // Nothing to add: shows nothing.
   return ( // Shows:
@@ -587,3 +626,115 @@ function AddRoleForm({ person: p, isOwner }: { person: StaffMember; isOwner: boo
     </form> // End of the form.
   ); // End of what's shown.
 } // End of AddRoleForm.
+
+// For the owner: remove someone who has left CLG. Shows what will happen,
+// what must be sorted first, and asks for their last day, the reason and
+// their name typed to confirm.
+function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
+  const [open, setOpen] = useState(false); // Whether the form is showing.
+  const [state, formAction, pending] = useActionState(removeFromTeam, initialFormState); // The reply, the action to send, and whether it's sending.
+  const today = todayInAdelaide(); // Today's date in Adelaide (the latest last day allowed).
+  const blocked = p.is_tutor && p.upcoming_bookings > 0; // True if they still have bookings coming up (the database refuses until they're moved).
+  return ( // Shows:
+    <div className="space-y-3 rounded-xl border border-red-100 bg-red-50/40 p-3">{/* a soft red box: */}
+      <p className="text-sm font-medium text-zinc-800">Left CLG</p>{/* the heading, */}
+      {!open ? ( // While the form is closed:
+        <>{/* (a group:) */}
+          <p className="text-xs text-zinc-600">{/* a small note: */}
+            When {p.full_name} is no longer part of the CLG team, remove them here. Their records stay; their access ends.{/* what this is for. */}
+          </p>{/* End of the note. */}
+          <button type="button" onClick={() => setOpen(true)} className="text-sm font-medium text-red-700 underline underline-offset-4">{/* a red button that opens the form: */}
+            Remove from the team{/* (its words) */}
+          </button>{/* End of the button. */}
+        </> // (end of the group)
+      ) : state.message ? ( // Once it's done:
+        <div className="space-y-2">{/* a block: */}
+          <Result state={state} />{/* the confirmation, */}
+          <p className="text-xs font-medium text-zinc-800">Still to do outside the app:</p>{/* a heading for the outside steps, */}
+          <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">{/* a list: */}
+            <li>Pay their final wages and any leave owed (most awards say within 7 days of their last day), and finish them in Xero payroll.</li>{/* final pay, */}
+            <li>Remove them from CLG&apos;s Microsoft 365 and Teams (family teams and channels), and any shared files.</li>{/* Microsoft 365 and Teams, */}
+            <li>Collect any CLG materials, keys or devices, and change any shared passwords they knew.</li>{/* materials and passwords, */}
+            <li>If they were linked to CLG for their Working with Children Check, update that with the screening unit.</li>{/* their check link, */}
+            <li>Let their families know who the new tutor is, once matched.</li>{/* families. */}
+          </ul>{/* End of the list. */}
+        </div> // End of the block.
+      ) : ( // While the form is open:
+        <form action={formAction} className="space-y-3">{/* a form: */}
+          <input type="hidden" name="account_id" value={p.account_id} />{/* who (hidden), */}
+          <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">{/* what will happen: */}
+            <li>Their {[p.is_tutor && "tutor", p.is_admin && "admin"].filter(Boolean).join(" and ")} access ends straight away, and they&apos;re signed out everywhere.</li>{/* access ends, */}
+            {p.is_tutor && <li>Their matches with students end and their calendar link stops working.</li>}{/* matches and calendar (tutors), */}
+            {p.is_parent && <li>They keep their parent account and still see their own children.</li>}{/* parent account kept, */}
+            <li>Pay, hours, sessions, checks and child safety records are kept for 7 years, as the law requires, then deleted.</li>{/* records kept, */}
+            <li>You can bring them back later by adding a role.</li>{/* bring back later. */}
+          </ul>{/* End of the list. */}
+          {p.is_tutor && p.current_students > 0 && ( // If they're matched with students:
+            <p className="text-xs text-amber-900">{/* an amber note: */}
+              They&apos;re matched with {p.current_students} student{p.current_students === 1 ? "" : "s"}. Those students will need a new tutor in{" "}<a href="/matching" className="underline underline-offset-4">Matching</a>.{/* how many students need a new tutor, with a link to Matching. */}
+            </p> // End of the note.
+          )}{/* End of that part. */}
+          {blocked && ( // If they still have bookings coming up:
+            <p role="alert" className="text-xs text-red-800">{/* a red note: */}
+              They still have {p.upcoming_bookings} booking{p.upcoming_bookings === 1 ? "" : "s"} coming up. Move {p.upcoming_bookings === 1 ? "it" : "them"} to another tutor or end {p.upcoming_bookings === 1 ? "it" : "them"} in{" "}{/* how many bookings, and what to do, */}
+              <a href="/schedule?as=admin" className="underline underline-offset-4">Sessions</a> first.{/* with a link to the admin Sessions tab. */}
+            </p> // End of the note.
+          )}{/* End of that part. */}
+          <div className="grid gap-3 sm:grid-cols-2">{/* A two-column grid: */}
+            <label className="block space-y-1">{/* a label: */}
+              <span className="text-xs font-medium text-zinc-800">Their last day</span>{/* "Their last day", */}
+              <input type="date" name="left_on" defaultValue={today} max={today} required className={inputClass} />{/* a date box (today to start, nothing later). */}
+            </label>{/* End of the label. */}
+            <label className="block space-y-1">{/* A label: */}
+              <span className="text-xs font-medium text-zinc-800">Why they left</span>{/* "Why they left", */}
+              <select name="reason" defaultValue="" required className={inputClass}>{/* a drop-down: */}
+                <option value="" disabled>{/* a blank first option that can't be picked: */}
+                  Choose…{/* "Choose…", */}
+                </option>{/* (end of the option) */}
+                {Object.entries(LEAVING_REASON_WORDS).map(([code, words]) => ( // for each reason:
+                  <option key={code} value={code}>{/* an option: */}
+                    {words}{/* its words. */}
+                  </option> // (end of the option)
+                ))}{/* End of the loop. */}
+              </select>{/* End of the drop-down. */}
+            </label>{/* End of the label. */}
+          </div>{/* End of the grid. */}
+          <label className="block space-y-1">{/* A label: */}
+            <span className="text-xs font-medium text-zinc-800">Note (optional)</span>{/* "Note (optional)", */}
+            <textarea name="details" maxLength={1000} rows={2} className={inputClass} />{/* a small text box, */}
+            <span className="block text-xs text-zinc-500">Keep it short and factual. A child safety concern goes in Child safety, not here.</span>{/* a hint. */}
+          </label>{/* End of the label. */}
+          <label className="block space-y-1">{/* A label: */}
+            <span className="text-xs font-medium text-zinc-800">Type {p.full_name} to confirm</span>{/* asking them to type the name, */}
+            <input name="confirm_name" required autoComplete="off" className={inputClass} />{/* the name box. */}
+          </label>{/* End of the label. */}
+          <div className="flex flex-wrap gap-2">{/* A row of buttons: */}
+            <BusyButton type="submit" disabled={pending || blocked} className="rounded-full bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50">{/* a red button (greyed out while bookings remain): */}
+              {pending ? "Removing…" : "Remove from the team"}{/* its words change while removing. */}
+            </BusyButton>{/* End of the button. */}
+            <button type="button" onClick={() => setOpen(false)} className={plainButton}>{/* A button that cancels: */}
+              Cancel{/* "Cancel". */}
+            </button>{/* End of the button. */}
+          </div>{/* End of the row. */}
+          <Result state={state} />{/* The reply (an error, if any). */}
+        </form> // End of the form.
+      )}{/* End of the choice. */}
+    </div> // End of the box.
+  ); // End of what's shown.
+} // End of LeaveTeamPanel.
+
+// For someone who has left: when and why (owner and operations), and a way
+// to bring them back by adding a tutor or admin role.
+function BringBackPanel({ person: p, isOwner }: { person: StaffMember; isOwner: boolean }) {
+  return ( // Shows:
+    <div className="space-y-3">{/* a block: */}
+      <p className="text-sm text-zinc-700">{/* a line: */}
+        Left CLG on {p.left_on ? plainDate(p.left_on) : "an unknown date"}{/* when they left, */}
+        {p.leaving_reason ? ` (${LEAVING_REASON_WORDS[p.leaving_reason] ?? p.leaving_reason})` : ""}.{/* and why, if known. */}
+        {" "}Their records are kept for 7 years after they left.{/* records kept. */}
+      </p>{/* End of the line. */}
+      <p className="text-sm font-medium text-zinc-800">Bring them back</p>{/* The heading, */}
+      <AddRoleForm person={p} isOwner={isOwner} staffOnly />{/* the form for adding a tutor or admin role. */}
+    </div> // End of the block.
+  ); // End of what's shown.
+} // End of BringBackPanel.

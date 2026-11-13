@@ -9,7 +9,8 @@ import { StaffDirectory, type Invitation, type StaffMember } from "./staff-direc
 // Staff directory: every tutor and admin with their job title, searchable
 // and filterable. Any admin level can look; the owner and operations admins
 // can change job titles, add roles and send links; only the owner removes
-// roles. See docs/features/staff-directory.md.
+// roles or removes someone who has left CLG. See docs/features/staff-directory.md
+// and docs/features/staff-leaving.md.
 export default async function StaffDirectoryPage() {
   const viewer = await requireAdminLevel(ANY_ADMIN); // Makes sure the person is an admin at any level, and gets who they are.
   const canEdit = FULL_ADMIN.includes(viewer.level); // True for the owner and operations admins.
@@ -46,7 +47,7 @@ export default async function StaffDirectoryPage() {
           title="Staff directory" // titled "Staff directory",
           intro={ // with an introduction:
             canEdit // for those who can edit,
-              ? "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone. Press Manage on a person to change their job title, send them a link, or add or remove a role." // mentioning the Manage button,
+              ? "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone. Press Manage on a person to change their job title, send them a link, add or remove a role, or remove them from the team when they leave. Choose \"Left CLG\" under Status to see former staff." // mentioning the Manage button and former staff,
               : "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone." // otherwise without it.
           } // (end of the introduction)
         />{/* (end of the heading) */}
