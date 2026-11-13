@@ -130,7 +130,9 @@ with the session and go when the session is deleted.
 6. In Vercel, add MS_TENANT_ID, MS_CLIENT_ID and MS_CLIENT_SECRET, and
    redeploy.
 7. In the app, Admin > Teams links > Settings: enter the organiser email
-   and switch on. Then "Make links now" to test.
+   and its Object ID (portal.azure.com > Users > the account > Object ID;
+   Microsoft needs the ID, not the email, when the app makes meetings on
+   its own), and switch on. Then "Make links now" to test.
 
 The client secret expires; renew it before then (put a reminder in the
 calendar).
