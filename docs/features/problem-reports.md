@@ -92,8 +92,8 @@ the database tests run, and the owner checks it before it goes live.
   screenshots or record ids, only the reviewer's fix summary. Reviewers are
   told this next to the box.
 - **Child safety** (SA Child Safe Environments; CLG child safe policy): this
-  form is not a channel for safety concerns. The form says so and points to the Child safety page (top bar), not
-  the Child Safety Officer. If a report reveals a concern, the reviewer
+  form is not a channel for safety concerns. The form says so and points to the Child safety page in
+  the top bar. If a report reveals a concern, the reviewer
   follows the child safe policy, not this queue.
 - **Data breaches** (Notifiable Data Breaches scheme): if a report shows
   someone could see data they shouldn't, mark it Urgent and follow the breach
