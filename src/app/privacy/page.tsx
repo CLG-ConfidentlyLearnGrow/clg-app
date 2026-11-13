@@ -111,6 +111,11 @@ export default function PrivacyPage() {
             <strong>Suggesting tutors.</strong> The app lists tutors who hold the right child safety checks, subjects and
             times. A CLG staff member always makes the final match.{/* suggesting tutors. */}
           </li>{/* (end of point) */}
+          <li>{/* Point (Carla, 13 Nov 2026): */}
+            <strong>Checking writing for child safety.</strong> To keep children safe, the app checks what is written in it
+            for words that may point to a risk to a child. A match is seen only by CLG&apos;s Child Safety Officer or
+            deputy, who decide whether any action is needed. The app never acts on a match by itself.{/* checking writing for child safety. */}
+          </li>{/* (end of point) */}
           <li>{/* Point: */}
             <strong>Deleting old records</strong> on the timetable below.{/* deleting old records. */}
           </li>{/* (end of point) */}
