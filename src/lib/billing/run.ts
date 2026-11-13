@@ -76,6 +76,10 @@ export async function runBilling(): Promise<Summary> {
   if (pay.error) summary.problems.push(`Tutor pay: ${pay.error.message}`); // Notes any problem,
   else summary.payLines = pay.data ?? 0; // or records how many lines were built.
 
+  // New award rates that start today: raise any staff rate below the minimum (before pay is worked out).
+  const award = await db.rpc("billing_apply_award_rates"); // Asks the database to apply award rates in force today.
+  if (award.error) summary.problems.push(`Award rates: ${award.error.message}`); // Notes any problem.
+
   // Summary-writing time after each completed session, at the tutor's rate.
   const summaries = await db.rpc("billing_build_summary_pay", { p_from: from, p_to: yesterday }); // Asks the database to add session summary pay for the fortnight.
   if (summaries.error) summary.problems.push(`Session summary pay: ${summaries.error.message}`); // Notes any problem.
