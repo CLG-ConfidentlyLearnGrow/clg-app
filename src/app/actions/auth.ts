@@ -146,7 +146,8 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
   if (invite.status === "used") return { error: "This invitation has already been used. Please sign in instead." }; // Already used: sign in instead.
   if (invite.status === "expired") return { error: "This invitation has expired. Please ask CLG to send a new link." }; // Expired: ask for a new link.
 
-  const made = await createAdminClient().auth.admin.createUser({ // Makes the account with full access:
+  const admin = createAdminClient(); // Connects with full access.
+  const made = await admin.auth.admin.createUser({ // Makes the account with full access:
     email: invite.email, // the invited email,
     password: v.password, // the chosen password,
     email_confirm: true, // email already confirmed (the link proves it),
@@ -158,6 +159,17 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
       return { error: "That password is too easy to guess or has appeared in a data breach. Please choose another." }; // asks for another.
     } // End of that case.
     if (made.error.code === "email_exists") { // Email already has an account:
+      // If they once started signing up but never confirmed their email, that
+      // half-made account blocked joining. The invite link proves they own
+      // the inbox, so we finish that account instead: set the chosen password
+      // and confirm the email. Confirming hands over the invitation's role
+      // (the database does this whenever an email is first confirmed).
+      const finished = await finishUnconfirmedAccount(invite.email, v.password, v.full_name); // Tries to finish the half-made account.
+      if (finished) { // It worked:
+        const again = await supabase.auth.signInWithPassword({ email: invite.email, password: v.password }); // signs them in,
+        if (again.error) redirect("/login"); // (couldn't: goes to the login page)
+        redirect("/mfa"); // and goes to set up two-step login.
+      } // End of the finished case.
       return { // explains:
         error: // (the message)
           "This email already has a CLG account. Please sign in. If you never finished setting that account up, use \"Forgot your password?\" on the sign-in page, and your invitation is added when you do.", // sign in, or reset the password to finish setting up.
@@ -171,6 +183,28 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
   // Staff must set up two-step login before they can see anything else.
   redirect("/mfa"); // Goes to set up two-step login.
 } // End of joinAsStaff.
+
+// Finishes an account that was started on the sign-up page but never
+// confirmed: sets the password and name, and confirms the email. Returns
+// false (changing nothing) if the account is already confirmed or can't be
+// found, so a confirmed account can never be taken over this way.
+async function finishUnconfirmedAccount(address: string, password: string, fullName: string): Promise<boolean> {
+  const admin = createAdminClient(); // Connects with full access.
+  const row = await admin.from("account_private").select("account_id").eq("email", address.toLowerCase()).maybeSingle(); // Finds the account id from the email.
+  if (!row.data) return false; // Not found: nothing to finish.
+  const user = await admin.auth.admin.getUserById(row.data.account_id as string); // Reads the sign-in account.
+  if (user.error || !user.data.user || user.data.user.email_confirmed_at) return false; // Can't read it, or already confirmed: leave it alone.
+  const updated = await admin.auth.admin.updateUserById(row.data.account_id as string, { // Finishes it:
+    password, // with the chosen password,
+    email_confirm: true, // the email confirmed (the invite link proves it),
+    user_metadata: { ...user.data.user.user_metadata, full_name: fullName }, // and their name, keeping other saved details.
+  }); // End of the update.
+  if (updated.error) { // It failed:
+    console.error("Finishing unconfirmed account failed:", updated.error.code ?? updated.error.name, updated.error.message); // notes why in the server log,
+    return false; // and reports it didn't work.
+  } // End of the failure case.
+  return true; // It worked.
+} // End of finishUnconfirmedAccount.
 
 const signInSchema = z.object({ email, password: z.string().min(1).max(128) }); // The rules for signing in: email and password.
 
