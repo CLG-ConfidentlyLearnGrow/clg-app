@@ -8,7 +8,7 @@
 -- One), parent P1 ...01 (Cara's parent), parent P2 ...02.
 
 -- The migration is safe to run twice.
-\ir ../migrations/20261113700100_paid_term_reviews.sql
+\ir ../migrations/20261113900100_paid_term_reviews.sql
 
 select tests.claims(null); -- Signs out, so no one is signed in.
 -- Keeps Cara's student id as cara and her family as fam.

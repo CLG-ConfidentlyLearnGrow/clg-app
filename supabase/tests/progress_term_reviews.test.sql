@@ -10,8 +10,8 @@
 -- Runs the database change 20261103000800_progress_term_review_add_on.sql first, as this test needs it.
 \ir ../migrations/20261103000800_progress_term_review_add_on.sql
 -- Then the 12 Nov 2026 change (reviews only when the family says yes to a paid offer).
--- Runs the database change 20261113700100_paid_term_reviews.sql first, as this test needs it.
-\ir ../migrations/20261113700100_paid_term_reviews.sql
+-- Runs the database change 20261113900100_paid_term_reviews.sql first, as this test needs it.
+\ir ../migrations/20261113900100_paid_term_reviews.sql
 
 select tests.claims(null); -- Signs out, so no one is signed in.
 -- Keeps Cara's student id as cara.

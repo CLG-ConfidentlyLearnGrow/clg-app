@@ -119,6 +119,6 @@ don't line up with term dates.
 
 ### Files
 
-- Migration `supabase/migrations/20261113700100_paid_term_reviews.sql`.
+- Migration `supabase/migrations/20261113900100_paid_term_reviews.sql`.
 - Tests `supabase/tests/progress_term_review_offers.test.sql` (and updates
   to the term review, study plan add-on and billing tests).
