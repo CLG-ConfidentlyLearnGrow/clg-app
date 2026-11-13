@@ -2,6 +2,18 @@
 //
 import { Card, Page, TextLink } from "@/components/ui"; // The card, page frame and link style.
 
+// The web address shown in brackets in each step 1, so people know exactly which website to open.
+const APP_ADDRESS = "app.clgtutoring.com"; // The address as people read and type it.
+
+// Summary: the clickable "(app.clgtutoring.com)" shown after "this website" in each step 1.
+function WebsiteLink() {
+  return ( // Shows:
+    <>({/* an opening bracket, */}
+      <TextLink href={`https://${APP_ADDRESS}`}>{APP_ADDRESS}</TextLink>{/* the address as a link that opens CLG, */}
+    )</> // and a closing bracket.
+  ); // End of what's shown.
+} // End of WebsiteLink.
+
 // Step-by-step guide for adding CLG to a phone or computer home screen.
 export default function InstallPage() {
   return ( // Shows:
@@ -14,7 +26,7 @@ export default function InstallPage() {
       <Card title="iPhone or iPad">{/* A card for iPhone or iPad: */}
         <ol className="list-decimal space-y-2 pl-5 text-sm">{/* a numbered list: */}
           <li>{/* step: */}
-            Open this website in <strong>Safari</strong> (the blue compass icon).{/* open in Safari. */}
+            Open this website <WebsiteLink /> in <strong>Safari</strong> (the blue compass icon).{/* open the linked website in Safari. */}
           </li>{/* (end of step) */}
           <li>{/* Step: */}
             Tap the <strong>Share</strong> button: the square with an arrow pointing up. It&apos;s at the bottom of the
@@ -32,7 +44,7 @@ export default function InstallPage() {
       <Card title="Android phone or tablet">{/* A card for Android: */}
         <ol className="list-decimal space-y-2 pl-5 text-sm">{/* a numbered list: */}
           <li>{/* step: */}
-            Open this website in <strong>Chrome</strong>.{/* open in Chrome. */}
+            Open this website <WebsiteLink /> in <strong>Chrome</strong>.{/* open the linked website in Chrome. */}
           </li>{/* (end of step) */}
           <li>{/* Step: */}
             Tap the <strong>three dots</strong> in the top-right corner.{/* tap the three dots. */}
@@ -50,7 +62,7 @@ export default function InstallPage() {
       <Card title="Windows or Mac computer">{/* A card for computers: */}
         <ol className="list-decimal space-y-2 pl-5 text-sm">{/* a numbered list: */}
           <li>{/* step: */}
-            Open this website in <strong>Chrome</strong> or <strong>Microsoft Edge</strong>.{/* open in Chrome or Edge. */}
+            Open this website <WebsiteLink /> in <strong>Chrome</strong> or <strong>Microsoft Edge</strong>.{/* open the linked website in Chrome or Edge. */}
           </li>{/* (end of step) */}
           <li>{/* Step: */}
             Click the <strong>install icon</strong> at the right end of the address bar (a screen with a down arrow),
