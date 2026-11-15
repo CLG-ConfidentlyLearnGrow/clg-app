@@ -48,6 +48,9 @@ type Named = { concern_id: string; account_id: string | null; full_name: string 
 // The quiet steps for one tutor a concern names, as the database gives them.
 type Steps = { tutor_id: string; full_name: string; no_new_students_id: string | null; end_match_id: string | null; matched_now: boolean; upcoming_bookings: number }; // the tutor, their name, each step in place (if any), whether matched with the child now, and bookings left.
 
+// An "urgent: needs a new tutor" flag on a concern, as the database gives it.
+type Rematch = { tutor_id: string; upcoming_sessions: number; paid_sessions: number; first_session: string | null; sorted_at: string | null; sorted_note: string | null }; // the tutor, the counts, first date, and whether it's sorted.
+
 // An extra reader of a concern, as the database gives it.
 type Reader = { concern_id: string; account_id: string; reason: string }; // the concern, the reader and why ("names_both" or "shared").
 
@@ -90,6 +93,13 @@ export default async function ConcernsPage() { // The page itself.
     }), // End of the loop.
   ); // End of the reads.
   const stepsFor = new Map(stepRows); // The quiet steps, by concern.
+  const rematchRows = await Promise.all( // Reads any "urgent: needs a new tutor" flags for those concerns (at the same time):
+    stepRows.map(async ([id]) => { // for each concern that names someone:
+      const { data } = await supabase.rpc("safety_concern_rematch", { p_concern: id }); // asks the database,
+      return [id, (data ?? []) as Rematch[]] as const; // and keeps the answer with the concern's id.
+    }), // End of the loop.
+  ); // End of the reads.
+  const rematchFor = new Map(rematchRows); // The urgent flags, by concern.
   const open = rows.filter((c) => c.status !== "closed"); // Concerns still open.
   const closed = rows.filter((c) => c.status === "closed"); // Closed concerns.
 
@@ -162,6 +172,11 @@ export default async function ConcernsPage() { // The page itself.
                 {t.end_match_id ? ( // If the match was already ended from a concern:
                   <ActionForm action={liftHold} submitLabel="Allow matching again">{/* a form to lift the block: */}
                     <p className="font-medium">Match with {c.child_name} ended. They can&apos;t be matched again while this is in place.</p>{/* says so, */}
+                    {(rematchFor.get(c.id) ?? []).filter((r) => r.tutor_id === t.tutor_id).map((r) => ( // any urgent re-match flag for this tutor:
+                      <p key={r.tutor_id} className="text-zinc-700">{/* a line: */}
+                        {r.sorted_at ? `New tutor sorted: ${r.sorted_note ?? "done"}.` : `Urgent on the Matching page: ${r.paid_sessions} paid session(s) of ${r.upcoming_sessions} booked need a new tutor.`}{/* sorted, or still urgent with the counts. */}
+                      </p> // End of the line.
+                    ))}{/* End of the flags. */}
                     <input type="hidden" name="hold" value={t.end_match_id} />{/* (which step) */}
                     <TextArea label="Why are you lifting it? (The match won't restart by itself.)" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
                   </ActionForm> // End of the form.
@@ -169,7 +184,7 @@ export default async function ConcernsPage() { // The page itself.
                   <ActionForm action={endMatch} submitLabel={`End match with ${c.child_name}`}>{/* a form to take the step: */}
                     <p className="text-zinc-700">{/* what it does: */}
                       {t.matched_now ? `Ends ${t.full_name}'s match with ${c.child_name} today, so they can no longer open ${c.child_name}'s records.` : `${t.full_name} isn't matched with ${c.child_name} now. This stops them being matched in future.`}
-                      {t.upcoming_bookings > 0 ? ` They have ${t.upcoming_bookings} upcoming booking(s) together, which you'll need to change in Sessions.` : ""}{/* and any bookings to change. */}
+                      {t.upcoming_bookings > 0 ? ` They have ${t.upcoming_bookings} upcoming booking(s) together. ${c.child_name} will go to the top of the Matching page as "Urgent: needs a new tutor", with paid sessions counted and no reason shown.` : ""}{/* and what happens to booked sessions. */}
                     </p>{/* End of the explanation. */}
                     <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
                     <input type="hidden" name="tutor" value={t.tutor_id} />{/* (which tutor) */}

@@ -15,6 +15,7 @@ import { OfferForm, type OfferChoice, type StudentTerm } from "../schedule/forms
 import { CourseDetails, type CourseUnit } from "@/components/course-details"; // University and TAFE unit details, and their type.
 import { CourseOverviewForm } from "../admin/course-overview-form"; // The admin's course overview form.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
+import { UrgentRematchBox } from "@/components/urgent-rematch-box"; // The red "Urgent: needs a new tutor" box (from the child safety module).
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null }; // How many subjects are at each stage, and the longest wait.
 type QueueRow = { // One student-subject in the queue:
@@ -150,6 +151,8 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
             </Link>{/* end of the link. */}
           </nav>{/* End of the view switch. */}
         </div>{/* End of the top row. */}
+
+        <UrgentRematchBox />{/* Students who urgently need a new tutor, first (shows nothing when there are none). */}
 
         {view === "gaps" ? ( // If the gaps view is open:
           <GapsView /> // the gaps list.

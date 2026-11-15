@@ -161,7 +161,7 @@ export async function endMatch(_prev: FormState, formData: FormData): Promise<Fo
   if (error) return { error: plainError(error, "We couldn't do that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   const left = Number(data ?? 0); // How many bookings the pair still has.
-  return { message: left > 0 ? `Match ended. They have ${left} upcoming booking(s) with this student: please change ${left === 1 ? "it" : "them"} in Sessions.` : "Match ended. The tutor can no longer open this student's records." }; // Confirms, and points to bookings to change.
+  return { message: left > 0 ? `Match ended. They have ${left} upcoming booking(s) with this student, so the student is now at the top of the Matching page as "Urgent: needs a new tutor" (no reason shown).` : "Match ended. The tutor can no longer open this student's records." }; // Confirms, and says where the urgent re-match shows.
 } // End of endMatch.
 
 // Lifts a quiet step.
@@ -175,6 +175,18 @@ export async function liftHold(_prev: FormState, formData: FormData): Promise<Fo
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Lifted." }; // Confirms.
 } // End of liftHold.
+
+// Marks an "Urgent: needs a new tutor" flag sorted (admins who do matching).
+export async function markRematchSorted(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z.object({ id: z.uuid(), note: z.string().trim().min(2, "Please say what was done.").max(1000, "Please keep the note under 1000 characters.") }).safeParse(Object.fromEntries(formData)); // Checks the form.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("urgent_rematch_sorted", { p_id: parsed.data.id, p_note: parsed.data.note }); // Marks it sorted.
+  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  revalidatePath("/matching"); // Refreshes the Matching page.
+  return { message: "Marked sorted." }; // Confirms.
+} // End of markRematchSorted.
 
 // ---------------------------------------------------------------------------
 // Naming the Child Safety Officer and deputy (owner only)
