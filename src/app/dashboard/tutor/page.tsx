@@ -9,6 +9,7 @@ import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard 
 import { TUTOR_SECTIONS } from "@/lib/dashboard-menu"; // The tutor dashboard's own sections.
 import { SessionAnswersCard, getOffersToAnswer } from "@/components/session-answers-card"; // The "waiting for your answer" card and its count.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Whether two-step sign-in is still needed, and the signed-in person.
+import { requireStaffName } from "@/lib/staff-name"; // Asks for their first and last name if it's missing.
 import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks"; // State names, weekday names, check names, and the state type.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress"; // When notes are due, when progress counts as stalled, and "x hr ago" wording.
@@ -54,6 +55,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const viewer = await requireViewer(); // The signed-in person.
   if (!viewer.roles.includes("tutor")) redirect("/dashboard"); // Not a tutor: sends them to their main dashboard.
   if (needsTwoStep(viewer)) redirect("/mfa"); // Two-step sign-in not set up: sends them to set it up.
+  await requireStaffName(viewer, "/dashboard/tutor"); // No first and last name yet: asks for it first.
   const params = await searchParams; // The address's settings.
   const requested = SECTIONS.find((s) => s.id === params.section)?.id ?? "students"; // Which section was asked for (students if none or unknown).
 

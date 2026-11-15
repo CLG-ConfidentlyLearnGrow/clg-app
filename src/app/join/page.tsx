@@ -73,14 +73,15 @@ export default async function JoinPage({ searchParams }: PageProps<"/join">) {
     <Page title={`Join CLG as ${roleWords}`}>{/* a page titled with the role, */}
       <Card>{/* with a card: */}
         <p className="mb-4 text-sm text-zinc-600">{/* a grey line: */}
-          CLG has invited <strong>{invite.email}</strong> to join as {roleWords}. Choose your name and a password to
+          CLG has invited <strong>{invite.email}</strong> to join as {roleWords}. Enter your first and last name and choose a password to
           finish. Next, you&apos;ll set up two-step login with an authenticator app.{/* who was invited, and what happens next, */}
           {invite.role === "tutor" && // for tutors:
             " Then add your checks (Working with Children Check, RRHAN-EC and first aid) on your dashboard. CLG confirms them before you're matched with students."}{/* also about adding their checks. */}
         </p>{/* End of the line. */}
         <ActionForm action={joinAsStaff} submitLabel="Join CLG">{/* A form that creates the account: */}
           <input type="hidden" name="t" value={token} />{/* the link's code (hidden), */}
-          <Field label="Your full name" name="full_name" autoComplete="name" required maxLength={200} />{/* their full name, */}
+          <Field label="First name" name="first_name" autoComplete="given-name" required maxLength={100} />{/* their first name (required, so colleagues and families see a real name), */}
+          <Field label="Last name" name="last_name" autoComplete="family-name" required maxLength={100} />{/* their last name (required too), */}
           <Field // the password box:
             label="Password" // its label,
             name="password" // its field name,

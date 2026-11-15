@@ -76,9 +76,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
                     doesn't look like another menu link. */}
                 <div className="flex flex-col items-end gap-0.5 border-l border-zinc-200 pl-3 text-right">{/* The signed-in box: */}
                   <span className="text-[11px] leading-tight text-zinc-500">Signed in as</span>{/* "Signed in as", */}
-                  <span className="max-w-[10rem] truncate text-xs leading-tight text-zinc-700" title={viewer.fullName}>{/* their name (cut short if long, full name on hover): */}
+                  <Link href="/my-name" className="max-w-[10rem] truncate text-xs leading-tight text-zinc-700 underline-offset-2 hover:underline" title={`${viewer.fullName} (change your name)`}>{/* their name, linking to the page to change it (cut short if long, full name on hover): */}
                     {viewer.fullName}{/* the name itself, */}
-                  </span>{/* end of the name. */}
+                  </Link>{/* end of the name. */}
                   <form action={signOut} className="mt-1">{/* the sign-out form: */}
                     <button // its button:
                       type="submit" // sends the form,
