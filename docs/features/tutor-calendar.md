@@ -110,7 +110,7 @@ tutors do."
 - Separate table (`public.family_calendar_links`) and functions
   (`reset_family_calendar_link`, `remove_family_calendar_link`,
   `family_calendar_feed`) so tutor and family links can never open each
-  other's feeds. Migration `20261117400100_family_calendar.sql`; tests
+  other's feeds. Migration `20261117400700_family_calendar.sql`; tests
   `supabase/tests/scheduling_family_calendar.test.sql`.
 - The same migration makes the tutors' feed leave out sessions while the
   tutor's checks for that student have lapsed, to match their Sessions list
