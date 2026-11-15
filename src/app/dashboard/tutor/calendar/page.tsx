@@ -9,10 +9,11 @@ import { redirect } from "next/navigation"; // Sends the person to another page.
 import { Card, Empty, TextLink } from "@/components/ui"; // Shared page parts: card, empty line and text link.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Whether two-step sign-in is still needed, and the signed-in person.
-import { SESSION_STATUS_NAMES, currentTime, lengthLabel, placeLabel } from "@/lib/scheduling"; // Session status names, the time now, length wording, place wording.
+import { currentTime, lengthLabel, placeLabel } from "@/lib/scheduling"; // The time now, length wording, place wording.
+import { WeekGrid } from "@/components/week-grid"; // The seven-day grid of sessions.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { // The calendar helpers:
-  clockIn, // a time of day on a given clock,
+  clockIn, // a time of day on a given clock (for the link card),
   dateIn, // a date on a given clock,
   dayHeading, // a day's heading ("Mon 17 Nov"),
   isIsoDate, // whether text is a date,
@@ -21,7 +22,7 @@ import { // The calendar helpers:
   timeZoneForState, // a tutor's time zone from their state,
   timeZoneName, // a time zone's everyday name.
 } from "@/lib/tutor-calendar"; // End of the helpers.
-import { CalendarLinkCard } from "./link-card"; // The calendar link controls.
+import { CalendarLinkCard } from "@/components/calendar-link-card"; // The calendar link controls.
 
 type Session = { // One session as the database lists it:
   id: string; // its id,
@@ -66,7 +67,6 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/da
   // time; each session is then placed on its day by the tutor's own clock.
   const { data } = await supabase.rpc("list_sessions", { p_from: plusDays(monday, -1), p_to: plusDays(monday, 7) }); // The sessions they can see that week.
   const sessions = ((data ?? []) as Session[]).filter((s) => s.tutor_id === viewer.id && days.includes(dateIn(s.starts_at, zone))); // Only their own, only this week.
-  const byDay = new Map(days.map((d) => [d, sessions.filter((s) => dateIn(s.starts_at, zone) === d)])); // Each day's sessions.
   const booked = sessions.filter((s) => s.status !== "cancelled"); // Sessions going ahead (or done).
   const minutes = booked.reduce((t, s) => t + (new Date(s.ends_at).getTime() - new Date(s.starts_at).getTime()) / 60000, 0); // Their total time this week, in minutes.
 
@@ -85,45 +85,19 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/da
           <TextLink href={weekHref(plusDays(monday, 7))}>Next week →</TextLink>{/* the week after. */}
         </nav>{/* End of the week buttons. */}
 
-        <ol className="grid gap-3 md:grid-cols-7">{/* the seven days: one under another on phones, side by side on wider screens: */}
-          {days.map((d) => { // For each day:
-            const list = byDay.get(d) ?? []; // its sessions,
-            const isToday = d === today; // whether it's today.
-            return ( // Shows:
-              <li key={d} className={`rounded-xl border p-3 ${isToday ? "border-teal-400 bg-teal-50/40" : "border-zinc-200"}`}>{/* a box for the day (outlined in teal if it's today): */}
-                <p className="mb-2 text-sm font-semibold">{/* the day's heading: */}
-                  {dayHeading(d)}{/* e.g. "Mon 17 Nov", */}
-                  {isToday && <span className="ml-1 text-xs font-normal text-teal-800">(today)</span>}{/* and "(today)" if it is. */}
-                </p>{/* End of the heading. */}
-                {list.length === 0 ? ( // No sessions that day:
-                  <p className="text-xs text-zinc-400">No sessions</p> // says so, quietly.
-                ) : ( // Otherwise:
-                  <ul className="space-y-2">{/* the day's sessions: */}
-                    {list.map((s) => { // For each session:
-                      const cancelled = s.status === "cancelled"; // whether it's cancelled.
-                      return ( // Shows:
-                        <li key={s.id} className={`rounded-lg bg-white p-2 text-xs shadow-sm ring-1 ring-zinc-100 ${cancelled ? "opacity-60" : ""}`}>{/* a small card (faded if cancelled): */}
-                          <p className={`font-semibold ${cancelled ? "line-through" : ""}`}>{/* the time (crossed out if cancelled): */}
-                            {clockIn(s.starts_at, zone)}–{clockIn(s.ends_at, zone)}{/* start to end, */}
-                          </p>{/* End of the time. */}
-                          <p>{s.student_name}</p>{/* the student, */}
-                          <p className="text-zinc-600">{s.subject}</p>{/* the subject, */}
-                          <p className="text-zinc-600">{placeLabel(s.delivery, s.library_name)}</p>{/* where, */}
-                          {s.status !== "scheduled" && <p className="text-zinc-500">{SESSION_STATUS_NAMES[s.status] ?? s.status}</p>}{/* its status, unless simply booked, */}
-                          {s.meeting_url && !cancelled && ( // the Teams link, for online sessions going ahead:
-                            <a href={s.meeting_url} target="_blank" rel="noreferrer" className="font-medium text-teal-700 underline">{/* opens Teams in a new tab, */}
-                              Join on Teams{/* its words. */}
-                            </a> // End of the link.
-                          )}{/* End of the Teams part. */}
-                        </li> // End of the session's card.
-                      ); // End of what's shown for this session.
-                    })}{/* End of the sessions. */}
-                  </ul> // End of the day's sessions.
-                )}{/* End of the day's contents. */}
-              </li> // End of the day's box.
-            ); // End of what's shown for this day.
-          })}{/* End of the days. */}
-        </ol>{/* End of the seven days. */}
+        <WeekGrid // the seven days:
+          days={days} // the week's dates,
+          today={today} // today (outlined),
+          zone={zone} // times on the tutor's clock,
+          items={sessions.map((s) => ({ // each session:
+            id: s.id, // its id,
+            status: s.status, // status,
+            starts_at: s.starts_at, // start,
+            ends_at: s.ends_at, // end,
+            lines: [s.student_name, s.subject, placeLabel(s.delivery, s.library_name)], // the student, subject and place,
+            meeting_url: s.meeting_url, // and Teams link.
+          }))} // (end of the sessions)
+        />{/* End of the seven days. */}
         {sessions.length === 0 && ( // No sessions all week:
           <div className="mt-4">{/* a little space, then: */}
             <Empty>No sessions this week. New bookings appear here once they&apos;re confirmed.</Empty>{/* a friendly note. */}

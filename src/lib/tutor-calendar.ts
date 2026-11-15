@@ -80,13 +80,14 @@ export type FeedSession = { // A feed row:
   session_id: string; // the session's id,
   status: string; // its status (scheduled, completed, cancelled, no_show),
   student_first_name: string; // the student's first name,
+  tutor_first_name?: string; // the tutor's first name (family feeds only),
   subject: string; // the subject,
   delivery: string; // where (online, library, home, school),
   place_name: string | null; // the library's name (libraries only),
   place_address: string | null; // the library's address (libraries only),
   starts_at: string; // when it starts,
   ends_at: string; // when it ends,
-  time_zone: string; // the tutor's time zone.
+  time_zone: string; // the time zone (the tutor's, or the student's for family feeds).
 }; // End of FeedSession.
 
 // Makes text safe inside a calendar file: backslashes, semicolons, commas
@@ -130,9 +131,16 @@ function whereWords(s: FeedSession): string { // Takes a session.
   return "In person (see the CLG app)"; // At home: no address in the calendar (the app has the details).
 } // End of whereWords.
 
-// Writes the whole calendar file for a tutor's sessions.
-export function buildCalendar(sessions: FeedSession[], appUrl: string): string { // Takes the sessions and the app's web address.
-  const zone = sessions[0]?.time_zone ?? LOCAL_TIME_ZONE; // The tutor's time zone (Adelaide if there are no sessions).
+// Writes the whole calendar file. "pagePath" is the app page each entry
+// links to (where the Join on Teams button is); "uidPrefix" keeps a family
+// feed's entries apart from a tutor feed's for the same session.
+export function buildCalendar( // Takes:
+  sessions: FeedSession[], // the sessions,
+  appUrl: string, // the app's web address,
+  { pagePath = "/dashboard/tutor/calendar", uidPrefix = "" }: { pagePath?: string; uidPrefix?: string } = {}, // and, optionally, the page to link to and an id prefix.
+): string { // Gives back the file's text.
+  const page = `${appUrl}${pagePath}`; // The full address of the page each entry links to.
+  const zone = sessions[0]?.time_zone ?? LOCAL_TIME_ZONE; // The time zone (Adelaide if there are no sessions).
   const stamp = icsTime(Date.now()); // When this file was made.
   const lines: string[] = [ // The calendar's opening lines:
     "BEGIN:VCALENDAR", // starts the calendar,
@@ -147,24 +155,25 @@ export function buildCalendar(sessions: FeedSession[], appUrl: string): string {
   ]; // End of the opening lines.
   for (const s of sessions) { // For each session:
     const cancelled = s.status === "cancelled"; // whether it's cancelled,
-    const title = `${cancelled ? "Cancelled: " : ""}CLG: ${s.student_first_name} – ${s.subject}`; // its title, e.g. "CLG: Sam – Mathematics",
+    const withTutor = s.tutor_first_name ? ` with ${s.tutor_first_name}` : ""; // " with Tara" (family feeds only),
+    const title = `${cancelled ? "Cancelled: " : ""}CLG: ${s.student_first_name} – ${s.subject}${withTutor}`; // its title, e.g. "CLG: Sam – Mathematics" (or "... with Tara"),
     const details = [ // the notes inside the entry:
-      `${s.student_first_name} – ${s.subject}`, // the student's first name and subject,
+      `${s.student_first_name} – ${s.subject}${withTutor}`, // the student's first name and subject (and tutor),
       whereWords(s), // where,
-      s.delivery === "online" && !cancelled ? `Join on Teams from the CLG app: ${appUrl}/dashboard/tutor/calendar` : "", // where to join an online session (the Teams link stays in the app, Carla 15 Nov 2026),
+      s.delivery === "online" && !cancelled ? `Join on Teams from the CLG app: ${page}` : "", // where to join an online session (the Teams link stays in the app, Carla 15 Nov 2026),
       cancelled ? "This session was cancelled." : "", // a note if it's cancelled,
-      `Details and changes: ${appUrl}/dashboard/tutor/calendar`, // where to see more in the app.
+      `Details and changes: ${page}`, // where to see more in the app.
     ].filter(Boolean).join("\n"); // (leaving out blank lines, one per line)
     lines.push( // Adds the entry:
       "BEGIN:VEVENT", // starts it,
-      `UID:${s.session_id}@clgtutoring.com`, // its lasting id (so changes update the same entry),
+      `UID:${uidPrefix}${s.session_id}@clgtutoring.com`, // its lasting id (so changes update the same entry),
       `DTSTAMP:${stamp}`, // when this copy was made,
       `DTSTART:${icsTime(s.starts_at)}`, // when it starts,
       `DTEND:${icsTime(s.ends_at)}`, // when it ends,
       `SUMMARY:${icsText(title)}`, // its title,
       `LOCATION:${icsText(whereWords(s))}`, // where,
       `DESCRIPTION:${icsText(details)}`, // the notes,
-      `URL:${appUrl}/dashboard/tutor/calendar`, // the entry's link: the Weekly calendar page (with the Join on Teams button),
+      `URL:${page}`, // the entry's link: the Weekly calendar page (with the Join on Teams button),
       `STATUS:${cancelled ? "CANCELLED" : "CONFIRMED"}`, // cancelled or going ahead,
       `TRANSP:${cancelled ? "TRANSPARENT" : "OPAQUE"}`, // cancelled ones don't mark the tutor as busy,
       "END:VEVENT", // ends it.

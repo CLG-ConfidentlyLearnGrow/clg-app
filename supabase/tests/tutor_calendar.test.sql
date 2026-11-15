@@ -100,15 +100,25 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.tutor_calendar_links where tutor_id = '00000000-0000-0000-0000-000000000013' and last_used_at is not null), 1, 'reading the feed notes when it was last used'); -- Checks: reading the feed notes when it was last used.
 
 -- The tutor's own state sets the time zone (a Victorian tutor sees Melbourne time).
+begin; -- Starts a change that will be undone, so T3 stays as before for later tests.
 update public.tutor_work_settings set work_state = 'VIC' where tutor_id = '00000000-0000-0000-0000-000000000013'; -- Sets T3's work state to Victoria.
-set role anon; -- Acts as a calendar app (not signed in).
+insert into public.tutor_checks (tutor_id, kind, reference, expires_on, verified_at) -- Gives T3 any checks Victoria needs of tutors working there (so their sessions still show):
+select '00000000-0000-0000-0000-000000000013', r.kind, 'REF', current_date + 365, now() -- (each needed check, confirmed, in date for a year)
+from public.check_requirements r where r.state = 'VIC' and r.basis = 'tutor_state'; -- (Victoria's tutor-state checks).
+set local role anon; -- Acts as a calendar app (not signed in), just inside this change.
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where time_zone = 'Australia/Melbourne'), :t3_in_window, 'feed uses the tutor''s own time zone'); -- Checks: feed uses the tutor's own time zone.
-reset role; -- Goes back to the all-powerful test user (access rules off).
-update public.tutor_work_settings set work_state = null where tutor_id = '00000000-0000-0000-0000-000000000013'; -- Puts T3's work state back to not set.
+rollback; -- Undoes the change (T3's work state and checks are as before).
 
 -- ---------------------------------------------------------------------------
 -- The link stops working when the person is no longer a tutor
 -- ---------------------------------------------------------------------------
+-- While the tutor's checks have lapsed, the feed hides those sessions (Carla, 16 Nov 2026).
+begin; -- Starts a change that will be undone, so T3's checks stay current for later tests.
+update public.tutor_checks set expires_on = current_date - 1 where tutor_id = '00000000-0000-0000-0000-000000000013'; -- Makes all of T3's checks expired.
+set local role anon; -- Acts as a calendar app (not signed in), just inside this change.
+select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_online'), 0, 'feed hides sessions while the tutor''s checks have lapsed'); -- Checks: feed hides sessions while the tutor's checks have lapsed.
+rollback; -- Undoes the change (the checks are current again).
+
 begin; -- Starts a change that will be undone, so T3 stays a tutor for later tests.
 delete from public.account_roles where account_id = '00000000-0000-0000-0000-000000000013' and role = 'tutor'; -- Takes away T3's tutor role.
 set local role anon; -- Acts as a calendar app (not signed in), just inside this change.

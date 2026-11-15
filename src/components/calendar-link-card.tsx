@@ -1,25 +1,35 @@
-// Summary: the "Add to your own calendar" controls on the tutor's weekly
-// calendar page. A tutor makes a private calendar link, copies it (or taps
-// a button for Google or Apple calendar), and can make a new link or turn
-// it off. The link is shown once, straight after it's made, because CLG
-// keeps only a scrambled copy (Carla, 12 Nov 2026).
+// Summary: the "Add to your own calendar" controls on the weekly calendar
+// pages (tutors, Carla 12 Nov 2026; parents and students, 15 Nov 2026).
+// The person makes a private calendar link, copies it (or taps a button for
+// Google or Apple calendar), and can make a new link or turn it off. The
+// link is shown once, straight after it's made, because CLG keeps only a
+// scrambled copy.
 //
 "use client"; // Runs in the browser, so the link can be shown and copied straight away.
 
 import { useActionState, useState } from "react"; // React's form helper, and a remembered value.
-import { makeCalendarLink, turnOffCalendarLink, type CalendarLinkState } from "@/app/actions/calendar"; // The server actions, and their reply's shape.
+import { // The server actions, and their reply's shape:
+  makeCalendarLink, // make a tutor link,
+  makeFamilyCalendarLink, // make a parent or student link,
+  turnOffCalendarLink, // turn off a tutor link,
+  turnOffFamilyCalendarLink, // turn off a parent or student link,
+  type CalendarLinkState, // the reply's shape.
+} from "@/app/actions/calendar"; // End of the actions.
 import { BusyButton, FormMessage } from "@/components/ui"; // The busy-aware button and the message box.
 
 // The small outline button look used for the secondary buttons here.
 const outline = // The look:
   "rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 transition hover:border-zinc-500 hover:bg-zinc-50"; // rounded, thin border, darker on hover.
 
-// The calendar link controls. "hasLink" says whether the tutor already has
-// a working link; "madeOn" and "lastUsed" are words about it, if so.
-export function CalendarLinkCard({ hasLink, madeOn, lastUsed }: { hasLink: boolean; madeOn: string | null; lastUsed: string | null }) { // Takes the link's state.
+// The calendar link controls. "kind" says whose link it is (a tutor's or a
+// family member's); "hasLink" says whether they already have a working
+// link; "madeOn" and "lastUsed" are words about it, if so.
+export function CalendarLinkCard({ kind = "tutor", hasLink, madeOn, lastUsed }: { kind?: "tutor" | "family"; hasLink: boolean; madeOn: string | null; lastUsed: string | null }) { // Takes the link's state.
   const [made, formAction] = useActionState( // One form for both buttons: its latest reply and its sender.
     async (_prev: CalendarLinkState, data: FormData) => // Runs when a button is pressed:
-      data.get("do") === "off" ? turnOffCalendarLink() : makeCalendarLink(), // "Turn off" turns it off; otherwise makes a new link.
+      data.get("do") === "off" // "Turn off" pressed:
+        ? (kind === "family" ? turnOffFamilyCalendarLink() : turnOffCalendarLink()) // turns off the right kind of link;
+        : (kind === "family" ? makeFamilyCalendarLink() : makeCalendarLink()), // otherwise makes a new one of the right kind.
     {} as CalendarLinkState, // Starts with nothing to show.
   ); // End of the form helper.
   const turnedOff = Boolean(made.message) && !made.link && !made.error; // Whether the link was just turned off.
