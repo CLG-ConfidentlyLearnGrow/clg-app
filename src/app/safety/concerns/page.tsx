@@ -5,9 +5,11 @@
 // shared on purpose. For each concern: who it's about, the details, the
 // follow-up notes, a box to add a note, where it's up to, and ways to pass
 // it on or share it with the other contact. Notes can't be edited or deleted.
+// For a tutor the concern names, two quiet steps: stop new students, and end
+// the match with the child in the concern. The tutor is never told why.
 //
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
-import { addConcernNote, passOnConcern, setConcernStatus, shareConcern } from "@/app/actions/child-safety"; // The server actions for notes, stages, passing on and sharing.
+import { addConcernNote, endMatch, liftHold, passOnConcern, setConcernStatus, shareConcern, stopNewStudents } from "@/app/actions/child-safety"; // The server actions for notes, stages, passing on, sharing and the quiet steps.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Card, Empty, Page, Select, TextArea } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down and multi-line box.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
@@ -42,6 +44,9 @@ type Note = { id: string; concern_id: string; author_name: string; note: string;
 
 // A CLG worker a concern is about, as the database gives it.
 type Named = { concern_id: string; account_id: string | null; full_name: string }; // the concern, the worker's account and their name.
+
+// The quiet steps for one tutor a concern names, as the database gives them.
+type Steps = { tutor_id: string; full_name: string; no_new_students_id: string | null; end_match_id: string | null; matched_now: boolean; upcoming_bookings: number }; // the tutor, their name, each step in place (if any), whether matched with the child now, and bookings left.
 
 // An extra reader of a concern, as the database gives it.
 type Reader = { concern_id: string; account_id: string; reason: string }; // the concern, the reader and why ("names_both" or "shared").
@@ -78,6 +83,13 @@ export default async function ConcernsPage() { // The page itself.
   const rows = ((concerns.data ?? []) as Concern[]).filter((c) => c.recipient_id === viewer.id || sharedWithMe.has(c.id)); // Only concerns they handle (not ones they only raised).
   const noteRows = (notes.data ?? []) as Note[]; // The notes.
   const others = ((contacts.data ?? []) as { role: string; account_id: string; full_name: string }[]).filter((c) => c.account_id !== viewer.id); // The other contact (to pass to).
+  const stepRows = await Promise.all( // Reads the quiet steps for each concern that names someone (at the same time):
+    rows.filter((c) => namedRows.some((n) => n.concern_id === c.id)).map(async (c) => { // for each such concern:
+      const { data } = await supabase.rpc("safety_concern_quiet_steps", { p_concern: c.id }); // asks the database,
+      return [c.id, (data ?? []) as Steps[]] as const; // and keeps the answer with the concern's id.
+    }), // End of the loop.
+  ); // End of the reads.
+  const stepsFor = new Map(stepRows); // The quiet steps, by concern.
   const open = rows.filter((c) => c.status !== "closed"); // Concerns still open.
   const closed = rows.filter((c) => c.status === "closed"); // Closed concerns.
 
@@ -124,6 +136,52 @@ export default async function ConcernsPage() { // The page itself.
           </dd>{/* End of the line. */}
         </dl>{/* End of the details. */}
         <p className="mt-4 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm">{c.what_happened}</p>{/* What happened, keeping their line breaks. */}
+
+        {(stepsFor.get(c.id) ?? []).map((t) => ( // For each tutor the concern names, the quiet steps:
+          <div key={t.tutor_id} className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{/* an amber box: */}
+            <p className="font-semibold">Quiet steps for {t.full_name}</p>{/* its heading, */}
+            <p className="mt-1 text-amber-950">Nothing happens unless you press a button. {t.full_name} won&apos;t be told why, and admins doing matching only see &quot;Can&apos;t be matched&quot;.</p>{/* what these do, */}
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">{/* the two steps, side by side on wide screens: */}
+              <div>{/* step 1: */}
+                {t.no_new_students_id ? ( // If they're already stopped from new students:
+                  <ActionForm action={liftHold} submitLabel="Lift">{/* a form to lift it: */}
+                    <p className="font-medium">Stopped from new students.</p>{/* says so, */}
+                    <input type="hidden" name="hold" value={t.no_new_students_id} />{/* (which step) */}
+                    <TextArea label="Why are you lifting it?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+                  </ActionForm> // End of the form.
+                ) : ( // Otherwise:
+                  <ActionForm action={stopNewStudents} submitLabel="Stop new students">{/* a form to take the step: */}
+                    <p className="text-zinc-700">They keep the students they have now, but won&apos;t be matched with anyone new.</p>{/* what it does, */}
+                    <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
+                    <input type="hidden" name="tutor" value={t.tutor_id} />{/* (which tutor) */}
+                    <TextArea label="Why?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+                  </ActionForm> // End of the form.
+                )}{/* End of step 1. */}
+              </div>{/* End of step 1. */}
+              <div>{/* step 2: */}
+                {t.end_match_id ? ( // If the match was already ended from a concern:
+                  <ActionForm action={liftHold} submitLabel="Allow matching again">{/* a form to lift the block: */}
+                    <p className="font-medium">Match with {c.child_name} ended. They can&apos;t be matched again while this is in place.</p>{/* says so, */}
+                    <input type="hidden" name="hold" value={t.end_match_id} />{/* (which step) */}
+                    <TextArea label="Why are you lifting it? (The match won't restart by itself.)" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+                  </ActionForm> // End of the form.
+                ) : c.student_id ? ( // Otherwise, if the child is a CLG student:
+                  <ActionForm action={endMatch} submitLabel={`End match with ${c.child_name}`}>{/* a form to take the step: */}
+                    <p className="text-zinc-700">{/* what it does: */}
+                      {t.matched_now ? `Ends ${t.full_name}'s match with ${c.child_name} today, so they can no longer open ${c.child_name}'s records.` : `${t.full_name} isn't matched with ${c.child_name} now. This stops them being matched in future.`}
+                      {t.upcoming_bookings > 0 ? ` They have ${t.upcoming_bookings} upcoming booking(s) together, which you'll need to change in Sessions.` : ""}{/* and any bookings to change. */}
+                    </p>{/* End of the explanation. */}
+                    <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
+                    <input type="hidden" name="tutor" value={t.tutor_id} />{/* (which tutor) */}
+                    <TextArea label="Why?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+                  </ActionForm> // End of the form.
+                ) : ( // A child who isn't a CLG student:
+                  <p className="text-zinc-700">The child isn&apos;t a CLG student, so there&apos;s no match to end.</p> // says so.
+                )}{/* End of step 2. */}
+              </div>{/* End of step 2. */}
+            </div>{/* End of the two steps. */}
+          </div> // End of the box.
+        ))}{/* End of the quiet steps. */}
 
         <h3 className="mt-6 text-sm font-semibold">Follow-up notes</h3>{/* The notes heading. */}
         {mine.length === 0 ? ( // If no notes:
