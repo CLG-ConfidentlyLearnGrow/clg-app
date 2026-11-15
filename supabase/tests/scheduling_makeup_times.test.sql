@@ -53,7 +53,7 @@ select tests.eq((select count(*) from public.session_makeup_offers where id = :'
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_wed' and account_id = '00000000-0000-0000-0000-000000000003' -- Checks the parent is asked to pick:
   and title like '%pick a make-up time%' and body like '%Make-up times offered%'), 1, 'parent asked to pick'); -- (with the times listed).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks the owner admin hears about the cancel:
-  and kind = 'staff_alert' and title = 'Session cancelled' and body like '%Reason: Sick or unwell%' and body like '%Waiting for the family%'), 1, 'CLG told about the cancel'); -- (with the reason and who picks).
+  and kind = 'staff_alert' and title = 'Session cancelled' and body like '%10:15am%' and body like '%Reason: Sick or unwell%' and body like '%Waiting for the family%'), 1, 'CLG told about the cancel'); -- (with the reason and who picks).
 
 -- Who can see the offer.
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as parent P4 (not Sam's parent).
@@ -89,7 +89,7 @@ select tests.eq((select count(*) from public.session_makeup_offers where id = :'
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor is told:
   and session_id = :'makeup_wed' and title = 'Make-up session booked'), 1, 'tutor told about the make-up'); -- (make-up booked).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks CLG is told:
-  and kind = 'staff_alert' and title = 'Make-up session booked'), 1, 'CLG told about the make-up'); -- (make-up booked).
+  and kind = 'staff_alert' and title = 'Make-up session booked' and body like '%10:15am%'), 1, 'CLG told about the make-up'); -- (make-up booked, for the Wednesday 10:15am session).
 
 -- ---------------------------------------------------------------------------
 -- The family cancels Tuesday; the tutor says neither time works
@@ -150,7 +150,7 @@ select tests.eq((select count(*) from public.list_makeup_offers() where id = :'o
 select tests.eq(private.expire_makeup_offers(), 1, 'one offer ran out'); -- Checks: the job finds it.
 select tests.eq((select count(*) from public.session_makeup_offers where id = :'offer_tue' and status = 'expired'), 1, 'marked as run out'); -- Checks: it's marked as run out.
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks CLG is told:
-  and title = 'Make-up time not picked'), 1, 'CLG told nobody picked'); -- (nobody picked).
+  and title = 'Make-up time not picked' and body like '%9:00am%'), 1, 'CLG told nobody picked'); -- (nobody picked, for the Tuesday 9am session).
 select tests.eq(private.expire_makeup_offers(), 0, 'only once'); -- Checks: it's handled only once.
 
 -- The helper on its own: a time too soon is refused when offering.

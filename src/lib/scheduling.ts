@@ -140,6 +140,7 @@ export const QUARTER_HOURS: string[] = Array.from({ length: 14 * 4 }, (_, i) => 
 // Plain words for where a make-up offer is up to.
 export const MAKEUP_STATUS_NAMES: Record<string, string> = {
   waiting: "Waiting for a pick", // Two times offered, not yet answered.
+  confirming: "Waiting for confirmation", // One side picked; the other side must agree first.
   picked: "Make-up booked", // A time was picked and booked.
   declined: "Neither time works", // The other side said neither works.
   expired: "Not picked in time", // Both times passed with no answer.

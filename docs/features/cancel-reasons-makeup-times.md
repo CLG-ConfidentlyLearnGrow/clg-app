@@ -67,8 +67,19 @@ the moment they cancel, and lets the other side say yes with one tap.
 4. **CLG hears at each step** (owner and operations admins): the cancel with
    its reason, the pick or "neither", and, if both times pass with no answer,
    a "Make-up time not picked" notice (checked every 15 minutes).
-5. CLG front desk can pick on either side's behalf (for a phone call).
-   Admins see every offer, and where it's up to, in a "Make-up times" card.
+5. **Everyone agrees before it's booked** (Carla, 16 Nov 2026: "A session
+   which has been altered needs to be confirmed by the other or all parties
+   before being confirmed"). When the tutor or family offers the times
+   themselves, their offer is their agreement and the other side's pick is
+   theirs. CLG staff can't pick or confirm on anyone's behalf. When CLG
+   staff cancel and offer the times (for CLG, or for a tutor or family on
+   the phone), neither side has agreed yet: one side picks, the other side
+   confirms ("Confirm a make-up time" card), and only then is it booked. If
+   they can't do it they say why, and CLG is told. One parent, or the
+   student 16+, answers for the family, as with every other booking
+   approval. Migration `20261118100200_makeup_times_everyone_agrees.sql`;
+   tests in `supabase/tests/scheduling_makeup_confirm.test.sql`.
+6. Admins see every offer, and where it's up to, in a "Make-up times" card.
 
 Stopping a whole booking is unchanged (reason optional, no make-up times).
 

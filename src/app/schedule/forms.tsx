@@ -15,6 +15,7 @@ import { // The server actions these forms send to:
   joinWaitlist, // join the waitlist,
   answerBooking, // the tutor answers a booking,
   answerMakeup, // pick a make-up time,
+  confirmMakeup, // confirm a picked make-up time,
   approveBooking, // the family approves a booking,
   cancelSession, // cancel one session,
   confirmAvailability, // confirm availability for next term,
@@ -584,7 +585,7 @@ export function CancelForm({ // Its settings:
           <legend className="text-sm font-medium text-zinc-800">Two other times this week</legend>{/* the heading, */}
           <p className="text-xs text-zinc-600">{/* a small note: */}
             Same length and place, in the same week (Monday to Sunday), at least 2 hr from now.{" "}{/* the rules, */}
-            {isTutor ? "The family picks one" : isAdmin ? "The other side picks one" : "Your tutor picks one"}, and CLG is told.{/* who picks. */}
+            {isTutor ? "The family picks one" : isAdmin ? "The tutor or family picks one and the other confirms it" : "Your tutor picks one"}, and CLG is told.{/* who picks (when CLG offers the times, both sides must agree). */}
           </p>{/* End of the note. */}
           {timePicker(1)}{/* the first time, */}
           {timePicker(2)}{/* the second time, */}
@@ -641,6 +642,27 @@ export function MakeupAnswerForm({ offerId, option1, option2 }: { offerId: strin
     </ButtonsForm> // End of the form.
   ); // End of what's shown.
 } // End of MakeupAnswerForm.
+
+// When CLG offered the times: the side that didn't pick confirms the picked
+// time, or says it doesn't work (with a reason). Confirming books it.
+export function MakeupConfirmForm({ offerId, pickedAt }: { offerId: string; pickedAt: string }) { // (takes the offer and the picked time)
+  return ( // Shows:
+    <ButtonsForm action={confirmMakeup}>{/* a form with its own buttons, sending to confirmMakeup: */}
+      {(pending) => ( // given whether it's sending:
+        <>{/* (a group) */}
+          <input type="hidden" name="offer_id" value={offerId} />{/* the offer (hidden), */}
+          <Button type="submit" name="answer" value="yes" disabled={pending}>{/* the confirm button: */}
+            Confirm {sessionWhen(pickedAt)}{/* e.g. "Confirm Thu 20 Nov, 4:00pm". */}
+          </Button>{/* (end of the button) */}
+          <TextArea label="If it doesn't work, please say why" name="note" maxLength={500} rows={2} />{/* why it doesn't work, */}
+          <BusyButton type="submit" name="answer" value="no" disabled={pending} className={quietButton}>{/* a quiet "doesn't work" button: */}
+            That time doesn&apos;t work{/* "That time doesn't work". */}
+          </BusyButton>{/* (end of the button) */}
+        </> // End of the group.
+      )}{/* End of this part. */}
+    </ButtonsForm> // End of the form.
+  ); // End of what's shown.
+} // End of MakeupConfirmForm.
 
 // The tutor records a session as done or a no-show.
 export function OutcomeForm({ id }: { id: string }) { // (takes the session)
