@@ -88,5 +88,5 @@ weekly bookings - or at least integrate them into their own calendars."
   (`src/lib/teams/graph.ts`). A tutor's own calendar is only as safe as
   their account, so the calendar entry says "Online – join from the CLG
   app" and links to the Weekly calendar page. Migration
-  `20261117300100_calendar_no_teams_links.sql` removes the column from the
+  `20261117300200_calendar_no_teams_links.sql` removes the column from the
   feed.
