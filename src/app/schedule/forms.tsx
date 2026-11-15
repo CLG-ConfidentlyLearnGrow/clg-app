@@ -14,6 +14,7 @@ import { // The server actions these forms send to:
   answerRenewal, // answer next term's renewal,
   joinWaitlist, // join the waitlist,
   answerBooking, // the tutor answers a booking,
+  answerMakeup, // pick a make-up time,
   approveBooking, // the family approves a booking,
   cancelSession, // cancel one session,
   confirmAvailability, // confirm availability for next term,
@@ -32,7 +33,7 @@ import { ActionForm } from "@/components/action-form"; // The form wrapper that 
 import { Button, Field, FormMessage, Select, TextArea } from "@/components/ui"; // Shared form parts: button, text box, form message, drop-down and big text box.
 import { initialFormState, type FormState } from "@/lib/forms"; // A form's starting state, and the type for a form's reply.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while it sends.
-import { SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, placeLabel } from "@/lib/scheduling"; // Scheduling helpers: session lengths, weekday names, a time in words, and a place in words.
+import { CANCEL_REASONS, QUARTER_HOURS, SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, dayLabel, placeLabel, sessionWhen, weekDates } from "@/lib/scheduling"; // Scheduling helpers: cancel reasons, quarter-hour times, session lengths, weekday names, a time in words, a day in words, a place in words, a session time in words, and a session's week.
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>; // The shape of a server action that a form sends to.
 
@@ -493,9 +494,27 @@ export function AnswerForm({ bookingId }: { bookingId: string }) { // (takes the
 } // End of AnswerForm.
 
 // Cancel one session, or stop a whole booking. Admins say who asked, which
-// decides credits and pay.
-export function CancelForm({ id, kind, isAdmin }: { id: string; kind: "session" | "booking"; isAdmin: boolean }) { // (takes the session or booking id, which one it is, and whether the person is an admin)
+// decides credits and pay. Cancelling one session (Carla, 16 Nov 2026) needs
+// a reason from a list and two other times in the same week, for the other
+// side to pick from (or a tick when no other time works that week).
+export function CancelForm({ // Its settings:
+  id, // the session or booking id,
+  kind, // which one it is,
+  isAdmin, // whether the person is CLG staff,
+  startsAt, // when the session starts (for a session: picks its week),
+  today, // today's local date (so past days aren't offered),
+  isTutor = false, // whether the tutor is cancelling (changes the help text).
+}: { // The settings' types:
+  id: string; // id is text,
+  kind: "session" | "booking"; // session or booking,
+  isAdmin: boolean; // yes or no,
+  startsAt?: string; // a moment as text (sessions only),
+  today?: string; // a date as text,
+  isTutor?: boolean; // yes or no.
+}) { // End of the settings.
   const [open, setOpen] = useState(false); // Whether the form is open.
+  const [reason, setReason] = useState(""); // The reason picked (so "Other" can ask for words).
+  const [noTimes, setNoTimes] = useState(false); // Whether "no other time works this week" is ticked.
   if (!open) { // If it's closed:
     return ( // shows:
       <button type="button" className="text-xs text-red-700 underline" onClick={() => setOpen(true)}>{/* a small red link-style button that opens it: */}
@@ -503,22 +522,79 @@ export function CancelForm({ id, kind, isAdmin }: { id: string; kind: "session" 
       </button> // (end of the button)
     ); // (end of what's shown)
   } // End of the closed case.
+  if (kind === "booking") { // Stopping a whole booking (unchanged):
+    return ( // shows:
+      <div className="mt-2 w-full rounded-xl bg-zinc-50 p-4">{/* a shaded block: */}
+        <ActionForm action={stopBooking} submitLabel="Stop booking and cancel future sessions">{/* the form, sending to stopBooking: */}
+          <input type="hidden" name="id" value={id} />{/* the booking (hidden), */}
+          <Field label="Reason (optional)" name="reason" maxLength={500} />{/* a reason (optional), */}
+          {isAdmin && <WhoAsked />}{/* for admins, who asked. */}
+        </ActionForm>{/* End of the form. */}
+      </div> // End of the block.
+    ); // End of what's shown.
+  } // End of the booking case.
+  // The days that can be offered: the session's week, from today on.
+  const days = startsAt ? weekDates(startsAt).filter((d) => !today || d >= today) : []; // Monday to Sunday of its week, without past days.
+  const timePicker = (n: 1 | 2) => ( // One make-up time: a day and a start time.
+    <div className="grid grid-cols-2 gap-3">{/* two boxes side by side: */}
+      <Select label={`Time ${n}: day`} name={`date_${n}`} required={!noTimes} disabled={noTimes} defaultValue="">{/* the day (needed unless no times): */}
+        <option value="" disabled>{/* a prompt: */}
+          Choose a day{/* "Choose a day". */}
+        </option>{/* (end of the prompt) */}
+        {days.map((d) => ( // for each day of the week:
+          <option key={d} value={d}>{/* a choice: */}
+            {dayLabel(d)}{/* e.g. "Thu 20 Nov". */}
+          </option> // (end of the choice)
+        ))}{/* End of the days. */}
+      </Select>{/* End of the day. */}
+      <Select label={`Time ${n}: start`} name={`time_${n}`} required={!noTimes} disabled={noTimes} defaultValue="">{/* the start time (needed unless no times): */}
+        <option value="" disabled>{/* a prompt: */}
+          Choose a time{/* "Choose a time". */}
+        </option>{/* (end of the prompt) */}
+        {QUARTER_HOURS.map((t) => ( // for each quarter hour:
+          <option key={t} value={t}>{/* a choice: */}
+            {clockTime(t)}{/* e.g. "4:15pm". */}
+          </option> // (end of the choice)
+        ))}{/* End of the times. */}
+      </Select>{/* End of the start time. */}
+    </div> // End of the two boxes.
+  ); // End of timePicker.
   return ( // Shows:
     <div className="mt-2 w-full rounded-xl bg-zinc-50 p-4">{/* a shaded block: */}
-      <ActionForm // the form:
-        action={kind === "session" ? cancelSession : stopBooking} // sending to cancelSession or stopBooking,
-        submitLabel={kind === "session" ? "Cancel this session" : "Stop booking and cancel future sessions"} // with a button saying what it does.
-      >{/* (end of the form's settings) */}
-        <input type="hidden" name="id" value={id} />{/* the session or booking (hidden), */}
-        <Field label="Reason (optional)" name="reason" maxLength={500} />{/* a reason (optional), */}
-        {isAdmin && ( // for admins:
-          <Select label="Who asked?" name="on_behalf" defaultValue="family">{/* a drop-down for who asked: */}
-            <option value="family">The family</option>{/* the family, */}
-            <option value="tutor">The tutor</option>{/* the tutor, */}
-            <option value="admin">CLG</option>{/* or CLG. */}
-          </Select> // End of the drop-down.
-        )}{/* End of this part. */}
-        {!isAdmin && ( // For families:
+      <ActionForm action={cancelSession} submitLabel="Cancel this session">{/* the form, sending to cancelSession: */}
+        <input type="hidden" name="id" value={id} />{/* the session (hidden), */}
+        <Select label="Reason" name="reason" required value={reason} onChange={(e) => setReason(e.target.value)}>{/* the reason drop-down (needed): */}
+          <option value="" disabled>{/* a prompt: */}
+            Choose a reason{/* "Choose a reason". */}
+          </option>{/* (end of the prompt) */}
+          {CANCEL_REASONS.map(([value, label]) => ( // for each reason:
+            <option key={value} value={value}>{/* a choice: */}
+              {label}{/* its words. */}
+            </option> // (end of the choice)
+          ))}{/* End of the reasons. */}
+        </Select>{/* End of the reason. */}
+        <Field // a few words:
+          label={reason === "other" ? "Please say why" : "A few words (optional)"} // needed for "Other", optional otherwise,
+          name="note" // sent as note,
+          maxLength={300} // up to 300 characters,
+          required={reason === "other"} // needed for "Other",
+          hint="Shared with the tutor, the family and CLG. Please don't include health details." // a privacy reminder.
+        />{/* (end of the box) */}
+        <fieldset className="space-y-3">{/* the make-up times: */}
+          <legend className="text-sm font-medium text-zinc-800">Two other times this week</legend>{/* the heading, */}
+          <p className="text-xs text-zinc-600">{/* a small note: */}
+            Same length and place, in the same week (Monday to Sunday), at least 2 hr from now.{" "}{/* the rules, */}
+            {isTutor ? "The family picks one" : isAdmin ? "The other side picks one" : "Your tutor picks one"}, and CLG is told.{/* who picks. */}
+          </p>{/* End of the note. */}
+          {timePicker(1)}{/* the first time, */}
+          {timePicker(2)}{/* the second time, */}
+          <label className="flex items-center gap-2 text-sm">{/* a tick box: */}
+            <input type="checkbox" name="no_times" checked={noTimes} onChange={(e) => setNoTimes(e.target.checked)} />{/* ticked when no other time works, */}
+            No other time works this week (CLG will help arrange a make-up){/* its words. */}
+          </label>{/* End of the tick box. */}
+        </fieldset>{/* End of the make-up times. */}
+        {isAdmin && <WhoAsked />}{/* For admins, who asked. */}
+        {!isAdmin && !isTutor && ( // For families:
           <p className="text-xs text-zinc-600">{/* a small note: */}
             Family cancellations: more than 24 hr before gets a full credit, 24 to 2 hr before gets a 50% credit, and
             under 2 hr gets no credit.{/* (the credit rules) */}
@@ -528,6 +604,43 @@ export function CancelForm({ id, kind, isAdmin }: { id: string; kind: "session" 
     </div> // End of the block.
   ); // End of what's shown.
 } // End of CancelForm.
+
+// For admins: who asked for the cancel (decides credits and pay).
+function WhoAsked() {
+  return ( // Shows:
+    <Select label="Who asked?" name="on_behalf" defaultValue="family">{/* a drop-down for who asked: */}
+      <option value="family">The family</option>{/* the family, */}
+      <option value="tutor">The tutor</option>{/* the tutor, */}
+      <option value="admin">CLG</option>{/* or CLG. */}
+    </Select> // End of the drop-down.
+  ); // End of what's shown.
+} // End of WhoAsked.
+
+// The other side picks one of the two make-up times, or says neither works
+// (with a reason). Picking books the make-up session straight away.
+export function MakeupAnswerForm({ offerId, option1, option2 }: { offerId: string; option1: string; option2: string }) { // (takes the offer and its two times)
+  return ( // Shows:
+    <ButtonsForm action={answerMakeup}>{/* a form with its own buttons, sending to answerMakeup: */}
+      {(pending) => ( // given whether it's sending:
+        <>{/* (a group) */}
+          <input type="hidden" name="offer_id" value={offerId} />{/* the offer (hidden), */}
+          <div className="flex flex-wrap gap-2">{/* a row of buttons: */}
+            <Button type="submit" name="choice" value="1" disabled={pending}>{/* the first time: */}
+              {sessionWhen(option1)}{/* e.g. "Thu 20 Nov, 4:00pm". */}
+            </Button>{/* (end of the button) */}
+            <Button type="submit" name="choice" value="2" disabled={pending}>{/* the second time: */}
+              {sessionWhen(option2)}{/* e.g. "Fri 21 Nov, 5:30pm". */}
+            </Button>{/* (end of the button) */}
+          </div>{/* End of the row. */}
+          <TextArea label="If neither works, please say why" name="note" maxLength={500} rows={2} />{/* why neither works, */}
+          <BusyButton type="submit" name="choice" value="0" disabled={pending} className={quietButton}>{/* a quiet "neither" button: */}
+            Neither works{/* "Neither works". */}
+          </BusyButton>{/* (end of the button) */}
+        </> // End of the group.
+      )}{/* End of this part. */}
+    </ButtonsForm> // End of the form.
+  ); // End of what's shown.
+} // End of MakeupAnswerForm.
 
 // The tutor records a session as done or a no-show.
 export function OutcomeForm({ id }: { id: string }) { // (takes the session)

@@ -105,3 +105,43 @@ export const TIME_CHECK_REASONS: Record<string, string> = {
   not_at_library: "Sign-on check didn't place the tutor at the library", // The location didn't match.
   no_location: "Signed on without a location check", // No location was shared.
 }; // End of the time check reasons.
+
+// Why a session is being cancelled: the short name the database keeps, and
+// the words shown in the drop-down (Carla, 16 Nov 2026). "Other" needs a few words.
+export const CANCEL_REASONS: [string, string][] = [ // (the list)
+  ["sick", "Sick or unwell"], // sick,
+  ["away", "Away or travelling"], // away,
+  ["school_event", "School or uni event"], // a school or uni event,
+  ["family", "Family matter"], // a family matter,
+  ["clash", "Clashes with something else"], // a clash,
+  ["other", "Other"], // other.
+]; // End of the list.
+
+// The seven dates (Monday to Sunday, YYYY-MM-DD) of the local week a
+// session falls in. Make-up times must be in that week.
+export function weekDates(iso: string): string[] {
+  const day = localDate(iso); // The session's local date.
+  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay(); // Its day of the week (0 is Sunday).
+  const monday = addDays(day, weekday === 0 ? -6 : 1 - weekday); // Steps back to that week's Monday.
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i)); // Monday plus the next six days.
+} // End of weekDates.
+
+// "2026-11-20" -> "Thu 20 Nov", for drop-downs.
+export function dayLabel(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }); // Read and shown in universal time, so the date can't shift.
+} // End of dayLabel.
+
+// Start times every 15 minutes from 7am to 8:45pm ("07:00" to "20:45"),
+// for choosing make-up times (sessions start on the quarter hour).
+export const QUARTER_HOURS: string[] = Array.from({ length: 14 * 4 }, (_, i) => // 14 hours of four quarter hours each:
+  `${String(7 + Math.floor(i / 4)).padStart(2, "0")}:${String((i % 4) * 15).padStart(2, "0")}`, // the hour from 7, and 00, 15, 30 or 45 minutes.
+); // End of the list.
+
+// Plain words for where a make-up offer is up to.
+export const MAKEUP_STATUS_NAMES: Record<string, string> = {
+  waiting: "Waiting for a pick", // Two times offered, not yet answered.
+  picked: "Make-up booked", // A time was picked and booked.
+  declined: "Neither time works", // The other side said neither works.
+  expired: "Not picked in time", // Both times passed with no answer.
+  none_offered: "No other time this week", // The person cancelling couldn't offer times.
+}; // End of the make-up stage names.

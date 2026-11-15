@@ -25,6 +25,7 @@ import { QuietHoursForm, SuggestLibraryForm, SummaryMinutesForm } from "./extra-
 import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Admin level groups, the level reader, two-step sign-in check, and the signed-in person.
 import { // Scheduling helpers:
   BOOKING_STATUS_NAMES, // booking status names,
+  MAKEUP_STATUS_NAMES, // make-up offer status names,
   SESSION_LENGTHS, // session lengths,
   SESSION_STATUS_NAMES, // session status names,
   WEEKDAY_NAMES, // weekday names,
@@ -51,6 +52,7 @@ import { // The scheduling forms:
   AwayForm, // add away dates,
   BookForm, // book a session,
   CancelForm, // cancel,
+  MakeupAnswerForm, // pick a make-up time,
   ConfirmTimesForm, // confirm a session's times,
   EndTimeForm, // change a session's end time,
   NoticeSettingsForm, // notice settings,
@@ -107,6 +109,25 @@ type Session = { // One session as listed:
   cancelled_by_role: string | null; // who cancelled it (if anyone),
   meeting_url: string | null; // and its online meeting link (if any).
 }; // End of Session.
+
+type MakeupOffer = { // Two make-up times offered after a cancel (Carla, 16 Nov 2026):
+  id: string; // the offer's id,
+  session_id: string; // the cancelled session,
+  student_id: string; // the student,
+  tutor_id: string; // the tutor,
+  student_name: string; // the student's name (first name only for tutors),
+  tutor_name: string; // the tutor's name,
+  subject: string; // the subject,
+  cancelled_starts_at: string; // when the cancelled session was,
+  reason: string | null; // the reason given, in words,
+  offered_by_role: string; // who cancelled: family, tutor or admin,
+  answer_by: string; // who picks: family or tutor,
+  option_1: string | null; // the first time offered,
+  option_2: string | null; // the second time offered,
+  status: string; // where it's up to,
+  picked_at: string | null; // the time picked (if any),
+  answer_note: string | null; // why neither works (if said).
+}; // End of MakeupOffer.
 
 type TimeOption = { // A time that could be booked:
   tutor_id: string; // the tutor,
@@ -214,10 +235,11 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         .maybeSingle() // if any.
     : null; // otherwise none.
   const myCheck = myCheckRes?.data as { id: string } | null | undefined; // The check (if any).
-  const [bookingsRes, sessionsRes, requestTimesRes] = await Promise.all([ // Reads three things at once:
+  const [bookingsRes, sessionsRes, requestTimesRes, makeupRes] = await Promise.all([ // Reads four things at once:
     supabase.rpc("list_bookings"), // the bookings they can see,
     supabase.rpc("list_sessions", { p_from: addDays(localToday(), -14), p_to: addDays(localToday(), 70) }), // sessions from 2 weeks ago to 10 weeks ahead,
-    supabase.rpc("booking_request_times"), // and when each booking was asked for (to show the newest first).
+    supabase.rpc("booking_request_times"), // when each booking was asked for (to show the newest first),
+    supabase.rpc("list_makeup_offers"), // and make-up times offered after cancels (open ones and the last 30 days).
   ]); // End of the reads.
   // Each dashboard shows only its own: all of them for admins, the tutor's
   // own in the tutor dashboard, and the family's children in a family one
@@ -243,6 +265,17 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const show = BOOKING_FILTERS.some((f) => f.key === one(params.show)) ? one(params.show) : "all"; // The chosen filter (all if none or unknown).
   const shownBookings = show === "all" ? bookings : bookings.filter((b) => bookingFilterKey(b) === show); // The bookings that match it.
   const sessions = ((sessionsRes.data ?? []) as Session[]).filter((x) => ours(x.tutor_id, x.student_id)); // The sessions for this dashboard.
+  const makeups = ((makeupRes.data ?? []) as MakeupOffer[]).filter((o) => ours(o.tutor_id, o.student_id)); // The make-up offers for this dashboard.
+  // Make-up times waiting for this person to pick: the tutor's when the family
+  // cancelled, the family's when the tutor (or CLG) cancelled, and any for CLG's front desk.
+  const makeupsToPick = makeups.filter( // Offers to answer here:
+    (o) => // each offer:
+      o.status === "waiting" && // still waiting,
+      o.option_1 !== null && // with two times,
+      o.option_2 !== null && // (both),
+      (isDesk || (isTutor ? o.answer_by === "tutor" : isFamily && o.answer_by === "family")), // and this dashboard's side picks (front desk can pick for either).
+  ); // End of the filter.
+  const otherMakeups = makeups.filter((o) => !makeupsToPick.includes(o)); // The rest, to show where they're up to.
   // Sign-on details for the tutor's own sessions.
   const mySessionIds = sessions.filter((s) => s.tutor_id === viewer.id).map((s) => s.id); // The tutor's own sessions.
   const signRes = mySessionIds.length // If there are any, reads:
@@ -308,7 +341,9 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         ...s, // its details,
         href: here(s.id), // its address in this dashboard,
         count: // its number:
-          s.id === "bookings" && waitingForMe.length + familyToApprove.length // for bookings, requests and offers waiting,
+          s.id === "sessions" && !isDesk && makeupsToPick.length // for the overview, make-up times to pick (not counted for CLG staff, who can pick but needn't),
+            ? makeupsToPick.length // that number,
+            : s.id === "bookings" && waitingForMe.length + familyToApprove.length // for bookings, requests and offers waiting,
             ? waitingForMe.length + familyToApprove.length // that number,
             : s.id === "notices" && unread // for notices, unread ones,
               ? unread // that number,
@@ -341,6 +376,59 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               You have {waitingForMe.length} booking request{waitingForMe.length > 1 ? "s" : ""} to answer.{" "}{/* how many, then, */}
               <TextLink href={here("bookings")}>See requests</TextLink>{/* a link to see them. */}
             </p> // End of the notice.
+          )}{/* End of this part. */}
+          {makeupsToPick.length > 0 && ( // If there are make-up times to pick:
+            <Card // a card:
+              title="Pick a make-up time" // its title,
+              description="A session was cancelled and two other times were offered in the same week. Pick one to book it, or say neither works." // its help text.
+            >{/* (end of the card's settings) */}
+              <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+                {makeupsToPick.map((o) => ( // for each offer:
+                  <li key={o.id} className="space-y-3 py-4 first:pt-0">{/* a row: */}
+                    <p>{/* what was cancelled: */}
+                      <span className="font-medium">{o.student_name}</span>{/* the student, */}
+                      <span className="text-zinc-600">{/* in grey: */}
+                        {" "}{/* a space, */}
+                        · {o.subject} with {o.tutor_name} · was {sessionWhen(o.cancelled_starts_at)}{/* the subject, tutor and cancelled time, */}
+                        {o.reason && ` · ${o.reason}`}{/* and the reason (if any). */}
+                      </span>{/* End of the grey part. */}
+                    </p>{/* End of the line. */}
+                    {isDesk && ( // for CLG staff, whose side they're picking for:
+                      <p className="text-xs text-zinc-600">Waiting for {o.answer_by === "tutor" ? "the tutor" : "the family"}. You can pick for them.</p> // who should pick.
+                    )}{/* End of this part. */}
+                    <MakeupAnswerForm offerId={o.id} option1={o.option_1 as string} option2={o.option_2 as string} />{/* the pick form. */}
+                  </li> // End of the row.
+                ))}{/* End of the loop. */}
+              </ul>{/* End of the list. */}
+            </Card> // End of the card.
+          )}{/* End of this part. */}
+          {otherMakeups.length > 0 && ( // If there are other make-up offers to show:
+            <Card // a card:
+              collapsible // can fold,
+              defaultOpen={false} // folded to start,
+              title="Make-up times" // its title,
+              description="Times offered after a cancel in the last 30 days, and where each is up to." // its help text.
+            >{/* (end of the card's settings) */}
+              <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+                {otherMakeups.map((o) => ( // for each offer:
+                  <li key={o.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3 first:pt-0">{/* a row: */}
+                    <span>{/* (a group) */}
+                      <span className="font-medium">{o.student_name}</span>{/* the student, */}
+                      <span className="text-zinc-600">{/* in grey: */}
+                        {" "}{/* a space, */}
+                        · {o.subject} with {o.tutor_name} · was {sessionWhen(o.cancelled_starts_at)}{/* the subject, tutor and cancelled time, */}
+                        {o.status === "picked" && o.picked_at && ` · now ${sessionWhen(o.picked_at)}`}{/* the new time, if one was picked, */}
+                        {o.status === "waiting" && o.option_1 && o.option_2 && ` · offered ${sessionWhen(o.option_1)} or ${sessionWhen(o.option_2)}`}{/* the two times, while waiting, */}
+                        {o.status === "declined" && o.answer_note && ` · "${o.answer_note}"`}{/* why neither works, if said. */}
+                      </span>{/* End of the grey part. */}
+                    </span>{/* End of the group. */}
+                    <span className="rounded-full bg-zinc-100 px-3 py-0.5 text-xs text-zinc-600">{/* a grey tag: */}
+                      {o.status === "waiting" ? `Waiting for ${o.answer_by === "tutor" ? "the tutor" : "the family"}` : (MAKEUP_STATUS_NAMES[o.status] ?? o.status)}{/* where it's up to. */}
+                    </span>{/* End of the tag. */}
+                  </li> // End of the row.
+                ))}{/* End of the loop. */}
+              </ul>{/* End of the list. */}
+            </Card> // End of the card.
           )}{/* End of this part. */}
           {toRecord.length > 0 && ( // If sessions need recording:
             <Card title="Did these sessions happen?" description="Mark each one done or a no-show.">{/* a card: */}
@@ -434,7 +522,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                             <SignOnForm id={s.id} atLibrary={s.delivery === "library"} /> // the sign-on form (location check for a library).
                           ))}{/* End of this part. */}
                         {new Date(s.starts_at).getTime() > now && ( // if it hasn't started:
-                          <CancelForm id={s.id} kind="session" isAdmin={isDesk} /> // the cancel form.
+                          <CancelForm id={s.id} kind="session" isAdmin={isDesk} isTutor={isTutor} startsAt={s.starts_at} today={localToday()} /> // the cancel form (reason and two make-up times in the session's week).
                         )}{/* End of this part. */}
                       </span> // End of the actions.
                     ) : ( // otherwise:
