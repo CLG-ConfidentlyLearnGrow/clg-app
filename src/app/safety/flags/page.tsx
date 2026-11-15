@@ -33,6 +33,7 @@ type Flag = { // Its fields:
   review_note: string | null; // the reviewer's note,
   reviewed_by_name: string | null; // who reviewed it,
   reviewed_at: string | null; // when,
+  text_cleared_at: string | null; // when the copied text was cleared (No concern flags, after 12 months),
   created_at: string; // when it was flagged.
 }; // End of the shape.
 
@@ -77,7 +78,7 @@ export default async function FlagsPage() { // The page itself.
   const [flags, words] = await Promise.all([ // Reads two things at once:
     supabase // the flags they may see:
       .from("safety_word_flags") // (from the flags table)
-      .select("id, source_table, source_field, author_name, author_roles, student_name, words, categories, urgent, text_copy, status, review_note, reviewed_by_name, reviewed_at, created_at") // with their details,
+      .select("id, source_table, source_field, author_name, author_roles, student_name, words, categories, urgent, text_copy, status, review_note, reviewed_by_name, reviewed_at, text_cleared_at, created_at") // with their details,
       .order("created_at", { ascending: false }) // newest first,
       .limit(300), // the latest 300;
     supabase.from("safety_watch_words").select("id, phrase, category, urgent, staff_only, active, note").order("phrase"), // and the word list, A to Z.
@@ -99,7 +100,8 @@ export default async function FlagsPage() { // The page itself.
       <p className="text-xs text-zinc-600">{/* the kinds of risk: */}
         May point to: {f.categories.map((c) => CATEGORY_LABELS[c] ?? c).join(", ")}{/* in words. */}
       </p>{/* End of the kinds. */}
-      <p className="mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm">{f.text_copy}</p>{/* The text as it was written, keeping its line breaks. */}
+      <p className={`mt-3 whitespace-pre-wrap rounded-xl bg-zinc-50 p-4 text-sm${f.text_cleared_at ? " italic text-zinc-500" : ""}`}>{f.text_copy}</p>{/* The text as it was written, keeping its line breaks (in grey italics once cleared). */}
+      {f.text_cleared_at && <p className="mt-1 text-xs text-zinc-500">Copied text cleared {plainDateTime(f.text_cleared_at)}. The original may still be where it was written.</p>}{/* When the text was cleared, if it was. */}
       {f.reviewed_at && ( // If someone has recorded a decision:
         <p className="mt-3 text-sm">{/* the last decision: */}
           <span className="text-xs text-zinc-500">{plainDateTime(f.reviewed_at)}, {f.reviewed_by_name}:</span>{" "}{/* when and who, */}
@@ -114,7 +116,7 @@ export default async function FlagsPage() { // The page itself.
               <option key={value} value={value}>{label}</option> // an option.
             ))}{/* End of the loop. */}
           </Select>{/* End of the drop-down. */}
-          <TextArea label="Note" name="note" maxLength={2000} rows={2} defaultValue={f.review_note ?? ""} hint="Why, in a sentence. Needed for 'No concern' and 'Raised as a concern'." />{/* the note box. */}
+          <TextArea label="Note" name="note" maxLength={2000} rows={2} defaultValue={f.review_note ?? ""} hint="Why, in a sentence. Needed for 'No concern' and 'Raised as a concern'. On 'No concern' flags, the copied text is cleared 12 months after the decision; the rest of the record stays." />{/* the note box. */}
         </ActionForm>{/* End of the form. */}
       </div>{/* End of the form area. */}
       <p className="mt-3 text-sm">{/* a link to raise a concern: */}
