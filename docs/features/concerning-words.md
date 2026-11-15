@@ -46,14 +46,14 @@ A busy person reading a summary for its learning content can miss these. The app
 - **APP 3 and APP 6 (collecting and using).** The flag copies text CLG already holds, for a related purpose (keeping children safe while CLG provides its service). Where it involves sensitive information, using it to lessen a serious threat to someone's life, health or safety is a permitted general situation (Privacy Act s 16A). Ask the lawyer to confirm.
 - **Automated decisions (Privacy Act, APP 1.7 to 1.9, from 10 Dec 2026).** These new rules require the privacy policy to explain computer programs that make, or substantially help make, decisions that significantly affect people. The app makes no decision here (a person always decides), but the privacy policy should still describe the check, to be safe and open.
 - **Children's Online Privacy Code (OAIC, in development).** Expected to require that children's information is handled in their best interests, with transparency. Checking for risks to children, with human review and no automatic consequences, is in their best interests. Explain it to students 16+ in plain words.
-- **APP 11 (security and keeping records).** Flags hold a copy of the text so the record survives edits and deletions. Flags that become concerns are kept as child safety records (45+ years in the policy draft). **Open question:** flags marked "no concern" could have their text copy cleared after a set time (for example 1 year), since they're no longer needed. Not built yet; for Carla and the lawyer.
+- **APP 11 (security and keeping records).** Flags hold a copy of the text so the record survives edits and deletions. Flags that become concerns, or are being followed up, are kept as child safety records (45+ years in the policy draft). **Flags marked "No concern" have their copied text cleared 12 months after the decision** (Carla, 15 Nov 2026), by a nightly job; the words that matched, who wrote it, when, and who decided and why stay on the record. The original writing follows its own deletion timetable.
 - **Staff monitoring.** South Australia has no general workplace surveillance law, but NSW (Workplace Surveillance Act 2005) and the ACT require written notice before computer surveillance of staff. Tell all staff in writing (tutor contract and code of conduct) that their writing in the app is checked, wherever they work.
 - **UK and EU later.** UK: the ICO Children's Code allows profiling of children where there is a compelling reason in their best interests, such as safeguarding; a data protection impact assessment (DPIA) is needed. EU: GDPR Art. 35 DPIA; Art. 22 is not triggered because no decision is solely automated. The design (human review, restricted access, transparency) fits both.
 
 ## Open questions for Carla and the lawyer
 
 1. Approve the privacy policy, family terms and tutor contract wording in section 5.
-2. Should the deputy see all flags (as built, so nothing waits while Carla is away), or only flags on Carla's writing?
-3. Clear the text copy on "no concern" flags after a set time? If so, how long?
+2. Decided 14 Nov 2026: the deputy sees all flags (as built).
+3. Decided 15 Nov 2026: the text copy on "No concern" flags is cleared after 12 months.
 4. When "Report a problem" (PR #115) and any future messaging are merged, add their text boxes to the check.
 5. Review the starting word list together in the first month of the pilot.
