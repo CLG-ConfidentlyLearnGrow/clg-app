@@ -14,6 +14,8 @@
 begin;
 -- Runs the concern flag database change again (checks it can run twice).
 \ir ../migrations/20261113700100_child_safety_concerns.sql
+-- Puts back the later "concern about a worker" rules, which the line above replaced with the older ones.
+\ir ../migrations/20261117100100_safety_concern_about_worker.sql
 
 select tests.claims(null); -- acts as the database itself while setting up
 select id as cara from public.students where full_name = 'Cara One' \gset

@@ -1,11 +1,13 @@
 // Summary: "Concerns sent to you", for the Child Safety Officer and the
-// deputy. Each person sees only the concerns sent to them (the database
-// enforces this, and needs two-step sign-in). For each concern: the details,
-// the follow-up notes, a box to add a note, where it's up to, and a way to
-// pass it to the other contact. Notes can't be edited or deleted.
+// deputy. Each person sees only the concerns sent to them or shared with
+// them (the database enforces this, and needs two-step sign-in). A concern
+// never reaches a CLG worker it names, unless it names both contacts or was
+// shared on purpose. For each concern: who it's about, the details, the
+// follow-up notes, a box to add a note, where it's up to, and ways to pass
+// it on or share it with the other contact. Notes can't be edited or deleted.
 //
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
-import { addConcernNote, passOnConcern, setConcernStatus } from "@/app/actions/child-safety"; // The server actions for notes, stages and passing on.
+import { addConcernNote, passOnConcern, setConcernStatus, shareConcern } from "@/app/actions/child-safety"; // The server actions for notes, stages, passing on and sharing.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Card, Empty, Page, Select, TextArea } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down and multi-line box.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
@@ -23,6 +25,7 @@ type Concern = { // Its fields:
   child_state: string; // the child's state,
   student_id: string | null; // the CLG student record (if any),
   sent_to: string; // officer or deputy,
+  recipient_id: string | null; // the person it was sent to,
   immediate_danger: boolean; // whether a child was in immediate danger,
   called_000: boolean; // whether they called 000,
   reported_to_line: string; // whether they'd reported to the line,
@@ -36,6 +39,12 @@ type Concern = { // Its fields:
 
 // A follow-up note, as the database gives it.
 type Note = { id: string; concern_id: string; author_name: string; note: string; created_at: string }; // its id, concern, author, words and time.
+
+// A CLG worker a concern is about, as the database gives it.
+type Named = { concern_id: string; account_id: string | null; full_name: string }; // the concern, the worker's account and their name.
+
+// An extra reader of a concern, as the database gives it.
+type Reader = { concern_id: string; account_id: string; reason: string }; // the concern, the reader and why ("names_both" or "shared").
 
 // Shows the concerns sent to this person.
 export default async function ConcernsPage() { // The page itself.
@@ -53,16 +62,20 @@ export default async function ConcernsPage() { // The page itself.
     ); // End of what's shown.
   } // End of the check.
   const supabase = await createClient(); // Connects to the database.
-  const [concerns, notes, contacts] = await Promise.all([ // Reads three things at once:
+  const [concerns, notes, contacts, named, readers] = await Promise.all([ // Reads five things at once:
     supabase // the concerns sent to them:
       .from("safety_concerns") // (from the concerns table)
-      .select("id, raised_by_name, raised_by_roles, raised_by_contact, child_name, child_state, student_id, sent_to, immediate_danger, called_000, reported_to_line, line_reference, happened_on, what_happened, status, created_at, closed_at") // with their details,
-      .eq("recipient_id", viewer.id) // sent to this person (not ones they raised),
-      .order("created_at", { ascending: false }), // newest first;
+      .select("id, raised_by_name, raised_by_roles, raised_by_contact, child_name, child_state, student_id, sent_to, recipient_id, immediate_danger, called_000, reported_to_line, line_reference, happened_on, what_happened, status, created_at, closed_at") // with their details,
+      .order("created_at", { ascending: false }), // newest first (ones they only raised are left out below);
     supabase.from("safety_concern_notes").select("id, concern_id, author_name, note, created_at").order("created_at"), // their notes, oldest first (the database only gives notes on their concerns);
-    supabase.rpc("child_safety_contacts_list"), // and who the contacts are (for passing on).
+    supabase.rpc("child_safety_contacts_list"), // who the contacts are (for passing on and sharing),
+    supabase.from("safety_concern_people").select("concern_id, account_id, full_name"), // who each concern is about (the database only gives rows for concerns they can read),
+    supabase.from("safety_concern_readers").select("concern_id, account_id, reason"), // and the extra readers of the concerns they handle.
   ]); // End of the reads.
-  const rows = (concerns.data ?? []) as Concern[]; // The concerns.
+  const namedRows = (named.data ?? []) as Named[]; // Who each concern is about.
+  const readerRows = (readers.data ?? []) as Reader[]; // The extra readers.
+  const sharedWithMe = new Map(readerRows.filter((r) => r.account_id === viewer.id).map((r) => [r.concern_id, r.reason])); // The concerns they read as an extra reader, and why.
+  const rows = ((concerns.data ?? []) as Concern[]).filter((c) => c.recipient_id === viewer.id || sharedWithMe.has(c.id)); // Only concerns they handle (not ones they only raised).
   const noteRows = (notes.data ?? []) as Note[]; // The notes.
   const others = ((contacts.data ?? []) as { role: string; account_id: string; full_name: string }[]).filter((c) => c.account_id !== viewer.id); // The other contact (to pass to).
   const open = rows.filter((c) => c.status !== "closed"); // Concerns still open.
@@ -72,7 +85,12 @@ export default async function ConcernsPage() { // The page itself.
   const concernCard = (c: Concern) => { // Takes a concern:
     const line = lineFor(c.child_state); // the reporting line for the child's state,
     const mine = noteRows.filter((n) => n.concern_id === c.id); // its notes,
-    const other = others[0]; // the other contact (if any).
+    const other = others[0]; // the other contact (if any),
+    const about = namedRows.filter((n) => n.concern_id === c.id); // the CLG workers it's about,
+    const otherIsNamed = !!other && about.some((n) => n.account_id === other.account_id); // whether the other contact is one of them,
+    const otherCanRead = !!other && (c.recipient_id === other.account_id || readerRows.some((r) => r.concern_id === c.id && r.account_id === other.account_id)); // whether the other contact can already read it,
+    const isRecipient = c.recipient_id === viewer.id; // whether it was sent to them (only they can pass it on),
+    const why = sharedWithMe.get(c.id); // why they can read it, if they're an extra reader.
     return ( // Shows:
       <Card // a card:
         key={c.id} // (one per concern)
@@ -81,7 +99,14 @@ export default async function ConcernsPage() { // The page itself.
         collapsible // opens and closes,
         defaultOpen={c.status !== "closed"} // open unless closed.
       >{/* (end of the card's settings) */}
+        {why && ( // If they read it as an extra reader:
+          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">{/* a note saying why: */}
+            {why === "names_both" ? "This concern names both child safety contacts, so it was sent to both of you." : "This concern was shared with you by the person handling it."}{/* both named, or shared. */}
+          </p> // End of the note.
+        )}{/* End of the reader note. */}
         <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[12rem_1fr]">{/* the details as a list of pairs: */}
+          <dt className="font-medium text-zinc-600">About a CLG worker</dt>{/* who it's about: */}
+          <dd>{about.length === 0 ? "No one named" : about.map((n) => n.full_name).join(", ")}{about.length > 0 ? ". They can't see this concern." : ""}</dd>{/* their names, or "No one named". */}
           <dt className="font-medium text-zinc-600">Immediate danger</dt>{/* danger: */}
           <dd>{c.immediate_danger ? `Yes. ${c.called_000 ? "They said they called 000." : "They did NOT say they called 000."}` : "No"}</dd>{/* yes or no, and 000. */}
           <dt className="font-medium text-zinc-600">Reported to the line</dt>{/* reporting line: */}
@@ -129,7 +154,7 @@ export default async function ConcernsPage() { // The page itself.
           </ActionForm>{/* End of the form. */}
         </div>{/* End of the forms. */}
 
-        {other && ( // If there's another contact to pass to:
+        {other && isRecipient && !otherIsNamed && ( // If there's another contact to pass to (and it isn't about them):
           <details className="mt-4 rounded-xl border border-zinc-200 p-4">{/* an open-and-close box: */}
             <summary className="cursor-pointer text-sm font-medium text-teal-800">{/* its title: */}
               Pass this to {other.full_name} ({CONTACT_ROLE_LABELS[other.role] ?? other.role}){/* who to pass to. */}
@@ -145,6 +170,24 @@ export default async function ConcernsPage() { // The page itself.
             </div>{/* End of the form area. */}
           </details> // End of the box.
         )}{/* End of passing on. */}
+
+        {other && !otherCanRead && ( // If there's another contact who can't read it yet:
+          <details className="mt-4 rounded-xl border border-zinc-200 p-4">{/* an open-and-close box: */}
+            <summary className="cursor-pointer text-sm font-medium text-teal-800">{/* its title: */}
+              Share this with {other.full_name} ({CONTACT_ROLE_LABELS[other.role] ?? other.role}){/* who to share with. */}
+            </summary>{/* End of the title. */}
+            <p className="mt-2 text-sm text-zinc-600">{/* a warning: */}
+              {otherIsNamed ? `This concern is about ${other.full_name}. Only share it if you've decided they should see it.` : "They'll be able to read it and its notes, and so will you."}{" "}
+              Sharing can&apos;t be undone, and your reason is kept as a note.{/* what sharing means, */}
+            </p>{/* End of the warning. */}
+            <div className="mt-3">{/* the form: */}
+              <ActionForm action={shareConcern} submitLabel="Share it">{/* sharing: */}
+                <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
+                <TextArea label="Why are you sharing it?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+              </ActionForm>{/* End of the form. */}
+            </div>{/* End of the form area. */}
+          </details> // End of the box.
+        )}{/* End of sharing. */}
       </Card> // End of the card.
     ); // End of what's shown.
   }; // End of concernCard.
@@ -152,7 +195,7 @@ export default async function ConcernsPage() { // The page itself.
   return ( // Shows:
     <Page // a page:
       title="Concerns sent to you" // titled "Concerns sent to you",
-      intro="Only you can read these. Keep them confidential: don't copy details into emails, Teams or other parts of the app." // with a confidentiality reminder.
+      intro="Only you (and anyone a concern was shared with) can read these. Keep them confidential: don't copy details into emails, Teams or other parts of the app." // with a confidentiality reminder.
     >{/* (end of the page's settings) */}
       {open.length === 0 ? <Empty>No open concerns.</Empty> : open.map(concernCard)}{/* The open concerns, or "No open concerns". */}
       {closed.length > 0 && ( // If any are closed:
