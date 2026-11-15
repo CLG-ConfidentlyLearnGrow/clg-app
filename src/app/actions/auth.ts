@@ -124,7 +124,8 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
 // The rules for the join form:
 const joinSchema = z.object({
   t: z.string().regex(/^[0-9a-f]{64}$/, "This invitation link isn't complete. Please open it again from your email."), // the invitation's secret code (64 letters and numbers),
-  full_name: z.string().trim().min(1, "Enter your name.").max(200), // name (required),
+  first_name: z.string().trim().min(1, "Enter your first name.").max(100, "Keep your first name to 100 characters or fewer."), // first name (required),
+  last_name: z.string().trim().min(1, "Enter your last name.").max(100, "Keep your last name to 100 characters or fewer."), // last name (required),
   password: newPassword, // password (the new password rules).
 }); // End of the rules.
 
@@ -135,6 +136,8 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
   const parsed = joinSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const v = parsed.data; // The checked values.
+  if (/[@<>]/.test(v.first_name + v.last_name)) return { error: "Please enter your name, not an email address." }; // An email address isn't a name.
+  const fullName = `${v.first_name} ${v.last_name}`; // Their full name, as shown across the app.
 
   // Check the link again here: it may have been used or replaced since the
   // page was opened.
@@ -151,7 +154,7 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
     email: invite.email, // the invited email,
     password: v.password, // the chosen password,
     email_confirm: true, // email already confirmed (the link proves it),
-    user_metadata: { full_name: v.full_name }, // with their name.
+    user_metadata: { full_name: fullName }, // with their name.
   }); // End of making the account.
   if (made.error) { // It failed:
     console.error("Joining as staff failed:", made.error.code ?? made.error.name, made.error.message); // notes why in the server log,
@@ -164,8 +167,9 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
       // the inbox, so we finish that account instead: set the chosen password
       // and confirm the email. Confirming hands over the invitation's role
       // (the database does this whenever an email is first confirmed).
-      const finished = await finishUnconfirmedAccount(invite.email, v.password, v.full_name); // Tries to finish the half-made account.
+      const finished = await finishUnconfirmedAccount(invite.email, v.password, fullName); // Tries to finish the half-made account.
       if (finished) { // It worked:
+        await saveNameParts(finished, v.first_name, v.last_name); // saves their first and last name,
         const again = await supabase.auth.signInWithPassword({ email: invite.email, password: v.password }); // signs them in,
         if (again.error) redirect("/login"); // (couldn't: goes to the login page)
         redirect("/mfa"); // and goes to set up two-step login.
@@ -178,6 +182,7 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
     return { error: "We couldn't set up your account. Please try again, or ask CLG for a new link." }; // Anything else: plain message.
   } // End of the failure case.
 
+  await saveNameParts(made.data.user.id, v.first_name, v.last_name); // Saves their first and last name.
   const signedIn = await supabase.auth.signInWithPassword({ email: invite.email, password: v.password }); // Signs them in.
   if (signedIn.error) redirect("/login"); // Couldn't: goes to the login page.
   // Staff must set up two-step login before they can see anything else.
@@ -187,8 +192,9 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
 // Finishes an account that was started on the sign-up page but never
 // confirmed: sets the password and name, and confirms the email. Returns
 // false (changing nothing) if the account is already confirmed or can't be
-// found, so a confirmed account can never be taken over this way.
-async function finishUnconfirmedAccount(address: string, password: string, fullName: string): Promise<boolean> {
+// found, so a confirmed account can never be taken over this way. Gives
+// back the account id when it worked.
+async function finishUnconfirmedAccount(address: string, password: string, fullName: string): Promise<string | false> {
   const admin = createAdminClient(); // Connects with full access.
   const row = await admin.from("account_private").select("account_id").eq("email", address.toLowerCase()).maybeSingle(); // Finds the account id from the email.
   if (!row.data) return false; // Not found: nothing to finish.
@@ -203,8 +209,18 @@ async function finishUnconfirmedAccount(address: string, password: string, fullN
     console.error("Finishing unconfirmed account failed:", updated.error.code ?? updated.error.name, updated.error.message); // notes why in the server log,
     return false; // and reports it didn't work.
   } // End of the failure case.
-  return true; // It worked.
+  return row.data.account_id as string; // It worked: hands back the account id.
 } // End of finishUnconfirmedAccount.
+
+// Saves a new staff member's first and last name on their account (the
+// database then builds the full name shown everywhere from them). If it
+// can't (for example, before the staff names update has been run), the
+// full name given at joining is still used, and nothing else stops.
+async function saveNameParts(accountId: string, first: string, last: string) {
+  const admin = createAdminClient(); // Connects with full access (the new person isn't signed in yet).
+  const { error } = await admin.from("accounts").update({ first_name: first, last_name: last }).eq("id", accountId); // Saves both names on their account.
+  if (error) console.error("Saving first and last name failed:", error.code, error.message); // Notes a failure in the server log.
+} // End of saveNameParts.
 
 const signInSchema = z.object({ email, password: z.string().min(1).max(128) }); // The rules for signing in: email and password.
 

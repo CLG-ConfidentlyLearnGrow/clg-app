@@ -22,6 +22,7 @@ import { ProgressSection } from "./progress-section"; // The progress section.
 import { AddOnsSection } from "./add-ons-section"; // The add-ons section.
 import { LeavingSection } from "./leaving-section"; // The people-leaving section.
 import { ADMIN_LEVEL_NAMES, FRONT_DESK, FULL_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth"; // Admin level names, level groups, the level check, and the level type.
+import { requireStaffName } from "@/lib/staff-name"; // Asks for their first and last name if it's missing.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { CountBadge } from "@/components/count-badge"; // The small to-do number badge.
@@ -98,6 +99,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   // Finance admins work in Billing; everyone else at their level sees the
   // sections that fit it (the database decides what they can actually read).
   const viewer = await requireAdminLevel(FRONT_DESK); // Must be a front-desk admin.
+  await requireStaffName(viewer, "/admin"); // No first and last name yet: asks for it first.
   const isFull = FULL_ADMIN.includes(viewer.level); // Whether they're a full admin.
   const supabase = await createClient(); // Connects to the database.
   const params = await searchParams; // The address's settings.

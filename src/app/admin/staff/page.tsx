@@ -16,7 +16,21 @@ export default async function StaffDirectoryPage() {
   const canEdit = FULL_ADMIN.includes(viewer.level); // True for the owner and operations admins.
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("staff_directory"); // Reads the staff list.
-  const staff = (data ?? []) as StaffMember[]; // The staff.
+  const listed = (data ?? []) as StaffMember[]; // The staff, as the directory gives them.
+  // Each person's first and last name (admins can read names). If this
+  // can't be read (before the staff names update is run), names stay as they are.
+  const parts = listed.length // Only asks if there's anyone listed:
+    ? await supabase.from("accounts").select("id, first_name, last_name").in("id", listed.map((p) => p.account_id)) // their first and last names,
+    : { data: [], error: null }; // (otherwise nothing to read)
+  const partsById = new Map( // A quick lookup from account id to names:
+    ((parts.error ? [] : parts.data) ?? []).map((r) => [r.id as string, r as { first_name: string | null; last_name: string | null }]), // one entry per person,
+  ); // End of the lookup.
+  const staff = listed.map((p) => ({ // Each person, with their names added:
+    ...p, // everything the directory gave,
+    first_name: partsById.get(p.account_id)?.first_name ?? null, // their first name (blank if not given),
+    last_name: partsById.get(p.account_id)?.last_name ?? null, // their last name (blank if not given),
+    names_known: !parts.error, // and whether the names could be read at all.
+  })); // End of the staff list.
   // Staff invited who haven't joined yet (owner and operations only).
   const invitations = canEdit // The waiting invitations, only for those who can edit:
     ? ((( // (the result of:)
@@ -47,7 +61,7 @@ export default async function StaffDirectoryPage() {
           title="Staff directory" // titled "Staff directory",
           intro={ // with an introduction:
             canEdit // for those who can edit,
-              ? "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone. Press Manage on a person to change their job title, send them a link, add or remove a role, or remove them from the team when they leave. Choose \"Left CLG\" under Status to see former staff." // mentioning the Manage button and former staff,
+              ? "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone. Press Manage on a person to change their name or job title, send them a link, add or remove a role, or remove them from the team when they leave. Choose \"Left CLG\" under Status to see former staff." // mentioning the Manage button and former staff,
               : "Everyone who works for CLG, with their job title and what they do in the app. Search or filter to find someone." // otherwise without it.
           } // (end of the introduction)
         />{/* (end of the heading) */}

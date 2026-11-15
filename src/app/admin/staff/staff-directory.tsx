@@ -8,6 +8,7 @@
 import { useActionState, useMemo, useState } from "react"; // Lets the page remember searches, filters and form replies.
 import { cancelInvitation } from "@/app/actions/admin"; // The server action that cancels an invitation.
 import { addRole, removeFromTeam, removeRole, resendStaffInvite, sendStaffLoginLink, setJobTitle } from "@/app/actions/staff-directory"; // The server actions for roles, leaving, links and job titles.
+import { setStaffName } from "@/app/actions/names"; // The server action for changing a staff member's first and last name.
 import { Empty } from "@/components/ui"; // The "nothing yet" note.
 import { initialFormState, type FormState } from "@/lib/forms"; // The starting (empty) form reply, and the reply type.
 import { SetLevelForm } from "../level-forms"; // The drop-down for changing an admin's level.
@@ -32,6 +33,9 @@ export type StaffMember = {
   leaving_reason: string | null; // why they left (only shown to the owner and operations admins),
   upcoming_bookings: number; // how many bookings they have coming up (tutors),
   current_students: number; // and how many students they're matched with now (tutors).
+  first_name?: string | null; // their first name (blank until given),
+  last_name?: string | null; // their last name (blank until given),
+  names_known?: boolean; // whether first and last names could be read at all.
 }; // End of the shape.
 
 // A waiting invitation.
@@ -417,7 +421,8 @@ function StaffCard({
           </span> // (end of the label)
         ))}{/* End of the loop. */}
         {p.work_state && <span className={pill}>{p.work_state}</span>}{/* The state they work from, if set, */}
-        {!p.last_sign_in_at && <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">Never signed in</span>}{/* and "Never signed in" if so. */}
+        {!p.last_sign_in_at && <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">Never signed in</span>}{/* "Never signed in" if so, */}
+        {needsName(p) && <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">Name not given yet</span>}{/* and "Name not given yet" if they have no first and last name. */}
       </div>{/* End of the row. */}
       {p.subjects.length > 0 && <p className="mt-2 text-sm text-zinc-600">Teaches: {p.subjects.join(", ")}</p>}{/* The subjects they teach, if any. */}
       {p.email && ( // If there's an email:
@@ -433,6 +438,7 @@ function StaffCard({
             <BringBackPanel person={p} isOwner={isOwner} /> // the panel for bringing them back,
           ) : ( // otherwise:
             <>{/* (a group:) */}
+              <StaffNameForm person={p} />{/* the name form, */}
               <JobTitleForm person={p} />{/* the job title form, */}
               <LoginLinkForm person={p} />{/* the login link form, */}
               <RolesPanel person={p} isOwner={isOwner} isMe={isMe} />{/* the roles panel, */}
@@ -444,6 +450,35 @@ function StaffCard({
     </li> // End of the card.
   ); // End of what's shown.
 } // End of StaffCard.
+
+// True if this staff member hasn't given a first and last name yet (only
+// when names could be read, so nobody is wrongly flagged).
+function needsName(p: StaffMember) {
+  return p.names_known === true && (!p.first_name || !p.last_name); // Names were read, and one is missing.
+} // End of needsName.
+
+// The form for changing a staff member's first and last name (owner and
+// operations admins). Starts with what's saved; if nothing is saved yet the
+// boxes start empty (the current name may be the start of their email).
+function StaffNameForm({ person }: { person: StaffMember }) {
+  const [state, formAction, pending] = useActionState(setStaffName, initialFormState); // The reply, the action to send, and whether it's sending.
+  if (person.names_known === false) return null; // Names can't be read yet (update not run): shows nothing.
+  return ( // Shows:
+    <form action={formAction} className="space-y-2">{/* a form: */}
+      <input type="hidden" name="account_id" value={person.account_id} />{/* who (hidden), */}
+      <span className="block text-sm font-medium text-zinc-800">Name</span>{/* "Name", */}
+      <span className="flex flex-wrap gap-2">{/* a row: */}
+        <input name="first_name" defaultValue={person.first_name ?? ""} placeholder="First name" aria-label="First name" required maxLength={100} className={inputClass} />{/* the first name box, */}
+        <input name="last_name" defaultValue={person.last_name ?? ""} placeholder="Last name" aria-label="Last name" required maxLength={100} className={inputClass} />{/* the last name box, */}
+        <BusyButton type="submit" disabled={pending} className={smallButton}>{/* a small button: */}
+          {pending ? "Saving…" : "Save"}{/* its words change while saving. */}
+        </BusyButton>{/* End of the button. */}
+      </span>{/* End of the row. */}
+      <span className="block text-xs text-zinc-500">How they appear across the app. They can also change it themselves by tapping their name at the top.</span>{/* A hint. */}
+      <Result state={state} />{/* The reply. */}
+    </form> // End of the form.
+  ); // End of what's shown.
+} // End of StaffNameForm.
 
 // The form for changing a person's job title.
 function JobTitleForm({ person }: { person: StaffMember }) {
