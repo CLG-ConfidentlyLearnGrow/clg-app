@@ -116,9 +116,9 @@ tutors do."
   tutor's checks for that student have lapsed, to match their Sessions list
   (Carla, 16 Nov 2026).
 - Research: the EEF and Evidence for Learning tutoring evidence stresses
-  regular, consistent attendance; AERO's family engagement guidance points
-  to keeping families informed in the tools they already use. A session
-  in the family's own calendar makes missed sessions less likely.
+  regular, consistent attendance, and AERO's family engagement guidance
+  stresses clear, regular communication with families. Putting sessions in
+  the calendar a family already uses makes missed sessions less likely.
 - Privacy: same rules as the tutors' link (APP 3, 6, 11; Children's Online
   Privacy Code; UK/EU data minimisation). Families may share their calendar
   with other family members; the page asks them to share only with family
