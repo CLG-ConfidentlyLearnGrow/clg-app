@@ -41,7 +41,19 @@ Carla's rules (15 Nov 2026):
 - In the pilot test guide: a tutor named in a concern sees nothing new on any page.
 - Time from raised to opened: target same day, as for all concerns.
 
-## 5. Still to decide
+## 5. Quiet steps (Carla chose "both, as separate buttons", 15 Nov 2026)
 
-- Quietly holding a tutor back while a concern is looked into: stop new students, end one match, or both (asked 15 Nov 2026).
+On a concern that names a tutor, the person handling it can take either step. Nothing happens unless they press the button.
+
+- **Stop new students.** The tutor keeps their current students, but matching, offers and bookings won't pair them with anyone new.
+- **End the match** with the child in the concern. The tutor's match ends today, so they can no longer open the child's records, and the pair can't be matched again.
+
+Each step needs a reason, which is kept as a note on the concern, and each can be lifted later. Lifting an ended match allows matching again but doesn't restart the match by itself. Upcoming bookings for the pair are counted and shown, so the handler can change them in Sessions.
+
+The tutor is never told why. Admins doing matching see only the usual "Can't be matched with this student". This follows the Victorian and Queensland guidance on not alerting a worker while a concern is looked into (section 2). Before any disciplinary step, the worker is still told and gets to respond.
+
+This works through the shared pairing check (`private.blocked_pair`), which now also reads `safety_holds`.
+
+## 6. Still to decide
+
 - The lawyer route for concerns naming all child safety contacts, once a lawyer is appointed.
