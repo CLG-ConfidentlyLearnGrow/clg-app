@@ -16,6 +16,7 @@
 12. [My pay and admin hours](#12-my-pay-and-admin-hours)
 13. [If a student isn't the right fit](#13-if-a-student-isnt-the-right-fit)
 14. [Notices](#14-notices)
+15. [Training and the handbook](#15-training-and-the-handbook)
 
 ## 1. Signing in and two-step sign in
 
@@ -175,3 +176,20 @@ still be logged, but please be on time.
 Notices are in the app only, never between 9pm and 5am (your local time). See them under
 **Schedule**, then **Notices**. The **Sessions on hold or back on** card on
 your dashboard shows families whose sessions are paused for billing.
+
+## 15. Training and the handbook
+
+- **Training** (in the tutor side menu) lists your modules. The number on
+  the tab shows what's due. Open a module, work through its lessons, then
+  do the quiz. You need every answer right, and you can try as many times
+  as you like.
+- The child safety, code of conduct and privacy modules must be done within
+  4 weeks of joining. After that, CLG can't match you with new students
+  until they're done (students you already tutor stay with you).
+- Compulsory modules are paid for their set time. They appear under
+  **My pay** as Training hours waiting for approval.
+- Download a certificate for each module, and your **CLG certified**
+  certificate once your starting course is done. To stay certified, finish
+  3 hr of training each quarter (safety modules don't count).
+- **Handbook** (in the side menu) is where to look when something happens.
+  The red page at the top says what to do, step by step.

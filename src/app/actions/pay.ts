@@ -128,6 +128,9 @@ export async function workOutPay(_prev: FormState, formData: FormData): Promise<
   // Add summary-writing time for each completed session (before the agreed-hours check, so it counts).
   const summaries = await supabase.rpc("billing_build_summary_pay", { p_from: parsed.data.from, p_to: parsed.data.to }); // Builds the session summary pay lines.
   if (summaries.error) return plain(summaries.error, "Couldn't work out session summary pay."); // Failed: plain message.
+  // Add compulsory training as hours waiting for approval (before the agreed-hours check, so it counts).
+  const training = await supabase.rpc("billing_build_training_hours", { p_from: parsed.data.from, p_to: parsed.data.to }); // Adds training hours for the period.
+  if (training.error) return plain(training.error, "Couldn't add training hours."); // Failed: plain message.
   // Then check agreed hours for part-time and full-time staff (only once the pay period has ended).
   const topUps = await supabase.rpc("billing_check_guaranteed_hours", { p_day: parsed.data.to }); // Adds any guaranteed-hours top-ups for the period.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.

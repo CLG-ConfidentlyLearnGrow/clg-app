@@ -22,6 +22,15 @@ async function problemReportsTab(isOwner: boolean, accountId: string): Promise<{
   return { count: count || undefined }; // Hands back the number (none when zero).
 } // End of problemReportsTab.
 
+// How many training modules the signed-in person needs to do now
+// (compulsory and not done, overdue, or due to redo soon). Shown on the
+// Training tab. None (or a problem reading it) shows no number.
+async function trainingToDo(): Promise<number | undefined> { // No inputs: it's for the signed-in person.
+  const { data } = await (await createClient()).rpc("training_my_modules"); // Their modules and where they're up to.
+  const n = ((data ?? []) as { state: string }[]).filter((m) => m.state === "to_do" || m.state === "overdue" || m.state === "renew_soon").length; // Counts the ones needing attention.
+  return n || undefined; // The number, or nothing when zero.
+} // End of trainingToDo.
+
 // The tutor dashboard's own sections (the page reads these to know which is open).
 export const TUTOR_SECTIONS = [ // Each section's id and its name on screen:
   { id: "students", label: "Your students" }, // their students,
@@ -89,6 +98,9 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
+    if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),
+    items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
+    items.push({ id: "handbook", label: "Handbook", href: "/handbook?as=admin" }); // the handbook,
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
@@ -101,6 +113,8 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       { id: "calendar", label: "Weekly calendar", href: "/dashboard/tutor/calendar" }, // their week at a glance, and the link for their own calendar (Carla, 12 Nov 2026),
       ...rest, // the other tutor sections,
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
+      { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
+      { id: "handbook", label: "Handbook", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.

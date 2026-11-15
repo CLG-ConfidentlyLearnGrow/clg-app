@@ -18,6 +18,7 @@ const KIND_LABELS: Record<string, string> = { // Each kind of pay line's words:
   tutoring_work: "Tutoring work", // tutoring work outside sessions,
   guaranteed: "Guaranteed hours top-up", // the guaranteed hours top-up.
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
+  training: "Training", // compulsory training, for its set time.
 }; // End of the list.
 
 const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`; // Minutes written as hours, e.g. "1.5 hr".
@@ -89,12 +90,12 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
                   <tr key={h.id}>{/* a row: */}
                     <td>{plainDate(h.work_date)}</td>{/* the day, */}
                     <td>{/* a cell: */}
-                      {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"}: {h.note}{/* the kind of work and the description, */}
+                      {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? "Training" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"}: {h.note}{/* the kind of work and the description, */}
                       {h.status === "declined" && h.review_note ? ` (declined: ${h.review_note})` : ""}{/* and the reason if declined. */}
                     </td>{/* End of the cell. */}
                     <td>{hours(h.minutes)}</td>{/* The hours, */}
                     <td>{/* a cell: */}
-                      {h.status === "submitted" && h.source === "guaranteed" ? ( // a guaranteed top-up waiting:
+                      {h.status === "submitted" && h.source !== "staff" ? ( // a top-up or training added by the app, waiting:
                         "Waiting for approval" // "Waiting for approval",
                       ) : h.status === "submitted" ? ( // other hours waiting:
                         <form action={withdrawMyHours} className="flex items-center gap-2">{/* a form that takes them back: */}

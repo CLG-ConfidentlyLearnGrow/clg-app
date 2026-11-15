@@ -16,7 +16,7 @@ type Line = {
   account_id: string | null; // who (if known),
   staff_name: string; // their name,
   work_date: string; // the day worked,
-  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary"; // what kind of pay,
+  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary" | "training"; // what kind of pay,
   work_kind: string; // the kind of work (school, tertiary or admin),
   minutes: number; // minutes,
   rate_cents: number; // the rate in cents,
@@ -34,6 +34,7 @@ const KIND_LABELS: Record<Line["kind"], string> = { // Words for each kind of pa
   tutoring_work: "Tutoring work", // tutoring work,
   guaranteed: "Guaranteed hours top-up", // guaranteed hours top-up.
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
+  training: "Training", // compulsory training, for its set time.
 }; // End of the list.
 
 // Adds days to a date (written as YYYY-MM-DD).
@@ -140,7 +141,7 @@ export async function PaySection({
               <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">{/* a bordered box: */}
                 <p className="mb-3">{/* a line: */}
                   <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}:{" "}{/* who and the day, */}
-                  {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"},{" "}{/* the kind of hours, */}
+                  {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? `Training (${h.work_type === "tutoring" ? "tutor rate" : "admin rate"})` : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"},{" "}{/* the kind of hours, */}
                   {hours(h.minutes)}. {h.note}{/* how long, and the description, */}
                   {h.logged_late && <span className="ml-1 text-xs text-amber-800">(logged late)</span>}{/* marked if logged late. */}
                 </p>{/* End of the line. */}
