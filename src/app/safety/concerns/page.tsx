@@ -217,7 +217,9 @@ export default async function ConcernsPage() { // The page itself.
             <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
             <TextArea label="Add a note" name="note" required minLength={2} maxLength={4000} rows={3} hint="What you did, e.g. 'Phoned CARL, reference 123'. Notes can't be changed later." />{/* the note box. */}
           </ActionForm>{/* End of the form. */}
-          <ActionForm action={setConcernStatus} submitLabel="Save">{/* changing where it's up to: */}
+          {/* The key changes with the saved stage, so the drop-down shows the new
+              stage after saving instead of jumping back to the old one. */}
+          <ActionForm key={c.status} action={setConcernStatus} submitLabel="Save">{/* changing where it's up to: */}
             <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
             <Select label="Where is this up to?" name="status" defaultValue={c.status}>{/* the stage drop-down: */}
               {Object.entries(STATUS_LABELS).map(([value, label]) => ( // for each stage:

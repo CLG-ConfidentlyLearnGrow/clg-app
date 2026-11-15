@@ -335,7 +335,11 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
 
       {level === "owner" && ( // Only for the owner:
         <Card title="Who receives concerns (owner only)" description="New concerns go to these people. Concerns already raised stay with the person they were sent to." collapsible defaultOpen={!deputy}>{/* A card for naming the contacts: */}
-          <ActionForm action={setSafetyContacts} submitLabel="Save">{/* the form: */}
+          {/* The key changes whenever the saved people change, so the form is rebuilt
+              with the new choices. Without it, the browser resets the drop-downs to
+              the people saved when the page first opened, which looked like the save
+              hadn't worked (Carla, 16 Nov 2026). */}
+          <ActionForm key={`${officer?.account_id ?? ""}-${deputy?.account_id ?? ""}`} action={setSafetyContacts} submitLabel="Save">{/* the form: */}
             <Select label={CONTACT_ROLE_LABELS.officer} name="officer" required defaultValue={officer?.account_id ?? ""}>{/* the officer drop-down: */}
               <option value="" disabled>Choose someone</option>{/* a blank first option, */}
               {choiceRows.map((c) => ( // for each staff member:
