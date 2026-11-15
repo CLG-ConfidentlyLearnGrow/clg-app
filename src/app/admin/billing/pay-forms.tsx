@@ -2,7 +2,7 @@
 //
 "use client"; // Runs in the browser, so the forms can show their result straight away.
 
-import { addAdminTime, declineHours, logMyHours, savePayPeriod, saveStaffPay, sendTimesheetsNow, uploadAwardRates, workOutPay } from "@/app/actions/pay"; // The server actions for these forms.
+import { addAdminTime, declineHours, linkXeroByEmail, logMyHours, markXeroTaskDone, savePayPeriod, saveStaffPay, sendTimesheetsNow, uploadAwardRates, workOutPay } from "@/app/actions/pay"; // The server actions for these forms.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field, Select } from "@/components/ui"; // The input box and drop-down list.
 
@@ -257,3 +257,23 @@ export function AwardRatesForm({ nextJuly, templateCsv }: { nextJuly: string; te
     </ActionForm> // End of the form.
   ); // End of what it shows.
 } // End of AwardRatesForm.
+
+// The button that ticks off one line on the Xero to-do list.
+export function XeroTaskDoneForm({ id }: { id: string }) {
+  return ( // Shows:
+    <ActionForm action={markXeroTaskDone} submitLabel="Done in Xero">{/* a form that ticks it off: */}
+      <input type="hidden" name="task_id" value={id} />{/* which to-do (hidden). */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of XeroTaskDoneForm.
+
+// The button that links staff to Xero employees with the same email.
+export function LinkXeroByEmailForm() {
+  return ( // Shows:
+    <ActionForm action={linkXeroByEmail} submitLabel="Link staff to Xero by email">{/* a form that links them: */}
+      <p className="text-xs text-zinc-600">{/* a small note: */}
+        Links everyone not yet linked to the Xero employee with the same email. Anyone already linked stays as they are.{/* what it does. */}
+      </p>{/* End of the note. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of LinkXeroByEmailForm.

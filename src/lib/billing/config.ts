@@ -56,7 +56,7 @@ export function xeroConfig(): XeroConfig | null {
     // Xero apps made after 2 March 2026 use the newer, narrower scopes.
     scopes: // the permissions asked for, which are either
       process.env.XERO_SCOPES ?? // the ones set in Vercel, or else this default list:
-      "openid profile email offline_access accounting.invoices accounting.payments accounting.contacts accounting.settings.read payroll.employees.read payroll.settings.read payroll.timesheets",
+      "openid profile email offline_access accounting.invoices accounting.payments accounting.contacts accounting.settings.read payroll.employees payroll.settings.read payroll.timesheets",
     // Account codes in CLG's Xero chart of accounts.
     salesAccount: process.env.XERO_SALES_ACCOUNT ?? "200", // the sales account (200 if not set),
     clearingAccount: process.env.XERO_STRIPE_CLEARING_ACCOUNT ?? "", // and the Stripe clearing account (blank if not set).

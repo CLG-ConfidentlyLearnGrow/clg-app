@@ -8,7 +8,7 @@ import { dollars, plainDate } from "@/lib/billing/money"; // Money as dollars, a
 import { listXeroEarningsRates, listXeroEmployees } from "@/lib/billing/payroll"; // Reads Xero Payroll's employees and earnings rates.
 import { xeroConnection } from "@/lib/billing/xero"; // Reads the saved Xero connection.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { AdminTimeForm, AwardRatesForm, DeclineHoursForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, type StaffPay } from "./pay-forms"; // The pay forms, and the pay details type.
+import { AdminTimeForm, AwardRatesForm, DeclineHoursForm, LinkXeroByEmailForm, PayPeriodForm, SendTimesheetsForm, StaffPayForm, WorkOutPayForm, XeroTaskDoneForm, type StaffPay } from "./pay-forms"; // The pay forms, and the pay details type.
 
 // A pay line as the database gives it.
 type Line = {
@@ -97,6 +97,17 @@ export async function PaySection({
   const staffList = [...staff].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)); // The staff list, by name.
 
   // Award minimum rates (every year kept) and the rates the app raised.
+  // The Xero to-do list: changes Xero's employee records still need (owner and Finance only).
+  const { data: xeroTaskRows } = await supabase // Reads:
+    .from("billing_xero_tasks") // the Xero to-do list,
+    .select("id, account_id, kind, details, created_at") // each line's details,
+    .is("done_at", null) // only what's still to do,
+    .order("created_at"); // oldest first.
+  const xeroTasks = (xeroTaskRows ?? []) as { id: string; account_id: string; kind: string; details: string; created_at: string }[]; // The lines still to do.
+  const missing = [...new Set(xeroTasks.map((t) => t.account_id).filter((id) => !staff.has(id)))]; // People on the list who are no longer staff (for example they left).
+  const { data: formerRows } = missing.length ? await supabase.from("accounts").select("id, full_name").in("id", missing) : { data: [] }; // Reads their names (nothing to read if none).
+  const nameOf = new Map<string, string>([...staff, ...((formerRows ?? []) as { id: string; full_name: string }[]).map((a) => [a.id, a.full_name] as [string, string])]); // Everyone's name, by id.
+
   const [awardRes, changeRes] = await Promise.all([ // Reads two things at once:
     supabase.from("billing_award_rates").select("work_kind, employment, min_rate_cents, award, effective_from").order("effective_from", { ascending: false }), // award rates, newest first,
     supabase.from("billing_staff_rate_changes").select("id, account_id, work_kind, old_cents, new_cents, effective_from").order("created_at", { ascending: false }).limit(20), // and the last 20 automatic raises.
@@ -244,8 +255,35 @@ export async function PaySection({
         </Card> // End of the card.
       )}{/* End of that part. */}
 
+      {canEdit && ( // For the owner and Finance:
+        <Card title={`Xero to-do${xeroTasks.length ? ` (${xeroTasks.length})` : ""}`} description="Changes to make to staff employee records in Xero, so Xero pays the same as the app. A line is added whenever someone's employment type, agreed hours or rates change, or they leave CLG. Tick each one off once Xero matches.">{/* a card listing what Xero still needs: */}
+          {xeroTasks.length === 0 ? ( // Nothing to do:
+            <Empty>Xero is up to date with the app.</Empty> // says so.
+          ) : ( // Otherwise:
+            <ul className="space-y-3">{/* a list: */}
+              {xeroTasks.map((t) => ( // for each line:
+                <li key={t.id} className="rounded-xl border border-amber-200 bg-amber-50 p-3">{/* an amber box: */}
+                  <p className="text-sm font-medium text-zinc-900">{/* the first line: */}
+                    {nameOf.get(t.account_id) ?? "Former staff member"} · {t.kind === "left" ? "Left CLG" : "Pay details changed"}{/* who, and what kind of change, */}
+                  </p>{/* End of the first line. */}
+                  <p className="mt-1 text-sm text-zinc-700">{t.details}</p>{/* what to change, */}
+                  <p className="mt-1 text-xs text-zinc-500">Changed in the app {t.created_at.slice(0, 10)}</p>{/* when it changed, */}
+                  <div className="mt-2"><XeroTaskDoneForm id={t.id} /></div>{/* and the "Done in Xero" button. */}
+                </li> // End of the box.
+              ))}{/* End of the loop. */}
+            </ul> // End of the list.
+          )}{/* End of the choice. */}
+        </Card> // End of the card.
+      )}{/* End of the Xero to-do part. */}
+
       <Card title="Pay rates" description="A separate hourly rate for each role a person holds: tutors have a school and a tertiary rate, admins have an admin rate. Someone who is both has all three. Pay is only worked out for a role once its rate is entered.">{/* A card of pay rates, explaining them: */}
         {xeroNote && <p className="mb-4 text-sm text-red-800">{xeroNote}</p>}{/* the Xero note, if any, */}
+        {!xeroNote && !xeroEmployees && ( // If Xero isn't connected:
+          <p className="mb-4 text-sm text-amber-900">{/* an amber note: */}
+            Xero isn&apos;t connected, so staff can&apos;t be matched to their Xero employee records yet. The owner connects it under Stripe and Xero, above.{/* why matching isn't shown, and how to fix it. */}
+          </p> // End of the note.
+        )}{/* End of that note. */}
+        {canEdit && xeroEmployees && <div className="mb-4"><LinkXeroByEmailForm /></div>}{/* When Xero is connected: the "link by email" button. */}
         {staffList.length === 0 ? ( // if there are no staff:
           <Empty>No tutors or admins yet.</Empty> // says so.
         ) : ( // Otherwise:

@@ -12,6 +12,8 @@ import { emailSignInLink } from "@/lib/email/sign-in-link"; // Emails a sign-in 
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { createAdminClient } from "@/lib/supabase/admin"; // The all-powerful database helper (secret key).
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
+import { endEmploymentInXero } from "@/lib/billing/staff-xero"; // Billing's step that ends someone's employment in Xero.
+import { XERO_LEAVING_CODES } from "@/lib/billing/payroll"; // The tax office's reasons for leaving, as Xero takes them.
 
 // Staff directory module: job titles, roles and links. Every action checks
 // the admin's level here, and the database checks again.
@@ -84,6 +86,8 @@ const removeSchema = z.object({
   account_id: z.uuid(), // whose account,
   role: z.enum(["tutor", "admin", "parent", "student"], "Choose a role to remove."), // which role,
   confirm_name: z.string().trim().min(1, "Type the person's full name to confirm."), // their full name typed to confirm.
+  end_in_xero: z.literal("on").optional(), // the "end their employment in Xero too" tick box (ticked or not),
+  xero_reason: z.enum(XERO_LEAVING_CODES).optional(), // and the reason Xero sends to the tax office.
 }); // End of the rules.
 
 // The owner takes away one role. Records are kept under the usual keeping
@@ -123,6 +127,8 @@ const leaveSchema = z.object({
   reason: z.enum(LEAVING_REASONS, "Choose why they left."), // why they left (from the list),
   details: z.string().trim().max(1000, "Keep the note to 1,000 characters or fewer.").optional(), // an optional short note,
   confirm_name: z.string().trim().min(1, "Type the person's full name to confirm."), // their full name typed to confirm.
+  end_in_xero: z.literal("on").optional(), // the "end their employment in Xero too" tick box (ticked or not),
+  xero_reason: z.enum(XERO_LEAVING_CODES).optional(), // and the reason Xero sends to the tax office.
 }); // End of the rules.
 
 // The owner removes someone who has left CLG: their tutor and admin access
@@ -134,7 +140,8 @@ export async function removeFromTeam(_prev: FormState, formData: FormData): Prom
   await requireAdminLevel(["owner"]); // Owner only.
   const parsed = leaveSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
-  const { account_id, left_on, reason, details, confirm_name } = parsed.data; // The checked values.
+  const { account_id, left_on, reason, details, confirm_name, end_in_xero, xero_reason } = parsed.data; // The checked values.
+  if (end_in_xero && !xero_reason) return { error: "Choose the reason to send to Xero, or untick ending their employment in Xero." }; // Xero needs a reason.
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("staff_leave", { // Asks the database to remove them:
@@ -150,7 +157,13 @@ export async function removeFromTeam(_prev: FormState, formData: FormData): Prom
   } // End of the failure case.
   revalidatePath("/admin/staff"); // Refreshes the staff page.
   revalidatePath("/admin"); // Refreshes the admin pages.
-  return { message: "Done. They've been removed from the team and signed out. Their records are kept for 7 years." }; // Confirms what happened.
+  revalidatePath("/admin/billing"); // Refreshes billing, where the Xero to-do list is.
+  const done = "Done. They've been removed from the team and signed out. Their records are kept for 7 years."; // What happened in the app.
+  if (!end_in_xero || !xero_reason) { // The owner chose not to change Xero from here:
+    return { message: `${done} Remember to end their employment in Xero too; it's on the Xero to-do list on Admin > Billing > Staff pay.` }; // reminds them.
+  } // End of that case.
+  const xero = await endEmploymentInXero(account_id, left_on, xero_reason); // Ends their employment in Xero (never throws).
+  return { message: `${done} ${xero.note}` }; // Confirms, with what happened in Xero.
 } // End of removeFromTeam.
 
 // ---------------------------------------------------------------------------
