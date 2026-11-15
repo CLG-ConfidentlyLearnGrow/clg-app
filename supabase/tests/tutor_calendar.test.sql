@@ -87,8 +87,10 @@ select tests.eq((select count(*) from public.calendar_feed(:'tok1') where subjec
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where starts_at < now() - interval '28 days'), 0, 'feed leaves out old sessions'); -- Checks: feed leaves out old sessions.
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_online' and student_first_name = 'Sam'), 1, 'feed shows the first name only'); -- Checks: feed shows the first name only.
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where student_first_name like '% %'), 0, 'no surnames in the feed'); -- Checks: no surnames in the feed.
-select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_online' and meeting_url = 'https://teams.example/cal-online'), 1, 'online session has its Teams link'); -- Checks: online session has its Teams link.
-select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_cancelled' and status = 'cancelled' and meeting_url is null), 1, 'cancelled session listed without its Teams link'); -- Checks: cancelled session listed without its Teams link.
+select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_online' and delivery = 'online'), 1, 'online session is listed'); -- Checks: online session is listed.
+-- Teams links stay inside the app (Carla, 15 Nov 2026): the feed has no Teams link column at all.
+select tests.fails(format($$select meeting_url from public.calendar_feed(%L)$$, :'tok1'), 'feed gives out Teams links'); -- Checks this is refused: feed gives out Teams links.
+select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_cancelled' and status = 'cancelled'), 1, 'cancelled session is listed as cancelled'); -- Checks: cancelled session is listed as cancelled.
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where session_id = :'c_library' and place_name = 'Alpha Library' and place_address = '1 Test St, Adelaide'), 1, 'library session has the library and address'); -- Checks: library session has the library and address.
 select tests.eq((select count(*) from public.calendar_feed(:'tok1') where time_zone = 'Australia/Adelaide'), :t3_in_window, 'times use Adelaide when no work state is set'); -- Checks: times use Adelaide when no work state is set.
 select tests.eq((select count(*) from public.calendar_feed(repeat('0', 64))), 0, 'wrong secret shows nothing'); -- Checks: wrong secret shows nothing.

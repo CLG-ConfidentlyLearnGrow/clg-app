@@ -3,7 +3,7 @@
 // the tutor's sessions. Calendar apps can't sign in, so the long secret in
 // the address is the only key; the database checks it and gives back only
 // that tutor's sessions, with the least detail needed (first name, subject,
-// time, place, Teams link).
+// time, place; Teams links stay in the app).
 //
 import { createClient } from "@supabase/supabase-js"; // The Supabase library's connection maker.
 import { siteUrl, supabasePublishableKey, supabaseUrl } from "@/lib/env"; // The app's address, and the database's address and public key.
