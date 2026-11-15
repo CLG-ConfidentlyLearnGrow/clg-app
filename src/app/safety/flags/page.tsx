@@ -109,7 +109,9 @@ export default async function FlagsPage() { // The page itself.
         </p> // End of the decision.
       )}{/* End of that part. */}
       <div className="mt-4">{/* the decision form: */}
-        <ActionForm action={reviewWordFlag} submitLabel="Save decision">{/* recording a decision: */}
+        {/* The key changes with the saved decision, so the form shows it after saving
+            instead of jumping back to what was there when the page opened. */}
+        <ActionForm key={`${f.status}-${f.reviewed_at ?? ""}`} action={reviewWordFlag} submitLabel="Save decision">{/* recording a decision: */}
           <input type="hidden" name="id" value={f.id} />{/* (which flag) */}
           <Select label="What did you decide?" name="status" defaultValue={f.status === "new" ? "no_concern" : f.status}>{/* the decision drop-down: */}
             {Object.entries(FLAG_STATUS_LABELS).filter(([value]) => value !== "new").map(([value, label]) => ( // for each decision (not "not reviewed"):
