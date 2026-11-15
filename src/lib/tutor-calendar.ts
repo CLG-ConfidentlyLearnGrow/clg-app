@@ -86,7 +86,6 @@ export type FeedSession = { // A feed row:
   place_address: string | null; // the library's address (libraries only),
   starts_at: string; // when it starts,
   ends_at: string; // when it ends,
-  meeting_url: string | null; // the Teams link (online, not cancelled),
   time_zone: string; // the tutor's time zone.
 }; // End of FeedSession.
 
@@ -125,7 +124,7 @@ function fold(line: string): string { // Takes one line.
 
 // Plain words for where a session happens, for the calendar entry.
 function whereWords(s: FeedSession): string { // Takes a session.
-  if (s.delivery === "online") return "Online (Teams)"; // Online.
+  if (s.delivery === "online") return "Online – join from the CLG app"; // Online (the Teams link stays in the app).
   if (s.delivery === "library") return [s.place_name ?? "Library", s.place_address].filter(Boolean).join(", "); // A library, with its address.
   if (s.delivery === "school") return "At the student's school"; // At school.
   return "In person (see the CLG app)"; // At home: no address in the calendar (the app has the details).
@@ -152,7 +151,7 @@ export function buildCalendar(sessions: FeedSession[], appUrl: string): string {
     const details = [ // the notes inside the entry:
       `${s.student_first_name} – ${s.subject}`, // the student's first name and subject,
       whereWords(s), // where,
-      s.meeting_url ? `Join on Teams: ${s.meeting_url}` : "", // the Teams link (if any),
+      s.delivery === "online" && !cancelled ? `Join on Teams from the CLG app: ${appUrl}/dashboard/tutor/calendar` : "", // where to join an online session (the Teams link stays in the app, Carla 15 Nov 2026),
       cancelled ? "This session was cancelled." : "", // a note if it's cancelled,
       `Details and changes: ${appUrl}/dashboard/tutor/calendar`, // where to see more in the app.
     ].filter(Boolean).join("\n"); // (leaving out blank lines, one per line)
@@ -163,9 +162,9 @@ export function buildCalendar(sessions: FeedSession[], appUrl: string): string {
       `DTSTART:${icsTime(s.starts_at)}`, // when it starts,
       `DTEND:${icsTime(s.ends_at)}`, // when it ends,
       `SUMMARY:${icsText(title)}`, // its title,
-      `LOCATION:${icsText(s.meeting_url ?? whereWords(s))}`, // where (the Teams link for online sessions, so it's one tap to join),
+      `LOCATION:${icsText(whereWords(s))}`, // where,
       `DESCRIPTION:${icsText(details)}`, // the notes,
-      ...(s.meeting_url ? [`URL:${s.meeting_url}`] : []), // the Teams link again, as the entry's link (if any),
+      `URL:${appUrl}/dashboard/tutor/calendar`, // the entry's link: the Weekly calendar page (with the Join on Teams button),
       `STATUS:${cancelled ? "CANCELLED" : "CONFIRMED"}`, // cancelled or going ahead,
       `TRANSP:${cancelled ? "TRANSPARENT" : "OPAQUE"}`, // cancelled ones don't mark the tutor as busy,
       "END:VEVENT", // ends it.

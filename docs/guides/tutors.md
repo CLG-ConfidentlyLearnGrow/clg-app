@@ -103,7 +103,9 @@ only.
   **Add to Apple or phone calendar**, or copy the link into Outlook
   (Add calendar > Subscribe from web).
 - The link is shown only once. It shows only each student's first name,
-  the subject, time, place and Teams link. Keep it to yourself. If you
+  the subject, time and place. For online sessions, tap the link in the
+  calendar entry and press **Join on Teams** here (Teams links stay in the
+  app, because anyone with one can join). Keep it to yourself. If you
   lose it or share it by mistake, choose **Make a new link** (the old one
   stops straight away) or **Turn off my link**.
 - Calendar apps update every few hours (Google can take up to a day), so

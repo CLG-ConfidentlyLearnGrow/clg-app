@@ -136,7 +136,7 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/da
 
       <Card // the calendar link card:
         title="Add to your own calendar" // its title,
-        description="A private link that shows your CLG sessions in Google, Outlook or Apple calendar, and keeps them up to date. It shows only each student's first name, the subject, the time, the place and the Teams link. Keep it to yourself." // what it does and what it shows.
+        description="A private link that shows your CLG sessions in Google, Outlook or Apple calendar, and keeps them up to date. It shows only each student's first name, the subject, the time and the place. For online sessions, join from this page (Teams links stay in the app for safety). Keep it to yourself." // what it does and what it shows.
       >{/* (end of the card's settings) */}
         <CalendarLinkCard // the link controls:
           hasLink={Boolean(link)} // whether they already have a link,

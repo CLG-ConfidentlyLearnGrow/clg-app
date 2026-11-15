@@ -30,8 +30,8 @@ weekly bookings - or at least integrate them into their own calendars."
 - **Australian Privacy Principles 3, 6 and 11** (collect and use only what's
   needed; keep it secure) and the **Children's Online Privacy Code** (least
   data about children): the link shows only the student's **first name**,
-  subject, time, place (library name and address, or Online) and the Teams
-  link. No surname, family contact, home address, school, notes, goals or
+  subject, time and place (library name and address, or Online). Teams links
+  are NOT included (Carla decided 15 Nov 2026, see below). No surname, family contact, home address, school, notes, goals or
   money. Home-session addresses are never sent ("In person (see the CLG
   app)").
 - Calendar apps can't sign in, so the link carries a 64-character random
@@ -82,10 +82,11 @@ weekly bookings - or at least integrate them into their own calendars."
 ## 6. Open questions for Carla
 
 - Should the feed stop while a tutor's child safety check has lapsed?
-- Is it OK for Teams links to be in tutors' personal calendars (Google,
-  Outlook, Apple)? Note: CLG's Teams meetings are currently set so that
-  **everyone with the link skips the waiting room** (`src/lib/teams/graph.ts`),
-  so anyone who got hold of a calendar link could join a child's session.
-  Options: keep the Teams link in the feed (asked for), leave it out (tutors
-  tap through to the app to join), or turn the Teams waiting room on for
-  people outside CLG.
+- **Decided (Carla, 15 Nov 2026): Teams links stay out of calendars.**
+  CLG's Teams meetings let everyone with the link straight in, because
+  tutors join as guests and couldn't admit a student from a waiting room
+  (`src/lib/teams/graph.ts`). A tutor's own calendar is only as safe as
+  their account, so the calendar entry says "Online – join from the CLG
+  app" and links to the Weekly calendar page. Migration
+  `20261117300200_calendar_no_teams_links.sql` removes the column from the
+  feed.
