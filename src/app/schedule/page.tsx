@@ -453,6 +453,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "bookings" && ( // The bookings section:
         <Card title="Bookings" description="Each booking is the same time every week, up to its last date. Newest first.">{/* a card: */}
+          {isDesk && <p className="mb-4 text-sm">Need to give a student a new tutor for sessions already booked? <TextLink href="/schedule/change-tutor">Change tutor on booked sessions</TextLink></p>}{/* for matching admins, the way to move sessions to a new tutor, */}
           {bookings.length > 0 && ( // when there are bookings, filter buttons:
             <nav aria-label="Show bookings" className="mb-4 flex flex-wrap gap-2 text-sm">{/* a row of filter links: */}
               {BOOKING_FILTERS.map((f) => { // for each filter:

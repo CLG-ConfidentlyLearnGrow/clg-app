@@ -5,6 +5,7 @@
 // that stays with the people handling the concern. An admin marks each one
 // sorted once the sessions are moved, with a short note.
 //
+import Link from "next/link"; // The Next.js link, for moving between pages without a full reload.
 import { markRematchSorted } from "@/app/actions/child-safety"; // The server action that marks a flag sorted.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field } from "@/components/ui"; // The text box.
@@ -12,7 +13,7 @@ import { shortDate } from "@/lib/scheduling"; // Short dates in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
 // One urgent flag, as the database gives it.
-type Urgent = { id: string; student_name: string; tutor_name: string | null; subjects: string; upcoming_sessions: number; paid_sessions: number; first_session: string | null; upcoming_bookings: number }; // the child, current tutor, subjects, counts and first date.
+type Urgent = { id: string; student_id: string; student_name: string; tutor_name: string | null; subjects: string; upcoming_sessions: number; paid_sessions: number; first_session: string | null; upcoming_bookings: number }; // the child, current tutor, subjects, counts and first date.
 
 // Shows the box (nothing at all when there are no urgent flags).
 export async function UrgentRematchBox() { // The box itself.
@@ -25,7 +26,7 @@ export async function UrgentRematchBox() { // The box itself.
       <h2 id="urgent-rematch" className="text-lg font-bold">Urgent: needs a new tutor ({rows.length})</h2>{/* its heading and count, */}
       <p className="mt-1 text-sm">{/* what to do: */}
         These students can no longer have sessions with their tutor, but still have sessions booked, often already paid for.
-        Please find a new tutor first, move the sessions in Sessions, then mark it sorted. Don&apos;t contact the tutor about why.{/* the steps, and not to ask the tutor. */}
+        Please find a new tutor first, use &quot;Move sessions to a new tutor&quot; below, then mark it sorted. Don&apos;t contact the tutor about why.{/* the steps, and not to ask the tutor. */}
       </p>{/* End of the explanation. */}
       <ul className="mt-4 space-y-4">{/* the list: */}
         {rows.map((r) => ( // for each flag:
@@ -34,6 +35,7 @@ export async function UrgentRematchBox() { // The box itself.
             <p className="mt-1">{/* the counts: */}
               {r.paid_sessions} paid session(s) of {r.upcoming_sessions} booked{r.first_session ? `, first on ${shortDate(r.first_session)}` : ""}{r.upcoming_bookings ? `; ${r.upcoming_bookings} weekly booking(s) to move` : ""}. Currently booked with {r.tutor_name ?? "a former tutor"}.{/* paid, booked, first date, bookings and the current tutor. */}
             </p>{/* End of the counts. */}
+            <p className="mt-2"><Link href={`/schedule/change-tutor?student=${r.student_id}`} className="font-medium text-red-900 underline underline-offset-4">Move sessions to a new tutor</Link></p>{/* a link to move this child's sessions. */}
             <div className="mt-3 max-w-md">{/* the form: */}
               <ActionForm action={markRematchSorted} submitLabel="Mark sorted">{/* marking it sorted: */}
                 <input type="hidden" name="id" value={r.id} />{/* (which flag) */}
