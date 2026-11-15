@@ -55,5 +55,5 @@ A busy person reading a summary for its learning content can miss these. The app
 1. Approve the privacy policy, family terms and tutor contract wording in section 5.
 2. Decided 14 Nov 2026: the deputy sees all flags (as built).
 3. Decided 15 Nov 2026: the text copy on "No concern" flags is cleared after 12 months.
-4. When "Report a problem" (PR #115) and any future messaging are merged, add their text boxes to the check.
+4. When "Report app issue" (PR #115, formerly "Report a problem") and any future messaging are merged, add their text boxes to the check.
 5. Review the starting word list together in the first month of the pilot.

@@ -1,4 +1,4 @@
-// Summary: the Problem reports page for reviewers: the queue of reports
+// Summary: the App issues page (problem reports) for reviewers: the queue of reports
 // (filtered by status), one report in full with its screenshots and the
 // reviewer's form, and (owner only) the reviewer list setting.
 //
@@ -41,15 +41,15 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
 
   const items = [ // This page's sections under its tab:
     { id: "queue", label: "Reports", href: "/admin/problems" }, // the queue,
-    ...(isOwner ? [{ id: "reviewers", label: "Who checks reports", href: "/admin/problems?section=reviewers" }] : []), // and the reviewer list (owner only).
+    ...(isOwner ? [{ id: "reviewers", label: "Who checks app issues", href: "/admin/problems?section=reviewers" }] : []), // and the reviewer list (owner only).
   ]; // End of the sections.
 
   // Not on the list: explains, instead of showing an empty queue.
   if (!isReviewer) { // Not a reviewer:
     return ( // shows:
       <DashboardFrame role="admin" roles={viewer.roles} current="problems">{/* the dashboard frame, */}
-        <Card title="Problem reports">{/* a card: */}
-          <p className="text-sm text-zinc-700">Only the owner and the admins they choose can check problem reports. Ask the owner if you should be on the list.</p>{/* explaining who can. */}
+        <Card title="App issues">{/* a card: */}
+          <p className="text-sm text-zinc-700">Only the owner and the admins they choose can check app issue reports. Ask the owner if you should be on the list.</p>{/* explaining who can. */}
         </Card>{/* End of the card. */}
       </DashboardFrame> // End of the frame.
     ); // End of what's shown.
@@ -62,7 +62,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
     return ( // shows:
       <DashboardFrame role="admin" roles={viewer.roles} current="problems" sub="reviewers" items={items}>{/* the dashboard frame, */}
         <Card // a card:
-          title="Who checks problem reports" // its title,
+          title="Who checks app issues" // its title,
           description="You always see every report. Add the admins who should also check them. Only admins can be added, because screenshots may show children's details, and they need two-step login to see reports." // explaining the rules.
         >{/* (end of the card's settings) */}
           {admins.filter((a) => a.level !== "owner").length === 0 ? ( // No other admins:
@@ -174,7 +174,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="problems" sub="queue" items={items}>{/* the dashboard frame, */}
-      <Card title="Problem reports" description="Reports anyone using the app has sent. Check each one, reply, and mark where it's up to.">{/* the queue card: */}
+      <Card title="App issues" description="App problems anyone using the app has reported. Check each one, reply, and mark where it's up to.">{/* the queue card: */}
         <div className="mb-4 flex flex-wrap gap-2">{/* the filter buttons (wrap on small screens): */}
           {FILTERS.map((f) => ( // for each filter:
             <TextLink // a link:

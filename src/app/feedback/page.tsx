@@ -8,7 +8,7 @@
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { giveFeedback } from "@/app/actions/feedback"; // The server action that saves feedback.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { Card, Empty, Page, Select, TextArea } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down and multi-line box.
+import { Card, Empty, Page, Select, TextArea, TextLink } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down, multi-line box and text link.
 import { getAdminLevel, requireViewer } from "@/lib/auth"; // Makes sure someone is signed in, and reads their admin level.
 import { FEEDBACK_GROUPS, FEEDBACK_KINDS, FEEDBACK_STATUS } from "@/lib/feedback"; // The group names, kinds and stages in words.
 import { plainDate } from "@/lib/privacy"; // Dates in words.
@@ -45,7 +45,7 @@ export default async function FeedbackPage() { // The page itself.
   return ( // Shows:
     <Page // a page:
       title="Feedback" // titled "Feedback",
-      intro="Tell us what's going well and what we could do better: about the app, about CLG, or about someone at CLG. It only takes a minute." // with a short explanation.
+      intro={<>Tell us what&apos;s going well and what we could do better: about the app, about CLG, or about someone at CLG. It only takes a minute. If something in the app is broken or not working, use <TextLink href="/report-problem">Report app issue</TextLink> instead.</>} // with a short explanation, pointing app faults to Report app issue.
     >{/* (end of the page's settings) */}
       {canSeeOverview && ( // For full admins:
         <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">{/* a small box: */}

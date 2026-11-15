@@ -1,4 +1,5 @@
-// Summary: the "Report a problem" link in the top bar. It remembers which
+// Summary: the "Report app issue" link in the top bar (renamed from "Report a
+// problem", Carla 16 Nov 2026, so other problems go to Feedback). It remembers which
 // page the person was on, so reviewers know where the problem happened.
 //
 "use client"; // Runs in the browser, so it can read the current page's address.
@@ -16,7 +17,7 @@ export function ReportProblemLink() {
       href={from ? `/report-problem?from=${encodeURIComponent(from)}` : "/report-problem"} // to the report page, with the page they were on,
       className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline" // in the same style as the other top bar links,
     >{/* (end of the link's settings) */}
-      Report a problem{/* its words, */}
+      Report app issue{/* its words, */}
     </Link> // end of the link.
   ); // End of what's shown.
 } // End of ReportProblemLink.

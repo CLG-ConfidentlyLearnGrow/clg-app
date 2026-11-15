@@ -177,15 +177,17 @@ Only the owner sees them, because they include pay and profit.
 
 > Screenshot to add: `screenshots/admins-15-reports.png`, a monthly report.
 
-## 16. Problem reports
+## 16. App issues
 
-Anyone signed in can tap **Report a problem** in the top bar, say what went
+Anyone signed in can tap **Report app issue** in the top bar, say what went
 wrong and add up to 6 screenshots. Nothing is fixed automatically: a person
 checks every report.
+It's only for problems with the app itself; anything else (sessions, tutors,
+billing, ideas) goes through **Feedback**, and each page points to the other.
 
-- **Problem reports** in the admin menu shows for the owner and the admins
+- **App issues** in the admin menu shows for the owner and the admins
   the owner chooses. A number shows how many new reports are waiting.
-- **Who checks reports** (owner only): add or remove admins. Only admins can
+- **Who checks app issues** (owner only): add or remove admins. Only admins can
   be added, because screenshots may show children's details.
 - Open a report to see what was written, the page, and the screenshots. Set
   the **Status** (New, Being checked, Approved to fix, Fixed, Closed) and

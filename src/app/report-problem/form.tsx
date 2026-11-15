@@ -1,4 +1,4 @@
-// Summary: the "Report a problem" form. The person says what went wrong and
+// Summary: the "Report app issue" form. The person says what went wrong and
 // what they were trying to do, and adds up to 6 screenshots (chosen from
 // their device, or pasted). Screenshots are shrunk in the browser before
 // sending, which keeps uploads quick on a phone and strips hidden photo
@@ -123,7 +123,7 @@ export function ReportProblemForm({ page }: { page: string }) {
     <form onSubmit={onSubmit} onPaste={onPaste} className="space-y-4">{/* the form (pasting a picture adds it), */}
       <FormMessage state={state} />{/* the error or thanks, */}
       <TextArea // the main box:
-        label="What went wrong?" // its words,
+        label="What went wrong in the app?" // its words,
         name="what_happened" // its name,
         rows={5} // five lines tall,
         minLength={10} // at least a short sentence,
