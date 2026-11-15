@@ -1,6 +1,8 @@
 // Summary: the frame for any page that belongs to a dashboard: the dashboard
 // tabs across the top, and that dashboard's side menu (with Sessions,
-// Billing and the rest as tabs), around the page's own contents.
+// Billing and the rest as tabs), around the page's own contents. It also
+// shows the "What's new" pop-up when that dashboard has updates the person
+// hasn't seen yet (Carla, 15 Nov 2026).
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -8,6 +10,7 @@ import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboar
 import { SectionShell, type Section } from "@/components/section-shell"; // The page frame with a side menu, and one menu item's shape.
 import { getDashboardMenu } from "@/lib/dashboard-menu"; // Builds a dashboard's side menu.
 import { ROLE_TABS } from "@/lib/roles"; // Each dashboard's name and address.
+import { WhatsNew } from "@/components/whats-new"; // The "What's new" pop-up for this dashboard.
 
 // Shows the dashboard tabs and side menu around a page. "current" is the
 // menu item that's open; "items" are smaller sections to show under it
@@ -32,6 +35,7 @@ export async function DashboardFrame({
   return ( // Shows:
     <>{/* (a group) */}
       <RoleTabs roles={roles} active={role} />{/* the dashboard tabs, with this one open, */}
+      <WhatsNew role={role} />{/* the "What's new" pop-up, if this dashboard has unseen updates, */}
       <SectionShell // the page frame:
         basePath={ROLE_TABS[role].href} // at the dashboard's address (each menu item has its own address anyway),
         label={ROLE_TABS[role].label} // labelled with the dashboard's name,
