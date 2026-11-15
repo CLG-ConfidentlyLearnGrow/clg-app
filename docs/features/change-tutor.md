@@ -30,6 +30,24 @@ Now a matching admin (owner, operations or support) can move a student's upcomin
 - **Record.** Each change is kept in `tutor_changes` (who, what, when, why). Only matching admins can read it. The activity log holds ids only.
 - **Modules.** Scheduling writes only its own tables and the tutor matches, as confirming a booking already does. It never writes billing, Teams or child safety tables. After moving sessions for an urgent re-match, the admin still marks the red flag "sorted" on the Matching page.
 
+## 3a. Day and time, and confirming first (Carla, 15 Nov 2026)
+
+Carla's follow-ups on the same day:
+
+- "When changing the tutor for pre-booked sessions, the day and time of the sessions can be altered in this step (will be set to the current booked day and time initially though)."
+- "A session which has been altered needs to be confirmed by the other or all parties before being confirmed."
+
+So the steps are now:
+
+- **Day and time.** The page fills in the current booked day and start time. The admin can pick another day, or a start time on the quarter hour. Each session moves to that day within its own Monday-to-Sunday week, keeping its length. This only works when every session being moved is on one weekly day and time. If there's a one-off session in the mix, choosing a change date after it makes this possible.
+- **Checks at the new time.** The new tutor must be free at the new time. The student mustn't have another session then, and no session can land before the change date.
+- **Confirming first.** "Send for confirmation" saves a waiting change and asks the new tutor and the family (parents, and the student if they have their own login). They each see a "Please confirm a change" box on their Sessions page, showing the old and new times, and get a notice. Nothing moves until both say yes. That matches how CLG's offers already work, where both sides approve a time (see `scheduling.md`). It also follows Principle 4 of the National Principles for Child Safe Organisations, on informing and involving families.
+- **Saying no.** A no needs a short reason. Full admins are told who said no and why, and the other side is told the change isn't going ahead.
+- **Something changes meanwhile.** When the last yes comes in, every check runs again. If the change can't be made any more (for example, the tutor got booked at that time), nothing moves. The change is marked "couldn't be made", and full admins are told why.
+- **Withdrawing.** The admin can withdraw a waiting change, and the new tutor and family are told nothing is changing.
+- **The old tutor** isn't asked, because their sessions are being moved. They're told after it's confirmed, unless the admin unticks that.
+- **Invoices** already made keep the old day and time in their wording. Billing's records aren't changed by scheduling, and the session still counts as paid. **Teams links** stay the same and still work at the new time.
+
 ## 4. How we'll know it works
 
 - Every urgent re-match flag is sorted before the first paid session date.
@@ -38,5 +56,5 @@ Now a matching admin (owner, operations or support) can move a student's upcomin
 
 ## 5. Still to decide
 
-- Whether the family should approve a new tutor before the change, rather than being told. For now CLG decides, as the family terms allow, and the family can contact CLG.
+- What happens when a change isn't answered for a long time. For now it waits until someone answers or the admin withdraws it, and the admin page shows when it was sent.
 - Moving only some sessions, such as one week while a tutor is away, rather than everything from a date. For now one-off changes are made by cancelling and booking that session.
