@@ -151,7 +151,7 @@ export function buildCalendar(sessions: FeedSession[], appUrl: string): string {
     const details = [ // the notes inside the entry:
       `${s.student_first_name} – ${s.subject}`, // the student's first name and subject,
       whereWords(s), // where,
-      s.delivery === "online" && !cancelled ? `Join on Teams from the CLG app: ${appUrl}/dashboard/tutor/calendar` : "", // where to join an online session (the Teams link stays in the app, proposed 15 Nov 2026),
+      s.delivery === "online" && !cancelled ? `Join on Teams from the CLG app: ${appUrl}/dashboard/tutor/calendar` : "", // where to join an online session (the Teams link stays in the app, Carla 15 Nov 2026),
       cancelled ? "This session was cancelled." : "", // a note if it's cancelled,
       `Details and changes: ${appUrl}/dashboard/tutor/calendar`, // where to see more in the app.
     ].filter(Boolean).join("\n"); // (leaving out blank lines, one per line)

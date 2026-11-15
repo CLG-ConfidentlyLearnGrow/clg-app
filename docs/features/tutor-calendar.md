@@ -31,7 +31,7 @@ weekly bookings - or at least integrate them into their own calendars."
   needed; keep it secure) and the **Children's Online Privacy Code** (least
   data about children): the link shows only the student's **first name**,
   subject, time and place (library name and address, or Online). Teams links
-  are NOT included (proposed 15 Nov 2026, see below). No surname, family contact, home address, school, notes, goals or
+  are NOT included (Carla decided 15 Nov 2026, see below). No surname, family contact, home address, school, notes, goals or
   money. Home-session addresses are never sent ("In person (see the CLG
   app)").
 - Calendar apps can't sign in, so the link carries a 64-character random
@@ -82,7 +82,7 @@ weekly bookings - or at least integrate them into their own calendars."
 ## 6. Open questions for Carla
 
 - Should the feed stop while a tutor's child safety check has lapsed?
-- **Proposed 15 Nov 2026 (waiting for Carla): Teams links stay out of calendars.**
+- **Decided (Carla, 15 Nov 2026): Teams links stay out of calendars.**
   CLG's Teams meetings let everyone with the link straight in, because
   tutors join as guests and couldn't admit a student from a waiting room
   (`src/lib/teams/graph.ts`). A tutor's own calendar is only as safe as

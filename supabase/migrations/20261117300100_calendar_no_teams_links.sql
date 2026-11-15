@@ -1,5 +1,5 @@
--- Summary: Teams links no longer go into tutors' own calendars (proposed
--- 15 Nov 2026, for Carla to choose).
+-- Summary: Teams links no longer go into tutors' own calendars (Carla,
+-- 15 Nov 2026). Admins, tutors and families still see them in the app.
 --
 -- CLG's Teams meetings let everyone with the link straight in (tutors join
 -- as guests, so nobody could let a student in from a waiting room). A
