@@ -10,7 +10,7 @@ import { PAY, requireAdminLevel, requireViewer } from "@/lib/auth"; // The pay a
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { xeroConfig } from "@/lib/billing/config"; // Checks whether Xero is set up.
 import { parseDollars } from "@/lib/billing/money"; // Turns a typed price into cents.
-import { sendTimesheets } from "@/lib/billing/payroll"; // Sends draft timesheets to Xero Payroll.
+import { listXeroEmployees, sendTimesheets } from "@/lib/billing/payroll"; // Reads Xero's employees, and sends draft timesheets to Xero Payroll.
 import { xeroConnection } from "@/lib/billing/xero"; // Reads the stored Xero connection.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
@@ -83,8 +83,49 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
   }); // End of the save.
   if (error) return plain(error, "Couldn't save the pay details."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
-  return { message: "Pay details saved. Pay already sent to Xero doesn't change." }; // Confirms, noting pay already sent doesn't change.
+  return { message: "Pay details saved. Pay already sent to Xero doesn't change. If you changed their employment type, agreed hours or a rate, make the same change to their employee record in Xero; it's on the Xero to-do list below." }; // Confirms, and reminds them to update Xero.
 } // End of saveStaffPay.
+
+// Ticks off a line on the Xero to-do list once Xero matches the app.
+export async function markXeroTaskDone(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(PAY); // Only owner and finance admins.
+  const id = uuid.safeParse(formData.get("task_id")); // Checks the to-do's id.
+  if (!id.success) return { error: "Please try again." }; // Problem: plain message.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("billing_xero_task_done", { p_task: id.data, p_how: "by_hand" }); // Asks the database to tick it off.
+  if (error) return plain(error, "Couldn't tick it off. Please try again."); // Failed: plain message.
+  revalidatePath(PAGE); // Refreshes the page so it shows the change.
+  return { message: "Ticked off." }; // Confirms.
+} // End of markXeroTaskDone.
+
+// Links every staff member who isn't linked yet to the Xero employee with
+// the same email. Links someone already chose are never changed.
+export async function linkXeroByEmail(): Promise<FormState> { // (The form sends nothing this needs.)
+  await requireAdminLevel(PAY); // Only owner and finance admins.
+  if (!xeroConfig() || !(await xeroConnection().catch(() => null))) return { error: "Connect Xero first (Stripe and Xero, above)." }; // Xero must be connected.
+  let employees; // Xero's employee list.
+  try { // Tries:
+    employees = await listXeroEmployees(); // to read it.
+  } catch (e) { // If Xero refused:
+    return { error: `Couldn't read Xero's employees: ${(e as Error).message}` }; // says why.
+  } // End of the try.
+  const xeroByEmail = new Map(employees.filter((e) => e.Email).map((e) => [e.Email!.trim().toLowerCase(), e.EmployeeID])); // Each Xero employee's id, by email in lower case.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const [roles, emails] = await Promise.all([ // Reads two things at once:
+    supabase.from("account_roles").select("account_id").in("role", ["tutor", "admin"]), // everyone who is a tutor or admin,
+    supabase.from("account_private").select("account_id, email"), // and everyone's email.
+  ]); // End of the reads.
+  const staffIds = new Set((roles.data ?? []).map((r) => r.account_id)); // The staff, by id.
+  const links = (emails.data ?? []) // Goes through the emails:
+    .filter((e) => staffIds.has(e.account_id) && e.email) // keeps staff with an email,
+    .map((e) => ({ account_id: e.account_id, xero_employee_id: xeroByEmail.get(e.email.trim().toLowerCase()) })) // finds their Xero employee by email,
+    .filter((l) => l.xero_employee_id); // and keeps those with a match.
+  if (links.length === 0) return { message: "Nobody new matched. Check their email is the same in the app and in Xero, or choose their Xero employee by hand." }; // Nothing matched: says what to check.
+  const { data, error } = await supabase.rpc("billing_link_xero_employees", { p_links: links }); // Asks the database to save the links.
+  if (error) return plain(error, "Couldn't link them. Please try again."); // Failed: plain message.
+  revalidatePath(PAGE); // Refreshes the page so it shows the change.
+  return { message: `Linked ${data} ${data === 1 ? "person" : "people"} to Xero by email. Now choose their Xero earnings rates in Pay rates.` }; // Confirms, with the next step.
+} // End of linkXeroByEmail.
 
 // An admin records office admin hours for a staff member.
 export async function addAdminTime(_prev: FormState, formData: FormData): Promise<FormState> {

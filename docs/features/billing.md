@@ -128,3 +128,19 @@ an invoice with that one line, at the price the family was shown, using
 credit first and the bank-debit discount as usual. An unpaid review
 invoice counts like any other unpaid invoice. See
 [term-reviews.md](term-reviews.md).
+
+## Keeping Xero's employee records in step (Carla, 16 Nov 2026)
+
+Xero Payroll holds each employee's record (employment type, ordinary hours, pay rates, start and end dates, tax and super). The app holds the same pay details so it can work out pay. To stop the two drifting apart as staff numbers grow:
+
+- **Xero to-do list** (Admin > Billing > Staff pay). A line is added whenever someone's employment type, agreed hours or an hourly rate changes, including when the app raises a rate to a new award minimum, and whenever someone is removed from the team. The owner or Finance ticks each line off once Xero matches.
+- **End employment in Xero too.** "Remove from the team" now has a tick box (on by default) that sets the person's last day and the Single Touch Payroll reason in Xero. Final pay and leave owed are still paid in a Xero pay run. If Xero isn't connected, the person isn't linked, or Xero refuses, the to-do stays open.
+- **Link staff to Xero by email.** One button links everyone not yet linked to the Xero employee with the same email. Links already chosen are never replaced.
+- New employees are still added in Xero (Xero's employee invite collects their tax file number declaration, super fund and bank details, which the app should not hold). Then link them by email.
+- Ending employment needs the Xero permission `payroll.employees` (was `payroll.employees.read`), so Xero must be connected again once after this change.
+
+Legal notes: Fair Work requires employee records, including the date and reason employment ended, to be kept for 7 years. Single Touch Payroll Phase 2 needs a cessation reason when employment ends (V, I, D, R, F, C or T); Xero sends it to the ATO.
+
+## Fortnightly pay
+
+The pay period is a setting (Admin > Billing > Staff pay > Pay period). Choose Fortnightly and set "A day a pay period starts" to the first day of a pay period in Xero's fortnightly pay calendar, so the app's timesheets line up with Xero's. Agreed weekly hours are doubled for a fortnight when checking guaranteed-hours top-ups.

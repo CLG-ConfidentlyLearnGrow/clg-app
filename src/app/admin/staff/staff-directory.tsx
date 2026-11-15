@@ -670,6 +670,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
   const [state, formAction, pending] = useActionState(removeFromTeam, initialFormState); // The reply, the action to send, and whether it's sending.
   const today = todayInAdelaide(); // Today's date in Adelaide (the latest last day allowed).
   const blocked = p.is_tutor && p.upcoming_bookings > 0; // True if they still have bookings coming up (the database refuses until they're moved).
+  const [reason, setReason] = useState(""); // Why they left, as chosen (used to suggest the reason for Xero).
   return ( // Shows:
     <div className="space-y-3 rounded-xl border border-red-100 bg-red-50/40 p-3">{/* a soft red box: */}
       <p className="text-sm font-medium text-zinc-800">Left CLG</p>{/* the heading, */}
@@ -687,7 +688,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
           <Result state={state} />{/* the confirmation, */}
           <p className="text-xs font-medium text-zinc-800">Still to do outside the app:</p>{/* a heading for the outside steps, */}
           <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">{/* a list: */}
-            <li>Pay their final wages and any leave owed (most awards say within 7 days of their last day), and finish them in Xero payroll.</li>{/* final pay, */}
+            <li>Pay their final wages and any leave owed in a Xero pay run (most awards say within 7 days of their last day).</li>{/* final pay, */}
             <li>Remove them from CLG&apos;s Microsoft 365 and Teams (family teams and channels), and any shared files.</li>{/* Microsoft 365 and Teams, */}
             <li>Collect any CLG materials, keys or devices, and change any shared passwords they knew.</li>{/* materials and passwords, */}
             <li>If they were linked to CLG for their Working with Children Check, update that with the screening unit.</li>{/* their check link, */}
@@ -722,7 +723,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
             </label>{/* End of the label. */}
             <label className="block space-y-1">{/* A label: */}
               <span className="text-xs font-medium text-zinc-800">Why they left</span>{/* "Why they left", */}
-              <select name="reason" defaultValue="" required className={inputClass}>{/* a drop-down: */}
+              <select name="reason" value={reason} onChange={(e) => setReason(e.target.value)} required className={inputClass}>{/* a drop-down that remembers the choice: */}
                 <option value="" disabled>{/* a blank first option that can't be picked: */}
                   Choose…{/* "Choose…", */}
                 </option>{/* (end of the option) */}
@@ -739,6 +740,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
             <textarea name="details" maxLength={1000} rows={2} className={inputClass} />{/* a small text box, */}
             <span className="block text-xs text-zinc-500">Keep it short and factual. A child safety concern goes in Child safety, not here.</span>{/* a hint. */}
           </label>{/* End of the label. */}
+          <XeroLeavingFields reason={reason} />{/* The "end their employment in Xero too" choice. */}
           <label className="block space-y-1">{/* A label: */}
             <span className="text-xs font-medium text-zinc-800">Type {p.full_name} to confirm</span>{/* asking them to type the name, */}
             <input name="confirm_name" required autoComplete="off" className={inputClass} />{/* the name box. */}
@@ -757,6 +759,55 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
     </div> // End of the box.
   ); // End of what's shown.
 } // End of LeaveTeamPanel.
+
+// The tax office's reasons someone stopped working, as Xero takes them.
+const XERO_REASON_WORDS: Record<string, string> = { // The words for each code:
+  V: "They chose to leave (resigned or retired)", // V: voluntary,
+  C: "Their contract or agreed work ended", // C: contract ended,
+  F: "Dismissed", // F: dismissal,
+  R: "Redundancy", // R: redundancy,
+  I: "Ill health", // I: ill health,
+  D: "Died", // D: deceased,
+  T: "Moved to a new employer in a business sale", // T: transfer.
+}; // End of the list.
+
+// The Xero reason that usually fits each reason for leaving ("" means choose).
+const XERO_REASON_FOR: Record<string, string> = { // From the app's reason to Xero's:
+  own_study_or_work: "V", moved: "V", pay: "V", hours: "V", workload: "V", personal: "V", // they chose to leave,
+  contract_ended: "C", // their agreed time finished,
+  clg_ended: "", // CLG ended it: dismissal or redundancy, so the owner chooses,
+  other: "", // something else: the owner chooses.
+}; // End of the list.
+
+// The "end their employment in Xero too" tick box, and the reason to send.
+// Ticked to start, because Xero needs to match the app.
+function XeroLeavingFields({ reason }: { reason: string }) {
+  const [on, setOn] = useState(true); // Whether the box is ticked (ticked to start).
+  const suggested = XERO_REASON_FOR[reason] ?? ""; // The Xero reason that fits the reason chosen above.
+  return ( // Shows:
+    <div className="space-y-2 rounded-lg border border-zinc-200 bg-white p-3">{/* a white box: */}
+      <label className="flex items-start gap-2 text-xs text-zinc-800">{/* a tick box with its words: */}
+        <input type="checkbox" name="end_in_xero" checked={on} onChange={(e) => setOn(e.target.checked)} className="mt-0.5" />{/* the tick box, */}
+        <span>End their employment in Xero too (sets their last day and reason there). You still pay their final wages in a Xero pay run.</span>{/* what it does. */}
+      </label>{/* End of the tick box. */}
+      {on && ( // When ticked:
+        <label className="block space-y-1">{/* a label: */}
+          <span className="text-xs font-medium text-zinc-800">Reason for the tax office (sent by Xero)</span>{/* its words, */}
+          <select key={suggested} name="xero_reason" defaultValue={suggested} required className={inputClass}>{/* a drop-down, starting on the reason that fits: */}
+            <option value="" disabled>{/* a blank first option that can't be picked: */}
+              Choose…{/* "Choose…", */}
+            </option>{/* (end of the option) */}
+            {Object.entries(XERO_REASON_WORDS).map(([code, words]) => ( // for each reason:
+              <option key={code} value={code}>{/* an option: */}
+                {words}{/* its words. */}
+              </option> // (end of the option)
+            ))}{/* End of the loop. */}
+          </select>{/* End of the drop-down. */}
+        </label> // End of the label.
+      )}{/* End of the ticked part. */}
+    </div> // End of the box.
+  ); // End of what's shown.
+} // End of XeroLeavingFields.
 
 // For someone who has left: when and why (owner and operations), and a way
 // to bring them back by adding a tutor or admin role.

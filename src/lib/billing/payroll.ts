@@ -16,10 +16,33 @@ export type XeroEmployee = { EmployeeID: string; FirstName: string; LastName: st
 export type XeroEarningsRate = { EarningsRateID: string; Name: string };
 
 // Gets CLG's current employees from Xero, for matching staff to Xero.
+// Xero gives at most 100 people at a time, so this asks page by page.
 export async function listXeroEmployees(): Promise<XeroEmployee[]> {
-  const res = await xeroPayroll<{ Employees: XeroEmployee[] }>("GET", "Employees"); // Asks Xero for the employee list.
-  return (res.Employees ?? []).filter((e) => e.Status !== "TERMINATED"); // Leaves out people who have left.
+  const all: XeroEmployee[] = []; // Everyone found so far.
+  for (let page = 1; page <= 20; page++) { // Up to 20 pages (2,000 people), as a safety limit.
+    const res = await xeroPayroll<{ Employees: XeroEmployee[] }>("GET", `Employees?page=${page}`); // Asks Xero for this page of the employee list.
+    const batch = res.Employees ?? []; // The people on this page (none if missing).
+    all.push(...batch); // Adds them to the list.
+    if (batch.length < 100) break; // A short page means it was the last one.
+  } // End of the pages.
+  return all.filter((e) => e.Status !== "TERMINATED"); // Leaves out people who have left.
 } // End of listXeroEmployees.
+
+// Why someone stopped working, in the codes the tax office's Single Touch
+// Payroll uses (Xero sends them on): V = they chose to leave, I = ill health,
+// D = died, R = redundancy, F = dismissed, C = contract or job ended,
+// T = moved to another employer in a business sale.
+export const XERO_LEAVING_CODES = ["V", "I", "D", "R", "F", "C", "T"] as const; // The allowed codes.
+export type XeroLeavingCode = (typeof XERO_LEAVING_CODES)[number]; // One of those codes.
+
+// Ends someone's employment in Xero Payroll: sets their last day and the
+// reason. Their final pay and any leave owed are still paid in a Xero pay
+// run, which Xero walks you through.
+export async function endXeroEmployment(employeeId: string, lastDay: string, code: XeroLeavingCode): Promise<void> {
+  await xeroPayroll("POST", "Employees", [ // Sends Xero an update for one employee:
+    { EmployeeID: employeeId, TerminationDate: `${lastDay}T00:00:00`, TerminationReason: code }, // who, their last day, and why.
+  ]); // End of the update (Xero's reply isn't needed).
+} // End of endXeroEmployment.
 
 // Gets CLG's earnings rates from Xero, so admin can pick one per kind of work.
 export async function listXeroEarningsRates(): Promise<XeroEarningsRate[]> {
