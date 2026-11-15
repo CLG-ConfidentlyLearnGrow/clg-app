@@ -144,3 +144,14 @@ Legal notes: Fair Work requires employee records, including the date and reason 
 ## Fortnightly pay
 
 The pay period is a setting (Admin > Billing > Staff pay > Pay period). Choose Fortnightly and set "A day a pay period starts" to the first day of a pay period in Xero's fortnightly pay calendar, so the app's timesheets line up with Xero's. Agreed weekly hours are doubled for a fortnight when checking guaranteed-hours top-ups.
+
+## Cancels with a make-up, and tutor late-cancel pay (16 Nov 2026, Carla)
+
+When a family cancels and a make-up session is booked, the cancelled session
+gets full credit with 2 hr or more notice, or 50% credit under 2 hr. With no
+make-up the rules above apply. Credit waits while make-up times are still
+waiting for an answer. Tutor late-cancel pay (50%, up to 1 hr) now applies
+only when the cancel came with less than 2 hr notice (was 24 hr or less).
+Notice counts from when the cancel was saved. See
+[cancel-reasons-makeup-times.md](cancel-reasons-makeup-times.md). Migration:
+`20261118100300_makeup_cancel_pay_rules.sql`.

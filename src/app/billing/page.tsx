@@ -223,7 +223,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                   <li>Sessions are paid in advance. Weekly and monthly invoices are due 4 days before the first session; per term invoices 1 week before.</li>{/* paying in advance, */}
                   <li>Weekly and monthly plans pay automatically, by saved card (weekly) or card or bank debit (monthly).</li>{/* automatic payment, */}
                   <li>If an invoice is overdue, all your family&apos;s sessions go on hold until it is paid.</li>{/* holds when overdue, */}
-                  <li>Cancel more than 24 hr before a session for full credit, or 2 to 24 hr before for half credit. Under 2 hr or a missed session gets no credit. If CLG or the tutor cancels, you get full credit.</li>{/* cancellations, */}
+                  <li>Cancel more than 24 hr before a session for full credit, or 2 to 24 hr before for half credit. Under 2 hr or a missed session gets no credit. If a make-up session is booked instead, you pay only for the make-up, or half the cancelled session as well if you cancelled under 2 hr before. If CLG or the tutor cancels, you get full credit.</li>{/* cancellations and make-ups (Carla, 16 Nov 2026), */}
                   <li>Credit comes off your next invoice for any CLG service. Refunds are given where the law requires.</li>{/* credits and refunds. */}
                 </ul>{/* End of the list. */}
                 <AcceptTermsForm familyId={a.family_id} />{/* The agree form. */}

@@ -597,8 +597,9 @@ export function CancelForm({ // Its settings:
         {isAdmin && <WhoAsked />}{/* For admins, who asked. */}
         {!isAdmin && !isTutor && ( // For families:
           <p className="text-xs text-zinc-600">{/* a small note: */}
-            Family cancellations: more than 24 hr before gets a full credit, 24 to 2 hr before gets a 50% credit, and
-            under 2 hr gets no credit.{/* (the credit rules) */}
+            If a make-up session is booked, you pay only for the make-up, or half the cancelled session as well if
+            you cancel under 2 hr before. With no make-up: more than 24 hr before gets a full credit, 24 to 2 hr
+            before a 50% credit, and under 2 hr no credit. Notice counts from when you send this.{/* (the credit rules, Carla 16 Nov 2026) */}
           </p> // End of the paragraph.
         )}{/* End of this part. */}
       </ActionForm>{/* End of the form. */}
