@@ -109,6 +109,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     return [ // hands back:
       { id: "children", label: "Your children", href: "/dashboard/parent?section=children", count: todo.get("parent", "children") }, // Your children (with details to finish),
       ...sessions, // Sessions,
+      { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=parent" }, // the family's week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
       { id: "add", label: "Add a child", href: "/dashboard/parent?section=add" }, // Add a child,
       { id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }, // and Billing (with anything to set up).
     ]; // End of the parent menu.
@@ -119,6 +120,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
   return [ // Hands back:
     { id: "learning", label: "Your learning", href: "/dashboard/student", count: todo.get("student", "learning") }, // Your learning (with steps overdue),
     ...sessions, // Sessions,
+    { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=student" }, // their week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
     ...(roles.includes("parent") ? [] : [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }]), // and Billing (unless they're also a parent).
   ]; // End of the student menu.
 } // End of getDashboardMenu.

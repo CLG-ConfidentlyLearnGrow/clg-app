@@ -1,4 +1,4 @@
-# Tutor weekly calendar and private calendar link
+# Weekly calendar and private calendar link (tutors, parents, students)
 
 Asked for by Carla, 12 Nov 2026: "The tutors need to be able to see their
 weekly bookings - or at least integrate them into their own calendars."
@@ -90,3 +90,36 @@ weekly bookings - or at least integrate them into their own calendars."
   app" and links to the Weekly calendar page. Migration
   `20261117300200_calendar_no_teams_links.sql` removes the column from the
   feed.
+
+## 7. Parents and students (Carla, 15 Nov 2026)
+
+"Student and parent profiles should also get a similar calendar entry as
+tutors do."
+
+- **Weekly calendar** tab on the parent and student dashboards
+  (`/dashboard/calendar?as=parent|student`): the same week view, showing a
+  parent's children (child, subject, tutor's first name, place) or a
+  student's own sessions, with **Join on Teams** for online sessions. Times
+  are in the student's state's time zone.
+- **Private calendar link** for each parent or student with their own login
+  (`/api/calendar/family/<secret>.ics`). Shows the child's first name, the
+  subject, the tutor's first name, the time and the place. No Teams links,
+  surnames, notes or money. A child unlinked from a parent drops out of
+  that parent's feed straight away; the link stops if the person loses the
+  parent or student role.
+- Separate table (`public.family_calendar_links`) and functions
+  (`reset_family_calendar_link`, `remove_family_calendar_link`,
+  `family_calendar_feed`) so tutor and family links can never open each
+  other's feeds. Migration `20261117400100_family_calendar.sql`; tests
+  `supabase/tests/scheduling_family_calendar.test.sql`.
+- The same migration makes the tutors' feed leave out sessions while the
+  tutor's checks for that student have lapsed, to match their Sessions list
+  (Carla, 16 Nov 2026).
+- Research: the EEF and Evidence for Learning tutoring evidence stresses
+  regular, consistent attendance; AERO's family engagement guidance points
+  to keeping families informed in the tools they already use. A session
+  in the family's own calendar makes missed sessions less likely.
+- Privacy: same rules as the tutors' link (APP 3, 6, 11; Children's Online
+  Privacy Code; UK/EU data minimisation). Families may share their calendar
+  with other family members; the page asks them to share only with family
+  who should see these sessions.
