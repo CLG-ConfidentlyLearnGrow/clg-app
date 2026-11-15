@@ -174,28 +174,83 @@ export async function approveBooking(_prev: FormState, formData: FormData): Prom
 // ---------------------------------------------------------------------------
 // Cancelling
 // ---------------------------------------------------------------------------
-// The rules for cancelling:
+// The rules for stopping a whole booking:
 const cancelSchema = z.object({
   id: z.uuid(), // the session or booking,
   reason: z.string().trim().max(500).optional(), // the reason (optional),
   on_behalf: z.enum(["", "family", "tutor", "admin"]).optional(), // who it's cancelled for (optional, admins only).
 }); // End of the rules.
 
-// Cancels one session.
+// The rules for cancelling one session (Carla, 16 Nov 2026): a reason from
+// the list, a few words (needed for "Other"), and two other times that week
+// (a day and a start time each), unless "no other time works" is ticked.
+const sessionCancelSchema = z.object({
+  id: z.uuid(), // the session,
+  reason: z.enum(["sick", "away", "school_event", "family", "clash", "other"], "Please choose a reason for cancelling."), // the reason from the list,
+  note: z.string().trim().max(300).optional(), // a few words (optional, except for "Other"),
+  date_1: z.union([z.iso.date(), z.literal("")]).optional(), // the first new day,
+  time_1: z.union([z.iso.time(), z.literal("")]).optional(), // the first new start time,
+  date_2: z.union([z.iso.date(), z.literal("")]).optional(), // the second new day,
+  time_2: z.union([z.iso.time(), z.literal("")]).optional(), // the second new start time,
+  no_times: z.literal("on").optional(), // ticked when no other time works this week,
+  on_behalf: z.enum(["", "family", "tutor", "admin"]).optional(), // who it's cancelled for (optional, admins only).
+}); // End of the rules.
+
+// Cancels one session, with a reason and two make-up times for the other side to pick from.
 export async function cancelSession(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
-  const parsed = cancelSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Couldn't read that request." }; // Problem: plain message.
+  const parsed = sessionCancelSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Couldn't read that request." }; // Problem: the first plain message.
+  const v = parsed.data; // The checked answers.
+  const noTimes = v.no_times === "on"; // Whether "no other time works" was ticked.
 
   const supabase = await createClient(); // Connects to the database.
-  const { error } = await supabase.rpc("cancel_session", { // Asks the database to cancel it:
-    p_session: parsed.data.id, // which session,
-    p_reason: parsed.data.reason || null, // the reason (or none),
-    p_for: parsed.data.on_behalf || null, // who it's for (or none).
+  const { error } = await supabase.rpc("cancel_session_with_times", { // Asks the database to cancel it and save the times:
+    p_session: v.id, // which session,
+    p_reason: v.reason, // the reason,
+    p_note: v.note || null, // the few words (or none),
+    p_date_1: noTimes ? null : v.date_1 || null, // the first new day (none if no times),
+    p_time_1: noTimes ? null : v.time_1 || null, // the first new start time,
+    p_date_2: noTimes ? null : v.date_2 || null, // the second new day,
+    p_time_2: noTimes ? null : v.time_2 || null, // the second new start time,
+    p_no_times: noTimes, // whether no other time works,
+    p_for: v.on_behalf || null, // who it's for (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't cancel the session.") }; // Failed: plain message.
-  return done("Session cancelled."); // Refreshes, updates Teams, and confirms it.
+  if (error) return { error: plainError(error, "Couldn't cancel the session.") }; // Failed: plain message (the database explains what's wrong with a time).
+  return done( // Refreshes, updates Teams, and confirms it:
+    noTimes // if no times were offered:
+      ? "Session cancelled. CLG will help arrange a make-up session." // says CLG will help,
+      : "Session cancelled. The two times you offered have been sent to choose from.", // otherwise says the times were sent.
+  ); // (end of the message)
 } // End of cancelSession.
+
+// The rules for answering make-up times: the offer, which time (1 or 2, or
+// 0 for neither), and a note (needed for neither).
+const makeupAnswerSchema = z.object({
+  offer_id: z.uuid(), // the offer,
+  choice: z.enum(["0", "1", "2"]), // the first time, the second time, or neither,
+  note: z.string().trim().max(500).optional(), // why neither works (optional otherwise).
+}); // End of the rules.
+
+// The other side picks one of the two make-up times, or says neither works.
+export async function answerMakeup(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = makeupAnswerSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: "Please pick one of the two times, or say neither works." }; // Problem: plain message.
+
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("answer_makeup_times", { // Asks the database to record the answer:
+    p_offer: parsed.data.offer_id, // which offer,
+    p_choice: Number(parsed.data.choice), // which time (0 for neither),
+    p_note: parsed.data.note || null, // and the note (or none).
+  }); // End of the request.
+  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  return done( // Refreshes, updates Teams (a new online session needs a link), and confirms it:
+    parsed.data.choice === "0" // if neither works:
+      ? "Thanks. CLG will be in touch to arrange another time." // says CLG will be in touch,
+      : "Make-up session booked. Everyone has been told.", // otherwise says it's booked.
+  ); // (end of the message)
+} // End of answerMakeup.
 
 // Stops a weekly booking, cancelling its future sessions.
 export async function stopBooking(_prev: FormState, formData: FormData): Promise<FormState> {

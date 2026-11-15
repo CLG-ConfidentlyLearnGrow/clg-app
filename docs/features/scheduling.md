@@ -34,6 +34,9 @@ automatic, like booking a doctor:
 5. Families, tutors and admins can cancel a session before it starts, or
    stop a booking (all future sessions are cancelled). The app records who
    cancelled and when. Billing uses that for credits and pay.
+   Since 16 Nov 2026 a single-session cancel needs a reason from a list and
+   offers two make-up times that week for the other side to pick: see
+   [cancel-reasons-makeup-times.md](cancel-reasons-makeup-times.md).
 6. After a session starts, the tutor records "completed" or "no-show". An
    admin can correct it.
 
