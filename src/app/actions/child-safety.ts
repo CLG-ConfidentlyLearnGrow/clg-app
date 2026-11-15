@@ -1,7 +1,9 @@
 // Summary: the server actions for child safety concerns. Anyone signed in
-// can raise a concern; only the person it was sent to can add notes, change
-// where it's up to, or pass it on; only the owner can name the Child Safety
-// Officer and deputy. The database checks every one of these rules again.
+// can raise a concern, and can say it is about someone who works for CLG
+// (that person never sees it); only the people handling a concern can add
+// notes, change where it's up to, pass it on or share it; only the owner can
+// name the Child Safety Officer and deputy. The database checks every one of
+// these rules again.
 //
 "use server"; // Marks every function in this file as a server action (it runs only on the server).
 
@@ -47,6 +49,9 @@ export async function raiseConcern(_prev: FormState, formData: FormData): Promis
   const parsed = raiseSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const d = parsed.data; // The checked answers.
+  const about = formData.getAll("about").map(String).filter((v) => v !== ""); // The CLG workers it's about (ticked boxes), if any.
+  if (about.length > 5) return { error: "Please name at most five people. You can add more detail in \"What happened\"." }; // Too many ticked.
+  if (about.some((v) => !z.uuid().safeParse(v).success)) return { error: "Please choose people from the list." }; // A bad value.
   const isOther = d.child === "other"; // True when the child isn't a CLG student listed.
   if (!isOther && !z.uuid().safeParse(d.child).success) return { error: "Please choose which child this is about." }; // A bad choice.
   if (isOther && !d.child_name) return { error: "Please give the child's name, or a description if you don't know it." }; // No name for an unlisted child.
@@ -62,7 +67,8 @@ export async function raiseConcern(_prev: FormState, formData: FormData): Promis
     p_reported_to_line: d.reported_to_line, // the reporting-line answer,
     p_line_reference: d.line_reference || null, // the reference number (if any),
     p_happened_on: d.happened_on || null, // when it happened (if given),
-    p_what_happened: d.what_happened, // and what happened.
+    p_what_happened: d.what_happened, // what happened,
+    p_about: about.length > 0 ? about : null, // and who it's about (if anyone).
   }); // End of the request.
   if (error) return { error: plainError(error, "We couldn't send that. Please phone CLG directly, and if a child is in danger call 000.") }; // Failed: plain message.
   revalidatePath("/safety"); // Refreshes the concern page (for "Concerns you've raised").
@@ -108,6 +114,19 @@ export async function passOnConcern(_prev: FormState, formData: FormData): Promi
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Passed on. You can no longer open this concern." }; // Confirms, and says they've lost access.
 } // End of passOnConcern.
+
+// Shares a concern with the other child safety contact (the sharer keeps it too).
+// This is how the deputy can choose to show the officer a flag about the officer.
+export async function shareConcern(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z.object({ id: z.uuid(), reason: z.string().trim().min(2, "Please say why you are sharing this.").max(1000, "Please keep the reason under 1000 characters.") }).safeParse(Object.fromEntries(formData)); // Checks the concern id and reason.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("safety_concern_share", { p_id: parsed.data.id, p_reason: parsed.data.reason }); // Shares it.
+  if (error) return { error: plainError(error, "We couldn't share that. Please try again.") }; // Failed: plain message.
+  revalidatePath("/safety/concerns"); // Refreshes the concerns page.
+  return { message: "Shared. They can now read this concern and its notes, and you still can too." }; // Confirms what happened.
+} // End of shareConcern.
 
 // ---------------------------------------------------------------------------
 // Naming the Child Safety Officer and deputy (owner only)

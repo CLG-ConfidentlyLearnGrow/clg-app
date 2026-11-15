@@ -18,6 +18,7 @@ const SOURCES = [ // Each kind of email: how to collect it, and how to put it ba
   { claim: "emergency_access_emails_claim", release: "emergency_access_emails_release" }, // emergency owner access emails,
   { claim: "security_alert_emails_claim", release: "security_alert_emails_release" }, // security alert emails,
   { claim: "safety_concern_emails_claim", release: "safety_concern_emails_release" }, // child safety concern alerts (no details, just "open the app"),
+  { claim: "safety_reader_emails_claim", release: "safety_reader_emails_release" }, // alerts when a concern is shared with a second contact (no details either),
   { claim: "watch_word_emails_claim", release: "watch_word_emails_release" }, // urgent flagged-word alerts (no names or words, just "open the app").
 ] as const; // End of the list (fixed).
 

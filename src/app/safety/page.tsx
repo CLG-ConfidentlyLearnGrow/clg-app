@@ -2,7 +2,8 @@
 // 1. call 000 if a child is in immediate danger (the biggest thing on the page),
 // 2. phone the child protection line for the child's state (SA first),
 // 3. tell CLG: the form sends the concern to the Child Safety Officer, or
-//    to the deputy (for example when the concern is about the officer).
+//    to the deputy. It can name CLG workers it is about: they never see it,
+//    and one about the officer goes to the deputy (and the other way round).
 // Then support lines for young people, the documents, the concerns this
 // person has raised, and (owner only) who receives concerns.
 //
@@ -21,6 +22,9 @@ type MyConcern = { id: string; child_name: string; sent_to: string; status: stri
 // A child safety contact, as the database gives it.
 type Contact = { role: "officer" | "deputy"; account_id: string; full_name: string }; // the job, the account and the name.
 
+// A CLG worker this person can name in a concern, as the database gives it.
+type Worker = { account_id: string; full_name: string; job: string }; // the account, the name and "Tutor" or "CLG staff".
+
 // The style for a radio button or tick box, so they match the app's other fields.
 const tick = "h-4 w-4 shrink-0 accent-teal-700"; // small, in CLG's teal.
 
@@ -31,11 +35,12 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
   const sent = typeof params.sent === "string"; // True straight after a concern was sent.
   const supabase = await createClient(); // Connects to the database.
   const level = await getAdminLevel(); // Their admin level (owner, etc.), if any.
-  const [children, contacts, mine, choices] = await Promise.all([ // Reads four things at once:
+  const [children, contacts, mine, choices, workers] = await Promise.all([ // Reads five things at once:
     supabase.from("students").select("id, full_name").order("full_name"), // the children they can see (their own, their students, or all for admins),
     supabase.rpc("child_safety_contacts_list"), // who receives concerns,
     supabase.from("safety_concerns").select("id, child_name, sent_to, status, created_at").eq("raised_by", viewer.id).order("created_at", { ascending: false }).limit(20), // the concerns they raised (latest 20),
-    level === "owner" ? supabase.rpc("child_safety_contact_choices") : Promise.resolve({ data: [] }), // and, for the owner, the staff to choose from.
+    level === "owner" ? supabase.rpc("child_safety_contact_choices") : Promise.resolve({ data: [] }), // for the owner, the staff to choose from,
+    supabase.rpc("safety_concern_people_choices"), // and the CLG workers they can name in a concern.
   ]); // End of the reads.
   const childRows = (children.data ?? []) as { id: string; full_name: string }[]; // The children.
   const contactRows = (contacts.data ?? []) as Contact[]; // The contacts.
@@ -43,6 +48,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
   const deputy = contactRows.find((c) => c.role === "deputy"); // The deputy, if named.
   const myRows = (mine.data ?? []) as MyConcern[]; // The concerns they raised.
   const choiceRows = (choices.data ?? []) as { account_id: string; full_name: string }[]; // The staff the owner can choose from.
+  const workerRows = (workers.data ?? []) as Worker[]; // The CLG workers they can name.
   const isContact = contactRows.some((c) => c.account_id === viewer.id); // True if they receive concerns themselves.
   const sa = lineFor("SA"); // South Australia's line (all students live in SA).
 
@@ -75,8 +81,9 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
         <div role="status" className="rounded-2xl border border-teal-300 bg-teal-50 p-5 text-sm text-teal-900">{/* a green confirmation box: */}
           <p className="font-semibold">Thank you. Your concern has been sent to CLG.</p>{/* the confirmation, */}
           <p className="mt-2">{/* what happens next: */}
-            Only the person you sent it to can read it. They will contact you if they need more information. Please
-            don&apos;t talk about it with the family or the person involved.{/* who can read it and what not to do, */}
+            It is kept confidential, and anyone you named who works for CLG is never shown it. CLG may need to
+            contact you about it, so we can&apos;t promise you won&apos;t be contacted. Please don&apos;t talk about it
+            with the family or the person involved.{/* who can read it, that CLG may contact them, and what not to do, */}
           </p>{/* End of the paragraph. */}
           <p className="mt-2 font-medium">{/* a reminder: */}
             Telling CLG doesn&apos;t replace reporting to the child protection line. If you haven&apos;t phoned {sa.phones[0].number} yet and you should, please do it now.{/* that reporting to CLG isn't enough on its own. */}
@@ -163,7 +170,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
       </Card>{/* End of step 2. */}
 
       {/* Step 3: tell CLG. */}
-      <Card title="3. Tell CLG" description="Your concern goes to one person only and is kept confidential. The person you are worried about is never told who raised it.">{/* A card with the form: */}
+      <Card title="3. Tell CLG" description="Your concern is kept confidential. If it's about someone who works for CLG, they never see it and aren't told who raised it. CLG may need to contact you about it.">{/* A card with the form: */}
         {!officer ? ( // If no officer has been named yet:
           <Empty>CLG hasn&apos;t named its Child Safety Officer in the app yet. Please phone CLG directly.</Empty> // says to phone.
         ) : ( // Otherwise:
@@ -180,12 +187,33 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
                 <label className="flex items-start gap-2 text-sm">{/* the deputy option: */}
                   <input type="radio" name="send_to" value="deputy" className={`${tick} mt-0.5`} />{/* its radio button, */}
                   <span>{/* its words: */}
-                    <strong>{deputy.full_name}</strong>, {CONTACT_ROLE_LABELS.deputy}. Choose this if the concern is about{" "}
-                    {officer.full_name}, or you can&apos;t reach them.{/* the deputy's name, job and when to choose them. */}
+                    <strong>{deputy.full_name}</strong>, {CONTACT_ROLE_LABELS.deputy}. Choose this if you can&apos;t
+                    reach {officer.full_name}.{/* the deputy's name, job and when to choose them. */}
                   </span>{/* end of the words. */}
                 </label> // End of the option.
               )}{/* End of the deputy option. */}
+              {deputy && ( // If a deputy is named, explains how naming a contact changes where it goes:
+                <p className="text-xs text-zinc-600">{/* a small note: */}
+                  If you name {officer.full_name} below, it goes to {deputy.full_name} instead, and if you name{" "}
+                  {deputy.full_name} it goes to {officer.full_name}. If you name both, both get it.{/* the routing rule in words. */}
+                </p> // End of the note.
+              )}{/* End of the routing note. */}
             </fieldset>{/* End of the choice. */}
+
+            {workerRows.length > 0 && ( // If there are CLG workers they can name:
+              <fieldset className="space-y-2">{/* the "who is it about" choice: */}
+                <legend className="text-sm font-medium text-zinc-800">Is this about someone who works for CLG? (optional)</legend>{/* its question, */}
+                <p className="text-xs text-zinc-600">Tick anyone it&apos;s about. They will never see this concern or be told who raised it.</p>{/* the promise, */}
+                <div className="grid gap-1 sm:grid-cols-2">{/* the tick boxes, in two columns on wide screens: */}
+                  {workerRows.map((w) => ( // for each worker:
+                    <label key={w.account_id} className="flex items-center gap-2 text-sm">{/* a tick box: */}
+                      <input type="checkbox" name="about" value={w.account_id} className={tick} />{/* its box, */}
+                      <span>{w.full_name} <span className="text-zinc-500">({w.job})</span></span>{/* their name and job. */}
+                    </label> // End of the tick box.
+                  ))}{/* End of the loop. */}
+                </div>{/* End of the tick boxes. */}
+              </fieldset> // End of the choice.
+            )}{/* End of the "who is it about" part. */}
 
             <fieldset className="space-y-2">{/* the danger question: */}
               <legend className="text-sm font-medium text-zinc-800">Is a child in immediate danger right now?</legend>{/* its question, */}

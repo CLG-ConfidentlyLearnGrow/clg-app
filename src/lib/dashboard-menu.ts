@@ -86,6 +86,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
     if (problems) items.push({ id: "problems", label: "Problem reports", href: "/admin/problems", count: problems.count }); // Problem reports (owner and chosen reviewers), with new reports counted,
+    if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).

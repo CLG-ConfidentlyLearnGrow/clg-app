@@ -61,6 +61,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
                   Child safety{/* its words, */}
                   <CountBadge n={safetyCount} className="bg-red-700 text-white" />{/* and the number of new concerns and flags, if any. */}
                 </Link>{/* end of the link. */}
+                <Link href="/feedback" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the feedback link (open to everyone signed in, Carla 15 Nov 2026): */}
+                  Feedback{/* its words, */}
+                </Link>{/* end of the link. */}
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
                   Your privacy{/* its words, */}
                 </Link>{/* end of the link. */}
