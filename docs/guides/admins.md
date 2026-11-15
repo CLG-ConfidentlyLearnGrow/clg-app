@@ -202,3 +202,24 @@ checks every report.
   child safe policy.
 
 > Screenshot to add: `screenshots/admins-16-problem-reports.png`, an open report.
+
+## 17. Training setup (owner and operations)
+
+Go to **Training setup** in the admin menu.
+
+1. **Modules**: add a module (it starts as a draft), then add lessons
+   (text, a video or PDF, a link) and quiz questions. Set who it's for, its
+   time, and whether it's compulsory, needed before new students, counts
+   towards the quarterly hours, or needs redoing. Publish it when ready.
+   A draft starting course is already there to edit.
+2. **Ask everyone to redo this** after a big change. Everyone gets the
+   usual time allowed again.
+3. **Progress**: everyone's compulsory modules, certification and whether
+   new matches are held. Reminders go out automatically.
+4. **Handbook**: write and publish the tutor handbook pages. Pin the
+   "Something's happened" page so it shows in red at the top.
+5. **Settings**: days allowed (28), hours each quarter (3), and the largest
+   upload.
+
+Training hours appear under Billing, then Pay, as hours waiting for
+approval. Admins do their own training under **Training** too.

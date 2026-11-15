@@ -279,7 +279,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
 // ---------------------------------------------------------------------------
 async function StudentPanel({ studentId, subject, nextHref }: { studentId: string; subject: string; nextHref: string | null }) { // The panel for one student and subject (with a link to the next student).
   const supabase = await createClient(); // Connects to the database.
-  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes] = await Promise.all([ // Reads everything at once:
+  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes, holdsRes] = await Promise.all([ // Reads everything at once:
     supabase // the student:
       .from("students") // from students,
       .select("id, full_name, family_id, year_level, school, state, goals, learning_needs, program") // these details,
@@ -298,7 +298,8 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
     supabase.from("libraries").select("id, name, active, confirmed_at").order("name"), // the libraries, by name,
     supabase.rpc("matching_shortlist", { p_student: studentId, p_subject: subject }), // the tutor shortlist,
     supabase.rpc("matching_not_offered", { p_student: studentId, p_subject: subject }), // tutors who don't fit, and why,
-    supabase.rpc("student_term_dates", { p_student: studentId }), // and their term dates.
+    supabase.rpc("student_term_dates", { p_student: studentId }), // their term dates,
+    supabase.rpc("training_matching_holds"), // and tutors whose new matches wait for overdue safety training.
   ]); // End of the reads.
   const student = studentRes.data as { // The student:
     id: string; // their id,
@@ -332,8 +333,16 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
   } | null; // (end of the type)
   const terms = (termsRes.data ?? []) as StudentTerm[]; // Their term dates.
   const libraryName = new Map((librariesRes.data ?? []).map((l) => [l.id as string, l.name as string])); // Each library's name, by id.
-  const shortlist = (shortlistRes.data ?? []) as Shortlist[]; // The tutor shortlist.
-  const notOffered = (notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[]; // Tutors who don't fit.
+  // Tutors with overdue compulsory safety training can't take new students
+  // (the database refuses the match), so they move off the shortlist into
+  // "Tutors who don't fit", with the reason (Carla, 16 Nov 2026).
+  const held = new Map(((holdsRes.data ?? []) as { tutor_id: string; modules: string }[]).map((h) => [h.tutor_id, h.modules])); // Each held tutor and their overdue modules.
+  const fullShortlist = (shortlistRes.data ?? []) as Shortlist[]; // The tutor shortlist from the database.
+  const shortlist = fullShortlist.filter((t) => !held.has(t.tutor_id)); // The shortlist without held tutors.
+  const notOffered = [ // Tutors who don't fit:
+    ...fullShortlist.filter((t) => held.has(t.tutor_id)).map((t) => ({ tutor_id: t.tutor_id, tutor_name: t.tutor_name, reason: `Compulsory safety training overdue (${held.get(t.tutor_id)}), so no new students until it's done` })), // held tutors, with the reason,
+    ...((notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[]), // then the rest, from the database.
+  ]; // End of the list.
   const thisSubject = subjects.find((s) => s.subject.toLowerCase() === subject.toLowerCase()); // This subject's details.
 
   // Siblings, past tutors, and every suitable time for each tutor.

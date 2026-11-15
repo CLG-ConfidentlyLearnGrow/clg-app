@@ -28,6 +28,7 @@ const contentSecurityPolicy = [ // The rules, one per line:
   "style-src 'self' 'unsafe-inline'", // styles only from the app,
   `img-src 'self' blob: data:${supabase ? ` https://${supabase}` : ""}`, // images from the app, files made on the page, and Supabase,
   "font-src 'self'", // fonts only from the app,
+  `media-src 'self'${supabase ? ` https://${supabase}` : ""}`, // videos only from the app or Supabase (training lesson videos),
   `connect-src 'self'${supabase ? ` https://${supabase} wss://${supabase}` : ""}`, // data and live updates only to the app and Supabase,
   "frame-src 'none'", // no other sites shown inside pages,
   "worker-src 'self'", // background workers only from the app,
