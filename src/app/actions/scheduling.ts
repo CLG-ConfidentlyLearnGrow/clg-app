@@ -248,9 +248,38 @@ export async function answerMakeup(_prev: FormState, formData: FormData): Promis
   return done( // Refreshes, updates Teams (a new online session needs a link), and confirms it:
     parsed.data.choice === "0" // if neither works:
       ? "Thanks. CLG will be in touch to arrange another time." // says CLG will be in touch,
-      : "Make-up session booked. Everyone has been told.", // otherwise says it's booked.
+      : "Thanks. The make-up is booked once everyone has agreed, and everyone will be told.", // otherwise: booked now, or once the other side confirms.
   ); // (end of the message)
 } // End of answerMakeup.
+
+// The rules for confirming a picked make-up time: the offer, yes or no, and
+// a note (needed for no).
+const makeupConfirmSchema = z.object({
+  offer_id: z.uuid(), // the offer,
+  answer: z.enum(["yes", "no"]), // it works, or it doesn't,
+  note: z.string().trim().max(500).optional(), // why it doesn't work (optional otherwise).
+}); // End of the rules.
+
+// When CLG offered the times, the side that didn't pick confirms the picked
+// time before it's booked (Carla, 16 Nov 2026: altered sessions need everyone's okay).
+export async function confirmMakeup(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = makeupConfirmSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: "Please confirm the time, or say it doesn't work." }; // Problem: plain message.
+
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("confirm_makeup_time", { // Asks the database to record the answer:
+    p_offer: parsed.data.offer_id, // which offer,
+    p_ok: parsed.data.answer === "yes", // yes or no,
+    p_note: parsed.data.note || null, // and the note (or none).
+  }); // End of the request.
+  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  return done( // Refreshes, updates Teams (a new online session needs a link), and confirms it:
+    parsed.data.answer === "yes" // if confirmed:
+      ? "Make-up session booked. Everyone has been told." // says it's booked,
+      : "Thanks. CLG will be in touch to arrange another time.", // otherwise says CLG will be in touch.
+  ); // (end of the message)
+} // End of confirmMakeup.
 
 // Stops a weekly booking, cancelling its future sessions.
 export async function stopBooking(_prev: FormState, formData: FormData): Promise<FormState> {

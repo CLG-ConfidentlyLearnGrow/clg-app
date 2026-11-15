@@ -53,6 +53,7 @@ import { // The scheduling forms:
   BookForm, // book a session,
   CancelForm, // cancel,
   MakeupAnswerForm, // pick a make-up time,
+  MakeupConfirmForm, // confirm a picked make-up time,
   ConfirmTimesForm, // confirm a session's times,
   EndTimeForm, // change a session's end time,
   NoticeSettingsForm, // notice settings,
@@ -266,16 +267,19 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const shownBookings = show === "all" ? bookings : bookings.filter((b) => bookingFilterKey(b) === show); // The bookings that match it.
   const sessions = ((sessionsRes.data ?? []) as Session[]).filter((x) => ours(x.tutor_id, x.student_id)); // The sessions for this dashboard.
   const makeups = ((makeupRes.data ?? []) as MakeupOffer[]).filter((o) => ours(o.tutor_id, o.student_id)); // The make-up offers for this dashboard.
+  // Whether a side ("tutor" or "family") is this dashboard's own. Only the
+  // tutor and the family answer for themselves; CLG staff can't (Carla, 16 Nov 2026).
+  const mySide = (side: string) => (isTutor ? side === "tutor" : isFamily && side === "family"); // the tutor dashboard is the tutor's side, a family dashboard the family's.
   // Make-up times waiting for this person to pick: the tutor's when the family
-  // cancelled, the family's when the tutor (or CLG) cancelled, and any for CLG's front desk.
-  const makeupsToPick = makeups.filter( // Offers to answer here:
-    (o) => // each offer:
-      o.status === "waiting" && // still waiting,
-      o.option_1 !== null && // with two times,
-      o.option_2 !== null && // (both),
-      (isDesk || (isTutor ? o.answer_by === "tutor" : isFamily && o.answer_by === "family")), // and this dashboard's side picks (front desk can pick for either).
+  // cancelled, the family's when the tutor (or CLG) cancelled.
+  const makeupsToPick = makeups.filter( // Offers to pick from here:
+    (o) => o.status === "waiting" && o.option_1 !== null && o.option_2 !== null && mySide(o.answer_by), // still waiting, with two times, and this side picks.
   ); // End of the filter.
-  const otherMakeups = makeups.filter((o) => !makeupsToPick.includes(o)); // The rest, to show where they're up to.
+  // Picked times waiting for this side to confirm (when CLG offered the times).
+  const makeupsToConfirm = makeups.filter( // Offers to confirm here:
+    (o) => o.status === "confirming" && o.picked_at !== null && mySide(o.answer_by === "tutor" ? "family" : "tutor"), // picked by the other side, waiting for this one.
+  ); // End of the filter.
+  const otherMakeups = makeups.filter((o) => !makeupsToPick.includes(o) && !makeupsToConfirm.includes(o)); // The rest, to show where they're up to.
   // Sign-on details for the tutor's own sessions.
   const mySessionIds = sessions.filter((s) => s.tutor_id === viewer.id).map((s) => s.id); // The tutor's own sessions.
   const signRes = mySessionIds.length // If there are any, reads:
@@ -341,8 +345,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
         ...s, // its details,
         href: here(s.id), // its address in this dashboard,
         count: // its number:
-          s.id === "sessions" && !isDesk && makeupsToPick.length // for the overview, make-up times to pick (not counted for CLG staff, who can pick but needn't),
-            ? makeupsToPick.length // that number,
+          s.id === "sessions" && makeupsToPick.length + makeupsToConfirm.length // for the overview, make-up times to pick or confirm,
+            ? makeupsToPick.length + makeupsToConfirm.length // that number,
             : s.id === "bookings" && waitingForMe.length + familyToApprove.length // for bookings, requests and offers waiting,
             ? waitingForMe.length + familyToApprove.length // that number,
             : s.id === "notices" && unread // for notices, unread ones,
@@ -393,10 +397,29 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                         {o.reason && ` · ${o.reason}`}{/* and the reason (if any). */}
                       </span>{/* End of the grey part. */}
                     </p>{/* End of the line. */}
-                    {isDesk && ( // for CLG staff, whose side they're picking for:
-                      <p className="text-xs text-zinc-600">Waiting for {o.answer_by === "tutor" ? "the tutor" : "the family"}. You can pick for them.</p> // who should pick.
-                    )}{/* End of this part. */}
                     <MakeupAnswerForm offerId={o.id} option1={o.option_1 as string} option2={o.option_2 as string} />{/* the pick form. */}
+                  </li> // End of the row.
+                ))}{/* End of the loop. */}
+              </ul>{/* End of the list. */}
+            </Card> // End of the card.
+          )}{/* End of this part. */}
+          {makeupsToConfirm.length > 0 && ( // If there are picked make-up times to confirm:
+            <Card // a card:
+              title="Confirm a make-up time" // its title,
+              description="CLG offered times after a cancel, and the other side picked one. It's booked once you confirm." // its help text.
+            >{/* (end of the card's settings) */}
+              <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+                {makeupsToConfirm.map((o) => ( // for each offer:
+                  <li key={o.id} className="space-y-3 py-4 first:pt-0">{/* a row: */}
+                    <p>{/* what was cancelled: */}
+                      <span className="font-medium">{o.student_name}</span>{/* the student, */}
+                      <span className="text-zinc-600">{/* in grey: */}
+                        {" "}{/* a space, */}
+                        · {o.subject} with {o.tutor_name} · was {sessionWhen(o.cancelled_starts_at)}{/* the subject, tutor and cancelled time, */}
+                        {o.reason && ` · ${o.reason}`}{/* and the reason (if any). */}
+                      </span>{/* End of the grey part. */}
+                    </p>{/* End of the line. */}
+                    <MakeupConfirmForm offerId={o.id} pickedAt={o.picked_at as string} />{/* the confirm form. */}
                   </li> // End of the row.
                 ))}{/* End of the loop. */}
               </ul>{/* End of the list. */}
@@ -417,13 +440,17 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                       <span className="text-zinc-600">{/* in grey: */}
                         {" "}{/* a space, */}
                         · {o.subject} with {o.tutor_name} · was {sessionWhen(o.cancelled_starts_at)}{/* the subject, tutor and cancelled time, */}
-                        {o.status === "picked" && o.picked_at && ` · now ${sessionWhen(o.picked_at)}`}{/* the new time, if one was picked, */}
+                        {(o.status === "picked" || o.status === "confirming") && o.picked_at && ` · ${o.status === "picked" ? "now" : "picked"} ${sessionWhen(o.picked_at)}`}{/* the new time, if one was picked, */}
                         {o.status === "waiting" && o.option_1 && o.option_2 && ` · offered ${sessionWhen(o.option_1)} or ${sessionWhen(o.option_2)}`}{/* the two times, while waiting, */}
                         {o.status === "declined" && o.answer_note && ` · "${o.answer_note}"`}{/* why neither works, if said. */}
                       </span>{/* End of the grey part. */}
                     </span>{/* End of the group. */}
                     <span className="rounded-full bg-zinc-100 px-3 py-0.5 text-xs text-zinc-600">{/* a grey tag: */}
-                      {o.status === "waiting" ? `Waiting for ${o.answer_by === "tutor" ? "the tutor" : "the family"}` : (MAKEUP_STATUS_NAMES[o.status] ?? o.status)}{/* where it's up to. */}
+                      {o.status === "waiting" // where it's up to: waiting for a pick,
+                        ? `Waiting for ${o.answer_by === "tutor" ? "the tutor" : "the family"} to pick` // (names who picks),
+                        : o.status === "confirming" // waiting for the other side to confirm,
+                          ? `Waiting for ${o.answer_by === "tutor" ? "the family" : "the tutor"} to confirm` // (names who confirms),
+                          : (MAKEUP_STATUS_NAMES[o.status] ?? o.status)}{/* or the stage's name. */}
                     </span>{/* End of the tag. */}
                   </li> // End of the row.
                 ))}{/* End of the loop. */}
