@@ -1,4 +1,8 @@
-# Report a problem
+# Report app issue
+
+Renamed from "Report a problem" (Carla, 16 Nov 2026): this is only for
+problems with the app itself. Other problems and ideas (sessions, tutors,
+billing, CLG) go through **Feedback**; each page points to the other.
 
 Asked for by Carla, 12 Nov 2026: "Need to make a spot where anyone can
 outline any problems with the app - is it possible for it to be auto fixed?
@@ -44,7 +48,7 @@ the database tests run, and the owner checks it before it goes live.
 
 ## 3. How the design follows the evidence
 
-- **On every page.** "Report a problem" sits in the top bar for anyone
+- **On every page.** "Report app issue" sits in the top bar for anyone
   signed in. The link remembers which page you were on.
 - **One required box.** "What went wrong?" is the only required field. "What
   were you trying to do?" and screenshots are optional.
@@ -52,12 +56,12 @@ the database tests run, and the owner checks it before it goes live.
   (Ctrl+V). The browser shrinks each one before sending, so uploads work on
   mobile data, and redrawing removes hidden photo details such as location.
 - **People check every report.** The owner always sees reports and chooses
-  which other admins check them (Problem reports > Who checks reports).
+  which other admins check them (App issues > Who checks app issues).
   Statuses: New, Being checked, Approved to fix, Fixed, Closed (no change).
   Priority: Urgent (privacy, safety or money), Normal, Low. Urgent reports
   are listed first.
 - **The reporter hears back.** Reviewers write a reply the reporter sees on
-  their Report a problem page, with the status. Private notes stay with
+  their Report app issue page, with the status. Private notes stay with
   reviewers.
 - **Optional hand-off to a developer.** The owner can turn an approved
   report into a GitHub issue. Only the reviewer's fix summary and the page

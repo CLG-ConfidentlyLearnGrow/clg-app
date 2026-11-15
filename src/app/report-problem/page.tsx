@@ -1,4 +1,5 @@
-// Summary: the "Report a problem" page, open to anyone signed in. It has the
+// Summary: the "Report app issue" page, open to anyone signed in. It is only
+// for problems with the app itself; everything else goes to Feedback. It has the
 // report form (with screenshots) and a list of the person's own reports,
 // showing where each is up to and any reply from CLG.
 //
@@ -31,11 +32,11 @@ export default async function ReportProblemPage({ searchParams }: PageProps<"/re
 
   return ( // Shows:
     <Page // the page frame:
-      title="Report a problem" // the heading,
-      intro="Something not working, or confusing? Tell us here. A CLG reviewer reads every report and replies on this page." // the sentence under it.
+      title="Report an app issue" // the heading,
+      intro={<>Something in the app broken, not working or confusing? Tell us here. A CLG reviewer reads every report and replies on this page. For anything else, such as sessions, tutors, billing or ideas, please use <TextLink href="/feedback">Feedback</TextLink> instead.</>} // the sentences under it, pointing other problems to Feedback.
     >{/* (end of the frame's settings) */}
       <Card // the form card:
-        title="What's the problem?" // its title,
+        title="What's the app issue?" // its title,
         description={<>For a worry about a child&apos;s safety, don&apos;t use this form: use <TextLink href="/safety">Child safety</TextLink> in the top bar instead.</>} // a note sending safety concerns to the Child safety page.
       >{/* (end of the card's settings) */}
         <ReportProblemForm page={from} />{/* the form, knowing which page they came from. */}

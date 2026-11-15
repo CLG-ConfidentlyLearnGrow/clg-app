@@ -1,5 +1,5 @@
 // Summary: the frame around every page: fonts, page title, the top bar
-// (logo, Home, Child safety, privacy and "Report a problem" links, who is
+// (logo, Home, Child safety, privacy and "Report app issue" links, who is
 // signed in, sign out) and the footer.
 // "Child safety" is on every page for everyone signed in, so a concern can
 // always be raised quickly (Carla, 12 Nov 2026).
@@ -14,7 +14,7 @@ import { getViewer } from "@/lib/auth"; // Reads who is signed in.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (for new child safety concerns).
 import { CountBadge } from "@/components/count-badge"; // The small number badge.
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
-import { ReportProblemLink } from "@/components/report-problem-link"; // The "Report a problem" link (remembers the page you were on).
+import { ReportProblemLink } from "@/components/report-problem-link"; // The "Report app issue" link (remembers the page you were on).
 import { Suspense } from "react"; // Lets part of the page wait for the address details without holding up the rest.
 import "./globals.css"; // The app-wide styles.
 
@@ -67,8 +67,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
                 <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
                   Your privacy{/* its words, */}
                 </Link>{/* end of the link. */}
-                <Suspense // the "Report a problem" link (open to everyone signed in, Carla 12 Nov 2026), which waits for the page address:
-                  fallback={<Link href="/report-problem" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">Report a problem</Link>} // a plain link while it waits,
+                <Suspense // the "Report app issue" link (open to everyone signed in, Carla 12 Nov 2026; renamed 16 Nov), which waits for the page address:
+                  fallback={<Link href="/report-problem" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">Report app issue</Link>} // a plain link while it waits,
                 >{/* (end of the wait settings) */}
                   <ReportProblemLink />{/* then the link that remembers the page. */}
                 </Suspense>{/* End of the report link. */}

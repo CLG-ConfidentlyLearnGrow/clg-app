@@ -94,7 +94,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: todo.get("admin", "reports") }); // Reports (owner only, because they include pay and profit), with new reports counted,
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
-    if (problems) items.push({ id: "problems", label: "Problem reports", href: "/admin/problems", count: problems.count }); // Problem reports (owner and chosen reviewers), with new reports counted,
+    if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What's new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),

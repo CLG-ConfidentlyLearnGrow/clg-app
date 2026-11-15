@@ -1,4 +1,4 @@
-// Summary: the reviewers' forms on the Problem reports page: change a
+// Summary: the reviewers' forms on the App issues page: change a
 // report's status, priority, reply and notes; and (owner only) send an
 // approved report to GitHub for the developer to fix.
 //
@@ -27,7 +27,7 @@ export function UpdateProblemForm({ report }: { report: ProblemReport }) {
         name="reply" // its name,
         maxLength={2000} // up to 2,000 characters,
         defaultValue={report.reply ?? ""} // starts with the saved reply,
-        hint="They see this on their Report a problem page." // help under the box.
+        hint="They see this on their Report app issue page." // help under the box.
       />{/* End of the reply box. */}
       <TextArea // the notes box:
         label="Private notes (reviewers only)" // its words,
