@@ -68,6 +68,7 @@ import { // The scheduling forms:
   WaitlistForm, // join the waitlist.
 } from "./forms"; // End of the forms.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
+import { TutorChangeAnswerBox } from "@/components/tutor-change-answer-box"; // The "Please confirm a change" box for tutor changes.
 
 // The scheduling module's one page. Each person sees the sections that fit
 // their roles; the database decides which bookings and sessions they see.
@@ -358,6 +359,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     >{/* (end of the frame's settings) */}
       {section === "sessions" && ( // The sessions section:
         <>{/* (a group) */}
+          {(isTutor || isFamily) && <TutorChangeAnswerBox />}{/* tutor changes CLG has asked this tutor or family to confirm (shows nothing if none), */}
           {myCheck && ( // If the tutor has an availability check:
             <Card // a card:
               title="Is your availability right for next term?" // its title,
