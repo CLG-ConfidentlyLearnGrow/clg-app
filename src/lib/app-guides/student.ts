@@ -19,7 +19,7 @@ export const STUDENT_GUIDE: GuideSource = { // The guide:
 - Your progress page has a **Back to home** button at the top.
 - The side menu has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you.
 - **Child safety** (in red, top of every page) is there if you ever feel unsafe or are worried about someone.
-- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
+- **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 
 ### Sign in for the first time
 1. Your parent or CLG sends you a login link by email.
@@ -148,12 +148,19 @@ Tip: Only the person or people paying see Billing. If your parent or someone els
 2. You can talk to someone any time, for free: Kids Helpline 1800 55 1800 (ages 5 to 25) or Lifeline 13 11 14.
 3. You can also tell an adult you trust, or choose **Child safety** at the top of any page and use the form to tell CLG. It is kept confidential.
 
+### Ask CLG a question (Help chat)
+1. Choose **Help chat** at the top of any page (on a phone, tap **Menu** first), then **Ask CLG a question**.
+2. Choose what it is about, give it a short title, write your message and choose **Send to CLG**.
+3. CLG replies in the chat and you get an email saying there is a reply. When you are done, choose **Close this chat**.
+
+Tip: Only you and CLG's admins can read your chats. Your brothers and sisters cannot see them.
+
 ### Give feedback or report an app issue
 - **Feedback** (top of the page): tell CLG what is going well, an idea, or a worry.
 - **Report app issue**: tell CLG if something in the app is not working, with a screenshot if you can.
 
 ### Your privacy
-Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email.
+Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email. If you are 18 or over, you can also choose whether CLG may quote what you write in its advertising without your name (off unless you turn it on).
 
 Tip: Your profile is private. If your brothers or sisters have their own login, they cannot see your sessions, progress or anything else on your profile, and you cannot see theirs. Your parent can see all their children.
 `, // End of the guide's text.

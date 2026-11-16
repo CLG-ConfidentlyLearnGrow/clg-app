@@ -2,14 +2,14 @@
 // redesigned for phones, Carla 16 Nov 2026).
 //
 // On a computer (wide screens) it looks as before: the logo on the left, then
-// Home, Child safety, Feedback, Your privacy and Report app issue in a row,
+// Home, Child safety, Help chat, Feedback, Your privacy and Report app issue in a row,
 // with who is signed in and Sign out at the end.
 //
 // On a phone or small tablet that row didn't fit and wrapped into a messy
 // stack, so the bar now holds just three things: the logo on the left, the
 // red Child safety button (always one tap away, because raising a concern
 // must be quick), and a Menu button. The Menu button opens a panel with
-// Home, Feedback, Your privacy, Report app issue, who is signed in, and
+// Home, Help chat, Feedback, Your privacy, Report app issue, who is signed in, and
 // Sign out, each on its own large row that's easy to tap.
 //
 // The logo keeps its true shape at every size (it used to get squeezed
@@ -32,6 +32,7 @@ const ROW_LINK = "flex min-h-12 items-center rounded-lg px-3 text-base font-medi
 // The links that sit in the top bar (or in the phone menu), apart from Child safety.
 const LINKS = [ // Each link's address and words, in the order shown:
   { href: "/dashboard", label: "Home" }, // your dashboard,
+  { href: "/help", label: "Help chat" }, // the help chat with CLG (open to everyone signed in, Carla 16 Nov 2026),
   { href: "/feedback", label: "Feedback" }, // feedback (open to everyone signed in, Carla 15 Nov 2026),
   { href: "/my-privacy", label: "Your privacy" }, // your privacy page.
 ]; // ("Report app issue" is added separately, because it remembers the page you were on.)
@@ -51,7 +52,7 @@ function ChildSafetyLink({ href, count }: { href: string; count: number | undefi
 
 // The whole top bar. It's given the signed-in person (or nobody) and their
 // new safety items, which the page frame has already looked up.
-export function SiteHeader({ viewer, newConcerns, newFlags }: { viewer: Viewer | null; newConcerns: number | undefined; newFlags: number | undefined }) {
+export function SiteHeader({ viewer, newConcerns, newFlags, helpUnread }: { viewer: Viewer | null; newConcerns: number | undefined; newFlags: number | undefined; helpUnread?: number }) { // Takes the signed-in person and their numbers for the badges.
   const safetyCount = (newConcerns ?? 0) + (newFlags ?? 0) || undefined; // New concerns and flags added together for the badge (nothing when zero).
   const safetyHref = newConcerns ? "/safety/concerns" : newFlags ? "/safety/flags" : "/safety"; // Child safety goes to new concerns first, then flagged words (officer or deputy), otherwise the concern page.
   return ( // Shows:
@@ -67,7 +68,7 @@ export function SiteHeader({ viewer, newConcerns, newFlags }: { viewer: Viewer |
               <Link href={LINKS[0].href} className={WIDE_LINK}>{LINKS[0].label}</Link>{/* Home, */}
               <ChildSafetyLink href={safetyHref} count={safetyCount} />{/* the red Child safety button, */}
               {LINKS.slice(1).map((link) => ( // then each remaining link:
-                <Link key={link.href} href={link.href} className={WIDE_LINK}>{link.label}</Link> // Feedback and Your privacy,
+                <Link key={link.href} href={link.href} className={`${WIDE_LINK} inline-flex items-center gap-1`}>{link.label}{link.href === "/help" && <CountBadge n={helpUnread} />}</Link> // Help chat (with the number of chats with a new reply), Feedback and Your privacy,
               ))}{/* end of the links, */}
               <Suspense fallback={<Link href="/report-problem" className={WIDE_LINK}>Report app issue</Link>}>{/* then "Report app issue" (a plain link while the page address loads), */}
                 <ReportProblemLink />{/* which remembers the page you were on. */}
@@ -91,7 +92,7 @@ export function SiteHeader({ viewer, newConcerns, newFlags }: { viewer: Viewer |
               <HeaderMenu>{/* and the Menu button, whose panel holds: */}
                 <nav aria-label="Main" className="flex flex-col py-1">{/* the links, one per row: */}
                   {LINKS.map((link) => ( // each link:
-                    <Link key={link.href} href={link.href} className={ROW_LINK}>{link.label}</Link> // Home, Feedback, Your privacy,
+                    <Link key={link.href} href={link.href} className={`${ROW_LINK} gap-2`}>{link.label}{link.href === "/help" && <CountBadge n={helpUnread} />}</Link> // Home, Help chat (with its number), Feedback, Your privacy,
                   ))}{/* end of the links, */}
                   <Suspense fallback={<Link href="/report-problem" className={ROW_LINK}>Report app issue</Link>}>{/* and "Report app issue" (a plain link while the page address loads), */}
                     <ReportProblemLink className={ROW_LINK} />{/* which remembers the page you were on. */}

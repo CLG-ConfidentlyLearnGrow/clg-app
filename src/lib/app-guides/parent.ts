@@ -22,7 +22,7 @@ The app has a few parts that are always there:
 - A page you open from your dashboard, such as a child's progress page, has a **Back** button at the top that takes you back.
 - The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
-- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
+- **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 - If you have more than one role (for example you are a parent and also learn with CLG yourself), tabs at the top let you switch between your dashboards.
 
 ### Sign in
@@ -270,6 +270,18 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 2. Choose **Child safety** (in red, top of every page) and follow the steps: report to the child protection line, then tell CLG using the form.
 3. Your concern is kept confidential. **Concerns you have raised** on that page shows only you what you sent.
 
+### Ask CLG a question (Help chat)
+1. Choose **Help chat** at the top of any page (on a phone, tap **Menu** at the top right first).
+2. Choose **Ask CLG a question**.
+3. Choose what it is about and, if it is about one of your children, choose them under **Who is it about?**.
+4. Give it a short title, write your message and choose **Send to CLG**.
+5. CLG replies in the chat. You get an email when there is a reply (the email does not include the message, so sign in to read it). A number next to **Help chat** shows chats with a new reply.
+6. When your question is answered, choose **Close this chat**. Write in it again any time to reopen it.
+
+Tip: If CLG asks you for a missing detail (such as your child's school or year level), the notice has a link to ask CLG about it. It opens the help chat with your child and the detail already filled in.
+
+Tip: Only you and CLG's admins can read your chats. Other parents, your child's tutor and your other children cannot see them. Do not use the help chat for child safety worries: use **Child safety** instead.
+
 ### Give feedback
 1. Choose **Feedback** at the top of any page.
 2. Choose what it is about (the app, CLG's service, or people at CLG), and whether it is praise, an idea or a worry.
@@ -285,6 +297,7 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 2. Choose **Download your information** for a copy of what CLG holds about you and your children.
 3. Use **Ask CLG about your information** to see, fix or delete information, withdraw consent, or make a complaint. CLG replies within 28 days.
 4. Under **Emails from CLG**, choose whether you get CLG news and offers (off unless you turn it on).
+5. Under **Quoting what you write**, choose whether CLG may use short quotes from what you write in its advertising, without your name or anything that could identify you or your child (off unless you turn it on).
 
 ### Learn with CLG yourself
 At the bottom of your dashboard, choose **Add a student profile**. You keep the same login and get a Student tab. You need to be 16 or over.

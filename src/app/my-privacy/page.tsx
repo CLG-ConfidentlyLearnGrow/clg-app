@@ -1,6 +1,7 @@
 // Summary: the "Your privacy" page: download your information, make requests, emails, and agreements.
 //
 import { makePrivacyRequest, setMarketingEmail } from "@/app/actions/privacy"; // The server actions for privacy requests and marketing emails.
+import { setQuotePermission } from "@/app/actions/help-chat"; // The server action for agreeing to be quoted without a name (Carla, 16 Nov 2026).
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Card, Empty, Page, Select, Table, TextArea, TextLink } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down, table, text box and link style.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
@@ -40,13 +41,14 @@ const CONSENT_LABELS: Record<string, string> = { // Words for each kind of agree
 export default async function MyPrivacyPage() {
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
   const supabase = await createClient(); // Connects to the database.
-  const [requests, marketing, consents, links, own] = await Promise.all([ // Reads five things at once:
+  const [requests, marketing, quote, consents, links, own] = await Promise.all([ // Reads six things at once:
     supabase // their requests:
       .from("privacy_requests") // (from the privacy requests table)
       .select("id, kind, details, status, received_at, due_on, extended_to, extension_reason, outcome, student:students(full_name)") // with their details,
       .eq("account_id", viewer.id) // made by this person,
       .order("received_at", { ascending: false }), // newest first;
     supabase.rpc("my_marketing_email"), // whether marketing emails are on;
+    supabase.rpc("my_quote_permission"), // whether they agreed to be quoted without their name, and whether they can choose;
     supabase // their agreements:
       .from("consent_records") // (from the agreements table)
       .select("id, kind, given_at, withdrawn_at, student:students(full_name)") // with their details,
@@ -55,7 +57,8 @@ export default async function MyPrivacyPage() {
       .limit(30), // at most 30;
     supabase.from("parent_student_links").select("student:students(id, full_name)").eq("parent_id", viewer.id).eq("can_manage", true), // the children they manage,
     supabase.from("students").select("id, full_name").eq("account_id", viewer.id), // and their own student profile (if any).
-  ]); // End of the reads.
+  ]);
+  const quoteRow = ((quote.data ?? []) as { agreed: boolean; can_choose: boolean }[])[0]; // Their quote choice, and whether they can make it. // End of the reads.
   const requestRows = (requests.data ?? []) as unknown as Request[]; // The requests.
   const consentRows = (consents.data ?? []) as unknown as Consent[]; // The agreements.
   const people = [ // Who a request can be about:
@@ -158,6 +161,20 @@ export default async function MyPrivacyPage() {
           </p>{/* End of the note. */}
         </ActionForm>{/* End of the form. */}
       </Card>{/* End of the card. */}
+
+      {quoteRow?.can_choose && ( // For anyone 18 or over (learners under 18 are never quoted):
+        <Card title="Quoting what you write">{/* A card for the quote choice: */}
+          <ActionForm action={setQuotePermission} submitLabel="Save">{/* a form that saves the choice: */}
+            <label className="flex items-start gap-2 text-sm">{/* a line holding: */}
+              <input type="checkbox" name="quote" defaultChecked={quoteRow.agreed} className="mt-1" />{/* a tick box, */}
+              <span>CLG may use short quotes from what I write to CLG (for example in the help chat or feedback) in its advertising, without my name or anything that could identify me or my child. (Off unless you turn it on.)</span>{/* and its words. */}
+            </label>{/* End of the line. */}
+            <p className="text-xs text-zinc-500">{/* A small grey note: */}
+              You can turn this off any time, and CLG will stop using new quotes from you. CLG never quotes learners under 18.{/* that it can be withdrawn. */}
+            </p>{/* End of the note. */}
+          </ActionForm>{/* End of the form. */}
+        </Card> // End of the card.
+      )}{/* End of the quote part. */}
 
       <Card collapsible defaultOpen={false} title="What you have agreed to">{/* A closed card of agreements: */}
         {consentRows.length === 0 ? ( // if none:

@@ -1,5 +1,6 @@
 // Summary: the job that sends waiting security emails (owner access requests and security alerts)
-// and child safety alerts (concerns, and urgent flagged words).
+// child safety alerts (concerns, and urgent flagged words), and help chat
+// "you have a new message" emails (Carla, 16 Nov 2026).
 //
 import { isCronRequest } from "@/lib/cron-auth"; // Checks the request really comes from the scheduler.
 import { createAdminClient } from "@/lib/supabase/admin"; // Connects to the database with full access (server only).
@@ -20,7 +21,8 @@ const SOURCES = [ // Each kind of email: how to collect it, and how to put it ba
   { claim: "safety_concern_emails_claim", release: "safety_concern_emails_release" }, // child safety concern alerts (no details, just "open the app"),
   { claim: "safety_reader_emails_claim", release: "safety_reader_emails_release" }, // alerts when a concern is shared with a second contact (no details either),
   { claim: "watch_word_emails_claim", release: "watch_word_emails_release" }, // urgent flagged-word alerts (no names or words, just "open the app"),
-  { claim: "family_ask_emails_claim", release: "family_ask_emails_release" }, // "Ask the family" emails from Matching, when a child's details are missing (Carla, 16 Nov 2026).
+  { claim: "family_ask_emails_claim", release: "family_ask_emails_release" }, // "Ask the family" emails from Matching, when a child's details are missing (Carla, 16 Nov 2026),
+  { claim: "help_chat_emails_claim", release: "help_chat_emails_release" }, // help chat "you have a new message" emails (never the message itself; they wait until quiet hours end).
 ] as const; // End of the list (fixed).
 
 // Collects each kind of waiting email and sends it.

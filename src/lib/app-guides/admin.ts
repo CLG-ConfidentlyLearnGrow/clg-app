@@ -35,7 +35,7 @@ All admins need two-step login, because the app holds children's information.
 ### Get around the admin dashboard
 - Choose the **Admin** tab at the top. If you also tutor or are a parent, the other tabs take you to those dashboards.
 - The side menu shows only what your admin level can use. A number next to an item means something is waiting there.
-- **Home**, **Child safety** (in red), **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
+- **Home**, **Child safety** (in red), **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
 - When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 - **App guide** in the side menu opens this guide. If you help families and tutors, their guides are listed under **Other guides you can open** at the bottom, so you can talk them through the app.
 
@@ -209,6 +209,27 @@ Tip: Keep concerns confidential. Do not copy details into emails, Teams or other
 // Help: feedback and app issues (every admin level).
 const HELP = `
 ## Help
+
+### Answer help chats (the help desk)
+Families, students, tutors and staff ask CLG questions in the **Help chat**. Owner, Operations and Support admins answer general chats. Owner, Operations and Finance admins answer **Billing and payments** and **My pay (CLG staff)** chats.
+1. Choose **Help chats** in the side menu. The number shows chats waiting for CLG.
+2. **Waiting for CLG** lists the longest waiting first. Open a chat by its title.
+3. Write your reply and choose **Send**. It is sent as CLG, and they get an email saying there is a reply (never the message itself, and not between 9pm and 5am their time).
+4. The first admin to reply looks after the chat. To hand it over, choose someone under **Looked after by** and choose **Save**. You can also mark it **Closed** there.
+
+### Start a chat with a family or person
+1. In **Help chats**, choose **Start a chat with a family or person**.
+2. To ask a family, choose the student and **Choose**. Tick who should be in the chat: parents start ticked; the student (if they have their own login) and their tutors do not. Only tick the people who should see it.
+3. Owner and Operations admins can instead pick a tutor or staff member.
+4. Choose the topic, write a short title and message, and choose **Start the chat**.
+
+### Keep a chat past 2 years (Owner and Operations)
+Chats are deleted 2 years after their last message. Chats with writing flagged by the child safety check (not closed as "No concern") are kept by themselves.
+1. Open the chat. Under **For CLG**, find **Keep this chat past 2 years?**.
+2. Choose **Testimonial**, **Practice scenario for staff training** or **Tracking a concern**, and choose **Save**.
+3. A testimonial is only allowed when everyone who wrote in the chat is 18 or over and has turned on **Quoting what you write** on their Your privacy page. Never show a name or anything that could identify them or their child.
+
+Tip: Billing details should only go to the person who pays. Messages are checked for child safety words like other writing in the app.
 
 ### Give feedback or report an app issue
 - **Feedback** (top of the page, or under **Menu** on a phone): praise, ideas or worries.

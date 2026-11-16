@@ -35,7 +35,9 @@ const SOURCE_LABELS: Record<string, { place: string; fields: Record<string, stri
   bookings: { place: "Booking", fields: { family_note: "Family note", tutor_note: "Tutor note" } }, // bookings,
   term_reviews: { place: "Term review", fields: { summary: "Summary", next_focus: "Next focus", recommendation_note: "Recommendation note", returned_reason: "Reason sent back", family_reply: "Family reply" } }, // term reviews,
   waitlist: { place: "Waitlist", fields: { note: "Note" } }, // the waitlist,
-  student_sensitive: { place: "Learning needs", fields: { learning_needs: "Learning needs", support_strategies: "Support strategies" } }, // learning needs.
+  student_sensitive: { place: "Learning needs", fields: { learning_needs: "Learning needs", support_strategies: "Support strategies" } }, // learning needs,
+  help_messages: { place: "Help chat", fields: { body: "Message" } }, // help chat messages (Carla, 16 Nov 2026),
+  help_chats: { place: "Help chat", fields: { subject: "Chat title" } }, // help chat titles.
 }; // End of the list.
 
 // Says in words where a flagged piece of text was written, e.g. "Session summary, Next step".

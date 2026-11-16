@@ -117,6 +117,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     items.splice(Math.min(1, items.length), 0, ...sessions); // Sessions goes second, after Families (one of an admin's main jobs).
     const billingToDo = ["families", "invoices", "pay"].reduce((t, id) => t + (todo.get("billing", id) ?? 0), 0); // Billing's total: families, invoices and pay.
     if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined }); // Billing (owner, operations and finance),
+    if (isDesk || isFinance) items.push({ id: "help", label: "Help chats", href: "/admin/help", count: todo.get("admin", "help") }); // the help desk: questions from families, students, tutors and staff (Carla, 16 Nov 2026), with chats waiting for CLG counted,
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: todo.get("admin", "reports") }); // Reports (owner only, because they include pay and profit), with new reports counted,
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
