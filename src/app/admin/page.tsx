@@ -764,6 +764,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
             <Card title="Add staff">{/* the "add staff" card: */}
               <InviteForm canInviteAdmins={isOwner} />{/* the invite form (only the owner can invite admins). */}
+              <p className="mt-4 text-sm text-zinc-600">{/* a note about tutor applications: */}
+                New tutors can also apply at <span className="font-medium">app.clgtutoring.com/apply</span>. Review them in <TextLink href="/admin/applications">Tutor applications</TextLink>; approving one sends the invite for you.{/* where people apply, and where applications are reviewed. */}
+              </p>{/* End of the note. */}
             </Card>{/* End of the card. */}
 
             {savedLevel === "operations" && ( // For operations admins:
