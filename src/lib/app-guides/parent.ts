@@ -190,6 +190,8 @@ After your child starts with a new tutor, a card asks how it is going 1 week, 2 
 2. Add anything else you would like CLG to know, and tick **Please contact me about this** if you would like a call or message.
 3. Choose **Send**, or **Skip this check-in** if you would rather not answer.
 
+When your child finishes with a tutor (for example after a change of tutor), a card asks how the sessions went and how well the ending was handled. Answer it the same way.
+
 Tip: Only CLG's office team sees your answers. The tutor does not.
 
 ### If a tutor is not the right fit

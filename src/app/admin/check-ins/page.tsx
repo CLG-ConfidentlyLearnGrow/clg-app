@@ -1,9 +1,11 @@
 // Summary: the Check-ins page for the owner and operations admins (Carla,
 // 16 Nov 2026). After a new match, the tutor, the parents and a learner with
 // their own login are each asked how it is going 1 week, 2 weeks and 6 weeks
-// after the first session. This page shows:
-//   * answers flagged for follow-up (rated 1 or 2, "not a good fit", or
-//     asking CLG to make contact), with a form to mark each followed up;
+// after the first session, and how it went (and how well the ending was
+// handled) once the match ends. This page shows:
+//   * answers flagged for follow-up (rated 1 or 2, "not a good fit", an
+//     ending rated 1 or 2, or asking CLG to make contact), with a form to
+//     mark each followed up;
 //   * each new match's check-ins: who was asked, who answered, and the
 //     average rating;
 //   * the latest answers in full.
@@ -32,7 +34,8 @@ type Answer = { // Its fields:
   student_name: string; // the learner's name,
   skipped: boolean; // whether they skipped it,
   rating: number | null; // the rating (if answered),
-  fit: string | null; // the fit (if answered),
+  fit: string | null; // the fit (if answered; not asked at the end of a match),
+  ending_rating: number | null; // how well the ending was handled (end of a match only),
   wants_contact: boolean; // whether they asked CLG to contact them,
   comment: string | null; // their comment (if any),
   follow_up: string; // "none", "open" or "done",
@@ -59,7 +62,9 @@ type Row = { // Its fields:
 // A short line saying what one person answered.
 function summary(a: Answer): ReactNode { // Takes the answer.
   if (a.skipped) return a.wants_contact ? "Skipped the questions, but asked CLG to make contact" : "Skipped"; // A skip (with or without a contact request).
-  const parts = [`Rated ${a.rating}/5`, `Good fit: ${CHECK_IN_FIT[a.fit ?? ""] ?? "Not given"}`]; // The rating and the fit,
+  const parts = a.stage === 0 // The answers:
+    ? [`Rated ${a.rating}/5`, `Ending handled: ${a.ending_rating ?? "?"}/5`] // at the end of a match, the rating and the ending rating,
+    : [`Rated ${a.rating}/5`, `Good fit: ${CHECK_IN_FIT[a.fit ?? ""] ?? "Not given"}`]; // otherwise the rating and the fit,
   if (a.wants_contact) parts.push("Asked CLG to make contact"); // and a contact request, if any.
   return parts.join(" · "); // Joined with dots.
 } // End of summary.
@@ -69,6 +74,7 @@ function reasons(a: Answer): string { // Takes the answer.
   const out: string[] = []; // The reasons being built.
   if (!a.skipped && a.rating !== null && a.rating <= 2) out.push(`a low rating (${a.rating}/5)`); // a low rating,
   if (!a.skipped && a.fit === "no") out.push("not a good fit"); // not a good fit,
+  if (!a.skipped && a.ending_rating !== null && a.ending_rating <= 2) out.push(`a poorly handled ending (${a.ending_rating}/5)`); // a poorly handled ending,
   if (a.wants_contact) out.push("asked CLG to make contact"); // a contact request.
   return out.length ? `Flagged for ${out.join(", ")}.` : ""; // The sentence, or nothing.
 } // End of reasons.
@@ -125,14 +131,15 @@ export default async function CheckInsPage() { // The page itself.
     <DashboardFrame role="admin" roles={viewer.roles} current="check-ins">{/* the dashboard frame, */}
       <div className="space-y-6">{/* the page's parts, with space between: */}
         <Card title="Check-ins after a new match" description="The tutor, the parents and the learner (if they have their own login) are each asked how it is going 1 week, 2 weeks and 6 weeks after their first session. Answers are only seen by the owner and operations admins.">{/* an explanation card: */}
-          <p className="text-sm">An answer is flagged for follow-up when it is rated 1 or 2, says it is not a good fit, or asks CLG to make contact.</p>{/* what gets flagged. */}
+          <p className="text-sm">When a match ends, each of them is also asked how it went and how well the ending was handled.</p>{/* the end-of-match feedback, */}
+          <p className="mt-2 text-sm">An answer is flagged for follow-up when it is rated 1 or 2, says it is not a good fit, rates the ending 1 or 2, or asks CLG to make contact.</p>{/* and what gets flagged. */}
         </Card>{/* End of the explanation. */}
 
         <Card title={`Needs follow-up (${open.length})`} description="Contact the person, then mark it followed up with a short note.">{/* the flagged answers: */}
           {open.length === 0 ? <Empty>Nothing needs follow-up.</Empty> : <ul className="space-y-2">{open.map(item)}</ul>}{/* "Nothing" or the list. */}
         </Card>{/* End of the flagged answers. */}
 
-        <Card title="New matches" description="Each check-in that has opened so far, with how many people answered." collapsible defaultOpen>{/* the overview: */}
+        <Card title="Matches being checked in" description="Each check-in (including feedback when a match ends) that has opened so far, with how many people answered." collapsible defaultOpen>{/* the overview: */}
           {overview.length === 0 ? ( // none yet:
             <Empty>No new matches have reached a check-in yet.</Empty> // says so,
           ) : ( // otherwise:

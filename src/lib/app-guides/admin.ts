@@ -310,9 +310,11 @@ If someone is locked out after too many wrong tries, enter their email under **U
 ### Check-ins after a new match
 After a new match, the tutor, the parents and the learner (if they have their own login) are each asked how it is going 1 week, 2 weeks and 6 weeks after the first session.
 1. Open **Check-ins** in the side menu. A number shows how many answers need follow-up.
-2. **Needs follow-up** lists answers rated 1 or 2, answers that say it is not a good fit, and anyone who asked CLG to make contact.
+2. **Needs follow-up** lists answers rated 1 or 2, answers that say it is not a good fit, endings rated 1 or 2, and anyone who asked CLG to make contact.
 3. Contact the person, then choose **Has this been followed up?**, add a private note and choose **Save**.
-4. **New matches** shows each check-in that has opened, how many people answered, and the average rating.
+4. **Matches being checked in** shows each check-in that has opened, how many people answered, and the average rating.
+
+When a match ends (for example a change of tutor, or the bookings finish), the same people are asked how the sessions went and how well the ending was handled. An ending rated 1 or 2 is flagged in **Needs follow-up** too.
 
 ### App feedback
 **Feedback** in the side menu shows what people are saying, grouped by area. Set where each item is up to and add private notes.

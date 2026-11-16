@@ -22,10 +22,11 @@ function plainError(error: { code?: string; message: string }, fallback: string)
 const answerSchema = z.object({ // Each field and its rule:
   tutor: z.uuid(), // the tutor in the match,
   student: z.uuid(), // the learner in the match,
-  stage: z.enum(["1", "2", "6"]), // which check-in,
+  stage: z.enum(["0", "1", "2", "6"]), // which check-in (0 is the end of a match),
   skip: z.enum(["yes"]).optional(), // "yes" when skipping,
   rating: z.union([z.enum(["1", "2", "3", "4", "5"]), z.literal("")]).optional(), // how it is going,
-  fit: z.union([z.enum(["yes", "unsure", "no"]), z.literal("")]).optional(), // whether it is a good fit,
+  fit: z.union([z.enum(["yes", "unsure", "no"]), z.literal("")]).optional(), // whether it is a good fit (1, 2 and 6 weeks),
+  ending: z.union([z.enum(["1", "2", "3", "4", "5"]), z.literal("")]).optional(), // how well the ending was handled (end of a match),
   contact: z.enum(["yes"]).optional(), // "yes" when they would like CLG to contact them,
   comment: z.string().trim().max(2000, "Please keep your comment under 2000 characters.").optional(), // anything else.
 }); // End of the rules.
@@ -37,18 +38,21 @@ export async function answerCheckIn(_prev: FormState, formData: FormData): Promi
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const d = parsed.data; // The checked answers.
   const skip = d.skip === "yes"; // True when they chose to skip.
-  if (!skip && !d.rating) return { error: "Please choose how it is going, from 1 to 5." }; // No rating chosen.
-  if (!skip && !d.fit) return { error: "Please choose yes, not sure yet or no." }; // No fit answer chosen.
+  const atEnd = d.stage === "0"; // True for feedback at the end of a match.
+  if (!skip && !d.rating) return { error: "Please choose how it went, from 1 to 5." }; // No rating chosen.
+  if (!skip && !atEnd && !d.fit) return { error: "Please choose yes, not sure yet or no." }; // No fit answer chosen (weekly check-ins).
+  if (!skip && atEnd && !d.ending) return { error: "Please choose how well the ending was handled, from 1 to 5." }; // No ending rating chosen (end of a match).
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("answer_check_in", { // Asks the database to save it:
     p_tutor: d.tutor, // the tutor,
     p_student: d.student, // the learner,
     p_stage: Number(d.stage), // the check-in,
     p_rating: skip ? null : Number(d.rating), // the rating (none when skipping),
-    p_fit: skip ? null : d.fit, // the fit (none when skipping),
+    p_fit: skip || atEnd ? null : d.fit, // the fit (none when skipping or at the end of a match),
     p_wants_contact: d.contact === "yes", // whether they would like CLG to contact them,
     p_comment: skip ? null : d.comment || null, // the comment (none when skipping),
-    p_skip: skip, // and whether they are skipping.
+    p_skip: skip, // whether they are skipping,
+    p_ending_rating: skip || !atEnd ? null : Number(d.ending), // and how well the ending was handled (end of a match only).
   }); // End of the request.
   if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/", "layout"); // Refreshes every page, so the card disappears wherever it was showing.

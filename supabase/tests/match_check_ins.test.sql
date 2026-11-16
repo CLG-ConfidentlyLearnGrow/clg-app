@@ -15,6 +15,8 @@
 begin;
 -- Runs the check-ins database change again (checks it can run twice).
 \ir ../migrations/20261119800100_match_check_ins.sql
+-- Then the end-of-match feedback change, which replaces the answer function and the schedule.
+\ir ../migrations/20261119800200_match_end_feedback.sql
 
 select tests.claims(null); -- acts as the database itself while setting up
 \set olive '00000000-0000-0000-0000-0000000000a0'
@@ -149,7 +151,7 @@ delete from public.match_check_ins where tutor_id = :'t1' and student_id = :'car
 update public.tutor_assignments set starts_on = current_date - 30, ends_on = current_date - 1 where tutor_id = :'t1' and student_id = :'cara'; -- ends the match yesterday
 select tests.claims(:'p1'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.my_check_ins('parent')), 0::bigint, 'an ended match gets no check-ins'); -- none
+select tests.eq((select count(*) from public.my_check_ins('parent') where stage <> 0), 0::bigint, 'an ended match gets no more 1, 2 or 6-week check-ins'); -- none (only the end-of-match request, see match_end_feedback.test.sql)
 reset role; -- back to the database itself
 
 -- 7. Comments are checked for concerning words.
