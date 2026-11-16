@@ -19,7 +19,8 @@ const SOURCES = [ // Each kind of email: how to collect it, and how to put it ba
   { claim: "security_alert_emails_claim", release: "security_alert_emails_release" }, // security alert emails,
   { claim: "safety_concern_emails_claim", release: "safety_concern_emails_release" }, // child safety concern alerts (no details, just "open the app"),
   { claim: "safety_reader_emails_claim", release: "safety_reader_emails_release" }, // alerts when a concern is shared with a second contact (no details either),
-  { claim: "watch_word_emails_claim", release: "watch_word_emails_release" }, // urgent flagged-word alerts (no names or words, just "open the app").
+  { claim: "watch_word_emails_claim", release: "watch_word_emails_release" }, // urgent flagged-word alerts (no names or words, just "open the app"),
+  { claim: "family_ask_emails_claim", release: "family_ask_emails_release" }, // "Ask the family" emails from Matching, when a child's details are missing (Carla, 16 Nov 2026).
 ] as const; // End of the list (fixed).
 
 // Collects each kind of waiting email and sends it.

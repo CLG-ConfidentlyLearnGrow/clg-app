@@ -409,3 +409,43 @@ export async function setQuietHours(_prev: FormState, formData: FormData): Promi
   if (error) return { error: plainError(error, "Could not save the quiet hours.") }; // Didn't work: says why.
   return done("Saved. New notices will wait until quiet hours end."); // Refreshes the page and says it's saved.
 } // End of setQuietHours.
+
+// ---------------------------------------------------------------------------
+// Matching page (Carla, 16 Nov 2026)
+// ---------------------------------------------------------------------------
+
+// The things Matching can ask a family to add.
+const missingItem = z.enum(["year_level", "school", "session_places", "booking_length"]); // The four items.
+
+// Front desk admins ask the family to add a missing detail. The family gets
+// an app notice and an email, with a link to the help chat. The database
+// checks who may ask.
+export async function askFamily(_prev: FormState, formData: FormData): Promise<FormState> { // Sends the ask.
+  await requireViewer(); // Must be signed in.
+  const student = id.safeParse(formData.get("student_id")); // Checks the student id.
+  const item = missingItem.safeParse(formData.get("item")); // Checks the item.
+  if (!student.success || !item.success) return { error: "Something went wrong. Please refresh the page." }; // Not right: asks to refresh.
+  const supabase = await createClient(); // Connects to the database.
+  const { data, error } = await supabase.rpc("ask_family", { p_student: student.data, p_item: item.data }); // Sends the ask (the database checks who may).
+  if (error) return { error: plainError(error, "Could not ask the family.") }; // Did not work: says why.
+  revalidatePath("/matching"); // Refreshes the Matching page.
+  const n = Number(data) || 1; // How many people were asked.
+  return { message: `Asked. ${n === 1 ? "The family has" : `${n} family members have`} an app notice now, and an email on the next send.` }; // Says it worked.
+} // End of askFamily.
+
+// Front desk admins say when a student really started waiting (for students
+// who were on CLG's waitlist before the app). An empty date clears it.
+export async function setWaitingSince(_prev: FormState, formData: FormData): Promise<FormState> { // Saves the date.
+  await requireViewer(); // Must be signed in.
+  const student = id.safeParse(formData.get("student_id")); // Checks the student id.
+  const subject = z.string().trim().min(1).max(100).safeParse(formData.get("subject")); // Checks the subject.
+  const raw = String(formData.get("since") ?? "").trim(); // The date typed (may be empty).
+  const since = z.iso.date().safeParse(raw); // Checks it is a real date.
+  if (!student.success || !subject.success) return { error: "Something went wrong. Please refresh the page." }; // Not right: asks to refresh.
+  if (raw && !since.success) return { error: "Please choose a date." }; // A date that is not right: says so.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("set_waiting_since", { p_student: student.data, p_subject: subject.data, p_since: raw ? since.data : null }); // Saves it (the database checks who may).
+  if (error) return { error: plainError(error, "Could not save the date.") }; // Did not work: says why.
+  revalidatePath("/matching"); // Refreshes the Matching page.
+  return { message: raw ? "Saved. The queue now counts the wait from that date." : "Cleared. The queue counts the wait from when they were added." }; // Says it worked.
+} // End of setWaitingSince.

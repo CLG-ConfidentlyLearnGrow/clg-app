@@ -50,7 +50,7 @@ Where: **Families** in the side menu.
 const MATCHING_SESSIONS = `
 ## Matching
 
-**Matching** lists students by stage, from **Needs a tutor** to **Active**. Choosing a student shows **Tutors who suit**, best fit first, and you offer a tutor and time.
+**Matching** lists students by tab, from **Needs a tutor** to **Active**. Choosing a student shows any missing details (with **Ask the family**) and a **Recommended offer**, ready to send.
 
 Why: The app only suggests tutors with checks in date for the student's state, who teach the subject at the right level and have spare hours. It never offers a tutor for their own child or family. That keeps every match safe and suitable.
 
