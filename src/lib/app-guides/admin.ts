@@ -50,7 +50,7 @@ Open **Sessions** in the side menu. Its sections include **Overview**, **Booking
 2. Choose who it's for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
 3. Choose **Find times**. **Available times** shows only tutors who suit: checks in date for the student's state, teach the subject at the student's level, free then, and under their weekly hours.
 4. Choose a time. If you didn't pick the suggested one, say why (it helps improve the suggestions).
-5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes.
+5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes. If not, the offer closes for now: the tutor and family are told, you get a notice saying who didn't answer, and the student is back in **Matching**.
 
 Tip: A student needs their details, preferred times and **How long to book** filled in before times can be offered.
 

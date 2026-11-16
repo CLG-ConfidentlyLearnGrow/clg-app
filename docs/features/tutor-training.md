@@ -54,3 +54,20 @@ Tutors (and CLG admin staff) need to learn how CLG works before they tutor, and 
 ## 6. Storage
 
 Videos and PDFs are kept in a private "training" file store. Admins upload them straight from the browser. Staff can only open files that belong to a published module made for them, through links that stop working after an hour. On Supabase Pro, check that the project's global upload limit (Storage settings) is at least the "largest video" setting.
+
+## 7. Carla's review of the drafts, 16 Nov 2026
+
+Carla answered the 8 review questions on the starter drafts. Two migrations load the result. Everything is still a **draft**: nothing reaches tutors until an admin publishes it in Training setup.
+
+- `20261118200100_training_review_edits.sql` updates the seven draft modules and the draft handbook pages:
+  - **All contact with families goes through the app**: session summaries, comments, replies to feedback notes and offering another session time. Never phone, text, personal email or social media. Teams is only for session links. (Module 2, handbook "Who to contact".)
+  - **Reaching a parent urgently**: the tutor phones CLG, who calls the parent. 000 first in an emergency. (Handbook "Something's happened".)
+  - **No-show**: wait 15 minutes, online or at the library. (Handbook, module 5.)
+  - **Under 12s** are dropped off and collected by a parent. A tutor never leaves the library with a student. (Handbook "In-person sessions".)
+  - **Lauren is tutors' first point of contact.** Carla can see those contacts and helps when time permits, and Lauren can see Carla's contacts with tutors. (Handbook "Who to contact", module 4.) The app has no tutor-to-staff messaging yet, so this is a working rule; admin notices already go to both.
+  - **Honest work**: tutors never write any of the student's work, "not a sentence, a paragraph or a conclusion". New module 2 lesson and quiz question.
+  - The review's other additions: tell CLG even when unsure (module 1), what to write down (module 1 quiz), no private tutoring and Block a student (module 2), no private copies and medical details in notes (module 3), Requests and Blocks (module 4), summaries within 48 hours, honest end times and the first three sessions (module 5), building confidence and independence (module 6).
+  - Only draft modules and pages are changed, and only exact pieces of text are swapped, so edits Carla made elsewhere are kept. A published module is left alone.
+- `20261118200200_training_new_modules.sql` adds four ongoing modules as drafts: **8 Assessment drafting** (30 min), **9 Families and communication** (30 min), **10 Learning support** (40 min), **11 Term reviews** (20 min). They count towards the 3 hours a quarter and don't hold matches. They are set as compulsory, as the review suggested. Once published, a compulsory module is due within the usual 4 weeks. The app can't yet hold a tutor back from a first drafting job or review, so Lauren checks modules 8 and 11 are done before assigning one. Carla can untick "compulsory" before publishing.
+- Evidence for the new modules: EEF *Feedback* and *Metacognition and self-regulation* (Teaching and Learning Toolkit) for drafting comments and building independence; EEF *Special Educational Needs in Mainstream Schools* (2020) for learning support; EEF *Parental engagement* for communicating with families. Legal notes are unchanged from section 5. The integrity rule protects students under school and SACE rules on acceptable help with assessed work.
+- Tests: `supabase/tests/training_review_content.test.sql`.
