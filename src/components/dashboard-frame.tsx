@@ -2,7 +2,10 @@
 // tabs across the top, and that dashboard's side menu (with Sessions,
 // Billing and the rest as tabs), around the page's own contents. It also
 // shows the "What's new" pop-up when that dashboard has updates the person
-// hasn't seen yet (Carla, 15 Nov 2026).
+// hasn't seen yet (Carla, 15 Nov 2026), and the first-time app tour the
+// first time someone opens that dashboard (Carla, 16 Nov 2026). The tour
+// comes first: while it's showing, "What's new" waits for the next visit, so
+// two pop-ups never open at once.
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -11,6 +14,7 @@ import { SectionShell, type Section } from "@/components/section-shell"; // The 
 import { getDashboardMenu } from "@/lib/dashboard-menu"; // Builds a dashboard's side menu.
 import { ROLE_TABS } from "@/lib/roles"; // Each dashboard's name and address.
 import { WhatsNew } from "@/components/whats-new"; // The "What's new" pop-up for this dashboard.
+import { firstTimeTour } from "@/components/first-time-tour"; // The first-time app tour for this dashboard, if it should open.
 
 // Shows the dashboard tabs and side menu around a page. "current" is the
 // menu item that's open; "items" are smaller sections to show under it
@@ -32,10 +36,11 @@ export async function DashboardFrame({
 }) { // End of the settings.
   const menu = await getDashboardMenu(role, roles); // The dashboard's side menu.
   const sections = menu.map((s) => (s.id === current && items ? { ...s, items } : s)); // The open item gets its smaller sections.
+  const tour = await firstTimeTour(role); // The first-time tour, if this dashboard's tour hasn't been seen yet (otherwise nothing).
   return ( // Shows:
     <>{/* (a group) */}
       <RoleTabs roles={roles} active={role} />{/* the dashboard tabs, with this one open, */}
-      <WhatsNew role={role} />{/* the "What's new" pop-up, if this dashboard has unseen updates, */}
+      {tour ?? <WhatsNew role={role} />}{/* the first-time tour if it's due, otherwise the "What's new" pop-up (if this dashboard has unseen updates), */}
       <SectionShell // the page frame:
         basePath={ROLE_TABS[role].href} // at the dashboard's address (each menu item has its own address anyway),
         label={ROLE_TABS[role].label} // labelled with the dashboard's name,

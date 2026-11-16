@@ -35,6 +35,9 @@ Tutors and admins need two-step login, because the app holds children's informat
 ### Put CLG on your phone's home screen
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
 
+### Take the app tour again
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+
 ## Your profile: checks, subjects and hours
 
 CLG can only match you with students, and show you their sessions, while your child safety checks are confirmed and in date for the student's state.
