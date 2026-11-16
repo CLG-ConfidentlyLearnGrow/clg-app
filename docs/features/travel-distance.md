@@ -100,7 +100,9 @@ number, street, suburb and postcode.
   point. Suggested wording: "When you save an address for travel distances,
   we send only that address to OpenStreetMap's address search (run by the
   OpenStreetMap Foundation, outside Australia) to find its map point. We do
-  not send your name or contact details."
+  not send your name or contact details." Carla approved it on 16 Nov 2026;
+  it is now in the privacy policy document (section 7 and the providers
+  table) and on the app's Privacy policy page.
 - **APP 11 (security)**: addresses are protected by the database's access
   rules, and every change to a tutor's addresses is in the audit log.
 - **Children's Online Privacy Code**: a child's address is treated as

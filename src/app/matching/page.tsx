@@ -16,13 +16,14 @@ import { CourseDetails, type CourseUnit } from "@/components/course-details"; //
 import { CourseOverviewForm } from "../admin/course-overview-form"; // The admin's course overview form.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { UrgentRematchBox } from "@/components/urgent-rematch-box"; // The red "Urgent: needs a new tutor" box (from the child safety module).
+import { AskFamilyButton, WaitingSinceForm } from "./forms"; // The "Ask the family" button and the "waiting since" date form.
 
 type StageCount = { stage: string; subjects: number; oldest_days: number | null }; // How many subjects are at each stage, and the longest wait.
 type QueueRow = { // One student-subject in the queue:
   student_id: string; // the student,
   student_name: string; // their name,
   year_level: string | null; // their year level (if known),
-  working_level: string | null; // the level they're working at (if known),
+  working_level: string | null; // the level they are working at (if known),
   subject: string; // the subject,
   state: string; // their state,
   stage: string; // their stage,
@@ -47,20 +48,34 @@ type Shortlist = { // One tutor on the shortlist:
   best_library_name: string | null; // library's name,
   booked_minutes: number; // minutes already booked each week,
   max_weekly_hours: number | null; // their most hours per week,
-  at_max: boolean; // whether they're at that limit,
+  at_max: boolean; // whether they are at that limit,
   learning_support: boolean; // whether they have learning support experience,
   check_kind: string | null; // a check expiring soon (if any),
   check_expires: string | null; // its expiry date,
   rank: number; // and their place in the list.
 }; // End of Shortlist.
 type Gap = { subject: string; level: string; state: string; waiting: number; longest_days: number }; // A subject and level students wait for that no tutor teaches.
+type Missing = { student_id: string; item: string; last_asked: string | null }; // A detail still missing before an offer, and when the family was last asked.
+type Wait = { student_id: string; subject: string; waiting_on: "tutor" | "family" | "both"; since: string }; // An offer waiting, and who it waits for.
 
-const STAGES: { id: string; label: string; hint: string }[] = [ // The stages, in order:
-  { id: "needs_tutor", label: "Needs a tutor", hint: "Asked for, nothing booked or waiting" }, // needs a tutor,
-  { id: "waitlist", label: "Waitlist", hint: "No suitable tutor available yet" }, // waitlist,
-  { id: "tutor_to_confirm", label: "Waiting for confirmation", hint: "Offer waiting for the tutor (and family) to approve" }, // waiting for confirmation,
-  { id: "assigned", label: "Assigned, no time", hint: "Tutor assigned but no weekly time booked" }, // assigned with no time,
-  { id: "active", label: "Active", hint: "Weekly sessions running" }, // active.
+// The details checked before an offer, in order (Carla, 16 Nov 2026), with
+// the admin page that fills each one in.
+const READY_ITEMS: { item: string; label: string; adminHref: (studentId: string) => string }[] = [ // Each detail:
+  { item: "year_level", label: "Year level", adminHref: (id) => `/admin?section=families&student=${id}` }, // year level,
+  { item: "school", label: "School", adminHref: (id) => `/admin?section=families&student=${id}` }, // school,
+  { item: "session_places", label: "Session places (online, libraries or travel distance)", adminHref: (id) => `/schedule?as=admin&section=child-places&student=${id}` }, // session places,
+  { item: "booking_length", label: "How long to book (end date and holidays)", adminHref: (id) => `/schedule?as=admin&section=booking-length&student=${id}` }, // how long to book.
+]; // End of the details.
+
+// The stage tabs, in order (Carla, 16 Nov 2026). "db" is the database's
+// stage; the two "waiting for" tabs split offers by who has not answered.
+const STAGES: { id: string; db: string; label: string; hint: string }[] = [ // The tabs:
+  { id: "needs_tutor", db: "needs_tutor", label: "Needs a tutor", hint: "Asked for a subject, nothing offered yet." }, // needs a tutor,
+  { id: "waiting_tutor", db: "tutor_to_confirm", label: "Waiting for tutor", hint: "An offer is waiting for the tutor to accept or decline." }, // waiting for the tutor,
+  { id: "waiting_family", db: "tutor_to_confirm", label: "Waiting for family", hint: "The tutor said yes. The offer is waiting for the family to approve." }, // waiting for the family,
+  { id: "waitlist", db: "waitlist", label: "Waitlist", hint: "No suitable tutor is available yet. These students wait here until one is." }, // waitlist,
+  { id: "assigned", db: "assigned", label: "Assigned, no time", hint: "A tutor is assigned but no weekly time is booked." }, // assigned with no time,
+  { id: "active", db: "active", label: "Active", hint: "Weekly sessions are running, including the first weeks with a new tutor." }, // active.
 ]; // End of the stages.
 const PAGE_SIZE = 30; // Students per page.
 const PARTS: Record<string, string> = { // The words for parts of the day:
@@ -84,12 +99,12 @@ const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10} hr`;
 export default async function MatchingPage({ searchParams }: PageProps<"/matching">) { // The page itself (reads the address's settings).
   const viewer = await requireViewer(); // The signed-in person.
   if (needsTwoStep(viewer)) redirect("/mfa"); // Two-step sign-in not set up: sends them to set it up.
-  const level = viewer.roles.includes("admin") ? await getAdminLevel() : null; // Their admin level, if they're an admin.
+  const level = viewer.roles.includes("admin") ? await getAdminLevel() : null; // Their admin level, if they are an admin.
   if (!level || !FRONT_DESK.includes(level)) redirect("/dashboard"); // Not a front-desk admin: sends them to their dashboard.
-  const isFull = FULL_ADMIN.includes(level); // Whether they're a full admin.
+  const isFull = FULL_ADMIN.includes(level); // Whether they are a full admin.
 
   const params = await searchParams; // The address's settings.
-  const view = one(params.view) === "gaps" ? "gaps" : "queue"; // Which view: gaps or the queue.
+  const view = ["reports", "gaps"].includes(one(params.view)) ? "reports" : "queue"; // Which view: reports (old "gaps" links too) or the queue.
   const stage = STAGES.find((s) => s.id === one(params.stage))?.id ?? "needs_tutor"; // Which stage (needs a tutor if none or unknown).
   const search = one(params.q).slice(0, 100); // The search words (up to 100 letters).
   const year = (YEAR_LEVELS as readonly string[]).includes(one(params.year)) ? one(params.year) : ""; // The year level filter (only a real year level).
@@ -99,20 +114,40 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   const subject = one(params.subject).slice(0, 100); // The subject chosen (up to 100 letters).
 
   const supabase = await createClient(); // Connects to the database.
-  const [countsRes, queueRes] = await Promise.all([ // Reads two things at once:
+  const current = STAGES.find((s) => s.id === stage)!; // The current tab.
+  const split = current.db === "tutor_to_confirm"; // Whether this tab splits waiting offers by who has not answered.
+  const [countsRes, queueRes, waitsRes] = await Promise.all([ // Reads three things at once:
     supabase.rpc("matching_stage_counts"), // the stage counts,
     supabase.rpc("matching_queue", { // the queue:
-      p_stage: stage, // at this stage,
+      p_stage: current.db, // at this stage,
       p_search: search || null, // matching the search,
       p_year: year || null, // the year level,
       p_state: state || null, // the state,
-      p_limit: PAGE_SIZE, // one page at a time,
-      p_offset: (page - 1) * PAGE_SIZE, // starting at this page.
+      p_limit: split ? 500 : PAGE_SIZE, // one page at a time (or all waiting offers, to split them here),
+      p_offset: split ? 0 : (page - 1) * PAGE_SIZE, // starting at this page (or the start).
     }), // (end of the queue settings)
+    supabase.rpc("matching_offer_waits"), // and who each waiting offer waits for.
   ]); // End of the reads.
-  const counts = (countsRes.data ?? []) as StageCount[]; // The stage counts.
-  const rows = (queueRes.data ?? []) as QueueRow[]; // The queue rows.
-  const total = rows[0]?.total ?? 0; // How many in the whole list.
+  const waits = (waitsRes.data ?? []) as Wait[]; // The waiting offers.
+  const waitKey = (studentId: string, subj: string) => `${studentId}|${subj.toLowerCase()}`; // A key for one student and subject.
+  const waitingOn = new Map(waits.map((w) => [waitKey(w.student_id, w.subject), w.waiting_on])); // Who each offer waits for, by student and subject.
+  const tabOf = (r: { student_id: string; subject: string }) => (waitingOn.get(waitKey(r.student_id, r.subject)) === "family" ? "waiting_family" : "waiting_tutor"); // Which waiting tab a row belongs in.
+  const dbCounts = (countsRes.data ?? []) as StageCount[]; // The stage counts from the database.
+  const counts: StageCount[] = [ // The counts for each tab:
+    ...dbCounts.filter((c) => c.stage !== "tutor_to_confirm"), // the stages as they are,
+    { stage: "waiting_tutor", subjects: waits.filter((w) => w.waiting_on !== "family").length, oldest_days: null }, // offers waiting for the tutor,
+    { stage: "waiting_family", subjects: waits.filter((w) => w.waiting_on === "family").length, oldest_days: null }, // offers waiting for the family.
+  ]; // End of the counts.
+  const allRows = (queueRes.data ?? []) as QueueRow[]; // The queue rows from the database.
+  const rows = split // The rows to show:
+    ? allRows.filter((r) => tabOf(r) === stage).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) // this waiting tab's rows, one page,
+    : allRows; // or as they came.
+  const total = split ? allRows.filter((r) => tabOf(r) === stage).length : (allRows[0]?.total ?? 0); // How many in the whole list.
+  // Details still missing for the students on this page (for the warning dot).
+  const missingRes = rows.length // If there are rows, reads:
+    ? await supabase.rpc("matching_missing", { p_students: [...new Set(rows.map((r) => r.student_id))] }) // what is missing for each student,
+    : null; // otherwise nothing.
+  const missingFor = new Set(((missingRes?.data ?? []) as Missing[]).map((m) => m.student_id)); // The students with something missing.
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1); // How many pages.
 
   const filters = { // The current filters:
@@ -124,7 +159,6 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   const link = (over: Record<string, string>) => `/matching?${new URLSearchParams({ ...filters, ...over }).toString()}`; // Makes a link keeping the filters, with some settings changed.
   const currentIndex = rows.findIndex((r) => r.student_id === studentId && r.subject === subject); // Where the chosen student is in the list.
   const next = currentIndex >= 0 ? rows[currentIndex + 1] : undefined; // The next student (if any).
-  const current = STAGES.find((s) => s.id === stage)!; // The current stage.
 
   return ( // Shows:
     <>{/* (a group) */}
@@ -143,41 +177,44 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
             >{/* (end of the link's settings) */}
               Students waiting{/* its words, */}
             </Link>{/* end of the link. */}
-            <Link // the gaps link:
-              href="/matching?view=gaps" // to the gaps,
-              className={`rounded-full border px-3 py-1 ${view === "gaps" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`} // highlighted when open.
+            <Link // the reports link:
+              href="/matching?view=reports" // to the reports,
+              className={`rounded-full border px-3 py-1 ${view === "reports" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`} // highlighted when open.
             >{/* (end of the link's settings) */}
-              Gaps{/* its words, */}
+              Reports{/* its words, */}
             </Link>{/* end of the link. */}
           </nav>{/* End of the view switch. */}
         </div>{/* End of the top row. */}
 
         <UrgentRematchBox />{/* Students who urgently need a new tutor, first (shows nothing when there are none). */}
 
-        {view === "gaps" ? ( // If the gaps view is open:
-          <GapsView /> // the gaps list.
+        {view === "reports" ? ( // If the reports view is open:
+          <div className="space-y-4">{/* the reports, one under another: */}
+            <ResponseTimesCard />{/* how long tutors and families take to answer, */}
+            <GapsView />{/* the gaps, */}
+            {isFull && <ReasonsCard />}{/* and why suggestions were changed (full admins). */}
+          </div> // End of the reports.
         ) : ( // otherwise:
           <>{/* (a group) */}
-            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5">{/* the stage boxes: */}
-              {STAGES.map((s) => { // for each stage:
+            <nav aria-label="Matching stages" className="flex flex-wrap gap-2 border-b border-zinc-200 pb-3 text-sm">{/* the stage tabs: */}
+              {STAGES.map((s) => { // for each tab:
                 const c = counts.find((x) => x.stage === s.id); // its count,
-                const active = s.id === stage; // whether it's open,
+                const active = s.id === stage; // whether it is open,
                 return ( // shows:
-                  <li key={s.id}>{/* a box: */}
-                    <Link // a link:
-                      href={link({ stage: s.id, page: "1" })} // to that stage, page 1,
-                      className={`block rounded-lg border px-3 py-2 text-sm ${active ? "border-teal-700 bg-teal-50" : "border-zinc-200 bg-white hover:border-teal-700"}`} // highlighted when open.
-                    >{/* (end of the link's settings) */}
-                      <span className="block text-2xl font-semibold">{c?.subjects ?? 0}</span>{/* the number of subjects, */}
-                      <span className="block">{s.label}</span>{/* the stage's name, */}
-                      {c?.oldest_days != null && <span className="block text-xs text-zinc-600">longest {c.oldest_days} days</span>}{/* and the longest wait (if any). */}
-                    </Link>{/* End of the link. */}
-                  </li> // End of the box.
-                ); // End of what's shown for this stage.
-              })}{/* End of the loop. */}
-            </ul>{/* End of the stage boxes. */}
+                  <Link // a tab:
+                    key={s.id} // (its key in the list)
+                    href={link({ stage: s.id, page: "1" })} // to that tab, page 1,
+                    aria-current={active ? "page" : undefined} // marked as current when open,
+                    title={s.hint} // what it means, on hover,
+                    className={`rounded-full border px-3 py-1 ${active ? "border-teal-700 bg-teal-700 text-white" : "border-zinc-300 bg-white hover:border-teal-700"}`} // filled when open, outlined otherwise.
+                  >{/* (end of the tab's settings) */}
+                    {s.label} ({c?.subjects ?? 0}){/* its name and count. */}
+                  </Link> // End of the tab.
+                ); // End of what is shown for this tab.
+              })}{/* End of the tabs. */}
+            </nav>{/* End of the stage tabs. */}
 
-            <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">{/* two columns on wide screens: */}
+            <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">{/* two columns on wide screens (a narrower list, more room for the student): */}
               <div className={`space-y-4 ${studentId ? "order-2 lg:order-1" : ""}`}>{/* the list column (below the student on small screens if one is chosen): */}
                 <Card title={`${current.label} (${total})`} description={current.hint}>{/* a card with the stage's name, count and hint: */}
                   <form method="get" action="/matching" className="mb-4 space-y-2">{/* the filter form: */}
@@ -210,7 +247,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                   ) : ( // otherwise:
                     <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
                       {rows.map((r) => { // for each student-subject:
-                        const active = r.student_id === studentId && r.subject === subject; // whether it's the chosen one,
+                        const active = r.student_id === studentId && r.subject === subject; // whether it is the chosen one,
                         return ( // shows:
                           <li key={`${r.student_id}-${r.subject}`}>{/* a row: */}
                             <Link // a link:
@@ -219,7 +256,12 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                               className={`block rounded-md px-2 py-2 ${active ? "bg-teal-50" : "hover:bg-zinc-50"}`} // highlighted if chosen.
                             >{/* (end of the link's settings) */}
                               <span className="flex items-baseline justify-between gap-2">{/* the top line: */}
-                                <span className="font-medium">{r.student_name}</span>{/* their name, */}
+                                <span className="font-medium">{/* in bold: */}
+                                  {missingFor.has(r.student_id) && ( // if a detail is missing,
+                                    <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500" title="Details missing before an offer" aria-label="Details missing" /> // an amber dot,
+                                  )}{/* (end of the dot) */}
+                                  {r.student_name}{/* their name. */}
+                                </span>{/* End of the bold part. */}
                                 <span className={`text-xs ${r.days >= 7 && stage !== "active" ? "text-amber-900" : "text-zinc-600"}`}>{/* days waiting (amber after a week): */}
                                   {r.days === 0 ? "today" : `${r.days} day${r.days === 1 ? "" : "s"}`}{/* today, or the number of days. */}
                                 </span>{/* End of the days. */}
@@ -231,7 +273,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                               </span>{/* End of the line. */}
                             </Link>{/* End of the link. */}
                           </li> // End of the row.
-                        ); // End of what's shown for this one.
+                        ); // End of what is shown for this one.
                       })}{/* End of the loop. */}
                     </ul> // End of the list.
                   )}{/* End of this part. */}
@@ -253,7 +295,6 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                     </p> // End of the line.
                   )}{/* End of this part. */}
                 </Card>{/* End of the card. */}
-                {isFull && <ReasonsCard />}{/* Why suggestions were changed (full admins). */}
               </div>{/* End of the list column. */}
 
               <div className={studentId ? "order-1 lg:order-2" : ""}>{/* the student column (on top on small screens if one is chosen): */}
@@ -263,6 +304,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                   <StudentPanel // their panel:
                     studentId={studentId} // the student,
                     subject={subject} // the subject,
+                    stage={stage} // the tab they are in,
                     nextHref={next ? link({ page: String(page), student: next.student_id, subject: next.subject }) : null} // and a link to the next student (if any).
                   />{/* (end of the panel) */}
                   </> // End of the group.
@@ -277,15 +319,15 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
         )}{/* End of this part. */}
       </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of MatchingPage.
 
 // ---------------------------------------------------------------------------
 // One student: everything about them, and the tutor shortlist
 // ---------------------------------------------------------------------------
-async function StudentPanel({ studentId, subject, nextHref }: { studentId: string; subject: string; nextHref: string | null }) { // The panel for one student and subject (with a link to the next student).
+async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId: string; subject: string; stage: string; nextHref: string | null }) { // The panel for one student and subject (the tab they are in, and a link to the next student).
   const supabase = await createClient(); // Connects to the database.
-  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes, holdsRes] = await Promise.all([ // Reads everything at once:
+  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes, holdsRes, missingRes, sinceRes] = await Promise.all([ // Reads everything at once:
     supabase // the student:
       .from("students") // from students,
       .select("id, full_name, family_id, year_level, school, state, goals, learning_needs, program") // these details,
@@ -298,15 +340,24 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       .order("added_at"), // oldest first.
     supabase // their session places:
       .from("student_places") // from student_places,
-      .select("online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until, include_school_holidays, include_public_holidays") // places, preferred times and how long to book,
+      .select("online, library_ids, travel_km, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, book_until, include_school_holidays, include_public_holidays") // places, preferred times and how long to book,
       .eq("student_id", studentId) // for this student,
       .maybeSingle(), // if any.
     supabase.from("libraries").select("id, name, active, confirmed_at").order("name"), // the libraries, by name,
     supabase.rpc("matching_shortlist", { p_student: studentId, p_subject: subject }), // the tutor shortlist,
-    supabase.rpc("matching_not_offered", { p_student: studentId, p_subject: subject }), // tutors who don't fit, and why,
+    supabase.rpc("matching_not_offered", { p_student: studentId, p_subject: subject }), // tutors who do not fit, and why,
     supabase.rpc("student_term_dates", { p_student: studentId }), // their term dates,
-    supabase.rpc("training_matching_holds"), // and tutors whose new matches wait for overdue safety training.
+    supabase.rpc("training_matching_holds"), // tutors whose new matches wait for overdue safety training,
+    supabase.rpc("matching_missing", { p_students: [studentId] }), // details still missing before an offer,
+    supabase // and any "waiting since" date set by hand:
+      .from("matching_waiting_since") // from matching_waiting_since,
+      .select("subject, since") // the subject and date,
+      .eq("student_id", studentId), // for this student.
   ]); // End of the reads.
+  const missing = new Map(((missingRes.data ?? []) as Missing[]).map((m) => [m.item, m.last_asked])); // Each missing detail and when the family was last asked.
+  const sinceRow = ((sinceRes.data ?? []) as { subject: string; since: string }[]).find((r) => r.subject.toLowerCase() === subject.toLowerCase()); // The date set for this subject (if any).
+  const sinceDate = sinceRow ? new Date(sinceRow.since).toLocaleDateString("en-CA", { timeZone: "Australia/Adelaide" }) : ""; // That date as YYYY-MM-DD in Adelaide (or empty).
+  const waitingTab = stage === "needs_tutor" || stage === "waitlist"; // Whether the student is still waiting for a tutor.
   const student = studentRes.data as { // The student:
     id: string; // their id,
     full_name: string; // name,
@@ -323,12 +374,13 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       <Card title="Student not found">{/* a card: */}
         <Empty>This student may have been removed.</Empty>{/* says they may have been removed. */}
       </Card> // End of the card.
-    ); // End of what's shown.
+    ); // End of what is shown.
   } // End of this part.
   const subjects = (subjectsRes.data ?? []) as (CourseUnit & { working_level: string | null })[]; // Their subjects.
   const places = placesRes.data as { // Their session places:
     online: boolean; // online or not,
     library_ids: string[]; // libraries,
+    travel_km: number | null; // how far a tutor may travel to them (if set),
     preferred_days: number[] | null; // preferred days (if any),
     preferred_parts: string[] | null; // preferred parts of the day (if any),
     preferred_school_hours: boolean; // whether school hours suit,
@@ -341,11 +393,11 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
   const libraryName = new Map((librariesRes.data ?? []).map((l) => [l.id as string, l.name as string])); // Each library's name, by id.
   // Tutors with overdue compulsory safety training can't take new students
   // (the database refuses the match), so they move off the shortlist into
-  // "Tutors who don't fit", with the reason (Carla, 16 Nov 2026).
+  // "Tutors who do not fit", with the reason (Carla, 16 Nov 2026).
   const held = new Map(((holdsRes.data ?? []) as { tutor_id: string; modules: string }[]).map((h) => [h.tutor_id, h.modules])); // Each held tutor and their overdue modules.
   const fullShortlist = (shortlistRes.data ?? []) as Shortlist[]; // The tutor shortlist from the database.
   const shortlist = fullShortlist.filter((t) => !held.has(t.tutor_id)); // The shortlist without held tutors.
-  const notOffered = [ // Tutors who don't fit:
+  const notOffered = [ // Tutors who do not fit:
     ...fullShortlist.filter((t) => held.has(t.tutor_id)).map((t) => ({ tutor_id: t.tutor_id, tutor_name: t.tutor_name, reason: `Compulsory safety training overdue (${held.get(t.tutor_id)}), so no new students until it is done` })), // held tutors, with the reason,
     ...((notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[]), // then the rest, from the database.
   ]; // End of the list.
@@ -383,7 +435,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
 
   const today = localToday(); // Today's date.
   const first = addDays(today, 7); // The first session date to suggest (a week from today).
-  const top = shortlist.find((t) => t.times > 0); // The top tutor: the first with a time that suits.
+  const top = shortlist.find((t) => t.times > 0 && !t.at_max); // The recommended tutor: the first with a time that suits and spare hours.
   const optionFor = (t: Shortlist) => ({ // Makes the suggested offer for a tutor:
     student_id: student.id, // the student,
     subject, // the subject,
@@ -400,8 +452,106 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
     places?.preferred_school_hours ? "school hours" : "", // school hours,
   ].filter(Boolean); // leaving out any not given.
 
+  const others = shortlist.filter((t) => t !== top); // The other tutors who suit.
+  // One tutor's box: who they are, why they suit, and the offer form.
+  const renderTutor = (t: Shortlist) => ( // Shows, for one tutor:
+              <li key={t.tutor_id} className={`rounded-lg border p-3 text-sm ${t === top ? "border-teal-700 bg-teal-50" : "border-zinc-200"}`}>{/* a box (highlighted for the recommended tutor): */}
+                <p className="flex flex-wrap items-baseline justify-between gap-2">{/* the top line: */}
+                  <span className="font-medium">{/* in bold: */}
+                    {t.rank}. {t.tutor_name}{/* their place and name, */}
+                    {t === top && ( // if they are the recommended tutor:
+                      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-teal-800">Recommended</span> // "Recommended".
+                    )}{/* End of this part. */}
+                  </span>{/* End of the bold part. */}
+                  <span className="text-xs text-zinc-600">{/* in grey: */}
+                    {hours(t.booked_minutes)} booked{/* hours booked, */}
+                    {t.max_weekly_hours != null ? ` of ${t.max_weekly_hours} hr` : ""}{/* of their most hours (if set). */}
+                  </span>{/* End of the grey part. */}
+                </p>{/* End of the top line. */}
+                <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-zinc-700">{/* the reasons they suit: */}
+                  {t.teaches_sibling && <li>✓ Teaches {t.sibling_names} (sibling)</li>}{/* teaches a sibling (if so), */}
+                  <li>{/* (a reason) */}
+                    ✓ Teaches {subject} at {thisSubject?.working_level ?? student.year_level}{/* teaches this subject at this level. */}
+                  </li>{/* End of the reason. */}
+                  <li>✓ Checks current for {student.state}</li>{/* checks current for the state. */}
+                  {t.times > 0 && ( // If times suit:
+                    <li>{/* (a reason) */}
+                      ✓ {t.times} time{t.times === 1 ? "" : "s"} that suit{/* how many times suit, */}
+                      {t.preferred_times > 0 ? ` (${t.preferred_times} preferred)` : ""}{/* and how many are preferred. */}
+                    </li> // End of the reason.
+                  )}{/* End of this part. */}
+                  {t.in_person_times > 0 && <li>✓ In person available</li>}{/* in person (if so), */}
+                  {t.learning_support && <li>✓ Learning support experience</li>}{/* learning support experience (if so). */}
+                </ul>{/* End of the reasons. */}
+                {t.at_max && ( // If at their limit:
+                  <p className="mt-1 text-amber-900">{/* an amber line: */}
+                    At their weekly maximum{t.max_weekly_hours != null ? ` (${t.max_weekly_hours} hr)` : ""}. They cannot be{/* their limit, */}
+                    booked past it. If they are the only option, ask them first.{/* (end of the text) */}
+                  </p> // End of the line.
+                )}{/* End of this part. */}
+                {!t.at_max && t.times === 0 && ( // Not at their limit but no time suits:
+                  <p className="mt-1 text-amber-900">No available times match this student&apos;s places right now.</p> // says so.
+                )}{/* End of this part. */}
+                {t.check_kind && t.check_expires && ( // If a check expires soon:
+                  <p className="mt-1 text-amber-900">{/* an amber line: */}
+                    {CHECK_NAMES[t.check_kind as CheckKind] ?? t.check_kind} expires {shortDate(t.check_expires)}.{/* which check and when. */}
+                  </p> // End of the line.
+                )}{/* End of this part. */}
+                {t.times > 0 && t.best_weekday && t.best_start && t.best_end && ( // If there is a best time:
+                  <p className="mt-2">{/* a line: */}
+                    Best time: {WEEKDAY_NAMES[t.best_weekday - 1]} {clockTime(t.best_start)} to {clockTime(t.best_end)} ·{" "}{/* the day, times, and, */}
+                    {placeLabel(t.best_delivery ?? "online", t.best_library_name)}{/* where. */}
+                  </p> // End of the line.
+                )}{/* End of this part. */}
+                {!t.at_max && ( // If not at their limit:
+                  <OfferForm // the offer form:
+                    student_id={student.id} // the student,
+                    subject={subject} // the subject,
+                    tutor_id={t.tutor_id} // the tutor,
+                    choices={choicesFor.get(t.tutor_id) ?? []} // their suitable times,
+                    libraries={confirmedLibraries} // the confirmed libraries,
+                    suggested={top ? optionFor(top) : null} // the suggested offer,
+                    defaultFirst={first} // the first date to suggest,
+                    defaultLast={places?.book_until ?? ""} // the last date (book until),
+                    terms={terms} // their term dates,
+                    bookUntil={places?.book_until ?? null} // how long to book,
+                    startOpen={t === top} // open to start for the recommended tutor (others open with "Offer").
+                  /> // End of the form.
+                )}{/* End of this part. */}
+              </li> // End of the box.
+  ); // End of renderTutor.
+  const missingCount = READY_ITEMS.filter((r) => missing.has(r.item)).length; // How many details are missing.
+
   return ( // Shows:
     <div className="space-y-4">{/* a list of cards: */}
+      {/* Ready check: the details a tutor needs, so they are not chasing them later (Carla, 16 Nov 2026). */}
+      <Card // the ready check card:
+        title={missingCount === 0 ? "Ready to offer" : `${missingCount} detail${missingCount === 1 ? "" : "s"} missing before an offer`} // ready, or how many are missing,
+        description={missingCount === 0 ? undefined : "Fill it in yourself, or ask the family. Asking sends them an app notice and an email, with a link to fill it in and to the help chat for questions."} // what to do when something is missing.
+      >{/* (end of the card's settings) */}
+        <ul className="space-y-2 text-sm">{/* a list: */}
+          {READY_ITEMS.map((r) => { // for each detail:
+            const isMissing = missing.has(r.item); // whether it is missing,
+            const asked = missing.get(r.item); // and when the family was last asked (if ever).
+            return ( // shows:
+              <li key={r.item} className="flex flex-wrap items-center gap-x-3 gap-y-1">{/* a row: */}
+                <span className={isMissing ? "text-amber-800" : "text-teal-800"} aria-hidden>{isMissing ? "✗" : "✓"}</span>{/* a cross or tick, */}
+                <span className={isMissing ? "font-medium" : "text-zinc-700"}>{r.label}</span>{/* the detail's name, */}
+                {isMissing && ( // if missing:
+                  <>{/* (a group) */}
+                    <TextLink href={r.adminHref(student.id)}>Fill in</TextLink>{/* a link to fill it in, */}
+                    <AskFamilyButton studentId={student.id} item={r.item} />{/* the "Ask the family" button, */}
+                    {asked && ( // if asked before,
+                      <span className="text-xs text-zinc-500">Asked {daysAgo(asked)}</span> // when.
+                    )}{/* (end of the asked note) */}
+                  </> // End of the group.
+                )}{/* End of this part. */}
+              </li> // End of the row.
+            ); // End of what is shown for this detail.
+          })}{/* End of the list. */}
+        </ul>{/* End of the list. */}
+      </Card>{/* End of the card. */}
+
       <Card // the student card:
         title={`${student.full_name} · ${subject}`} // the name and subject,
         description={ // links under the title:
@@ -414,7 +564,20 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
           </span> // End of the row.
         } // (end of the links)
       >{/* (end of the card's settings) */}
-        <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">{/* a details list in two columns: */}
+        {/* One summary line, so the key facts are seen at a glance. */}
+        <p className="text-sm text-zinc-700">{/* a grey line: */}
+          {[ // the facts:
+            student.year_level ?? "Year not set", // year level,
+            student.school || "School not set", // school,
+            student.state, // state,
+            `working at ${thisSubject?.working_level ?? "level not sure"}`, // working level,
+            places ? [places.online ? "online" : null, ...places.library_ids.map((id) => libraryName.get(id) ?? "a library"), places.travel_km ? `travels up to ${places.travel_km} km` : null].filter(Boolean).join(", ") || "no places set" : "no places set", // places,
+            preferred.length ? `prefers ${preferred.join(", ")}` : null, // preferred times,
+          ].filter(Boolean).join(" · ")}{/* joined with dots. */}
+        </p>{/* End of the line. */}
+        <details className="mt-3 rounded-lg border border-zinc-200 px-3 py-2">{/* a fold-out box: */}
+          <summary className="cursor-pointer text-sm font-medium">More details</summary>{/* its title, */}
+        <dl className="mt-2 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">{/* a details list in two columns: */}
           <Detail label="School year">{/* school year: */}
             {student.year_level ?? "Not set"}{/* the year level, */}
             {student.school ? ` at ${student.school}` : ""} · {student.state}{/* school and state. */}
@@ -456,6 +619,18 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
             {past.map((p) => `${p.accounts?.full_name ?? "A tutor"} (${p.subject}, to ${shortDate(p.ends_on)})`).join(", ") || "None"}{/* each with subject and end date (or none). */}
           </Detail>{/* End of this detail. */}
         </dl>{/* End of the details list. */}
+        </details>{/* End of the fold-out box. */}
+        {waitingTab && ( // If still waiting for a tutor:
+          <details className="mt-3 rounded-lg border border-zinc-200 px-3 py-2">{/* a fold-out box: */}
+            <summary className="cursor-pointer text-sm font-medium">{/* its title: */}
+              Waiting since{sinceDate ? `: ${shortDate(sinceDate)} (set by hand)` : ""}{/* "Waiting since" and any date set by hand. */}
+            </summary>{/* End of the title. */}
+            <p className="mt-2 text-xs text-zinc-600">{/* a grey hint: */}
+              If this student was on CLG&apos;s waitlist before they were added to the app, set the day they first asked. The list puts the longest waiting at the top.{/* (the hint's words) */}
+            </p>{/* End of the hint. */}
+            <WaitingSinceForm studentId={student.id} subject={subject} current={sinceDate} />{/* the date form. */}
+          </details> // End of the fold-out box.
+        )}{/* End of this part. */}
         {/* University and TAFE students: degree, unit codes, course pages and CLG's overview. */}
         <div className="mt-3 text-sm">{/* a box: */}
           <CourseDetails // the unit details:
@@ -466,87 +641,29 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
         </div>{/* End of the box. */}
       </Card>{/* End of the card. */}
 
-      <Card // the shortlist card:
-        title="Tutors who suit" // its title,
-        description="Best fit tutor: teaches the subject at the level the student is working at, then a tutor who already teaches a sibling, then spare hours, then a place that suits, then a time that suits. Pay rates are not shown." // how tutors are ranked.
+      {/* The recommended offer: one tutor, ready to send (Carla, 16 Nov 2026). */}
+      <Card // the recommended offer card:
+        title="Recommended offer" // its title,
+        description="Best fit: teaches the subject at the level the student is working at, then a tutor who already teaches a sibling, then spare hours, then a place that suits, then a time that suits. Pay rates are not shown." // how tutors are ranked.
       >{/* (end of the card's settings) */}
-        {shortlistRes.error ? ( // if the shortlist couldn't be read:
+        {shortlistRes.error ? ( // if the shortlist could not be read:
           <Empty>{shortlistRes.error.message}</Empty> // the reason.
         ) : shortlist.length === 0 ? ( // if no tutors:
-          <Empty>No tutor teaches {subject} at this level for {student.state} yet. See the Gaps view.</Empty> // says so.
+          <Empty>No tutor teaches {subject} at this level for {student.state} yet. See Reports, then Gaps.</Empty> // says so.
+        ) : top ? ( // if there is a recommended tutor:
+          <ol>{renderTutor(top)}</ol> // their box, with the offer open.
         ) : ( // otherwise:
-          <ol className="space-y-3">{/* a numbered list: */}
-            {shortlist.map((t) => ( // for each tutor:
-              <li key={t.tutor_id} className={`rounded-lg border p-3 text-sm ${t === top ? "border-teal-700 bg-teal-50" : "border-zinc-200"}`}>{/* a box (highlighted for the top tutor): */}
-                <p className="flex flex-wrap items-baseline justify-between gap-2">{/* the top line: */}
-                  <span className="font-medium">{/* in bold: */}
-                    {t.rank}. {t.tutor_name}{/* their place and name, */}
-                    {t === top && ( // if they're the top tutor:
-                      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-teal-800">Suggested</span> // "Suggested".
-                    )}{/* End of this part. */}
-                  </span>{/* End of the bold part. */}
-                  <span className="text-xs text-zinc-600">{/* in grey: */}
-                    {hours(t.booked_minutes)} booked{/* hours booked, */}
-                    {t.max_weekly_hours != null ? ` of ${t.max_weekly_hours} hr` : ""}{/* of their most hours (if set). */}
-                  </span>{/* End of the grey part. */}
-                </p>{/* End of the top line. */}
-                <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-zinc-700">{/* the reasons they suit: */}
-                  {t.teaches_sibling && <li>✓ Teaches {t.sibling_names} (sibling)</li>}{/* teaches a sibling (if so), */}
-                  <li>{/* (a reason) */}
-                    ✓ Teaches {subject} at {thisSubject?.working_level ?? student.year_level}{/* teaches this subject at this level. */}
-                  </li>{/* End of the reason. */}
-                  <li>✓ Checks current for {student.state}</li>{/* checks current for the state. */}
-                  {t.times > 0 && ( // If times suit:
-                    <li>{/* (a reason) */}
-                      ✓ {t.times} time{t.times === 1 ? "" : "s"} that suit{/* how many times suit, */}
-                      {t.preferred_times > 0 ? ` (${t.preferred_times} preferred)` : ""}{/* and how many are preferred. */}
-                    </li> // End of the reason.
-                  )}{/* End of this part. */}
-                  {t.in_person_times > 0 && <li>✓ In person available</li>}{/* in person (if so), */}
-                  {t.learning_support && <li>✓ Learning support experience</li>}{/* learning support experience (if so). */}
-                </ul>{/* End of the reasons. */}
-                {t.at_max && ( // If at their limit:
-                  <p className="mt-1 text-amber-900">{/* an amber line: */}
-                    At their weekly maximum{t.max_weekly_hours != null ? ` (${t.max_weekly_hours} hr)` : ""}. They cannot be
-                    booked past it; if they are the only option, ask them first.{/* (end of the text) */}
-                  </p> // End of the line.
-                )}{/* End of this part. */}
-                {!t.at_max && t.times === 0 && ( // Not at their limit but no time suits:
-                  <p className="mt-1 text-amber-900">No available times match this student&apos;s places right now.</p> // says so.
-                )}{/* End of this part. */}
-                {t.check_kind && t.check_expires && ( // If a check expires soon:
-                  <p className="mt-1 text-amber-900">{/* an amber line: */}
-                    {CHECK_NAMES[t.check_kind as CheckKind] ?? t.check_kind} expires {shortDate(t.check_expires)}.{/* which check and when. */}
-                  </p> // End of the line.
-                )}{/* End of this part. */}
-                {t.times > 0 && t.best_weekday && t.best_start && t.best_end && ( // If there's a best time:
-                  <p className="mt-2">{/* a line: */}
-                    Best time: {WEEKDAY_NAMES[t.best_weekday - 1]} {clockTime(t.best_start)} to {clockTime(t.best_end)} ·{" "}{/* the day, times, and, */}
-                    {placeLabel(t.best_delivery ?? "online", t.best_library_name)}{/* where. */}
-                  </p> // End of the line.
-                )}{/* End of this part. */}
-                {!t.at_max && ( // If not at their limit:
-                  <OfferForm // the offer form:
-                    student_id={student.id} // the student,
-                    subject={subject} // the subject,
-                    tutor_id={t.tutor_id} // the tutor,
-                    choices={choicesFor.get(t.tutor_id) ?? []} // their suitable times,
-                    libraries={confirmedLibraries} // the confirmed libraries,
-                    suggested={top ? optionFor(top) : null} // the suggested offer,
-                    defaultFirst={first} // the first date to suggest,
-                    defaultLast={places?.book_until ?? ""} // the last date (book until),
-                    terms={terms} // their term dates,
-                    bookUntil={places?.book_until ?? null} // how long to book,
-                    startOpen={t === top} // open to start for the top tutor.
-                  /> // End of the form.
-                )}{/* End of this part. */}
-              </li> // End of the box.
-            ))}{/* End of the loop. */}
-          </ol> // End of the list.
+          <Empty>No tutor who suits has a matching time with spare hours right now. Check the other tutors below, or the student&apos;s places.</Empty> // says so.
         )}{/* End of this part. */}
       </Card>{/* End of the card. */}
 
-      {notOffered.length > 0 && ( // If some tutors don't fit:
+      {others.length > 0 && ( // If other tutors suit:
+        <Card collapsible defaultOpen={!top} title={`Other tutors who suit (${others.length})`}>{/* a fold-up card with the count (open if there is no recommendation): */}
+          <ol className="space-y-3">{others.map(renderTutor)}</ol>{/* each tutor's box. */}
+        </Card> // End of the card.
+      )}{/* End of this part. */}
+
+      {notOffered.length > 0 && ( // If some tutors do not fit:
         <Card collapsible defaultOpen={false} title={`Tutors who do not fit (${notOffered.length})`}>{/* a fold-up card with the count: */}
           <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
             {notOffered.map((t) => ( // for each:
@@ -559,8 +676,14 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
         </Card> // End of the card.
       )}{/* End of this part. */}
     </div> // End of the list of cards.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of StudentPanel.
+
+// How long ago a time was, in plain words ("today", "1 day ago", "5 days ago").
+function daysAgo(iso: string): string { // Takes a time.
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000); // Whole days since then.
+  return days <= 0 ? "today" : `${days} day${days === 1 ? "" : "s"} ago`; // Today, or how many days.
+} // End of daysAgo.
 
 function Detail({ label, children }: { label: string; children: ReactNode }) { // One detail: a label and its value.
   return ( // Shows:
@@ -568,7 +691,7 @@ function Detail({ label, children }: { label: string; children: ReactNode }) { /
       <dt className="text-xs font-medium text-zinc-500">{label}</dt>{/* the label, */}
       <dd className="whitespace-pre-line">{children}</dd>{/* the value (keeping line breaks). */}
     </div> // End of the group.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of Detail.
 
 // ---------------------------------------------------------------------------
@@ -604,7 +727,7 @@ async function GapsView() { // The gaps list.
         </ul> // End of the list.
       )}{/* End of this part. */}
     </Card> // End of the card.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of GapsView.
 
 // ---------------------------------------------------------------------------
@@ -635,7 +758,54 @@ async function ReasonsCard() { // The "why suggestions were changed" card.
         </ul> // End of the list.
       )}{/* End of this part. */}
     </Card> // End of the card.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of ReasonsCard.
+
+// ---------------------------------------------------------------------------
+// Response times: how long tutors and families take to answer offers
+// ---------------------------------------------------------------------------
+async function ResponseTimesCard() { // The response times card.
+  const supabase = await createClient(); // Connects to the database.
+  const { data, error } = await supabase.rpc("matching_response_times", { p_days: 180 }); // Reads the last 180 days.
+  const rows = (data ?? []) as { who: string; tutor_id: string | null; tutor_name: string; answered: number; avg_hours: number | null; not_answered: number }[]; // One row per tutor, plus families.
+  const families = rows.find((r) => r.who === "family"); // The families row.
+  const tutors = rows.filter((r) => r.who === "tutor"); // The tutor rows.
+  const hrs = (h: number | null) => (h == null ? "no answers yet" : h < 1 ? "under 1 hr" : `${Math.round(h)} hr`); // An average in plain words.
+  return ( // Shows:
+    <Card // a card:
+      title="Response times" // its title,
+      description="Average time from an offer being sent to a yes or no, over the last 180 days. Offers that ran out with no answer are counted separately." // its help text.
+    >{/* (end of the card's settings) */}
+      {error ? ( // if it could not be read:
+        <Empty>{error.message}</Empty> // the reason.
+      ) : rows.length === 0 ? ( // if nothing yet:
+        <Empty>No offers in the last 180 days.</Empty> // says so.
+      ) : ( // otherwise:
+        <div className="overflow-x-auto">{/* a box that scrolls sideways only if the table is too wide: */}
+          <table className="w-full text-left text-sm">{/* a table: */}
+            <thead className="text-xs text-zinc-500">{/* the headings: */}
+              <tr>{/* one row: */}
+                <th className="py-1 pr-3 font-medium">Who</th>{/* who, */}
+                <th className="py-1 pr-3 font-medium">Average time to answer</th>{/* average time, */}
+                <th className="py-1 pr-3 font-medium">Answered</th>{/* how many answered, */}
+                <th className="py-1 font-medium">Ran out with no answer</th>{/* how many ran out. */}
+              </tr>{/* End of the row. */}
+            </thead>{/* End of the headings. */}
+            <tbody className="divide-y divide-zinc-100">{/* the rows: */}
+              {[...(families ? [families] : []), ...tutors].map((r) => ( // families first, then each tutor:
+                <tr key={r.tutor_id ?? "family"} className={r.who === "family" ? "font-medium" : ""}>{/* a row (families in bold): */}
+                  <td className="py-1.5 pr-3">{r.tutor_name}</td>{/* the name, */}
+                  <td className="py-1.5 pr-3">{hrs(r.avg_hours)}</td>{/* the average, */}
+                  <td className="py-1.5 pr-3">{r.answered}</td>{/* how many answered, */}
+                  <td className={`py-1.5 ${r.not_answered > 0 ? "text-amber-800" : ""}`}>{r.not_answered}</td>{/* how many ran out (amber if any). */}
+                </tr> // End of the row.
+              ))}{/* End of the rows. */}
+            </tbody>{/* End of the rows. */}
+          </table>{/* End of the table. */}
+        </div> // End of the box.
+      )}{/* End of this part. */}
+    </Card> // End of the card.
+  ); // End of what is shown.
+} // End of ResponseTimesCard.
 
 export const metadata = { title: "Matching · CLG Tutoring" }; // The browser tab title.

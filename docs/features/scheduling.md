@@ -582,3 +582,44 @@ Carla: "Only if a session finishes more than 15 minutes early does it become a r
 - **Times to check** only lists a recorded finish that's more than 15 minutes early, or after the booked end.
 - Running over, or finishing more than 15 minutes early, works as before: the tutor records the real end time and why, and CLG confirms it before pay.
 - Legal note: pay still follows the confirmed times (Fair Work Act 2009 record-keeping, reg 3.33). Short early finishes are paid as booked, which can only favour the tutor.
+
+## Matching page redesign, 16 Nov 2026
+
+Carla approved ideas 1 to 3 from the matching redesign notes.
+
+- One screen: stage tabs along the top (Needs a tutor, Waiting for tutor,
+  Waiting for family, Waitlist, Assigned with no time, Active), the list on
+  the left and the chosen student on the right. "Waitlist" means no
+  suitable tutor is available yet. The two "Waiting for" tabs split offers
+  by who has not answered (matching_offer_waits()); the database stage is
+  unchanged, so the Reports module is not affected.
+- Longest waiting stay at the top. Front desk admins can back-date when a
+  student first joined CLG's waitlist (set_waiting_since(), stored in
+  matching_waiting_since, owned by scheduling; the core student tables are
+  not written).
+- Ready check: year level, school, session places and how long to book
+  (matching_missing()). Each missing item has "Fill in" and "Ask the
+  family". Asking (ask_family()) sends the parents an app notice and one
+  email (outside quiet hours) with a link to fill it in and a pointer to the
+  help chat. At most once a day per student and item.
+- One recommended offer, open and ready to send; other tutors are folded
+  away. Details beyond a one-line summary sit under "More details".
+- Reports view: response times (matching_response_times(): average hours
+  from an offer to a yes or no, per tutor and for families, and how many
+  ran out unanswered), Gaps, and why suggestions were changed.
+
+Legal note: only front desk admins can see missing details, asks, offer
+waits and response times (row level security and function checks, APP 11).
+Asks go only to the child's parents (APP 6, use for the primary purpose),
+the email names no other child, and nothing is shown to tutors. Response
+times are an operational measure of staff work, not shown to tutors or
+families; keep them out of performance decisions without a fair process
+(Fair Work Act, general protections).
+
+Research: getting the right tutor in place quickly and keeping the same
+tutor matters most for tutoring impact (EEF small group and one to one
+tuition guidance; Evidence for Learning toolkit on one to one tuition).
+Reducing the information a coordinator must scan to one recommended
+option speeds decisions and cuts errors (Hick's law; Nielsen Norman Group
+on progressive disclosure). Collecting missing details before an offer
+avoids tutors chasing families, which delays the first session.
