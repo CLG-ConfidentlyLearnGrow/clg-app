@@ -17,9 +17,9 @@ export const childSchema = z.object({
   year_level: z.enum(YEAR_LEVELS, "Choose your child's year level. CLG uses it to match the right tutor."), // Must be from the year level list.
   school: z.string().trim().min(1, "Enter your child's school.").max(200), // School is required, up to 200 letters.
   goals: z // The family's end goal for support:
-    .string("Tell us what you'd like CLG's support to achieve.") // must be text,
+    .string("Tell us what you would like CLG's support to achieve.") // must be text,
     .trim() // with spaces removed from the ends,
-    .min(1, "Tell us what you'd like CLG's support to achieve.") // can't be blank,
+    .min(1, "Tell us what you would like CLG's support to achieve.") // can't be blank,
     .max(4000, "Please keep the end goal under 4,000 characters."), // and is up to 4,000 letters.
   extra_info: z.string().trim().max(2000, "Please keep other information under 2,000 characters.").optional(), // Optional, up to 2,000 letters.
   learning_needs: z.string().trim().max(2000, "Please keep learning needs under 2,000 characters.").optional(), // Optional, up to 2,000 letters.

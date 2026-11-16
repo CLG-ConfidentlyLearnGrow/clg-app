@@ -189,14 +189,14 @@ export async function TermReviewOfferCard({ studentId, isFamily }: { studentId: 
         before you see it, and you can reply or ask for a call.{/* (what the review includes) */}
       </p>{/* End of the line. */}
       {offer.answer === "yes" ? ( // If they've said yes:
-        <p className="text-sm text-zinc-600">Booked. Your tutor is writing it, and you&apos;ll see it here once CLG has checked it.</p> // says it's booked.
+        <p className="text-sm text-zinc-600">Booked. Your tutor is writing it, and you will see it here once CLG has checked it.</p> // says it's booked.
       ) : ( // Otherwise:
         <>{/* (a group:) */}
           {offer.answer === "no" && ( // if they said no:
             <p className="mb-3 text-sm text-zinc-600">You said no thanks. You can change your mind until {shortDate(offer.period_ends_on)}.</p> // says they can still change their mind,
           )}{/* (end of that line) */}
           <p className="mb-3 text-sm text-zinc-600">{/* a line: */}
-            Please answer by {shortDate(offer.period_ends_on)}. If you don&apos;t answer, no review is written and nothing is charged.{/* the last day, and that silence costs nothing. */}
+            Please answer by {shortDate(offer.period_ends_on)}. If you do not answer, no review is written and nothing is charged.{/* the last day, and that silence costs nothing. */}
           </p>{/* End of the line. */}
           <TermReviewOfferForm studentId={studentId} offerId={offer.id} staff={false} />{/* The yes or no form. */}
         </> // (end of the group)

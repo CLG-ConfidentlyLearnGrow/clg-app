@@ -48,18 +48,18 @@ function ModuleFields({ m }: { m?: ModuleRow }) { // Takes the module (none for 
       <Field label="Name" name="title" required minLength={2} maxLength={150} defaultValue={m?.title} />{/* the name, */}
       <TextArea label="Summary" name="summary" rows={2} maxLength={600} defaultValue={m?.summary} hint="One or two lines on what it covers." />{/* the summary, */}
       <div className="grid gap-4 sm:grid-cols-2">{/* two columns on wider screens: */}
-        <Select label="Who it's for" name="audience" defaultValue={m?.audience ?? "tutor"}>{/* who it's for: */}
+        <Select label="Who it is for" name="audience" defaultValue={m?.audience ?? "tutor"}>{/* who it's for: */}
           {AUDIENCES.map((a) => <option key={a} value={a}>{AUDIENCE_NAMES[a]}</option>)}{/* each choice. */}
         </Select>{/* End of the choice. */}
         <Select label="Where it sits" name="stage" defaultValue={m?.stage ?? "ongoing"}>{/* the stage: */}
           {STAGES.map((s) => <option key={s} value={s}>{STAGE_NAMES[s]}</option>)}{/* each choice. */}
         </Select>{/* End of the choice. */}
-        <Field label="Set time (minutes)" name="minutes" type="number" min={5} max={480} required defaultValue={m?.minutes ?? 30} hint="What it takes, and what's paid for compulsory modules." />{/* the set time, */}
+        <Field label="Set time (minutes)" name="minutes" type="number" min={5} max={480} required defaultValue={m?.minutes ?? 30} hint="What it takes, and what is paid for compulsory modules." />{/* the set time, */}
         <Field label="Redo every (months)" name="renew_months" type="number" min={1} max={60} defaultValue={m?.renew_months ?? ""} hint="Leave blank if it never needs redoing. Child safety and privacy: 12." />{/* the redo period, */}
         <Field label="Order" name="position" type="number" min={0} max={9999} defaultValue={m?.position ?? 100} hint="Smaller numbers show first." />{/* the order. */}
       </div>{/* End of the columns. */}
-      <Tick name="required" label="Compulsory" hint="Everyone it's for must finish it. It's paid automatically for the set time." defaultChecked={m?.required} />{/* compulsory, */}
-      <Tick name="holds_matching" label="Needed before new students (safety)" hint="Tutors can't be matched with new students once it's overdue. Only works if it's compulsory." defaultChecked={m?.holds_matching} />{/* holds matches, */}
+      <Tick name="required" label="Compulsory" hint="Everyone it is for must finish it. It is paid automatically for the set time." defaultChecked={m?.required} />{/* compulsory, */}
+      <Tick name="holds_matching" label="Needed before new students (safety)" hint="Tutors cannot be matched with new students once it is overdue. Only works if it is compulsory." defaultChecked={m?.holds_matching} />{/* holds matches, */}
       <p className="text-sm text-zinc-600">Safety modules (needed before new students) never count towards the training hours each quarter. Every other module does. The app sets this itself.</p>{/* how the quarterly hours are counted (automatic, Carla 16 Nov 2026). */}
     </> // End of the group.
   ); // End of what's shown.
@@ -82,7 +82,7 @@ export function ModuleForm({ m }: { m: ModuleRow }) { // Takes the module.
       <ModuleFields m={m} />{/* the module's fields, */}
       <Select label="Status" name="status" defaultValue={m.status}>{/* draft, published or retired: */}
         <option value="draft">Draft (only admins see it)</option>{/* draft, */}
-        <option value="published">Published (the people it&apos;s for can see it)</option>{/* published, */}
+        <option value="published">Published (the people it is for can see it)</option>{/* published, */}
         <option value="retired">Retired (hidden, records kept)</option>{/* retired. */}
       </Select>{/* End of the choice. */}
     </ActionForm> // End of the form.
@@ -130,7 +130,7 @@ export function LessonFileForm({ lessonId, maxMb }: { lessonId: string; maxMb: n
     startUpload(async () => { // Starts uploading:
       const path = `lessons/${crypto.randomUUID()}.${ext}`; // a random storage name,
       const up = await createBrowserSupabase().storage.from("training").upload(path, file, { contentType: LESSON_FILE_TYPES[ext], upsert: false }); // uploads it (never replacing another file),
-      if (up.error) { setLocal({ error: "The upload didn't work. Check your connection, and that Supabase's upload limit (Storage settings) is at least this size." }); return; } // failed: explains,
+      if (up.error) { setLocal({ error: "The upload did not work. Check your connection, and that Supabase's upload limit (Storage settings) is at least this size." }); return; } // failed: explains,
       setLocal({}); // clears the browser message,
       const form = new FormData(); // and sends the details to the server:
       form.set("lesson_id", lessonId); // which lesson,
@@ -166,7 +166,7 @@ export function QuestionForm({ moduleId, q, nextPosition }: { moduleId: string; 
         <Field label="Number of the right choice" name="correct_option" type="number" min={1} max={6} required defaultValue={q?.correct_option ?? 1} hint="1 is the first line." />{/* which is right, */}
         <Field label="Order" name="position" type="number" min={0} max={9999} defaultValue={q?.question_position ?? nextPosition} />{/* the order. */}
       </div>{/* End of the columns. */}
-      <TextArea label="Why it's right (admins only)" name="explanation" rows={2} maxLength={600} defaultValue={q?.explanation ?? ""} />{/* an explanation for admins. */}
+      <TextArea label="Why it is right (admins only)" name="explanation" rows={2} maxLength={600} defaultValue={q?.explanation ?? ""} />{/* an explanation for admins. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of QuestionForm.
@@ -194,7 +194,7 @@ export function SettingsForm({ graceDays, quarterMinutes, videoMaxMb }: { graceD
   return ( // Shows:
     <ActionForm action={saveTrainingSettings} submitLabel="Save settings">{/* a form that saves them: */}
       <Field label="Days allowed to finish a compulsory module" name="grace_days" type="number" min={0} max={180} defaultValue={graceDays} hint="Counted from when someone joins, or when the module becomes compulsory or is changed in a big way. 28 days is 4 weeks." />{/* days allowed, */}
-      <Field label="Training hours needed each quarter to stay CLG certified" name="quarter_hours" type="number" min={0} max={40} step={0.25} defaultValue={quarterMinutes / 60} hint="Safety modules don't count towards these hours." />{/* hours each quarter, */}
+      <Field label="Training hours needed each quarter to stay CLG certified" name="quarter_hours" type="number" min={0} max={40} step={0.25} defaultValue={quarterMinutes / 60} hint="Safety modules do not count towards these hours." />{/* hours each quarter, */}
       <Field label="Largest video or PDF upload (MB)" name="video_max_mb" type="number" min={1} max={5000} defaultValue={videoMaxMb} hint="Supabase's own upload limit (Storage settings) must be at least this big." />{/* largest upload. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
@@ -211,7 +211,7 @@ export function HandbookForm({ page }: { page?: HandbookRow }) { // Takes the pa
       <Field label="Heading" name="title" required minLength={2} maxLength={150} defaultValue={page?.title} />{/* the heading, */}
       <TextArea label="Text" name="body" rows={page ? 16 : 6} maxLength={30000} defaultValue={page?.body} hint='Start a line with "## " for a heading, or "- " for a bullet point. Leave a blank line between paragraphs.' />{/* the text, */}
       <div className="grid gap-4 sm:grid-cols-3">{/* three columns: */}
-        <Select label="Who it's for" name="audience" defaultValue={page?.audience ?? "everyone"}>{/* who it's for: */}
+        <Select label="Who it is for" name="audience" defaultValue={page?.audience ?? "everyone"}>{/* who it's for: */}
           {AUDIENCES.map((a) => <option key={a} value={a}>{AUDIENCE_NAMES[a]}</option>)}{/* each choice. */}
         </Select>{/* End of the choice. */}
         <Select label="Status" name="status" defaultValue={page?.status ?? "draft"}>{/* draft or published: */}
@@ -220,7 +220,7 @@ export function HandbookForm({ page }: { page?: HandbookRow }) { // Takes the pa
         </Select>{/* End of the choice. */}
         <Field label="Order" name="position" type="number" min={0} max={9999} defaultValue={page?.position ?? 100} />{/* the order. */}
       </div>{/* End of the columns. */}
-      <Tick name="urgent" label={'Pin at the top in red (for "Something\'s happened")'} defaultChecked={page?.urgent} />{/* the pin. */}
+      <Tick name="urgent" label='Pin at the top in red (for "Something has happened")' defaultChecked={page?.urgent} />{/* the pin. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of HandbookForm.

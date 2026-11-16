@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const queued = await supabase.rpc("problem_screenshots_to_remove"); // Gets the files waiting to be removed.
   if (queued.error) { // Couldn't get them:
     console.error("Problem screenshot removal:", queued.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't read the removal list" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not read the removal list" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   const paths = (queued.data ?? []) as string[]; // The file paths.
   if (paths.length === 0) return Response.json({ records: tidy.data ?? 0, removed: 0 }); // None: reports nothing removed.
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const removed = await supabase.storage.from("problem-screenshots").remove(paths); // Removes the files.
   if (removed.error) { // Couldn't remove them:
     console.error("Problem screenshot removal:", removed.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't remove the files" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not remove the files" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   await supabase.rpc("problem_screenshots_removed", { p_paths: paths }); // Tells the database these files are gone.
   return Response.json({ records: tidy.data ?? 0, removed: paths.length }); // Reports what was removed.

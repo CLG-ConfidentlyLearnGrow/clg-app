@@ -88,7 +88,7 @@ export function parseAcara(rows: Cell[][]): AcaraCurriculum[] | { error: string 
   if (Object.values(c).some((i) => i < 0)) { // Any column missing:
     return { // hands back a plain message.
       error: // The message:
-        "This doesn't look like ACARA's curriculum file. Use the \"Download entire curriculum\" Excel file from australiancurriculum.edu.au/downloads.",
+        "This does not look like ACARA's curriculum file. Use the \"Download entire curriculum\" Excel file from australiancurriculum.edu.au/downloads.",
     }; // End of the message.
   } // End of the missing-column check.
 

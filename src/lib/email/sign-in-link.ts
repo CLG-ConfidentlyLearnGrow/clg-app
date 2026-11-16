@@ -35,14 +35,14 @@ export async function emailSignInLink(email: string, subject: string, body: stri
   }); // End of making the link.
   const tokenHash = made.data?.properties?.hashed_token; // The link's one-time code.
   if (made.error || !tokenHash) { // Couldn't make it:
-    return { sent: false, link: null, problem: `Couldn't make a link: ${made.error?.code ?? made.error?.message ?? "no code returned"}` }; // reports why.
+    return { sent: false, link: null, problem: `Could not make a link: ${made.error?.code ?? made.error?.message ?? "no code returned"}` }; // reports why.
   } // End of that case.
 
   // Our own "one more step" page uses the code when the person presses a
   // button, so email scanners that open links can't use it up first.
   const path = `/auth/continue?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&next=/set-password`; // The page the button opens.
   const fullLink = `${siteUrl()}${path}`; // The full link, for the admin to copy if the email fails.
-  if (!emailIsSetUp()) return { sent: false, link: fullLink, problem: "Email isn't set up yet." }; // No email key: hands back the link.
+  if (!emailIsSetUp()) return { sent: false, link: fullLink, problem: "Email is not set up yet." }; // No email key: hands back the link.
 
   const problem = await sendEmails([ // Sends one email:
     { // (the email:)
@@ -53,7 +53,7 @@ export async function emailSignInLink(email: string, subject: string, body: stri
       body, // the caller's message,
       link: path, // the button opens the "one more step" page,
       button: "Set my password and sign in", // the button's words,
-      footer: `This link is only for ${email}. It works once, for one hour, and only the newest link we've sent works. If you weren't expecting it, you can ignore this email.`, // small print on how the link works.
+      footer: `This link is only for ${email}. It works once, for one hour, and only the newest link we have sent works. If you were not expecting it, you can ignore this email.`, // small print on how the link works.
     }, // (end of the email)
   ]); // (end of the list)
   if (problem) return { sent: false, link: fullLink, problem }; // It didn't go: hands back the link and why.

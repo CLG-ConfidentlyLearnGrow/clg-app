@@ -66,7 +66,7 @@ export function EmergencyRequestForm() {
         required // that must be filled in,
         minLength={10} // at least 10 characters,
         maxLength={1000} // up to 1,000,
-        hint="For example: what needs doing, and why the owner can't be reached." // and a hint.
+        hint="For example: what needs doing, and why the owner cannot be reached." // and a hint.
       />{/* (end of the box) */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

@@ -70,11 +70,11 @@ Tip: **Where you stand** shows what is confirmed and when each check runs out. Y
 3. Library not in the list? Add its name and suburb, and choose **Suggest library**. CLG checks it before families can book it.
 
 ### Confirm your availability for next term
-About 4 weeks before a term ends, CLG asks **Is your availability right for next term?** on your Sessions overview. Check your hours, then choose **No changes** or **I've updated it**.
+About 4 weeks before a term ends, CLG asks **Is your availability right for next term?** on your Sessions overview. Check your hours, then choose **No changes** or **I have updated it**.
 
 ## Sessions
 
-Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Where you teach**. Times are Adelaide time. Tutors don't book sessions: CLG offers them, and you accept.
+Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Where you teach**. Times are Adelaide time. Tutors do not book sessions: CLG offers them, and you accept.
 
 ### Accept or decline a booking request
 1. When you have a request, the Overview shows **You have (number) booking requests to answer**. Choose **See requests**.
@@ -82,7 +82,7 @@ Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**,
 3. Choose **Accept**, or **Decline** with a note to the family saying why.
 4. Answer within 48 hr, or the request runs out and the time is freed.
 
-Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time doesn't suit** instead. It's confirmed once you both say yes. You have 3 days, with a reminder after 2. After that the offer closes for now.
+Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time does not suit** instead. It is confirmed once you both say yes. You have 3 days, with a reminder after 2. After that the offer closes for now.
 
 ### Sign on to a session
 1. From 30 minutes before the session, **Sign on** appears next to it on the Overview.
@@ -93,18 +93,18 @@ Tip: When CLG offers a time to both you and the family, you see **Approve** and 
 Choose **Join** next to the session on the Overview, or on your **Weekly calendar**. It opens Microsoft Teams.
 
 ### Mark whether a session happened
-After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one. If the student hasn't arrived, wait 15 minutes after the start, then log off or leave and choose **No-show**. The app won't take a no-show before then.
+After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one. If the student has not arrived, wait 15 minutes after the start, then log off or leave and choose **No-show**. The app will not take a no-show before then.
 
 ### Record a different finish time
 1. On the Overview, open **Your recent sessions**.
 2. Choose **Finished at a different time?** next to the session.
 3. Enter the time you finished and why, then choose **Send to CLG**. Do this within a week. CLG confirms it before pay.
 
-Tip: Only record a finish that's more than 15 minutes early, or a session that ran over. Finishing up to 15 minutes early counts as finishing on time.
+Tip: Only record a finish that is more than 15 minutes early, or a session that ran over. Finishing up to 15 minutes early counts as finishing on time.
 
 ### Cancel a session
 1. On the Overview, find the session and choose **Cancel**.
-2. Choose a reason (please don't include health details).
+2. Choose a reason (please do not include health details).
 3. Offer two other times that week. The family picks one. If no time works, tick that box and CLG will help.
 4. Choose **Cancel this session**.
 
@@ -125,9 +125,9 @@ If CLG wants to move a student's sessions to you (or change the day and time), a
 2. Find the request from your student's family (for example an extra session before a test).
 3. If you can, choose a date, time, length and place, add a note for the family, and choose **Offer this time**. The family then approves it.
 
-### If a match isn't working
+### If a match is not working
 1. In **Sessions**, choose **Blocks**, then **Block a student**.
-2. Write why. Only CLG sees the reason, and the family isn't told.
+2. Write why. Only CLG sees the reason, and the family is not told.
 3. Choose **Block this student**. CLG will follow up with you.
 
 ### See your week, and add sessions to your own calendar
@@ -153,7 +153,7 @@ Notes are due within 6 hr of each session and take about three minutes. Families
 3. Use **Note for CLG staff only** for anything just for CLG.
 4. Choose **Save note**. The family and student see the note (except the staff-only part).
 
-Tip: Write the next step to the student, and keep it specific. For a session that wasn't booked in the app, use the link under **Write a session note**.
+Tip: Write the next step to the student, and keep it specific. For a session that was not booked in the app, use the link under **Write a session note**.
 
 ### Set goals and skills
 1. Open the student's **Progress and notes**.
@@ -181,7 +181,7 @@ When a family uploads a school report or marked work, it shows under **New uploa
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook
-In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something's happened** is pinned at the top in red.
+In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
 
 ### Check your pay and log extra hours
 1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.
@@ -198,7 +198,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 
 ### Give feedback or report an app issue
 - **Feedback**: praise, ideas or worries about the app, CLG's service or people at CLG.
-- **Report app issue**: something in the app isn't working. Add a screenshot if you can.
+- **Report app issue**: something in the app is not working. Add a screenshot if you can.
 
 ### Your privacy and name
 Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).

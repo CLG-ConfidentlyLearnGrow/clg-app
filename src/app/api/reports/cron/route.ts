@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.rpc("reports_make_due"); // Asks the database to make any reports that are due.
   if (error) { // It failed:
     console.error("Reports:", error.message); // notes why in the server log,
-    return Response.json({ made: 0, problem: "Couldn't make the reports" }, { status: 500 }); // and reports the problem.
+    return Response.json({ made: 0, problem: "Could not make the reports" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   return Response.json({ made: data ?? 0 }); // Reports how many were made.
 } // End of GET.

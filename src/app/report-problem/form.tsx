@@ -76,7 +76,7 @@ export function ReportProblemForm({ page }: { page: string }) {
     setNote( // Explains anything left out:
       [ // (each reason, if it applies)
         over ? `Only ${MAX_SCREENSHOTS} screenshots can be added, so ${over} ${over === 1 ? "was" : "were"} left out.` : "", // too many,
-        skipped ? `${skipped} ${skipped === 1 ? "picture" : "pictures"} couldn't be read. Please try a JPG or PNG screenshot.` : "", // couldn't be read.
+        skipped ? `${skipped} ${skipped === 1 ? "picture" : "pictures"} could not be read. Please try a JPG or PNG screenshot.` : "", // couldn't be read.
       ].filter(Boolean).join(" "), // (joined, skipping blanks)
     ); // End of the note.
     setShots((now) => [...now, ...added].slice(0, MAX_SCREENSHOTS)); // Adds them (never more than the limit).
@@ -129,7 +129,7 @@ export function ReportProblemForm({ page }: { page: string }) {
         minLength={10} // at least a short sentence,
         maxLength={4000} // up to 4,000 characters,
         required // must be filled in,
-        hint="For example: what you pressed, what you expected, and what happened instead. Please don't include medical details." // help under the box.
+        hint="For example: what you pressed, what you expected, and what happened instead. Please do not include medical details." // help under the box.
       />{/* End of the main box. */}
       <TextArea // the second box:
         label="What were you trying to do? (optional)" // its words,

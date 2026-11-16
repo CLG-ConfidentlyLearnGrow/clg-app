@@ -510,8 +510,8 @@ function LoginLinkForm({ person }: { person: StaffMember }) {
       <p className="text-sm font-medium text-zinc-800">Login link</p>{/* the heading, */}
       <p className="text-xs text-zinc-500">{/* a small grey note: */}
         {person.last_sign_in_at // if they've signed in before,
-          ? "Emails them a link to set a new password, for example if they're locked out." // a password reset link,
-          : "They haven't signed in yet. Emails them a new link to choose a password."}{/* otherwise a new login link. */}
+          ? "Emails them a link to set a new password, for example if they are locked out." // a password reset link,
+          : "They have not signed in yet. Emails them a new link to choose a password."}{/* otherwise a new login link. */}
       </p>{/* End of the note. */}
       <BusyButton type="submit" disabled={pending} className={plainButton}>{/* An outlined button: */}
         {pending ? "Sending…" : person.last_sign_in_at ? "Send a password link" : "Send a new login link"}{/* its words change while sending, and to match. */}
@@ -530,7 +530,7 @@ function RolesPanel({ person: p, isOwner, isMe }: { person: StaffMember; isOwner
       role: "admin", // (the role)
       label: p.admin_level ? LEVEL_NAMES[p.admin_level] : "Admin", // with their level,
       canRemove: isOwner && !isMe && p.admin_level !== "owner", // removable by the owner, but not their own or the owner's,
-      why: p.admin_level === "owner" ? "The owner's admin role can't be removed." : isMe ? "You can't remove your own admin role." : undefined, // and why not, if it can't be.
+      why: p.admin_level === "owner" ? "The owner's admin role cannot be removed." : isMe ? "You cannot remove your own admin role." : undefined, // and why not, if it can't be.
     }); // (end of the role)
   if (p.is_tutor) held.push({ role: "tutor", label: p.tutor_active === false ? "Tutor (finished)" : "Tutor", canRemove: isOwner && p.tutor_active !== false }); // Tutors: removable by the owner unless already finished.
   if (p.is_parent) held.push({ role: "parent", label: "Parent", canRemove: isOwner }); // Parents: removable by the owner.
@@ -699,7 +699,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
         <form action={formAction} className="space-y-3">{/* a form: */}
           <input type="hidden" name="account_id" value={p.account_id} />{/* who (hidden), */}
           <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">{/* what will happen: */}
-            <li>Their {[p.is_tutor && "tutor", p.is_admin && "admin"].filter(Boolean).join(" and ")} access ends straight away, and they&apos;re signed out everywhere.</li>{/* access ends, */}
+            <li>Their {[p.is_tutor && "tutor", p.is_admin && "admin"].filter(Boolean).join(" and ")} access ends straight away, and they are signed out everywhere.</li>{/* access ends, */}
             {p.is_tutor && <li>Their matches with students end and their calendar link stops working.</li>}{/* matches and calendar (tutors), */}
             {p.is_parent && <li>They keep their parent account and still see their own children.</li>}{/* parent account kept, */}
             <li>Pay, hours, sessions, checks and child safety records are kept for 7 years, as the law requires, then deleted.</li>{/* records kept, */}
@@ -707,7 +707,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
           </ul>{/* End of the list. */}
           {p.is_tutor && p.current_students > 0 && ( // If they're matched with students:
             <p className="text-xs text-amber-900">{/* an amber note: */}
-              They&apos;re matched with {p.current_students} student{p.current_students === 1 ? "" : "s"}. Those students will need a new tutor in{" "}<a href="/matching" className="underline underline-offset-4">Matching</a>.{/* how many students need a new tutor, with a link to Matching. */}
+              They are matched with {p.current_students} student{p.current_students === 1 ? "" : "s"}. Those students will need a new tutor in{" "}<a href="/matching" className="underline underline-offset-4">Matching</a>.{/* how many students need a new tutor, with a link to Matching. */}
             </p> // End of the note.
           )}{/* End of that part. */}
           {blocked && ( // If they still have bookings coming up:

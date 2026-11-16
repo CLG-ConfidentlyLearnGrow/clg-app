@@ -101,7 +101,7 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-2 pl-5 text-sm">{/* a bulleted list: */}
           <li>Sell or rent information, or use it for advertising or profiling.</li>{/* sell or advertise, */}
           <li>Send news or offers unless you turn them on in Your privacy. Session, invoice and safety messages always come.</li>{/* send news unless turned on, */}
-          <li>Let tutors see students they don&apos;t teach, or parents see other families.</li>{/* show other people's children, */}
+          <li>Let tutors see students they do not teach, or parents see other families.</li>{/* show other people's children, */}
           <li>Let tutors and children message each other privately. Contact goes through CLG and the family.</li>{/* allow private tutor-child messages. */}
         </ul>{/* End of the list. */}
       </Card>{/* End of the card. */}
@@ -176,7 +176,7 @@ export default function PrivacyPage() {
 
       <Card title="If something goes wrong">{/* A card on breaches: */}
         <p className="text-sm">{/* a line: */}
-          If information is lost or seen by someone who shouldn&apos;t see it, CLG acts straight away to contain it, decides
+          If information is lost or seen by someone who should not see it, CLG acts straight away to contain it, decides
           within 72 hr whether serious harm is likely, and if so tells the people affected and the privacy regulator.{/* what CLG does if information is lost or seen. */}
         </p>{/* End of the line. */}
       </Card>{/* End of the card. */}

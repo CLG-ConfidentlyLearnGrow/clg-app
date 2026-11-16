@@ -155,7 +155,7 @@ export function SubjectPicker({
       {/* A note explaining levels. */}
       <p className="text-xs text-zinc-500">{/* (small grey text) */}
         Tick each subject, then choose the level your child is working at in it. This can be different from their
-        school year. If you&apos;re not sure, leave it as &quot;Not sure&quot;; the tutor will check in the first
+        school year. If you are not sure, leave it as &quot;Not sure&quot;; the tutor will check in the first
         sessions.{/* (end of the note's words) */}
       </p>{/* End of the note. */}
       <input type="hidden" name="subjects_json" value={value} />{/* The hidden field sent to the server. */}

@@ -93,7 +93,7 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
         <SessionAnswersCard waiting={offers.as_family} notices={todo.get("sessions", "notices") ?? 0} who="family" />
         {onHold.data === true && ( // If the family's sessions are on hold:
           <Card title="Sessions on hold">{/* a card: */}
-            <p className="text-sm">Your family&apos;s sessions are on hold because an invoice is overdue. They start again as soon as it&apos;s paid. The person who pays can do this in Billing, or contact CLG.</p>{/* saying why and what to do. */}
+            <p className="text-sm">Your family&apos;s sessions are on hold because an invoice is overdue. They start again as soon as it is paid. The person who pays can do this in Billing, or contact CLG.</p>{/* saying why and what to do. */}
           </Card> // End of the card.
         )}{/* End of the on-hold card. */}
         {section === "children" && ( // The children section:
@@ -113,11 +113,11 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                   <li>CLG checks your child&apos;s details. We may contact you to confirm them.</li>{/* step 1: CLG checks the details, */}
                   <li>We match your child with a tutor who suits their year level, subject and location.</li>{/* step 2: CLG finds a tutor, */}
                   <li>{/* step 3: */}
-                    Once that&apos;s done, you&apos;ll see your child&apos;s tutor here, plus a{" "}{/* the tutor and progress page will show, */}
+                    Once that is done, you will see your child&apos;s tutor here, plus a{" "}{/* the tutor and progress page will show, */}
                     <strong>Progress</strong> page with their goals and a next step after each session.{/* with goals and next steps. */}
                   </li>{/* End of step 3. */}
                 </ol>{/* End of the list. */}
-                <p className="mt-3 text-sm text-zinc-500">You don&apos;t need to do anything else for now.</p>{/* Nothing else to do for now. */}
+                <p className="mt-3 text-sm text-zinc-500">You do not need to do anything else for now.</p>{/* Nothing else to do for now. */}
               </Card> // End of the card.
             )}{/* End of this part. */}
             <NewUpdates studentIds={[...mine]} />{/* New updates, about their own children only (Billing is a tab in the menu now). */}

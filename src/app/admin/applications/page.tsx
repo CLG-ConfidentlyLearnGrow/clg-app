@@ -120,7 +120,7 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
               <SubHeading>What and when they can teach</SubHeading>{/* A heading: */}
               <div className="space-y-3">{/* the answers: */}
                 <Answer label="Subjects and year levels">{app.subjects}</Answer>{/* subjects, */}
-                <Answer label="When they're free">{app.availability}</Answer>{/* availability. */}
+                <Answer label="When they are free">{app.availability}</Answer>{/* availability. */}
               </div>{/* End of the answers. */}
               <SubHeading>Qualifications and experience</SubHeading>{/* A heading: */}
               <div className="space-y-3">{/* the answers: */}
@@ -145,7 +145,7 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
               </div>{/* End of the columns. */}
               <SubHeading>In their own words</SubHeading>{/* A heading: */}
               <div className="space-y-3">{/* the answers: */}
-                <Answer label="Why they'd like to tutor with CLG">{app.statement}</Answer>{/* why CLG, */}
+                <Answer label="Why they would like to tutor with CLG">{app.statement}</Answer>{/* why CLG, */}
                 <Answer label="A time they helped a young person">{app.helped_example}</Answer>{/* a time they helped, */}
                 {app.heard_from && <Answer label="How they heard about CLG">{app.heard_from}</Answer>}{/* how they heard (if given). */}
               </div>{/* End of the answers. */}
@@ -164,13 +164,13 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
             <Card title="Questions to use" description="Ask about real past behaviour. Note their answers in the record above." collapsible defaultOpen={false}>{/* the questions card (closed to start): */}
               <SubHeading>Interview (child-safe questions)</SubHeading>{/* a heading, */}
               <ol className="list-decimal space-y-1 pl-5 text-sm">{INTERVIEW_QUESTIONS.map((q) => <li key={q}>{q}</li>)}</ol>{/* the interview questions, */}
-              <p className="mt-2 text-sm text-zinc-600">Also ask them to explain a topic they&apos;d teach, as if to a student, to see how clearly they explain and check for understanding.</p>{/* a teaching task, */}
+              <p className="mt-2 text-sm text-zinc-600">Also ask them to explain a topic they would teach, as if to a student, to see how clearly they explain and check for understanding.</p>{/* a teaching task, */}
               <SubHeading>Referees (ideally by phone)</SubHeading>{/* a heading, */}
               <ol className="list-decimal space-y-1 pl-5 text-sm">{REFEREE_QUESTIONS.map((q) => <li key={q}>{q}</li>)}</ol>{/* and the referee questions. */}
             </Card>{/* End of the questions card. */}
 
             {app.status === "approved" ? ( // Already approved:
-              <Card title="Approved" description={`${app.decided_at ? `Approved ${shortDate(app.decided_at)}. ` : ""}${app.invited_at ? `Invite sent ${shortDate(app.invited_at)}.` : "The invite hasn't gone yet."}`}>{/* a card saying so: */}
+              <Card title="Approved" description={`${app.decided_at ? `Approved ${shortDate(app.decided_at)}. ` : ""}${app.invited_at ? `Invite sent ${shortDate(app.invited_at)}.` : "The invite has not gone yet."}`}>{/* a card saying so: */}
                 <ApproveForm id={app.id} again />{/* with a button to send the invite again. */}
               </Card> // End of the card.
             ) : app.status === "declined" ? ( // Declined:
@@ -179,7 +179,7 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
               </Card> // End of the card.
             ) : app.status === "withdrawn" ? ( // Withdrawn:
               <Card title="Withdrawn">{/* a card saying so: */}
-                <p className="text-sm">To reopen it, set the status back to New or Shortlisted above. It&apos;s deleted 12 months after it was withdrawn.</p>{/* with how to reopen it. */}
+                <p className="text-sm">To reopen it, set the status back to New or Shortlisted above. It is deleted 12 months after it was withdrawn.</p>{/* with how to reopen it. */}
               </Card> // End of the card.
             ) : ( // Still open:
               <div className="grid gap-6 lg:grid-cols-2">{/* two cards side by side on wide screens: */}

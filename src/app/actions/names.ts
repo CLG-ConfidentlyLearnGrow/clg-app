@@ -44,7 +44,7 @@ export async function setMyName(_prev: FormState, formData: FormData): Promise<F
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("set_my_name", { p_first: first_name, p_last: last_name }); // Asks the database to save it (only ever their own name).
-  if (error) return { error: plainError(error, "Couldn't save your name. Please try again.") }; // It failed: says so plainly.
+  if (error) return { error: plainError(error, "Could not save your name. Please try again.") }; // It failed: says so plainly.
 
   refreshNames(); // Shows the new name everywhere.
   const next = formData.get("next"); // Where to go next, if the form says.
@@ -64,7 +64,7 @@ export async function setStaffName(_prev: FormState, formData: FormData): Promis
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("set_staff_name", { p_account: account_id, p_first: first_name, p_last: last_name }); // Asks the database to save it (it checks the admin's level again).
-  if (error) return { error: plainError(error, "Couldn't save the name. Please try again.") }; // It failed: says so plainly.
+  if (error) return { error: plainError(error, "Could not save the name. Please try again.") }; // It failed: says so plainly.
 
   refreshNames(); // Shows the new name everywhere.
   return { message: `Saved as ${first_name} ${last_name}` }; // Confirms the new name.

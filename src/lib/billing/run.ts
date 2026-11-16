@@ -285,7 +285,7 @@ export async function recordPaymentIntent(pi: PaymentIntent, invoiceId = pi.meta
     p_status: status, // at this stage,
     p_message: pi.last_payment_error?.message ?? null, // with any failure reason.
   }); // End of recording.
-  if (error) throw new Error(`Couldn't record payment ${pi.id}: ${error.message}`); // Save failed: plain message.
+  if (error) throw new Error(`Could not record payment ${pi.id}: ${error.message}`); // Save failed: plain message.
 } // End of recordPaymentIntent.
 
 // After a family saves a card or bank debit on Stripe's page.
@@ -305,7 +305,7 @@ export async function recordSavedPaymentMethod(setupIntentId: string) {
       p_method: method, // bank debit or card,
       p_mandate: si.mandate, // and any debit agreement.
     }); // End of the save.
-    if (error) throw new Error(`Couldn't save the payment method: ${error.message}`); // Save failed: plain message.
+    if (error) throw new Error(`Could not save the payment method: ${error.message}`); // Save failed: plain message.
     return; // Done.
   } // End of the second payer case.
   const { error } = await db.rpc("billing_save_payment_method", { // Otherwise saves it as the family's method:
@@ -315,7 +315,7 @@ export async function recordSavedPaymentMethod(setupIntentId: string) {
     p_method: si.payment_method.type === "au_becs_debit" ? "bank_debit" : "card", // bank debit or card,
     p_mandate: si.mandate, // and any debit agreement.
   }); // End of the save.
-  if (error) throw new Error(`Couldn't save the payment method: ${error.message}`); // Save failed: plain message.
+  if (error) throw new Error(`Could not save the payment method: ${error.message}`); // Save failed: plain message.
 } // End of recordSavedPaymentMethod.
 
 // Payments Stripe has confirmed are recorded in Xero against the invoice.

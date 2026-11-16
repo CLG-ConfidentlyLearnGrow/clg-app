@@ -29,7 +29,7 @@ export async function removeRoleOrAccount(_prev: FormState, formData: FormData):
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const lookup = await supabase.rpc("admin_find_account", { p_email: email }); // Looks up the account by email.
   const found = ((lookup.data ?? []) as { account_id: string; full_name: string }[])[0]; // The first match (if any).
-  if (lookup.error) return { error: "We couldn't check that email. Please try again." }; // Lookup failed: plain message.
+  if (lookup.error) return { error: "We could not check that email. Please try again." }; // Lookup failed: plain message.
   if (!found) return { error: `No CLG account uses ${email}.` }; // No match: says so.
 
   const result = // Does the chosen step:
@@ -43,7 +43,7 @@ export async function removeRoleOrAccount(_prev: FormState, formData: FormData):
   if (result.error) { // It failed:
     console.error("Remove role or account failed:", result.error.code, result.error.message); // notes why in the server log,
     const plain = ["22023", "23514", "42501"].includes(result.error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${result.error.message}.` : "We couldn't do that. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${result.error.message}.` : "We could not do that. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.

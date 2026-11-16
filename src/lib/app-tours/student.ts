@@ -83,6 +83,6 @@ Why: You should always be able to speak up, and know someone will listen.
 
 That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "roadmap".
 
-After an app update, a **What's new** box shows what has changed for you.
+After an app update, a **What is new** box shows what has changed for you.
 `, // End of the tour's text.
 }; // End of the student tour.

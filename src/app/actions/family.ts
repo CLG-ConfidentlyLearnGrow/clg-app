@@ -22,7 +22,7 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
   if ("error" in subjects) return subjects; // Shows any subject problem.
 
   if (formData.get("parental_consent") !== "on") { // The consent box wasn't ticked:
-    return { error: "Please tick the box to confirm you're the parent or guardian and agree." }; // asks them to tick it.
+    return { error: "Please tick the box to confirm you are the parent or guardian and agree." }; // asks them to tick it.
   } // End of that check.
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -36,7 +36,7 @@ export async function addChild(_prev: FormState, formData: FormData): Promise<Fo
     p_goals: parsed.data.goals, // end goal,
     p_extra_info: parsed.data.extra_info || undefined, // and other information (if any).
   }); // End of the request.
-  if (error) return { error: "We couldn't add your child. Please check the details and try again." }; // Failed: plain message.
+  if (error) return { error: "We could not add your child. Please check the details and try again." }; // Failed: plain message.
   if (parsed.data.learning_needs && typeof studentId === "string") { // If learning needs were given:
     await supabase.from("students").update({ learning_needs: parsed.data.learning_needs }).eq("id", studentId); // saves them on the new child.
   } // End of learning needs.
@@ -94,7 +94,7 @@ export async function updateChild(_prev: FormState, formData: FormData): Promise
     }) // End of the changes.
     .eq("id", v.student_id) // for this child,
     .select("id"); // and reports which row changed.
-  if (error || !updated?.length) return { error: "We couldn't save the changes. Please try again." }; // Nothing saved: plain message.
+  if (error || !updated?.length) return { error: "We could not save the changes. Please try again." }; // Nothing saved: plain message.
 
   // Bring the subject list in line with what's ticked, and update levels.
   const { data: current } = await supabase // Reads the saved subjects:
@@ -109,7 +109,7 @@ export async function updateChild(_prev: FormState, formData: FormData): Promise
     const c = have.get(s.subject.toLowerCase()); // finds the saved one,
     return c && c.working_level !== s.level; // and keeps it if its level differs.
   }); // End of the filter.
-  const failed = { error: "Details saved, but we couldn't update the subjects. Please try again." }; // The message if any subject change fails.
+  const failed = { error: "Details saved, but we could not update the subjects. Please try again." }; // The message if any subject change fails.
   if (remove.length) { // Some to remove:
     const { error: e } = await supabase.from("student_subjects").delete().in("id", remove); // deletes them,
     if (e) return failed; // failed: stops with the message.

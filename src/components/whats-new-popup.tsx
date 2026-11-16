@@ -47,7 +47,7 @@ export function WhatsNewPopup({ role, updates }: { role: Role; updates: WhatsNew
         <div className="flex items-start justify-between gap-3">{/* the heading row: */}
           <div>{/* the words: */}
             <p className={`text-xs font-semibold uppercase tracking-wide ${theme.strongText}`}>{theme.title}</p>{/* which dashboard, */}
-            <h2 id="whats-new-title" className="mt-1 text-xl font-semibold tracking-tight">What&apos;s new</h2>{/* and the heading. */}
+            <h2 id="whats-new-title" className="mt-1 text-xl font-semibold tracking-tight">What is new</h2>{/* and the heading. */}
           </div>{/* End of the words. */}
           <button // the close button:
             type="button" // a plain button (not a form send),
@@ -72,7 +72,7 @@ export function WhatsNewPopup({ role, updates }: { role: Role; updates: WhatsNew
             </ul>{/* End of the list. */}
           </section> // End of the part.
         ))}{/* End of the updates. */}
-        {more > 0 && <p className="mt-4 text-sm text-zinc-600">And {more} more {more === 1 ? "update" : "updates"} on the What&apos;s new page.</p>}{/* How many more there are. */}
+        {more > 0 && <p className="mt-4 text-sm text-zinc-600">And {more} more {more === 1 ? "update" : "updates"} on the What is new page.</p>}{/* How many more there are. */}
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">{/* the bottom row: */}
           <Link href={`/whats-new#${role}`} onClick={() => dialog.current?.close()} className="text-sm font-medium text-teal-800 underline underline-offset-4">{/* a link to every update (closing the box first): */}

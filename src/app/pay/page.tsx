@@ -74,14 +74,14 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
             {p.guaranteed_weekly_minutes != null && p.employment !== "casual" && ( // agreed weekly hours, for non-casual staff:
               <li>Agreed hours: {hours(p.guaranteed_weekly_minutes)} a week. If you work less in a pay period, CLG tops it up.</li> // with the top-up note.
             )}{/* End of agreed hours. */}
-            {p.employment === "casual" && settings.data === true && <li>As a casual, you&apos;re paid at least 2 hr for each day you work.</li>}{/* The casual 2 hr minimum, if it applies. */}
+            {p.employment === "casual" && settings.data === true && <li>As a casual, you are paid at least 2 hr for each day you work.</li>}{/* The casual 2 hr minimum, if it applies. */}
           </ul> // End of the list.
         ) : ( // Otherwise:
-          <Empty>CLG hasn&apos;t entered your pay rates yet.</Empty> // says rates aren't entered yet.
+          <Empty>CLG has not entered your pay rates yet.</Empty> // says rates aren't entered yet.
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
       {(canTutor || canAdmin) && ( // If they can log hours:
-        <Card title="Log hours" description={`Work outside sessions, with a short description of what you did. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they're paid with your tutoring in the next pay run.`}>{/* a card titled "Log hours", with when they're due: */}
+        <Card title="Log hours" description={`Work outside sessions, with a short description of what you did. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they are paid with your tutoring in the next pay run.`}>{/* a card titled "Log hours", with when they're due: */}
           <LogHoursForm today={today} canTutor={canTutor} canAdmin={canAdmin} />{/* the form for logging hours, */}
           {logRows.length > 0 && ( // if they've logged any:
             <div className="mt-6">{/* a block: */}

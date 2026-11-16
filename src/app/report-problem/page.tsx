@@ -36,15 +36,15 @@ export default async function ReportProblemPage({ searchParams }: PageProps<"/re
       intro={<>Something in the app broken, not working or confusing? Tell us here. A CLG reviewer reads every report and replies on this page. For anything else, such as sessions, tutors, billing or ideas, please use <TextLink href="/feedback">Feedback</TextLink> instead.</>} // the sentences under it, pointing other problems to Feedback.
     >{/* (end of the frame's settings) */}
       <Card // the form card:
-        title="What's the app issue?" // its title,
-        description={<>For a worry about a child&apos;s safety, don&apos;t use this form: use <TextLink href="/safety">Child safety</TextLink> in the top bar instead.</>} // a note sending safety concerns to the Child safety page.
+        title="What is the app issue?" // its title,
+        description={<>For a worry about a child&apos;s safety, do not use this form: use <TextLink href="/safety">Child safety</TextLink> in the top bar instead.</>} // a note sending safety concerns to the Child safety page.
       >{/* (end of the card's settings) */}
         <ReportProblemForm page={from} />{/* the form, knowing which page they came from. */}
       </Card>{/* End of the form card. */}
 
-      <Card title="Your reports" description="Where each report is up to. Reports are kept for 2 years after they're closed; screenshots for 90 days.">{/* The list card: */}
+      <Card title="Your reports" description="Where each report is up to. Reports are kept for 2 years after they are closed; screenshots for 90 days.">{/* The list card: */}
         {mine.length === 0 ? ( // No reports yet:
-          <Empty>You haven&apos;t reported any problems.</Empty> // says so.
+          <Empty>You have not reported any problems.</Empty> // says so.
         ) : ( // Otherwise:
           <Table headings={["Sent", "Problem", "Status", "Reply from CLG"]}>{/* a table: */}
             {mine.map((r) => ( // for each report:

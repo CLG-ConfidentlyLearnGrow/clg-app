@@ -31,7 +31,7 @@ export async function setCourseOverview(_prev: FormState, formData: FormData): P
   }); // End of the save.
   if (error) { // The save failed:
     console.error("Set course overview failed:", error.code, error.message); // notes why in the server log,
-    return { error: error.code === "22023" ? `${error.message}.` : "We couldn't save the overview. Please try again." }; // shows the database's own plain message if it gave one, otherwise a general one.
+    return { error: error.code === "22023" ? `${error.message}.` : "We could not save the overview. Please try again." }; // shows the database's own plain message if it gave one, otherwise a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: parsed.data.overview ? "Overview saved. The tutor will see it." : "Overview cleared." }; // Confirms it saved (or cleared).

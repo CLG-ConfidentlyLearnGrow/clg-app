@@ -98,6 +98,6 @@ Why: Keeping children safe is everyone's job, and you should always know what CL
 
 That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "invoice".
 
-After an app update, a **What's new** box shows what has changed for you.
+After an app update, a **What is new** box shows what has changed for you.
 `, // End of the tour's text.
 }; // End of the parent tour.

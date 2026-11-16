@@ -46,7 +46,7 @@ export function FamilySetupForm() {
           <Field label="Child's full name" name="full_name" required maxLength={200} />{/* the child's full name, */}
           <p className="text-sm text-zinc-600">{/* a grey note: */}
             Fill in what you know. Anything left blank, the family is asked to finish when they first sign in. A tutor
-            can&apos;t be assigned until the date of birth, state, year level and school are in.{/* what to fill in, and what's needed before a tutor can be assigned. */}
+            cannot be assigned until the date of birth, state, year level and school are in.{/* what to fill in, and what's needed before a tutor can be assigned. */}
           </p>{/* End of the note. */}
           <Field label="Child's date of birth (optional)" name="date_of_birth" type="date" hint={DOB_HINT} />{/* date of birth (optional), */}
           <StateSelect label="State the child lives in (optional)" optional />{/* state (optional), */}

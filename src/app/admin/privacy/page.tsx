@@ -235,7 +235,7 @@ export default async function AdminPrivacyPage({ searchParams }: PageProps<"/adm
                     )}{/* End of that part. */}
                     <ActionForm action={updateIncident} submitLabel="Save">{/* A form that records the next step: */}
                       <input type="hidden" name="id" value={i.id} />{/* which breach (hidden), */}
-                      <Select label="What's happened" name="step" defaultValue="">{/* a drop-down of what's happened: */}
+                      <Select label="What has happened" name="step" defaultValue="">{/* a drop-down of what's happened: */}
                         <option value="" disabled>{/* a blank first option that can't be picked: */}
                           Choose one{/* "Choose one", */}
                         </option>{/* (end of the option) */}
@@ -273,7 +273,7 @@ export default async function AdminPrivacyPage({ searchParams }: PageProps<"/adm
                   ))}{/* End of the loop. */}
               </ul>{/* End of the list. */}
               <p className="mt-3 text-xs text-zinc-500">{/* A small grey note: */}
-                Kept for 7 years after closing (Canada needs at least 24 months), then deleted automatically. Records can&apos;t
+                Kept for 7 years after closing (Canada needs at least 24 months), then deleted automatically. Records cannot
                 be deleted or changed once closed.{/* how long they're kept, and that they can't be changed. */}
               </p>{/* End of the note. */}
             </Card>{/* End of the card. */}

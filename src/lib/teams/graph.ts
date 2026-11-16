@@ -42,7 +42,7 @@ async function accessToken(config: GraphConfig): Promise<string> {
   const body = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error_description?: string }; // Reads Microsoft's reply (empty if unreadable).
   if (!res.ok || !body.access_token) { // Sign-in failed:
     throw new GraphError( // Stops with a plain message, including the first line of Microsoft's reason.
-      `Microsoft didn't accept the app's sign-in. Check MS_TENANT_ID, MS_CLIENT_ID and MS_CLIENT_SECRET (the secret may have expired). ${body.error_description?.split("\r\n")[0] ?? ""}`.trim(),
+      `Microsoft did not accept the app's sign-in. Check MS_TENANT_ID, MS_CLIENT_ID and MS_CLIENT_SECRET (the secret may have expired). ${body.error_description?.split("\r\n")[0] ?? ""}`.trim(),
     ); // End of the error.
   } // End of the failure check.
   cached = { token: body.access_token, expires: Date.now() + (body.expires_in ?? 3600) * 1000 }; // Keeps the pass and when it runs out (1 hr if not said).
@@ -65,12 +65,12 @@ async function plainProblem(res: Response, doing: string): Promise<string> {
   const body = (await res.json().catch(() => ({}))) as { error?: { code?: string; message?: string } }; // Reads Microsoft's error reply.
   const message = body.error?.message ?? ""; // Microsoft's own message (blank if none).
   if (/application access policy/i.test(message)) { // The access policy step isn't finished:
-    return `${doing}: Microsoft 365 hasn't allowed the app to make meetings for this account yet. Finish the access policy step (it can take 30 minutes to work).`; // explains what to do.
+    return `${doing}: Microsoft 365 has not allowed the app to make meetings for this account yet. Finish the access policy step (it can take 30 minutes to work).`; // explains what to do.
   } // End of the access policy case.
   if (/valid GUID/i.test(message)) { // Microsoft was given an email where it needs the Object ID:
     return `${doing}: Microsoft needs the organiser account's Object ID, not its email. Add it in Teams links > Settings.`; // explains what to do.
   } // End of the Object ID case.
-  if (res.status === 404) return `${doing}: Microsoft couldn't find the organiser account. Check the Object ID in the Teams settings.`; // Account not found.
+  if (res.status === 404) return `${doing}: Microsoft could not find the organiser account. Check the Object ID in the Teams settings.`; // Account not found.
   if (res.status === 401 || res.status === 403) { // Not allowed:
     return `${doing}: Microsoft refused (${res.status}). Check the app has the OnlineMeetings.ReadWrite.All permission with admin consent. ${message}`.trim(); // explains the permission needed.
   } // End of the not-allowed case.

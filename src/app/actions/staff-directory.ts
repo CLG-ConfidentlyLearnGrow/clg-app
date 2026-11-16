@@ -36,7 +36,7 @@ export async function setJobTitle(_prev: FormState, formData: FormData): Promise
   const { error } = await supabase.rpc("set_staff_job_title", { p_account: account_id, p_title: job_title }); // Asks the database to save it.
   if (error) { // It failed:
     const plain = ["42501", "22023"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't save the job title. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not save the job title. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin/staff"); // Refreshes the staff page.
   return { message: job_title ? "Saved" : "Removed" }; // Confirms saved or removed.
@@ -68,15 +68,15 @@ export async function addRole(_prev: FormState, formData: FormData): Promise<For
   const { error } = await supabase.rpc("admin_add_role", { p_account: account_id, p_role: role, p_level: level }); // Asks the database to add the role.
   if (error) { // It failed:
     const plain = ["42501", "22023", "23505"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't add the role. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not add the role. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin/staff"); // Refreshes the staff page.
   revalidatePath("/admin"); // Refreshes the admin pages.
   const extra = // An extra note for the message:
     role === "tutor" // for tutors,
-      ? " They'll need confirmed checks before they're matched with students." // checks are needed before matching,
+      ? " They will need confirmed checks before they are matched with students." // checks are needed before matching,
       : role === "admin" // for admins,
-        ? " They'll see the admin tools next time they open a page (two-step login needed)." // two-step login is needed,
+        ? " They will see the admin tools next time they open a page (two-step login needed)." // two-step login is needed,
         : " Any child they add needs an admin to confirm the link."; // for parents, children need confirming.
   return { message: `Added the ${ROLE_WORDS[role]} role.${extra}` }; // Confirms the role was added, with the note.
 } // End of addRole.
@@ -106,7 +106,7 @@ export async function removeRole(_prev: FormState, formData: FormData): Promise<
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["42501", "22023", "23514"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't remove the role. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not remove the role. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin/staff"); // Refreshes the staff page.
   revalidatePath("/admin"); // Refreshes the admin pages.
@@ -153,14 +153,14 @@ export async function removeFromTeam(_prev: FormState, formData: FormData): Prom
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["42501", "22023", "23514"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't remove them from the team. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not remove them from the team. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin/staff"); // Refreshes the staff page.
   revalidatePath("/admin"); // Refreshes the admin pages.
   revalidatePath("/admin/billing"); // Refreshes billing, where the Xero to-do list is.
-  const done = "Done. They've been removed from the team and signed out. Their records are kept for 7 years."; // What happened in the app.
+  const done = "Done. They have been removed from the team and signed out. Their records are kept for 7 years."; // What happened in the app.
   if (!end_in_xero || !xero_reason) { // The owner chose not to change Xero from here:
-    return { message: `${done} Remember to end their employment in Xero too; it's on the Xero to-do list on Admin > Billing > Staff pay.` }; // reminds them.
+    return { message: `${done} Remember to end their employment in Xero too; it is on the Xero to-do list on Admin > Billing > Staff pay.` }; // reminds them.
   } // End of that case.
   const xero = await endEmploymentInXero(account_id, left_on, xero_reason); // Ends their employment in Xero (never throws).
   return { message: `${done} ${xero.note}` }; // Confirms, with what happened in Xero.
@@ -186,14 +186,14 @@ export async function sendStaffLoginLink(_prev: FormState, formData: FormData): 
   const person = ((data ?? []) as { account_id: string; full_name: string; email: string | null; left_on: string | null }[]).find( // Finds this person in it:
     (p) => p.account_id === parsed.data.account_id, // by account id.
   ); // End of the search.
-  if (!person) return { error: "That person isn't in the staff directory." }; // Not found: says so.
+  if (!person) return { error: "That person is not in the staff directory." }; // Not found: says so.
   if (person.left_on) return { error: `${person.full_name} has left CLG. Add a role first to bring them back, then send a link.` }; // Former staff get no sign-in link.
-  if (!person.email) return { error: `We don't have an email for ${person.full_name}.` }; // No email: says so.
+  if (!person.email) return { error: `We do not have an email for ${person.full_name}.` }; // No email: says so.
   const email = person.email; // Their email.
 
   const admin = createAdminClient(); // Connects with full access.
   const user = await admin.auth.admin.getUserById(person.account_id); // Reads their sign-in account.
-  if (user.error || !user.data.user) return { error: "We couldn't check that account. Please try again." }; // Couldn't read it: plain message.
+  if (user.error || !user.data.user) return { error: "We could not check that account. Please try again." }; // Couldn't read it: plain message.
   const neverSignedIn = !user.data.user.last_sign_in_at; // True if they've never signed in.
 
   // Sent through Resend like staff invitations (not Supabase's own email),
@@ -208,14 +208,14 @@ export async function sendStaffLoginLink(_prev: FormState, formData: FormData): 
   if (sent.sent) { // It sent:
     return { // tells the admin:
       message: neverSignedIn // if never signed in,
-        ? `We've emailed ${email} a new link to choose a password and sign in. It can take a few minutes; ask them to check junk or spam too.` // a new link to choose a password,
-        : `We've emailed ${email} a link to set a new password. It can take a few minutes; ask them to check junk or spam too.`, // otherwise a link to set a new password.
+        ? `We have emailed ${email} a new link to choose a password and sign in. It can take a few minutes; ask them to check junk or spam too.` // a new link to choose a password,
+        : `We have emailed ${email} a link to set a new password. It can take a few minutes; ask them to check junk or spam too.`, // otherwise a link to set a new password.
     }; // End of the message.
   } // End of the sent case.
   console.error("Staff login link email failed:", sent.problem); // Notes the email failure in the server log.
-  if (!sent.link) return { error: "We couldn't make a new link. Please try again." }; // No link either: tells the admin plainly.
+  if (!sent.link) return { error: "We could not make a new link. Please try again." }; // No link either: tells the admin plainly.
   return { // Gives the admin the link to send themselves:
-    message: `The email couldn't be sent. Copy this link and send it to ${email} yourself (for example by Teams). It works once, for one hour: ${sent.link}`, // (the message, with the link)
+    message: `The email could not be sent. Copy this link and send it to ${email} yourself (for example by Teams). It works once, for one hour: ${sent.link}`, // (the message, with the link)
   }; // End of the message.
 } // End of sendStaffLoginLink.
 

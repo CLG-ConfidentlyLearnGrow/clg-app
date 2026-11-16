@@ -45,7 +45,7 @@ export default async function FeedbackPage() { // The page itself.
   return ( // Shows:
     <Page // a page:
       title="Feedback" // titled "Feedback",
-      intro={<>Tell us what&apos;s going well and what we could do better: about the app, about CLG, or about someone at CLG. It only takes a minute. If something in the app is broken or not working, use <TextLink href="/report-problem">Report app issue</TextLink> instead.</>} // with a short explanation, pointing app faults to Report app issue.
+      intro={<>Tell us what is going well and what we could do better: about the app, about CLG, or about someone at CLG. It only takes a minute. If something in the app is broken or not working, use <TextLink href="/report-problem">Report app issue</TextLink> instead.</>} // with a short explanation, pointing app faults to Report app issue.
     >{/* (end of the page's settings) */}
       {canSeeOverview && ( // For full admins:
         <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">{/* a small box: */}
@@ -54,7 +54,7 @@ export default async function FeedbackPage() { // The page itself.
       )}{/* End of that part. */}
 
       <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{/* a red note: */}
-        Worried about a child&apos;s safety? Don&apos;t use this form.{" "}{/* safety worries go elsewhere, */}
+        Worried about a child&apos;s safety? Do not use this form.{" "}{/* safety worries go elsewhere, */}
         <Link href="/safety" className="font-semibold underline underline-offset-4">Go to Child safety</Link>.{/* with the link. */}
       </p>{/* End of the note. */}
 
@@ -80,7 +80,7 @@ export default async function FeedbackPage() { // The page itself.
             <div className="space-y-2 rounded-xl bg-zinc-50 p-4">{/* a shaded box: */}
               <p className="text-xs text-zinc-600">{/* when to fill it in and who sees it: */}
                 Only if you chose &quot;{personArea.label}&quot;. This goes privately to CLG&apos;s Child Safety Officer. The person
-                won&apos;t see it or be told who sent it, but CLG may contact you about it.{/* the privacy promise, */}
+                will not see it or be told who sent it, but CLG may contact you about it.{/* the privacy promise, */}
               </p>{/* End of the note. */}
               <Select label="Who is it about?" name="about" defaultValue="">{/* the person drop-down: */}
                 <option value="">Choose someone</option>{/* a blank first option, */}

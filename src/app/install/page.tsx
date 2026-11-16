@@ -29,7 +29,7 @@ export default function InstallPage() {
             Open this website <WebsiteLink /> in <strong>Safari</strong> (the blue compass icon).{/* open the linked website in Safari. */}
           </li>{/* (end of step) */}
           <li>{/* Step: */}
-            Tap the <strong>Share</strong> button: the square with an arrow pointing up. It&apos;s at the bottom of the
+            Tap the <strong>Share</strong> button: the square with an arrow pointing up. It is at the bottom of the
             screen on iPhone, or the top on iPad.{/* tap Share. */}
           </li>{/* (end of step) */}
           <li>{/* Step: */}
@@ -75,7 +75,7 @@ export default function InstallPage() {
       </Card>{/* End of the card. */}
 
       <p className="text-sm">{/* A closing line: */}
-        Stuck? Contact CLG and we&apos;ll walk you through it. <TextLink href="/">Back to CLG</TextLink>{/* offering help, with a link back. */}
+        Stuck? Contact CLG and we will walk you through it. <TextLink href="/">Back to CLG</TextLink>{/* offering help, with a link back. */}
       </p>{/* End of the line. */}
     </Page> // End of the page.
   ); // End of what's shown.

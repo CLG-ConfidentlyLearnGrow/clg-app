@@ -128,7 +128,7 @@ export default async function ConcernsPage() { // The page itself.
         )}{/* End of the reader note. */}
         <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[12rem_1fr]">{/* the details as a list of pairs: */}
           <dt className="font-medium text-zinc-600">About a CLG worker</dt>{/* who it's about: */}
-          <dd>{about.length === 0 ? "No one named" : about.map((n) => n.full_name).join(", ")}{about.length > 0 ? ". They can't see this concern." : ""}</dd>{/* their names, or "No one named". */}
+          <dd>{about.length === 0 ? "No one named" : about.map((n) => n.full_name).join(", ")}{about.length > 0 ? ". They cannot see this concern." : ""}</dd>{/* their names, or "No one named". */}
           <dt className="font-medium text-zinc-600">Immediate danger</dt>{/* danger: */}
           <dd>{c.immediate_danger ? `Yes. ${c.called_000 ? "They said they called 000." : "They did NOT say they called 000."}` : "No"}</dd>{/* yes or no, and 000. */}
           <dt className="font-medium text-zinc-600">Reported to the line</dt>{/* reporting line: */}
@@ -150,7 +150,7 @@ export default async function ConcernsPage() { // The page itself.
         {(stepsFor.get(c.id) ?? []).map((t) => ( // For each tutor the concern names, the quiet steps:
           <div key={t.tutor_id} className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{/* an amber box: */}
             <p className="font-semibold">Quiet steps for {t.full_name}</p>{/* its heading, */}
-            <p className="mt-1 text-amber-950">Nothing happens unless you press a button. {t.full_name} won&apos;t be told why, and admins doing matching only see &quot;Can&apos;t be matched&quot;.</p>{/* what these do, */}
+            <p className="mt-1 text-amber-950">Nothing happens unless you press a button. {t.full_name} will not be told why, and admins doing matching only see &quot;Cannot be matched&quot;.</p>{/* what these do, */}
             <div className="mt-3 grid gap-4 sm:grid-cols-2">{/* the two steps, side by side on wide screens: */}
               <div>{/* step 1: */}
                 {t.no_new_students_id ? ( // If they're already stopped from new students:
@@ -161,7 +161,7 @@ export default async function ConcernsPage() { // The page itself.
                   </ActionForm> // End of the form.
                 ) : ( // Otherwise:
                   <ActionForm action={stopNewStudents} submitLabel="Stop new students">{/* a form to take the step: */}
-                    <p className="text-zinc-700">They keep the students they have now, but won&apos;t be matched with anyone new.</p>{/* what it does, */}
+                    <p className="text-zinc-700">They keep the students they have now, but will not be matched with anyone new.</p>{/* what it does, */}
                     <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
                     <input type="hidden" name="tutor" value={t.tutor_id} />{/* (which tutor) */}
                     <TextArea label="Why?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
@@ -171,19 +171,19 @@ export default async function ConcernsPage() { // The page itself.
               <div>{/* step 2: */}
                 {t.end_match_id ? ( // If the match was already ended from a concern:
                   <ActionForm action={liftHold} submitLabel="Allow matching again">{/* a form to lift the block: */}
-                    <p className="font-medium">Match with {c.child_name} ended. They can&apos;t be matched again while this is in place.</p>{/* says so, */}
+                    <p className="font-medium">Match with {c.child_name} ended. They cannot be matched again while this is in place.</p>{/* says so, */}
                     {(rematchFor.get(c.id) ?? []).filter((r) => r.tutor_id === t.tutor_id).map((r) => ( // any urgent re-match flag for this tutor:
                       <p key={r.tutor_id} className="text-zinc-700">{/* a line: */}
                         {r.sorted_at ? `New tutor sorted: ${r.sorted_note ?? "done"}.` : `Urgent on the Matching page: ${r.paid_sessions} paid session(s) of ${r.upcoming_sessions} booked need a new tutor.`}{/* sorted, or still urgent with the counts. */}
                       </p> // End of the line.
                     ))}{/* End of the flags. */}
                     <input type="hidden" name="hold" value={t.end_match_id} />{/* (which step) */}
-                    <TextArea label="Why are you lifting it? (The match won't restart by itself.)" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
+                    <TextArea label="Why are you lifting it? (The match will not restart by itself.)" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
                   </ActionForm> // End of the form.
                 ) : c.student_id ? ( // Otherwise, if the child is a CLG student:
                   <ActionForm action={endMatch} submitLabel={`End match with ${c.child_name}`}>{/* a form to take the step: */}
                     <p className="text-zinc-700">{/* what it does: */}
-                      {t.matched_now ? `Ends ${t.full_name}'s match with ${c.child_name} today, so they can no longer open ${c.child_name}'s records.` : `${t.full_name} isn't matched with ${c.child_name} now. This stops them being matched in future.`}
+                      {t.matched_now ? `Ends ${t.full_name}'s match with ${c.child_name} today, so they can no longer open ${c.child_name}'s records.` : `${t.full_name} is not matched with ${c.child_name} now. This stops them being matched in future.`}
                       {t.upcoming_bookings > 0 ? ` They have ${t.upcoming_bookings} upcoming booking(s) together. ${c.child_name} will go to the top of the Matching page as "Urgent: needs a new tutor", with paid sessions counted and no reason shown.` : ""}{/* and what happens to booked sessions. */}
                     </p>{/* End of the explanation. */}
                     <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
@@ -191,7 +191,7 @@ export default async function ConcernsPage() { // The page itself.
                     <TextArea label="Why?" name="reason" required minLength={2} maxLength={1000} rows={2} />{/* the reason box. */}
                   </ActionForm> // End of the form.
                 ) : ( // A child who isn't a CLG student:
-                  <p className="text-zinc-700">The child isn&apos;t a CLG student, so there&apos;s no match to end.</p> // says so.
+                  <p className="text-zinc-700">The child is not a CLG student, so there is no match to end.</p> // says so.
                 )}{/* End of step 2. */}
               </div>{/* End of step 2. */}
             </div>{/* End of the two steps. */}
@@ -215,7 +215,7 @@ export default async function ConcernsPage() { // The page itself.
         <div className="mt-4 grid gap-6 sm:grid-cols-2">{/* The forms, side by side on wide screens: */}
           <ActionForm action={addConcernNote} submitLabel="Add note">{/* adding a note: */}
             <input type="hidden" name="id" value={c.id} />{/* (which concern) */}
-            <TextArea label="Add a note" name="note" required minLength={2} maxLength={4000} rows={3} hint="What you did, e.g. 'Phoned CARL, reference 123'. Notes can't be changed later." />{/* the note box. */}
+            <TextArea label="Add a note" name="note" required minLength={2} maxLength={4000} rows={3} hint="What you did, e.g. 'Phoned CARL, reference 123'. Notes cannot be changed later." />{/* the note box. */}
           </ActionForm>{/* End of the form. */}
           {/* The key changes with the saved stage, so the drop-down shows the new
               stage after saving instead of jumping back to the old one. */}
@@ -235,7 +235,7 @@ export default async function ConcernsPage() { // The page itself.
               Pass this to {other.full_name} ({CONTACT_ROLE_LABELS[other.role] ?? other.role}){/* who to pass to. */}
             </summary>{/* End of the title. */}
             <p className="mt-2 text-sm text-zinc-600">{/* a warning: */}
-              For example, if it turns out to be about you, or you&apos;re away. After this you won&apos;t be able to open it.{/* when and what happens, */}
+              For example, if it turns out to be about you, or you are away. After this you will not be able to open it.{/* when and what happens, */}
             </p>{/* End of the warning. */}
             <div className="mt-3">{/* the form: */}
               <ActionForm action={passOnConcern} submitLabel="Pass it on">{/* passing on: */}
@@ -252,8 +252,8 @@ export default async function ConcernsPage() { // The page itself.
               Share this with {other.full_name} ({CONTACT_ROLE_LABELS[other.role] ?? other.role}){/* who to share with. */}
             </summary>{/* End of the title. */}
             <p className="mt-2 text-sm text-zinc-600">{/* a warning: */}
-              {otherIsNamed ? `This concern is about ${other.full_name}. Only share it if you've decided they should see it.` : "They'll be able to read it and its notes, and so will you."}{" "}
-              Sharing can&apos;t be undone, and your reason is kept as a note.{/* what sharing means, */}
+              {otherIsNamed ? `This concern is about ${other.full_name}. Only share it if you have decided they should see it.` : "They will be able to read it and its notes, and so will you."}{" "}
+              Sharing cannot be undone, and your reason is kept as a note.{/* what sharing means, */}
             </p>{/* End of the warning. */}
             <div className="mt-3">{/* the form: */}
               <ActionForm action={shareConcern} submitLabel="Share it">{/* sharing: */}
@@ -270,7 +270,7 @@ export default async function ConcernsPage() { // The page itself.
   return ( // Shows:
     <Page // a page:
       title="Concerns sent to you" // titled "Concerns sent to you",
-      intro="Only you (and anyone a concern was shared with) can read these. Keep them confidential: don't copy details into emails, Teams or other parts of the app." // with a confidentiality reminder.
+      intro="Only you (and anyone a concern was shared with) can read these. Keep them confidential: do not copy details into emails, Teams or other parts of the app." // with a confidentiality reminder.
     >{/* (end of the page's settings) */}
       <p><BackButton href="/safety">Back to Child safety</BackButton></p>{/* A button back to the Child safety page. */}
       {open.length === 0 ? <Empty>No open concerns.</Empty> : open.map(concernCard)}{/* The open concerns, or "No open concerns". */}

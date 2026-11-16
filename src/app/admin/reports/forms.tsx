@@ -63,7 +63,7 @@ export function ReportSettingsForm({ superPercent, otherCosts }: { superPercent:
           name="other_costs" // its name,
           inputMode="decimal" // shows a number keypad on phones,
           defaultValue={otherCosts} // starts with the saved costs,
-          hint="Rent, software, insurance, fees and other costs that aren't wages. Used for profit after all costs. Leave blank if not known." // help under the box.
+          hint="Rent, software, insurance, fees and other costs that are not wages. Used for profit after all costs. Leave blank if not known." // help under the box.
         />{/* End of the other costs box. */}
       </div>{/* End of the columns. */}
     </ActionForm> // End of the form.

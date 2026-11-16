@@ -30,7 +30,7 @@ type Session = {
 const STATUS_NOTES: Record<string, string> = { // Words for each link status:
   making: "Being made", // being made,
   made: "Teams link made", // made,
-  failed: "Couldn't make it yet", // failed,
+  failed: "Could not make it yet", // failed,
   removing: "Being deleted", // being deleted,
   removed: "Deleted", // deleted.
 }; // End of the list.
@@ -71,7 +71,7 @@ export default async function AdminTeamsPage({ searchParams }: PageProps<"/admin
             <ul className="list-disc space-y-1 pl-5 text-sm">{/* a bulleted list: */}
               {!connected && ( // if the app details are missing:
                 <li>{/* a list item: */}
-                  The Microsoft app details aren&apos;t in Vercel yet: MS_TENANT_ID, MS_CLIENT_ID and MS_CLIENT_SECRET.{/* naming the missing details. */}
+                  The Microsoft app details are not in Vercel yet: MS_TENANT_ID, MS_CLIENT_ID and MS_CLIENT_SECRET.{/* naming the missing details. */}
                 </li> // (end of the item)
               )}{/* End of that point. */}
               {!settings?.enabled && <li>Teams links are switched off in Settings.</li>}{/* If links are switched off, says so. */}

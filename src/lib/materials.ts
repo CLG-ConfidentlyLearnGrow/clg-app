@@ -34,7 +34,7 @@ export const MATERIAL_KIND_NAMES: Record<MaterialKind, string> = {
 
 // The plain name of each material stage.
 export const MATERIAL_STATUS_NAMES: Record<string, string> = {
-  draft: "Draft (tutors can't see it)", // Not ready yet.
+  draft: "Draft (tutors cannot see it)", // Not ready yet.
   published: "Published", // Ready and visible to tutors.
   retired: "Retired (hidden from tutors)", // No longer used.
 }; // End of the stage names.

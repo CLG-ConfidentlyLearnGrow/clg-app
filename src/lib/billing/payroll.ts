@@ -66,7 +66,7 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
   const db = createAdminClient(); // Connects to the database with full access.
   const problems: string[] = []; // Plain messages about anyone who couldn't be sent.
   const { data: period } = await db.rpc("billing_pay_period", { p_day: periodStart }).single<{ period_start: string; period_end: string }>(); // Asks the database for the pay period's first and last day.
-  if (!period) return { sent: 0, problems: ["Couldn't work out the pay period."] }; // Stops if it couldn't.
+  if (!period) return { sent: 0, problems: ["Could not work out the pay period."] }; // Stops if it couldn't.
   const days = Math.round((Date.parse(period.period_end) - Date.parse(period.period_start)) / 86400000) + 1; // How many days the period covers.
 
   const { data: lines } = await db // Reads the pay lines waiting to be sent:
@@ -126,7 +126,7 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
         `timesheet-${accountId}-${period.period_start}`, // A unique key so a retry can't make a second copy.
       ); // End of the Xero request.
       const id = res.Timesheets?.[0]?.TimesheetID; // The new timesheet's id in Xero.
-      if (!id) throw new Error("Xero didn't return a timesheet."); // No id means it didn't work.
+      if (!id) throw new Error("Xero did not return a timesheet."); // No id means it didn't work.
       const { error } = await db.rpc("billing_mark_pay_sent", { p_lines: own.map((l) => l.id), p_timesheet: id }); // Marks these lines as sent.
       if (error) throw new Error(error.message); // Treats a save failure as a problem.
       sent++; // Counts this person as sent.

@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const queued = await supabase.rpc("tutor_application_files_to_remove"); // Gets the CVs waiting to be removed.
   if (queued.error) { // Couldn't get them:
     console.error("Tutor application CV removal:", queued.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't read the removal list" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not read the removal list" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   const paths = (queued.data ?? []) as string[]; // The file paths.
   if (paths.length === 0) return Response.json({ records: tidy.data ?? 0, removed: 0 }); // None: reports nothing removed.
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const removed = await supabase.storage.from("tutor-applications").remove(paths); // Removes the CVs.
   if (removed.error) { // Couldn't remove them:
     console.error("Tutor application CV removal:", removed.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't remove the files" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not remove the files" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   await supabase.rpc("tutor_application_files_removed", { p_paths: paths }); // Tells the database these files are gone.
   return Response.json({ records: tidy.data ?? 0, removed: paths.length }); // Reports what was removed.

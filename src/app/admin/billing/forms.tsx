@@ -124,7 +124,7 @@ export function OverrideForm({ familyId }: { familyId: string }) {
     <ActionForm action={overridePause} submitLabel="Lift the pause">{/* a form that lifts the pause: */}
       <input type="hidden" name="family_id" value={familyId} />{/* the family (hidden), */}
       <p className="text-sm text-zinc-600">{/* a grey note: */}
-        Only lift a pause without payment when there is a new due date or an agreed payment plan. If it isn&apos;t paid
+        Only lift a pause without payment when there is a new due date or an agreed payment plan. If it is not paid
         by the date you choose, the pause comes back on its own.{/* when to use this, and what happens if it isn't paid. */}
       </p>{/* End of the note. */}
       <Field label="Reason" name="reason" required minLength={5} maxLength={500} />{/* The reason, */}
@@ -142,7 +142,7 @@ export function WaiverForm({ sessionId, needsProof }: { sessionId: string; needs
       <Field label="Why (no health details)" name="reason" required minLength={5} maxLength={500} />{/* the reason, */}
       {needsProof && ( // if this learner has already had this year's waiver:
         <label className="flex items-center gap-2 text-sm">{/* a tick box line: */}
-          <input type="checkbox" name="proof_seen" required /> Proof seen and explained to me (don&apos;t keep a copy){/* proof must be seen; no copy kept. */}
+          <input type="checkbox" name="proof_seen" required /> Proof seen and explained to me (do not keep a copy){/* proof must be seen; no copy kept. */}
         </label> // End of the line.
       )}{/* (end of the proof tick box) */}
     </ActionForm> // End of the form.

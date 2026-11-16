@@ -17,7 +17,7 @@ export function EnrollTwoStep() {
       <div className="space-y-3">{/* a block with space between parts: */}
         {enrollment && "error" in enrollment && <p className="text-sm text-red-700">{enrollment.error}</p>}{/* any error in red, */}
         <p className="text-sm">{/* a line: */}
-          You&apos;ll need an authenticator app on your phone, such as Microsoft Authenticator or Google Authenticator.{/* saying they need an authenticator app. */}
+          You will need an authenticator app on your phone, such as Microsoft Authenticator or Google Authenticator.{/* saying they need an authenticator app. */}
         </p>{/* End of the line. */}
         <Button busy={pending} onClick={() => startTransition(async () => setEnrollment(await startEnrollment()))}>{/* A button that starts set-up (greyed out while starting): */}
           {pending ? "Starting…" : "Set up two-step login"}{/* its words change while starting. */}
@@ -33,7 +33,7 @@ export function EnrollTwoStep() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={enrollment.qrCode} alt="QR code for your authenticator app" className="h-48 w-48 bg-white p-2" />{/* the QR code picture, */}
       <p className="text-xs text-zinc-500">{/* a small grey line: */}
-        Can&apos;t scan it? Enter this key instead: <code className="break-all">{enrollment.secret}</code>{/* with the key to type in if scanning doesn't work. */}
+        Cannot scan it? Enter this key instead: <code className="break-all">{enrollment.secret}</code>{/* with the key to type in if scanning doesn't work. */}
       </p>{/* End of the line. */}
       <ActionForm action={verifyTwoStep} submitLabel="Turn on two-step login">{/* A form that checks the code: */}
         <input type="hidden" name="factorId" value={enrollment.factorId} />{/* which app (hidden), */}

@@ -26,7 +26,7 @@ export async function makeReport(_prev: FormState, formData: FormData): Promise<
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("report_make", { p_from: parsed.data.from, p_to: parsed.data.to }); // Asks the database to make and save the report.
-  if (error || !data) return { error: error?.message.startsWith("Choose") ? error.message : "Couldn't make the report. Only the owner can make reports." }; // Failed: shows the database's plain message, or explains only the owner can.
+  if (error || !data) return { error: error?.message.startsWith("Choose") ? error.message : "Could not make the report. Only the owner can make reports." }; // Failed: shows the database's plain message, or explains only the owner can.
   revalidatePath("/admin/reports"); // Refreshes the reports page so the new report is listed.
   redirect(`/admin/reports?id=${data as string}`); // Opens the new report.
 } // End of makeReport.
@@ -44,7 +44,7 @@ export async function deleteReport(formData: FormData): Promise<void> {
 
 // The rules for the settings form:
 const settingsSchema = z.object({
-  super_percent: z.coerce.number("Enter super as a number, e.g. 12.").min(0, "Super can't be below 0%.").max(50, "Super can't be above 50%."), // super, 0 to 50%,
+  super_percent: z.coerce.number("Enter super as a number, e.g. 12.").min(0, "Super cannot be below 0%.").max(50, "Super cannot be above 50%."), // super, 0 to 50%,
   other_costs: z.string().trim(), // other costs a month, as typed.
 }); // End of the rules.
 
@@ -57,7 +57,7 @@ export async function saveReportSettings(_prev: FormState, formData: FormData): 
   if (cents === null) return { error: "Enter other costs as dollars, e.g. 1200 or $1,200.50." }; // Not a price: explains how to type it.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("report_save_settings", { p_super_percent: parsed.data.super_percent, p_monthly_other_costs_cents: cents }); // Asks the database to save them.
-  if (error) return { error: "Couldn't save. Only the owner can change report settings." }; // Failed: explains only the owner can.
+  if (error) return { error: "Could not save. Only the owner can change report settings." }; // Failed: explains only the owner can.
   revalidatePath("/admin/reports"); // Refreshes the reports page.
   return { message: "Saved. New reports will use these settings." }; // Tells the person it worked.
 } // End of saveReportSettings.

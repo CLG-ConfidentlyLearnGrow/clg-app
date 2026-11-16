@@ -34,7 +34,7 @@ export function CurriculumFileForm() {
       if ("error" in result) setReadError(result.error); // A problem: shows it.
       else setSkills(result); // Otherwise keeps the skills.
     } catch { // If the file couldn't be read:
-      setReadError("Couldn't read that file. Save it as Excel (.xlsx) or CSV and try again."); // asks for Excel or CSV.
+      setReadError("Could not read that file. Save it as Excel (.xlsx) or CSV and try again."); // asks for Excel or CSV.
     } // End of the try.
   } // End of readFile.
 

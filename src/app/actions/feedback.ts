@@ -43,10 +43,10 @@ export async function giveFeedback(_prev: FormState, formData: FormData): Promis
     p_comment: d.comment, // the comment,
     p_about: isPerson ? d.about : null, // and the person (only for "A person at CLG").
   }); // End of the request.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/feedback"); // Refreshes the feedback page (for "Your feedback").
   revalidatePath("/admin/feedback"); // Refreshes the overview.
-  return { message: isPerson ? "Thank you. Your feedback has been sent privately. The person it's about won't see it." : "Thank you for your feedback!" }; // Thanks them.
+  return { message: isPerson ? "Thank you. Your feedback has been sent privately. The person it is about will not see it." : "Thank you for your feedback!" }; // Thanks them.
 } // End of giveFeedback.
 
 // Marks where a piece of feedback is up to, and saves the private note.
@@ -60,7 +60,7 @@ export async function updateFeedback(_prev: FormState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("feedback_update", { p_id: parsed.data.id, p_status: parsed.data.status, p_note: parsed.data.note ?? null }); // Saves it.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/admin/feedback"); // Refreshes the overview.
   return { message: "Saved." }; // Confirms.
 } // End of updateFeedback.
@@ -79,7 +79,7 @@ export async function setFeedbackArea(_prev: FormState, formData: FormData): Pro
   const id = d.id || `${d.grp}_${d.label.toLowerCase().replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "")}`.slice(0, 40); // A short name made from the group and the name, for a new area.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("set_feedback_area", { p_id: id, p_grp: d.grp, p_label: d.label, p_active: d.active !== "no" }); // Saves it.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/admin/feedback"); // Refreshes the overview.
   revalidatePath("/feedback"); // Refreshes the form (its list of areas).
   return { message: "Saved." }; // Confirms.

@@ -24,11 +24,11 @@ export type DeclineReason = (typeof DECLINE_REASONS)[number]; // One of those (f
 // Each decline reason in words.
 export const DECLINE_REASON_NAMES: Record<DeclineReason, string> = { // reason -> words:
   not_needed: "Subjects or year levels not needed right now", // no demand for what they teach,
-  location_times: "Location or availability doesn't suit", // wrong place or times,
-  experience: "Experience or qualifications don't match what we need", // not the right background,
+  location_times: "Location or availability does not suit", // wrong place or times,
+  experience: "Experience or qualifications do not match what we need", // not the right background,
   referees: "Referee checks", // referees raised concerns,
   child_safety: "Child safety screening", // a child safety concern (talk to the Child Safety Officer),
-  no_reply: "Didn't reply or attend the interview", // went quiet,
+  no_reply: "Did not reply or attend the interview", // went quiet,
   other: "Other (see note)", // anything else.
 }; // End of the reason names.
 
@@ -44,7 +44,7 @@ export const TEACH_MODE_NAMES: Record<(typeof TEACH_MODES)[number], string> = { 
 export const WWCC_STATUSES = ["held", "applied", "not_yet"] as const; // The fixed list (matches the database).
 export const WWCC_STATUS_NAMES: Record<(typeof WWCC_STATUSES)[number], string> = { // answer -> words:
   held: "I have one", // already holds a check,
-  applied: "I've applied", // waiting for it,
+  applied: "I have applied", // waiting for it,
   not_yet: "Not yet", // hasn't applied.
 }; // End of the check answer names.
 

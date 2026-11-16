@@ -36,7 +36,7 @@ export async function createFramework(_prev: FormState, formData: FormData): Pro
     version: parsed.data.version, // version,
     starts_on: parsed.data.starts_on || null, // start date (or none).
   }); // End of the save.
-  if (error) return { error: "Couldn't add it. That code and version may already exist." }; // Failed: the code and version may already exist.
+  if (error) return { error: "Could not add it. That code and version may already exist." }; // Failed: the code and version may already exist.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Curriculum added as a draft. Load its skills, then check the summary and confirm it." }; // Tells the admin what's next.
@@ -80,7 +80,7 @@ export async function importSkills(_prev: FormState, formData: FormData): Promis
       error: // (the message)
         error.code === "23505" // if some codes are already loaded,
           ? "Some skill codes are already loaded for this curriculum. Remove those rows and try again." // that,
-          : "Couldn't load the skills. Check the rows and try again.", // otherwise a general message.
+          : "Could not load the skills. Check the rows and try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
 
@@ -100,7 +100,7 @@ export async function setStudentFramework(_prev: FormState, formData: FormData):
   const { error } = await supabase // Saves the link:
     .from("student_frameworks") // in the student curriculums table,
     .upsert(parsed.data, { onConflict: "student_id,framework_id", ignoreDuplicates: true }); // skipping it if already set.
-  if (error) return { error: "Couldn't set the curriculum." }; // Failed: plain message.
+  if (error) return { error: "Could not set the curriculum." }; // Failed: plain message.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Curriculum set for this student." }; // Confirms it.
@@ -157,12 +157,12 @@ export async function importAcara(_prev: FormState, formData: FormData): Promise
   try { // Reading could fail.
     raw = JSON.parse(String(formData.get("payload") ?? "[]")); // Reads the hidden field.
   } catch { // Couldn't read it:
-    return { error: "Couldn't read the subjects. Please choose the file again." }; // asks to choose the file again.
+    return { error: "Could not read the subjects. Please choose the file again." }; // asks to choose the file again.
   } // End of reading.
   const parsed = acaraPayload.safeParse(raw); // Checks the subjects against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const total = parsed.data.reduce((n, c) => n + c.skills.length, 0); // Counts all the skills.
-  if (total > 5000) return { error: "That's too many skills at once. Choose fewer subjects." }; // Too many: asks for fewer subjects.
+  if (total > 5000) return { error: "That is too many skills at once. Choose fewer subjects." }; // Too many: asks for fewer subjects.
 
   const accessed = new Date().toLocaleDateString("en-AU", { // Today's date in words, for the licence credit:
     day: "numeric", // day number,
@@ -207,7 +207,7 @@ export async function importAcara(_prev: FormState, formData: FormData): Promise
   const parts = []; // The parts of the message.
   if (loaded.length) parts.push(`${loaded.length} loaded as drafts. Check and confirm them above.`); // How many loaded.
   if (skipped.length) parts.push(`Already loaded, so skipped: ${skipped.join(", ")}.`); // Which were skipped.
-  if (failed.length) parts.push(`Couldn't load: ${failed.join(", ")}. Please try those again.`); // Which failed.
+  if (failed.length) parts.push(`Could not load: ${failed.join(", ")}. Please try those again.`); // Which failed.
   return loaded.length ? { message: parts.join(" ") } : { error: parts.join(" ") }; // A success message if any loaded, otherwise an error.
 } // End of importAcara.
 
@@ -245,7 +245,7 @@ const fileCurriculum = z.object({ // The rules for a curriculum from a spreadshe
       }), // (end of one skill)
     ) // (end of the list)
     .min(1, "Choose a file with at least one skill.") // at least one,
-    .max(5000, "That's too many skills at once. Split the file into smaller ones."), // and at most 5,000.
+    .max(5000, "That is too many skills at once. Split the file into smaller ones."), // and at most 5,000.
 }); // End of the rules.
 
 // Saves a whole curriculum from a spreadsheet as one draft.
@@ -255,7 +255,7 @@ export async function importCurriculumFile(_prev: FormState, formData: FormData)
   try { // Reading could fail.
     skills = JSON.parse(String(formData.get("payload") ?? "[]")); // Reads the hidden field.
   } catch { // Couldn't read it:
-    return { error: "Couldn't read the skills. Please choose the file again." }; // asks to choose the file again.
+    return { error: "Could not read the skills. Please choose the file again." }; // asks to choose the file again.
   } // End of reading.
   const parsed = fileCurriculum.safeParse({ // Checks everything against the rules:
     code: formData.get("code"), // code,
@@ -278,7 +278,7 @@ export async function importCurriculumFile(_prev: FormState, formData: FormData)
       error: // (the message)
         error?.code === "23505" // if that code and version exist,
           ? "A curriculum with that code and version is already loaded. Use a different code or version." // that,
-          : "Couldn't add the curriculum. Please try again.", // otherwise a general message.
+          : "Could not add the curriculum. Please try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
 
@@ -299,7 +299,7 @@ export async function importCurriculumFile(_prev: FormState, formData: FormData)
       error: // (the message)
         skillError.code === "23505" // if two rows share a code,
           ? "Two rows share the same skill code. Make each code different (or leave codes blank) and try again." // that,
-          : "Couldn't load the skills. Check the file and try again.", // otherwise a general message.
+          : "Could not load the skills. Check the file and try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
 

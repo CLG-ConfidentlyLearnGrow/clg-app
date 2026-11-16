@@ -89,7 +89,7 @@ export async function StudyDatesToCheck() { // The admin list of study dates sti
   return ( // Shows:
     <Card // a card:
       title="Study dates to check" // its title,
-      description="Students with a booking whose dates aren't loaded yet: tertiary students with no study dates, and school students whose last day of Term 4 isn't confirmed. Ask the family, or add it under Session places." // its help text.
+      description="Students with a booking whose dates are not loaded yet: tertiary students with no study dates, and school students whose last day of Term 4 is not confirmed. Ask the family, or add it under Session places." // its help text.
     >{/* (end of the card's settings) */}
       {rows.length === 0 ? ( // if none:
         <Empty>Nothing to check.</Empty> // says so.
@@ -145,7 +145,7 @@ const REQUEST_STATUS: Record<string, string> = { // The words for each request s
   open: "Waiting for a time", // open,
   offered: "Time offered, waiting for approval", // offered,
   done: "Booked", // done,
-  declined: "Couldn't be arranged", // declined,
+  declined: "Could not be arranged", // declined,
   withdrawn: "Withdrawn", // withdrawn.
 }; // End of the words.
 
@@ -282,7 +282,7 @@ export async function RequestsSection({ // The requests and public holidays sect
                       before={r.kind === "extra" && r.event_on ? dayBefore(r.event_on) : null} // and the latest date (the day before the event, for an extra session).
                     /> // End of the form.
                   )}{/* End of this part. */}
-                  {isAdmin && <CloseRequestForm id={r.id} status="declined" label="Couldn't arrange it" />}{/* Admins can decline it. */}
+                  {isAdmin && <CloseRequestForm id={r.id} status="declined" label="Could not arrange it" />}{/* Admins can decline it. */}
                   {!isAdmin && !isTutor && <CloseRequestForm id={r.id} status="withdrawn" label="Withdraw" />}{/* Families can withdraw it. */}
                 </li> // End of the row.
               ); // End of what's shown for this request.
@@ -373,7 +373,7 @@ export async function BlocksSection({ // The blocks section, given:
           collapsible // can fold,
           defaultOpen={false} // folded to start,
           title={isTutor ? "Block a student" : "Block a tutor"} // its title,
-          description="If a match isn't working and shouldn't be suggested again. A reason is required, and CLG will follow up with you." // its help text.
+          description="If a match is not working and should not be suggested again. A reason is required, and CLG will follow up with you." // its help text.
         >{/* (end of the card's settings) */}
           <BlockForm choices={isTutor ? tutorChoices : familyChoices} asTutor={isTutor} />{/* the block form. */}
         </Card> // End of the card.
@@ -382,7 +382,7 @@ export async function BlocksSection({ // The blocks section, given:
         title="Blocks" // its title,
         description={ // its help text:
           isAdmin // for admins,
-            ? "Each block needs a follow-up with the person who made it, to understand what happened and help it not happen again. The other person isn't told." // their wording,
+            ? "Each block needs a follow-up with the person who made it, to understand what happened and help it not happen again. The other person is not told." // their wording,
             : "Blocks you have made. Only CLG sees the reason." // otherwise everyone else's.
         } // (end of the help text)
       >{/* (end of the card's settings) */}

@@ -42,7 +42,7 @@ export class StripeError extends Error {
 // Sends one request to Stripe and returns its reply, or throws a StripeError.
 async function call<T>(method: "GET" | "POST", path: string, params: Params = {}, idempotencyKey?: string): Promise<T> {
   const key = stripeKey(); // Reads the Stripe key.
-  if (!key) throw new Error("Stripe isn't connected yet (STRIPE_SECRET_KEY is missing)."); // No key: plain message.
+  if (!key) throw new Error("Stripe is not connected yet (STRIPE_SECRET_KEY is missing)."); // No key: plain message.
   const body = encode(params); // Turns the values into Stripe's form format.
   const url = `https://api.stripe.com/v1/${path}${method === "GET" && body ? `?${body}` : ""}`; // The address (GET requests carry values after "?").
   const res = await fetch(url, { // Sends the request:

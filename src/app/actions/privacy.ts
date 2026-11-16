@@ -19,7 +19,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 
 // The rules for a privacy request:
 const requestSchema = z.object({
-  kind: z.enum(PRIVACY_REQUEST_KINDS.map((k) => k.id) as [string, ...string[]], { message: "Please choose what you'd like." }), // what they'd like (one of the request kinds),
+  kind: z.enum(PRIVACY_REQUEST_KINDS.map((k) => k.id) as [string, ...string[]], { message: "Please choose what you would like." }), // what they'd like (one of the request kinds),
   details: z.string().trim().min(3, "Please tell us a little more.").max(2000, "Please keep it under 2000 characters."), // the details (3 to 2,000 letters),
   student_id: z.union([z.uuid(), z.literal("")]).optional(), // which child it's about (optional).
 }); // End of the rules.
@@ -36,7 +36,7 @@ export async function makePrivacyRequest(_prev: FormState, formData: FormData): 
     p_student: parsed.data.student_id || undefined, // and the child, if chosen.
   }); // End of the request.
   if (error) { // It failed:
-    return { error: error.code === "54000" ? error.message : "We couldn't send that. Please try again, or email CLG." }; // shows the "too many requests" message, or a general one.
+    return { error: error.code === "54000" ? error.message : "We could not send that. Please try again, or email CLG." }; // shows the "too many requests" message, or a general one.
   } // End of the failure case.
   revalidatePath("/my-privacy"); // Refreshes the privacy page.
   return { message: "Sent. CLG will reply within 28 days, and you can follow it below." }; // Confirms and says when to expect a reply.
@@ -48,9 +48,9 @@ export async function setMarketingEmail(_prev: FormState, formData: FormData): P
   const on = formData.get("marketing") === "on"; // True if the box is ticked.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("set_marketing_email", { p_on: on, p_version: POLICY_VERSION }); // Saves the choice, with the policy version agreed to.
-  if (error) return { error: "We couldn't save that. Please try again." }; // Failed: plain message.
+  if (error) return { error: "We could not save that. Please try again." }; // Failed: plain message.
   revalidatePath("/my-privacy"); // Refreshes the privacy page.
-  return { message: on ? "You'll get CLG news and offers by email. You can turn this off any time." : "You won't get news or offers. You'll still get messages about your sessions and invoices." }; // Confirms what they'll get.
+  return { message: on ? "You will get CLG news and offers by email. You can turn this off any time." : "You will not get news or offers. You will still get messages about your sessions and invoices." }; // Confirms what they'll get.
 } // End of setMarketingEmail.
 
 // A parent gives (or renews) consent for each child that needs it.
@@ -61,7 +61,7 @@ export async function agreeForChildren(_prev: FormState, formData: FormData): Pr
   const needed = ((data ?? []) as { student_id: string }[]).map((c) => c.student_id); // Their ids.
   const ticked = needed.filter((id) => formData.get(`child_${id}`) === "on"); // The ones the parent ticked.
   if (ticked.length < needed.length) return { error: "Please tick the box for each child to carry on." }; // Not all ticked: asks to tick each one.
-  if (!(await giveParentalConsent(ticked))) return { error: "We couldn't save that. Please try again." }; // Saves consent; plain message if it fails.
+  if (!(await giveParentalConsent(ticked))) return { error: "We could not save that. Please try again." }; // Saves consent; plain message if it fails.
   redirect("/dashboard"); // Done: goes to the dashboard.
 } // End of agreeForChildren.
 
@@ -93,7 +93,7 @@ export async function updatePrivacyRequest(_prev: FormState, formData: FormData)
   }); // End of the save.
   if (error) return { error: error.message }; // Failed: shows the database's message.
   revalidatePath("/admin/privacy"); // Refreshes the admin privacy page.
-  return { message: "Saved. Remember to tell the person what's happening." }; // Reminds the admin to tell the person.
+  return { message: "Saved. Remember to tell the person what is happening." }; // Reminds the admin to tell the person.
 } // End of updatePrivacyRequest.
 
 // The rules for recording a data breach:
@@ -138,7 +138,7 @@ export async function recordIncident(_prev: FormState, formData: FormData): Prom
     children_affected: formData.get("children_affected") === "on", // whether children were affected (tick box),
     regions, // and the regions.
   }); // End of the save.
-  if (error) return { error: "We couldn't save that. Check the date isn't in the future, then try again." }; // Failed: plain message.
+  if (error) return { error: "We could not save that. Check the date is not in the future, then try again." }; // Failed: plain message.
   revalidatePath("/admin/privacy"); // Refreshes the admin privacy page.
   return { message: "Recorded. The 72-hr clock has started: follow the next step shown." }; // Reminds the admin the 72-hr clock has started.
 } // End of recordIncident.
@@ -154,7 +154,7 @@ const incidentUpdateSchema = z.object({
 export async function updateIncident(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(); // Makes sure the person is a full admin (sends anyone else away).
   const parsed = incidentUpdateSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Please choose what's happened." }; // Problem: asks what happened.
+  if (!parsed.success) return { error: "Please choose what has happened." }; // Problem: asks what happened.
   const now = new Date().toISOString(); // The current time.
   const note = parsed.data.note || null; // The note (or none).
   const change: Record<string, unknown> = // What to save, by step:
@@ -178,8 +178,8 @@ export async function updateIncident(_prev: FormState, formData: FormData): Prom
     return { // explains:
       error: // (the message)
         parsed.data.step === "close" // if closing,
-          ? "It can't be closed yet: decide on serious harm first, and if harm is likely, record telling the regulators." // what has to happen first,
-          : "We couldn't save that. Please try again.", // otherwise a general message.
+          ? "It cannot be closed yet: decide on serious harm first, and if harm is likely, record telling the regulators." // what has to happen first,
+          : "We could not save that. Please try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
   revalidatePath("/admin/privacy"); // Refreshes the admin privacy page.

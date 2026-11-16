@@ -115,7 +115,7 @@ export async function Roadmap({
   return ( // Shows:
     <Card // a card:
       title="Roadmap" // titled "Roadmap",
-      description="What's coming up, broken into small steps to tick off. Each session's next step is added here too." // with a short explanation.
+      description="What is coming up, broken into small steps to tick off. Each session's next step is added here too." // with a short explanation.
     >{/* (end of the card's settings) */}
       {isStudentSelf && ( // For the student's own login:
         <p className="mb-4 text-xs text-zinc-500">Your parent or carer and your tutor can see your roadmap.</p> // a note on who can see it.
@@ -224,7 +224,7 @@ export async function Roadmap({
       {canPlan && !hasStudyPlans && addOn?.mode === "paid" && ( // If study plans are paid and the student doesn't have them:
         <p className="mt-6 rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700">{/* a grey note: */}
           Study plans (adding assessments and goals, and planned study steps) are an add-on{/* what study plans are, */}
-          {addOn.price_cents ? `, ${dollars(addOn.price_cents)} a ${addOn.price_period}` : ""}. Ask CLG if you&apos;d
+          {addOn.price_cents ? `, ${dollars(addOn.price_cents)} a ${addOn.price_period}` : ""}. Ask CLG if you would
           like them.{/* and to ask CLG. */}
         </p> // End of the note.
       )}{/* End of that part. */}
