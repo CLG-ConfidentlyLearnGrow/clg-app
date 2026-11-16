@@ -26,7 +26,7 @@ const contentSecurityPolicy = [ // The rules, one per line:
   "default-src 'self'", // by default, only the app itself,
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`, // scripts only from the app (plus eval while developing),
   "style-src 'self' 'unsafe-inline'", // styles only from the app,
-  `img-src 'self' blob: data:${supabase ? ` https://${supabase}` : ""}`, // images from the app, files made on the page, and Supabase,
+  `img-src 'self' blob: data: https://tile.openstreetmap.org${supabase ? ` https://${supabase}` : ""}`, // images from the app, files made on the page, OpenStreetMap map pictures (the admin Travel map), and Supabase,
   "font-src 'self'", // fonts only from the app,
   `media-src 'self'${supabase ? ` https://${supabase}` : ""}`, // videos only from the app or Supabase (training lesson videos),
   `connect-src 'self'${supabase ? ` https://${supabase} wss://${supabase}` : ""}`, // data and live updates only to the app and Supabase,
