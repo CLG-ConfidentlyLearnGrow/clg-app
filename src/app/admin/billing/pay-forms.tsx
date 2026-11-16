@@ -252,7 +252,7 @@ export function AwardRatesForm({ nextJuly, templateCsv }: { nextJuly: string; te
       <p className="text-xs text-zinc-600">{/* help text: */}
         One line per rate: work (school, tertiary or admin), employment (casual, part_time or full_time), hourly rate, award name.{" "}
         <a className="underline" href={`data:text/csv;charset=utf-8,${encodeURIComponent(templateCsv)}`} download="clg-award-rates.csv">Download this year&apos;s rates</a>{/* a ready-made file to change */}
-        {" "}to change and upload. Anyone below the new minimum for their employment type is raised on the start date; rates already above it aren&apos;t changed.
+        {" "}to change and upload. Anyone below the new minimum for their employment type is raised on the start date; rates already above it are not changed.
       </p>{/* end of the help text */}
     </ActionForm> // End of the form.
   ); // End of what it shows.

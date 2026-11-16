@@ -41,9 +41,9 @@ reset role; -- back to the database itself
 select tests.claims(:'older'); -- signs in as the older student
 set role authenticated; -- acts as a signed-in person
 select tests.eq(public.billing_i_pay()::int, 0, 'a student whose parent pays gets no Billing tab'); -- no
-select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0::bigint, 'and isn''t asked how often to pay'); -- hidden
-select tests.eq((select count(*) from public.billing_invoices where family_id = :'fam'), 0::bigint, 'and can''t see the family''s invoices'); -- hidden
-select tests.fails(format($q$select public.billing_choose_plan(%L, 'weekly')$q$, :'fam'), 'and can''t change how the family pays'); -- refused
+select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0::bigint, 'and is not asked how often to pay'); -- hidden
+select tests.eq((select count(*) from public.billing_invoices where family_id = :'fam'), 0::bigint, 'and cannot see the family''s invoices'); -- hidden
+select tests.fails(format($q$select public.billing_choose_plan(%L, 'weekly')$q$, :'fam'), 'and cannot change how the family pays'); -- refused
 reset role; -- back to the database itself
 
 -- 3. If CLG makes that student the bill payer, they get billing.
@@ -63,7 +63,7 @@ insert into public.students (family_id, full_name, account_id, date_of_birth, st
 insert into public.parent_student_links (parent_id, student_id, verified_at) values (:'p1', :'solo', now()); -- P1 is their parent
 select tests.claims('00000000-0000-0000-0000-000000000011'); -- signs in as that student
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'solo_fam'), 0::bigint, 'an only learner whose parent pays isn''t asked how often to pay'); -- hidden
+select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'solo_fam'), 0::bigint, 'an only learner whose parent pays is not asked how often to pay'); -- hidden
 reset role; -- back to the database itself
 
 -- 4. An adult learner with no parent linked pays for themselves.

@@ -40,8 +40,8 @@ type Invoice = {
 const NOTES: Record<string, string> = { // Messages for each note in the address:
   "setup=done": "Thanks. Your payment details are saved with Stripe. It can take a minute to show here.", // payment details saved,
   "setup=cancelled": "Payment set-up was cancelled. You can try again any time.", // set-up cancelled,
-  "setup=not-connected": "Online payment isn't switched on yet. CLG will let you know when it is.", // online payment not on yet,
-  "setup=missing": "We couldn't find your billing details. Please contact CLG.", // billing details not found,
+  "setup=not-connected": "Online payment is not switched on yet. CLG will let you know when it is.", // online payment not on yet,
+  "setup=missing": "We could not find your billing details. Please contact CLG.", // billing details not found,
   "paid=processing": "A payment for this invoice is already on its way.", // a payment already on its way.
 }; // End of the list.
 

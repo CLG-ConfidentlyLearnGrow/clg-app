@@ -59,7 +59,7 @@ export async function saveFamilyBilling(_prev: FormState, formData: FormData): P
   const result = existing.data // Saves it:
     ? await supabase.from("billing_accounts").update(values).eq("family_id", family_id) // updating the existing account,
     : await supabase.from("billing_accounts").insert({ family_id, ...values }); // or making a new one.
-  if (result.error) return plain(result.error, "Couldn't save the billing plan."); // Failed: plain message.
+  if (result.error) return plain(result.error, "Could not save the billing plan."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Billing plan saved." }; // Confirms it.
 } // End of saveFamilyBilling.
@@ -78,7 +78,7 @@ export async function saveKeptRate(_prev: FormState, formData: FormData): Promis
       .delete() // (removing the row)
       .eq("family_id", parsed.data.family_id) // for this family,
       .eq("price_item_id", parsed.data.price_item_id); // and this price item.
-    if (error) return plain(error, "Couldn't remove the kept rate."); // Failed: plain message.
+    if (error) return plain(error, "Could not remove the kept rate."); // Failed: plain message.
     revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
     return { message: "Kept rate removed. This family now pays the price list." }; // Confirms the family now pays the price list.
   } // End of the remove case.
@@ -90,7 +90,7 @@ export async function saveKeptRate(_prev: FormState, formData: FormData): Promis
     amount_cents: cents, // amount in cents,
     note: parsed.data.note?.trim() || null, // note (or none).
   }); // End of the save.
-  if (error) return plain(error, "Couldn't save the kept rate."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the kept rate."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Kept rate saved." }; // Confirms it.
 } // End of saveKeptRate.
@@ -109,9 +109,9 @@ export async function savePrice(_prev: FormState, formData: FormData): Promise<F
     .from("billing_price_items") // in the price items table,
     .update({ amount_cents: cents, gst_applies: parsed.data.gst_applies === "on", active: parsed.data.active === "on" }) // the amount, GST and in-use settings,
     .eq("id", parsed.data.id); // for this price item.
-  if (error) return plain(error, "Couldn't save the price. Only one price can be on for each session level."); // Failed: explains only one price can be on per session level.
+  if (error) return plain(error, "Could not save the price. Only one price can be on for each session level."); // Failed: explains only one price can be on per session level.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
-  return { message: "Price saved. New invoices use it; invoices already made don't change." }; // Confirms, noting old invoices don't change.
+  return { message: "Price saved. New invoices use it; invoices already made do not change." }; // Confirms, noting old invoices don't change.
 } // End of savePrice.
 
 // Adds a school term or holiday period.
@@ -130,7 +130,7 @@ export async function addSchoolPeriod(_prev: FormState, formData: FormData): Pro
   if (parsed.data.ends_on < parsed.data.starts_on) return { error: "The end date is before the start date." }; // End can't be before start.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.from("billing_school_periods").insert(parsed.data); // Saves it.
-  if (error) return plain(error, "Couldn't add it. A term or holiday may already start on that date."); // Failed: plain message.
+  if (error) return plain(error, "Could not add it. A term or holiday may already start on that date."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: `${parsed.data.name} added.` }; // Confirms it.
 } // End of addSchoolPeriod.
@@ -146,7 +146,7 @@ export async function buildInvoice(_prev: FormState, formData: FormData): Promis
     p_from: parsed.data.from, // from this date,
     p_to: parsed.data.to, // to this date.
   }); // End of the request.
-  if (error) return plain(error, "Couldn't build the invoice."); // Failed: plain message.
+  if (error) return plain(error, "Could not build the invoice."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return data // Tells the admin:
     ? { message: "Invoice built as a draft. It goes to Xero on its send date, or approve it below." } // a draft was built and what happens next,
@@ -179,7 +179,7 @@ export async function voidInvoice(_prev: FormState, formData: FormData): Promise
   if (!parsed.success) return { error: "Please give a reason." }; // Problem: asks for a reason.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_void_invoice", { p_invoice: parsed.data.id, p_reason: parsed.data.reason }); // Asks the database to cancel it.
-  if (error) return plain(error, "Couldn't cancel the invoice."); // Failed: plain message.
+  if (error) return plain(error, "Could not cancel the invoice."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Invoice cancelled. Its sessions can be billed again and any credit it used was returned. If it was already in Xero, void it there too." }; // Confirms, with a reminder to void it in Xero too.
 } // End of voidInvoice.
@@ -193,7 +193,7 @@ export async function addCredit(_prev: FormState, formData: FormData): Promise<F
   if (cents === null) return { error: "Enter the amount in dollars, for example 40." }; // Not a price: shows an example.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_add_credit", { p_family: parsed.data.family_id, p_amount_cents: cents, p_note: parsed.data.note }); // Asks the database to add the credit.
-  if (error) return plain(error, "Couldn't add the credit."); // Failed: plain message.
+  if (error) return plain(error, "Could not add the credit."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Credit added. It comes off the family's next invoice." }; // Confirms it comes off the next invoice.
 } // End of addCredit.
@@ -210,7 +210,7 @@ export async function waiveLateCancel(_prev: FormState, formData: FormData): Pro
     p_reason: parsed.data.reason, // with this reason,
     p_proof_seen: formData.get("proof_seen") === "on", // and whether proof was seen (the tick box).
   }); // (end of the request)
-  if (error) return plain(error, "Couldn't waive it."); // Failed: plain message (such as "already had their waiver").
+  if (error) return plain(error, "Could not waive it."); // Failed: plain message (such as "already had their waiver").
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Waived. The family gets a full credit for this session." }; // Confirms the full credit.
 } // End of waiveLateCancel.
@@ -229,9 +229,9 @@ export async function overridePause(_prev: FormState, formData: FormData): Promi
     p_until: parsed.data.until, // until this date,
     p_payment_plan: parsed.data.payment_plan ?? null, // with this payment plan (or none).
   }); // End of the request.
-  if (error) return plain(error, "Couldn't lift the pause."); // Failed: plain message.
+  if (error) return plain(error, "Could not lift the pause."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
-  return { message: "Pause lifted until that date. If the family hasn't paid by then, it comes back on its own." }; // Confirms, noting the pause returns if still unpaid.
+  return { message: "Pause lifted until that date. If the family has not paid by then, it comes back on its own." }; // Confirms, noting the pause returns if still unpaid.
 } // End of overridePause.
 
 // Saves the billing settings (owner only).
@@ -279,10 +279,10 @@ export async function chooseBillingPlan(_prev: FormState, formData: FormData): P
   const parsed = z // Checks the form has:
     .object({ family_id: uuid, plan: z.enum(["weekly", "monthly", "term", "upfront"]) }) // a family and a plan,
     .safeParse(Object.fromEntries(formData)); // (from the form's fields).
-  if (!parsed.success) return { error: "Please choose how often you'd like to pay." }; // Problem: asks them to choose.
+  if (!parsed.success) return { error: "Please choose how often you would like to pay." }; // Problem: asks them to choose.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_choose_plan", { p_family: parsed.data.family_id, p_plan: parsed.data.plan }); // Asks the database to save the choice.
-  if (error) return plain(error, "Couldn't save your choice. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save your choice. Please try again."); // Failed: plain message.
   revalidatePath("/billing"); // Refreshes the family billing page.
   return { message: "Thanks, your choice is saved." }; // Thanks them.
 } // End of chooseBillingPlan.
@@ -294,7 +294,7 @@ export async function acceptBillingTerms(_prev: FormState, formData: FormData): 
   if (!familyId.success || formData.get("agree") !== "on") return { error: "Please tick the box to agree." }; // Bad id or box not ticked: asks them to tick it.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_accept_terms", { p_family: familyId.data, p_version: FAMILY_TERMS_VERSION }); // Asks the database to save the agreement with the terms version.
-  if (error) return plain(error, "Couldn't save your agreement. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save your agreement. Please try again."); // Failed: plain message.
   revalidatePath("/billing"); // Refreshes the family billing page.
   return { message: "Thanks, your agreement is saved." }; // Thanks them.
 } // End of acceptBillingTerms.
@@ -428,7 +428,7 @@ export async function saveSplit(_prev: FormState, formData: FormData): Promise<F
     p_payer: parsed.data.payer_id, // this payer,
     p_share: share, // this share.
   }); // End of the request.
-  if (error) return plain(error, "Couldn't save the split."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the split."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Split saved. It applies to invoices made from now on. Ask the other parent to set up their own automatic payment in the app." }; // Confirms, and says the other parent sets up their own payment.
 } // End of saveSplit.

@@ -57,7 +57,7 @@ select tests.eq((select count(*) from public.accounts where id = '00000000-0000-
 
 -- Nobody signed in can't use it.
 set role anon; -- Acts as a visitor who isn't signed in.
-select tests.fails($$select public.set_my_name('No', 'Body')$$, 'visitor can''t set a name'); -- Checks: refused for visitors.
+select tests.fails($$select public.set_my_name('No', 'Body')$$, 'visitor cannot set a name'); -- Checks: refused for visitors.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
@@ -66,7 +66,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as the operations admin with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.set_staff_name('00000000-0000-0000-0000-0000000007f1', 'Amy', 'Swann'); -- Fixes the tutor's last name.
-select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f3', 'Pete', 'Parent')$$, 'isn''t a staff member', 'admin can''t use it for a parent'); -- Checks: only for staff.
+select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f3', 'Pete', 'Parent')$$, 'is not a staff member', 'admin cannot use it for a parent'); -- Checks: only for staff.
 select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f1', 'Amy', '')$$, 'enter a last name', 'admin must give both names'); -- Checks: the same name checks apply.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-0000000007f1' and full_name = 'Amy Swann'), 1, 'operations admin changes a staff name'); -- Checks: saved.
@@ -85,12 +85,12 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000007f2', 'aal2'); -- Signs in as the support admin.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f1', 'Amy', 'Other')$$, 'Only the owner or an operations admin', 'support admin can''t change staff names'); -- Checks: refused for support.
+select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f1', 'Amy', 'Other')$$, 'Only the owner or an operations admin', 'support admin cannot change staff names'); -- Checks: refused for support.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000007f1', 'aal2'); -- Signs in as the tutor.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f2', 'Nina', 'Other')$$, 'Only the owner or an operations admin', 'tutor can''t change another person''s name'); -- Checks: refused for a tutor.
+select tests.fails_with($$select public.set_staff_name('00000000-0000-0000-0000-0000000007f2', 'Nina', 'Other')$$, 'Only the owner or an operations admin', 'tutor cannot change another person''s name'); -- Checks: refused for a tutor.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.accounts where id = '00000000-0000-0000-0000-0000000007f2' and full_name = 'Nina Deskworth'), 1, 'refused changes left the name alone'); -- Checks: nothing changed.
 

@@ -43,7 +43,7 @@ export function checkFormStamp(stamp: string | null | undefined, now = Date.now(
     return "That was very quick. Please check your answers and press Send again."; // a gentle message (a person can simply press again).
   } // End of the speed check.
   if (seconds > MAX_FILL_HOURS * 3600) { // Opened more than a day ago:
-    return "This form has expired. Please refresh the page and try again. Copy your longer answers first so you don't lose them."; // asks them to reload.
+    return "This form has expired. Please refresh the page and try again. Copy your longer answers first so you do not lose them."; // asks them to reload.
   } // End of the age check.
   return null; // All good.
 } // End of checkFormStamp.

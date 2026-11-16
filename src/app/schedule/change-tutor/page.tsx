@@ -27,7 +27,7 @@ type Pattern = { weekday: number; start_time: string; minutes: number; same_patt
 // One change sent for confirmation.
 type Offer = { id: string; status: string; student_name: string; subject: string; from_tutor_name: string | null; to_tutor_name: string | null; from_date: string; sessions: number; old_time: string; new_time: string; tutor_ok: boolean; family_ok: boolean; declined_by_role: string | null; answer_note: string | null; closed_note: string | null; reason: string; created_at: string }; // as the database gives it.
 // The words for each state of a sent change.
-const OFFER_STATUS: Record<string, string> = { waiting: "Waiting", confirmed: "Confirmed and made", declined: "Declined", withdrawn: "Withdrawn", failed: "Couldn't be made" }; // waiting, confirmed, declined, withdrawn, failed.
+const OFFER_STATUS: Record<string, string> = { waiting: "Waiting", confirmed: "Confirmed and made", declined: "Declined", withdrawn: "Withdrawn", failed: "Could not be made" }; // waiting, confirmed, declined, withdrawn, failed.
 // Start times every 15 minutes from 7am to 9pm, as "HH:MM".
 const START_TIMES = Array.from({ length: 57 }, (_, i) => { const m = 7 * 60 + i * 15; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; }); // 7:00, 7:15 ... 21:00.
 // A "HH:MM" time in words, e.g. "4:15pm".
@@ -51,7 +51,7 @@ const isId = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0
 function blockers(c: Candidate): string[] { // Takes the candidate.
   const out: string[] = []; // The list of problems.
   if (c.clashes > 0) out.push(`${c.clashes} clash${c.clashes === 1 ? "" : "es"}${c.first_clash ? `, first ${sessionWhen(c.first_clash)}` : ""}`); // clashing sessions,
-  if (c.missing_library) out.push(`doesn't teach at ${c.missing_library}`); // a library they don't teach at,
+  if (c.missing_library) out.push(`does not teach at ${c.missing_library}`); // a library they don't teach at,
   if (c.at_max) out.push(`past their ${c.max_weekly_hours} hr a week`); // going past their hours.
   return out; // The problems.
 } // End of blockers.
@@ -189,12 +189,12 @@ export default async function ChangeTutorPage({ searchParams }: PageProps<"/sche
                     <option value="" disabled>Choose a tutor</option>{/* a prompt, */}
                     {free.map((c) => <option key={c.tutor_id} value={c.tutor_id}>{c.full_name}{c.teaches_sibling ? " (teaches a sibling)" : ""}</option>)}{/* and each free tutor. */}
                   </Select>{/* End of the list. */}
-                  <Field label="Reason (only matching admins see this)" name="reason" required minLength={2} maxLength={500} placeholder="e.g. Tutor leaving CLG" hint="If this is about a child safety concern, just write 'Safety re-match'. Don't write the details here." />{/* the reason box, */}
+                  <Field label="Reason (only matching admins see this)" name="reason" required minLength={2} maxLength={500} placeholder="e.g. Tutor leaving CLG" hint="If this is about a child safety concern, just write 'Safety re-match'. Do not write the details here." />{/* the reason box, */}
                   <label className="flex items-start gap-2 text-sm">{/* the tick box: */}
                     <input type="checkbox" name="tell_old_tutor" defaultChecked className="mt-1" />{/* ticked to start, */}
-                    <span>Once it&apos;s confirmed, tell {pair.tutor_name} that the sessions have moved to another tutor (no reason is given). Untick while a concern is being looked into.</span>{/* what it does. */}
+                    <span>Once it is confirmed, tell {pair.tutor_name} that the sessions have moved to another tutor (no reason is given). Untick while a concern is being looked into.</span>{/* what it does. */}
                   </label>{/* End of the tick box. */}
-                  <p className="text-sm text-zinc-600">The new tutor and the family are asked to confirm (outside quiet hours). Once both say yes, every session from {shortDate(from)} moves{retimed ? " to the new time" : ""}, and the new tutor can read the student&apos;s notes. If either says no, nothing changes and you&apos;re told why.</p>{/* what will happen. */}
+                  <p className="text-sm text-zinc-600">The new tutor and the family are asked to confirm (outside quiet hours). Once both say yes, every session from {shortDate(from)} moves{retimed ? " to the new time" : ""}, and the new tutor can read the student&apos;s notes. If either says no, nothing changes and you are told why.</p>{/* what will happen. */}
                 </ActionForm>{/* End of the form. */}
               </div> // End of the form area.
             )}{/* End of the move form. */}

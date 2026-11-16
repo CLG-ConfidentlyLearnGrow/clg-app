@@ -64,7 +64,7 @@ export function DeclineForm({ id }: { id: string }) {
       <TextArea label="Note (optional, private)" name="note" maxLength={1000} />{/* a note, */}
       <label className="flex items-start gap-2 text-sm">{/* the email choice: */}
         <input type="checkbox" name="send_email" defaultChecked className="mt-1" />{/* a tick box (ticked to start), */}
-        <span>Email them a polite &ldquo;not this time&rdquo; (the reason isn&apos;t included).</span>{/* and its words. */}
+        <span>Email them a polite &ldquo;not this time&rdquo; (the reason is not included).</span>{/* and its words. */}
       </label>{/* End of the line. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
@@ -78,7 +78,7 @@ export function ApproveForm({ id, again }: { id: string; again: boolean }) {
       <p className="text-sm text-zinc-600">{/* a note: */}
         {again // Already approved:
           ? "Sends a fresh tutor invite link to their email. The old link stops working." // says a new link goes,
-          : "Needs the interview and both referee checks recorded first. They'll get the usual tutor invite link. Once they join, they add their checks, which you confirm before they're matched with students."}{/* otherwise what's needed and what happens. */}
+          : "Needs the interview and both referee checks recorded first. They will get the usual tutor invite link. Once they join, they add their checks, which you confirm before they are matched with students."}{/* otherwise what's needed and what happens. */}
       </p>{/* End of the note. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

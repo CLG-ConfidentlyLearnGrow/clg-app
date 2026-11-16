@@ -40,7 +40,7 @@ export async function TutorChangeAnswerBox() { // The box itself.
               <ActionForm action={answerTutorChange} submitLabel="Decline">{/* a no: */}
                 <input type="hidden" name="id" value={r.id} />{/* (which change) */}
                 <input type="hidden" name="answer" value="no" />{/* (no) */}
-                <Field label="Why doesn't it suit?" name="note" required minLength={2} maxLength={500} placeholder="e.g. Thursdays don't work for us" />{/* the reason box. */}
+                <Field label="Why does not it suit?" name="note" required minLength={2} maxLength={500} placeholder="e.g. Thursdays do not work for us" />{/* the reason box. */}
               </ActionForm>{/* End of the no. */}
             </div>{/* End of the answers. */}
           </li> // End of the box.

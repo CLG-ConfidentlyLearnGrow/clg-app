@@ -19,7 +19,7 @@ select tests.eq(least((select count(*) from public.session_notices where account
 select tests.eq(least((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' and kind = 'booking_confirmed'), 1), 1, 'family told about confirmations'); -- Checks: family told about confirmations.
 select tests.eq(least((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' and kind = 'booking_declined'), 1), 1, 'family told about a decline'); -- Checks: family told about a decline.
 select tests.eq((select count(*) from public.session_notices n join public.sessions x on x.id = n.session_id -- Checks whoever cancels isn't told about it:
-  where n.kind = 'session_cancelled' and n.account_id = x.cancelled_by), 0, 'whoever cancels isn''t told about it'); -- (no notice to the person who cancelled).
+  where n.kind = 'session_cancelled' and n.account_id = x.cancelled_by), 0, 'whoever cancels is not told about it'); -- (no notice to the person who cancelled).
 
 -- P3 wants the first reminder 24 hr before.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.

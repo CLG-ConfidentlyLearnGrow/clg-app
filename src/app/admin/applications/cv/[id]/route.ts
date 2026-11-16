@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 export async function GET(_request: NextRequest, ctx: RouteContext<"/admin/applications/cv/[id]">) {
   const { id } = await ctx.params; // The application's id from the address.
   const notFound = () => // A "not available" reply:
-    new NextResponse("This CV isn't available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // the same plain message for missing or not allowed, never saved by the browser.
+    new NextResponse("This CV is not available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // the same plain message for missing or not allowed, never saved by the browser.
   if (!z.uuid().safeParse(id).success) return notFound(); // Odd id: not available.
 
   const supabase = await createClient(); // Connects to the database.

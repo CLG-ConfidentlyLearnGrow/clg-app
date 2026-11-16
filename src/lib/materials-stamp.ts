@@ -121,8 +121,8 @@ export async function checkPdf(bytes: Uint8Array): Promise<{ pages: number } | {
     const locked = e instanceof Error && /encrypt/i.test(e.message); // true if it failed because of a password,
     return { // hands back:
       error: locked // if locked,
-        ? "That PDF is locked with a password, so the app can't add the tutor's name to it. Save it again without a password and try again." // the password message,
-        : "That PDF couldn't be read. Try saving it again as a PDF and uploading it again.", // otherwise the damaged-file message.
+        ? "That PDF is locked with a password, so the app cannot add the tutor's name to it. Save it again without a password and try again." // the password message,
+        : "That PDF could not be read. Try saving it again as a PDF and uploading it again.", // otherwise the damaged-file message.
     }; // End of the message.
   } // End of the error handling.
 } // End of checkPdf.

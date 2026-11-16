@@ -93,7 +93,7 @@ function render(e: OutgoingEmail) {
 // null when Resend accepted them all.
 export async function sendEmails(emails: OutgoingEmail[]): Promise<string | null> {
   const key = process.env.RESEND_API_KEY; // Reads the Resend key.
-  if (!key) return "Email isn't set up yet (RESEND_API_KEY is missing)."; // No key, so nothing can be sent.
+  if (!key) return "Email is not set up yet (RESEND_API_KEY is missing)."; // No key, so nothing can be sent.
   if (emails.length === 0) return null; // Nothing to send.
   const from = process.env.EMAIL_FROM || "CLG Tutoring <noreply@clgtutoring.com>"; // Who the emails come from.
   const replyTo = process.env.EMAIL_REPLY_TO || undefined; // Where replies go, if set.
@@ -125,6 +125,6 @@ export async function sendEmails(emails: OutgoingEmail[]): Promise<string | null
     const detail = await res.text().catch(() => ""); // Reads Resend's explanation (blank if unreadable).
     return `Resend refused the emails (${res.status}): ${detail.slice(0, 300)}`; // Reports it, cut to 300 letters.
   } catch (err) { // Couldn't reach Resend at all:
-    return `Couldn't reach Resend: ${err instanceof Error ? err.message : String(err)}`; // reports why.
+    return `Could not reach Resend: ${err instanceof Error ? err.message : String(err)}`; // reports why.
   } // End of the error handling.
 } // End of sendEmails.

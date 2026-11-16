@@ -15,7 +15,7 @@ export async function GET() {
   } // End of the check.
   const { data, error } = await supabase.rpc("my_data_export"); // Asks the database for their information.
   if (error || !data) { // Couldn't make it:
-    return new NextResponse("We couldn't make your download. Please try again, or send CLG a privacy request.", { // a plain message:
+    return new NextResponse("We could not make your download. Please try again, or send CLG a privacy request.", { // a plain message:
       status: 500, // (server error)
       headers: { "Cache-Control": "no-store" }, // never saved by the browser.
     }); // (end of the reply)

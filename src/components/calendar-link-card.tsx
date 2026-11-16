@@ -58,7 +58,7 @@ export function CalendarLinkCard({ kind = "tutor", hasLink, madeOn, lastUsed }: 
       {link ? ( // Just made a link:
         <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">{/* a highlighted box: */}
           <p className="text-sm font-medium text-amber-900">{/* a warning: */}
-            Copy this link now. For your privacy CLG can&apos;t show it again (you can always make a new one).{/* copy it now. */}
+            Copy this link now. For your privacy CLG cannot show it again (you can always make a new one).{/* copy it now. */}
           </p>{/* End of the warning. */}
           <input // the link, in a box that's easy to select:
             readOnly // can't be typed in,
@@ -93,7 +93,7 @@ export function CalendarLinkCard({ kind = "tutor", hasLink, madeOn, lastUsed }: 
         </p> // End of the line.
       ) : ( // No link yet:
         <p className="text-sm text-zinc-700">{/* an explanation: */}
-          You don&apos;t have a calendar link yet. Make one to see your CLG sessions in Google, Outlook or Apple calendar.{/* what it's for. */}
+          You do not have a calendar link yet. Make one to see your CLG sessions in Google, Outlook or Apple calendar.{/* what it's for. */}
         </p> // End of the explanation.
       )}{/* End of the link part. */}
 

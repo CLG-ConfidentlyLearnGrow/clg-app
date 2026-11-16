@@ -43,7 +43,7 @@ export default async function HandbookPage({ searchParams }: PageProps<"/handboo
       </form>{/* End of the search. */}
       {q && <p className="text-sm text-zinc-600">{shown.length} page{shown.length === 1 ? "" : "s"} found for &ldquo;{q}&rdquo;. <TextLink href={`/handbook?as=${role}`}>Show all</TextLink></p>}{/* How many were found, with a way back. */}
       {shown.length === 0 ? ( // Nothing to show:
-        <Empty>{pages.length ? "No pages match. Try a different word, or ask CLG." : "The handbook is being written. CLG will let you know when it's ready."}</Empty> // says why.
+        <Empty>{pages.length ? "No pages match. Try a different word, or ask CLG." : "The handbook is being written. CLG will let you know when it is ready."}</Empty> // says why.
       ) : ( // Otherwise:
         <Card>{/* a card with the list: */}
           <ul className="divide-y divide-zinc-100">{/* a list with lines between: */}

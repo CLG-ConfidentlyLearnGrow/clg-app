@@ -52,6 +52,9 @@ select count(*) as questions_before from public.training_questions \gset
 select md5(string_agg(body, '' order by module_id, position)) as bodies_before from public.training_lessons \gset
 \ir ../migrations/20261118200600_training_wording_6_hours.sql
 \ir ../migrations/20261118200700_training_15_minute_modules.sql
+-- Runs the later "no short forms" change again too, as a catch-up script
+-- would, since the files above put back some wording it had written out.
+\ir ../migrations/20261119500100_training_no_contractions.sql
 -- Nothing was added or changed the second time.
 select tests.eq((select count(*) from public.training_lessons), :lessons_before::bigint, 'running again adds no lessons'); -- checks lessons
 select tests.eq((select count(*) from public.training_questions), :questions_before::bigint, 'running again adds no questions'); -- checks questions

@@ -114,6 +114,6 @@ Why: Every adult at CLG shares the job of keeping children safe and their inform
 
 That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "no-show" or "note".
 
-After an app update, a **What's new** box shows what has changed for tutors.
+After an app update, a **What is new** box shows what has changed for tutors.
 `, // End of the tour's text.
 }; // End of the tutor tour.

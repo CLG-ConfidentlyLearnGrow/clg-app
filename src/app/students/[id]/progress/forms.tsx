@@ -220,7 +220,7 @@ export function SessionNoteForm({ // Its settings:
         <fieldset className="space-y-2">{/* a group box: */}
           <legend className="mb-1 text-sm font-medium">Skills worked on</legend>{/* its title, */}
           <p className="text-xs text-zinc-500">{/* a small grey note: */}
-            Leave a skill blank if you didn&apos;t work on it. Each skill can stay where it is or move one step.{/* says to leave a skill blank if not worked on. */}
+            Leave a skill blank if you did not work on it. Each skill can stay where it is or move one step.{/* says to leave a skill blank if not worked on. */}
           </p>{/* End of the paragraph. */}
           {skills.map((s) => ( // For each skill:
             <label key={s.id} className="block space-y-1 text-sm">{/* a label: */}
@@ -400,7 +400,7 @@ export function TermReviewForm({ studentId, review }: { studentId: string; revie
       <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
       <input type="hidden" name="review_id" value={review.id} />{/* the review (hidden), */}
       <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{/* an amber warning box: */}
-        Please write this review yourself. Don&apos;t copy any student information (names, work, results or notes) into
+        Please write this review yourself. Do not copy any student information (names, work, results or notes) into
         ChatGPT, Copilot, Gemini or any other AI tool. Student information must stay in the CLG app.{/* (keeps student information out of AI tools) */}
       </p>{/* End of the paragraph. */}
       <TextArea // A big text box:
@@ -409,7 +409,7 @@ export function TermReviewForm({ studentId, review }: { studentId: string; revie
         rows={4} // four rows high,
         maxLength={2000} // up to 2000 letters,
         defaultValue={review.summary ?? ""} // filled with what's saved,
-        hint="Against the goals above: what they can do now that they couldn't, and what's still building. The family reads this as written." // with a note on what to write.
+        hint="Against the goals above: what they can do now that they could not, and what is still building. The family reads this as written." // with a note on what to write.
       />{/* (end of the element) */}
       <TextArea // A big text box:
         label="Focus for next term" // labelled "Focus for next term",
@@ -450,7 +450,7 @@ export function TermReviewReplyForm({ studentId, reviewId }: { studentId: string
       <TextArea label="Your reply (optional)" name="reply" rows={3} maxLength={2000} />{/* the reply (optional), */}
       <label className="flex items-start gap-2 text-sm">{/* a label: */}
         <input type="checkbox" name="wants_call" className="mt-1" />{/* a tick box to ask for a call, */}
-        <span>I&apos;d like a call to talk about next term</span>{/* its words. */}
+        <span>I would like a call to talk about next term</span>{/* its words. */}
       </label>{/* End of the label. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
@@ -561,7 +561,7 @@ export function EvidenceReviewForm({ // Its settings:
         rows={2} // two rows high,
         maxLength={1000} // up to 1000 letters,
         defaultValue={comment ?? ""} // filled with what's saved,
-        hint="What it shows and what you'll work on next." // with a note on what to write.
+        hint="What it shows and what you will work on next." // with a note on what to write.
       />{/* (end of the element) */}
       {skills.length > 0 && ( // If there are goal skills:
         <fieldset className="space-y-1">{/* a group box: */}

@@ -81,7 +81,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as parent P3.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with(format($$select public.confirm_makeup_time(%L, false)$$, :'offer_b'), 'say why', '"doesn''t work" with no reason'); -- Checks: saying no needs a reason.
+select tests.fails_with(format($$select public.confirm_makeup_time(%L, false)$$, :'offer_b'), 'say why', '"does not work" with no reason'); -- Checks: saying no needs a reason.
 -- The parent confirms; keeps the make-up session's id as makeup_b.
 select public.confirm_makeup_time(:'offer_b', true) as makeup_b \gset
 reset role; -- Goes back to the all-powerful test user (access rules off).
@@ -101,9 +101,9 @@ select public.confirm_makeup_time(:'offer_b', false, 'Swimming lessons on Friday
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.session_makeup_offers where id = :'offer_b' and status = 'declined' and answer_note like 'Swimming%'), 1, 'marked as not suitable'); -- Checks: the offer shows it doesn't work, with the reason.
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks CLG is told:
-  and title = 'Make-up time not suitable' and body like '%Swimming%'), 1, 'CLG told it doesn''t work'); -- (with the reason).
+  and title = 'Make-up time not suitable' and body like '%Swimming%'), 1, 'CLG told it does not work'); -- (with the reason).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor is told:
-  and title = 'Make-up time not suitable'), 1, 'tutor told it doesn''t work'); -- (one notice).
+  and title = 'Make-up time not suitable'), 1, 'tutor told it does not work'); -- (one notice).
 
 update public.session_makeup_offers set status = 'confirming', picked_at = now() - interval '1 hour' where id = :'offer_b'; -- Sets it back, with the picked time already passed.
 select tests.eq(private.expire_makeup_offers(), 1, 'a passed pick runs out'); -- Checks: the job finds it.

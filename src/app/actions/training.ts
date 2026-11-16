@@ -58,13 +58,13 @@ export async function finishModule(_prev: FormState, formData: FormData): Promis
   } // End of the questions.
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("training_finish", { p_module: id.data, p_answers: answers }); // Asks the database to mark it and record it.
-  if (error) return plain(error, "Couldn't save your answers. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save your answers. Please try again."); // Failed: plain message.
   const result = data as { passed: boolean; score: number; total: number; wrong: number[]; already?: boolean }; // What the database said.
   revalidatePath("/training"); // Refreshes the training pages.
   if (!result.passed) { // Not all right:
     return { error: `You got ${result.score} of ${result.total}. Have another look at question${result.wrong.length > 1 ? "s" : ""} ${numberList(result.wrong)}, then try again. You can try as many times as you like.` }; // says which to look at again.
   } // End of the not-passed case.
-  if (result.already) return { message: "All right. You'd already finished this module, so nothing new was recorded." }; // Already done: says so.
+  if (result.already) return { message: "All right. You had already finished this module, so nothing new was recorded." }; // Already done: says so.
   return { message: "Well done, all right! This module is finished. Your certificate is ready on the Training page." }; // Passed: well done.
 } // End of finishModule.
 
@@ -112,7 +112,7 @@ export async function createModule(_prev: FormState, formData: FormData): Promis
   const id = crypto.randomUUID(); // A new id for the module.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.from("training_modules").insert({ id, ...f.values, status: "draft", created_by: viewer.id }); // Saves it as a draft.
-  if (error) return plain(error, "Couldn't add the module. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not add the module. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page.
   redirect(`${ADMIN_PAGE}/${id}`); // Opens the new module to add lessons and questions.
 } // End of createModule.
@@ -128,10 +128,10 @@ export async function saveModule(_prev: FormState, formData: FormData): Promise<
   if (!status.success) return { error: "Choose draft, published or retired." }; // Problem: asks for one.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.from("training_modules").update({ ...f.values, status: status.data }).eq("id", id.data); // Saves the changes.
-  if (error) return plain(error, "Couldn't save the module. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the module. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
   revalidatePath("/training", "layout"); // And the training pages.
-  return { message: status.data === "published" ? "Saved. It's published, so the people it's for can see it." : "Saved." }; // Says it's saved.
+  return { message: status.data === "published" ? "Saved. It is published, so the people it is for can see it." : "Saved." }; // Says it's saved.
 } // End of saveModule.
 
 // Deletes a draft module (published ones are retired instead, to keep records).
@@ -142,7 +142,7 @@ export async function deleteDraftModule(_prev: FormState, formData: FormData): P
   const supabase = await createClient(); // Connects to the database.
   const { data: files } = await supabase.from("training_lessons").select("file_path").eq("module_id", id.data).not("file_path", "is", null); // The lesson files to remove too.
   const { error, count } = await supabase.from("training_modules").delete({ count: "exact" }).eq("id", id.data).eq("status", "draft"); // Deletes it, only if it's a draft.
-  if (error) return plain(error, "Couldn't delete it. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not delete it. Please try again."); // Failed: plain message.
   if (!count) return { error: "Only drafts can be deleted. Retire a published module instead, so its records stay." }; // Not a draft: explains.
   const paths = (files ?? []).map((f) => f.file_path as string); // The file names.
   if (paths.length) await supabase.storage.from("training").remove(paths); // Removes the files from the store.
@@ -157,9 +157,9 @@ export async function askRedo(_prev: FormState, formData: FormData): Promise<For
   if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("training_ask_redo", { p_module: id.data }); // Asks the database to start a new version.
-  if (error) return plain(error, "Couldn't do that. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not do that. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
-  return { message: "Done. Everyone it's for needs to finish it again, with the usual time allowed from today." }; // Says what happens now.
+  return { message: "Done. Everyone it is for needs to finish it again, with the usual time allowed from today." }; // Says what happens now.
 } // End of askRedo.
 
 // ---------------------------------------------------------------------------
@@ -195,7 +195,7 @@ export async function saveLesson(_prev: FormState, formData: FormData): Promise<
   const { error } = id.success // Saves:
     ? await supabase.from("training_lessons").update(values).eq("id", id.data) // changes to that lesson,
     : await supabase.from("training_lessons").insert(values); // or a new lesson.
-  if (error) return plain(error, "Couldn't save the lesson. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the lesson. Please try again."); // Failed: plain message.
   revalidatePath(`${ADMIN_PAGE}/${parsed.data.module_id}`); // Refreshes the module's admin page.
   return { message: id.success ? "Lesson saved." : "Lesson added." }; // Says it's saved.
 } // End of saveLesson.
@@ -209,7 +209,7 @@ export async function deleteLesson(_prev: FormState, formData: FormData): Promis
   const { data: lesson } = await supabase.from("training_lessons").select("module_id, file_path").eq("id", id.data).maybeSingle(); // Reads the lesson first.
   if (!lesson) return { error: "That lesson is already gone." }; // Not found: already gone.
   const { error } = await supabase.from("training_lessons").delete().eq("id", id.data); // Deletes it.
-  if (error) return plain(error, "Couldn't delete the lesson. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not delete the lesson. Please try again."); // Failed: plain message.
   if (lesson.file_path) await supabase.storage.from("training").remove([lesson.file_path]); // Removes its file from the store.
   revalidatePath(`${ADMIN_PAGE}/${lesson.module_id}`); // Refreshes the module's admin page.
   return { message: "Lesson deleted." }; // Says it's done.
@@ -221,14 +221,14 @@ export async function attachLessonFile(_prev: FormState, formData: FormData): Pr
   const id = uuid.safeParse(formData.get("lesson_id")); // Reads and checks the lesson's id.
   const path = z.string().regex(/^lessons\/[0-9a-f-]{36}\.(mp4|webm|mov|pdf)$/).safeParse(formData.get("path")); // Checks the stored file name is one this app made.
   const name = z.string().trim().min(1).max(200).safeParse(formData.get("file_name")); // Checks the original file name.
-  if (!id.success || !path.success || !name.success) return { error: "That file couldn't be attached. Please try again." }; // Problem: plain message.
+  if (!id.success || !path.success || !name.success) return { error: "That file could not be attached. Please try again." }; // Problem: plain message.
   const supabase = await createClient(); // Connects to the database.
   const { data: lesson } = await supabase.from("training_lessons").select("module_id, file_path").eq("id", id.data).maybeSingle(); // Reads the lesson first.
   if (!lesson) return { error: "That lesson is gone. Please reload the page." }; // Not found: asks to reload.
   const { error } = await supabase.from("training_lessons").update({ file_path: path.data, file_name: name.data, updated_at: new Date().toISOString() }).eq("id", id.data); // Saves the file on the lesson.
   if (error) { // Failed:
     await supabase.storage.from("training").remove([path.data]); // removes the uploaded file so nothing is left behind,
-    return plain(error, "Couldn't attach the file. Please try again."); // and says so.
+    return plain(error, "Could not attach the file. Please try again."); // and says so.
   } // End of the failure case.
   if (lesson.file_path && lesson.file_path !== path.data) await supabase.storage.from("training").remove([lesson.file_path]); // Removes the file it replaced.
   revalidatePath(`${ADMIN_PAGE}/${lesson.module_id}`); // Refreshes the module's admin page.
@@ -242,9 +242,9 @@ export async function removeLessonFile(_prev: FormState, formData: FormData): Pr
   if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
   const supabase = await createClient(); // Connects to the database.
   const { data: lesson } = await supabase.from("training_lessons").select("module_id, file_path").eq("id", id.data).maybeSingle(); // Reads the lesson first.
-  if (!lesson?.file_path) return { message: "There's no file on this lesson." }; // No file: nothing to do.
+  if (!lesson?.file_path) return { message: "There is no file on this lesson." }; // No file: nothing to do.
   const { error } = await supabase.from("training_lessons").update({ file_path: null, file_name: null }).eq("id", id.data); // Takes the file off the lesson.
-  if (error) return plain(error, "Couldn't remove the file. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not remove the file. Please try again."); // Failed: plain message.
   await supabase.storage.from("training").remove([lesson.file_path]); // Deletes the file from the store.
   revalidatePath(`${ADMIN_PAGE}/${lesson.module_id}`); // Refreshes the module's admin page.
   return { message: "File removed." }; // Says it's done.
@@ -275,7 +275,7 @@ export async function saveQuestion(_prev: FormState, formData: FormData): Promis
   const { error } = id.success // Saves:
     ? await supabase.from("training_questions").update(values).eq("id", id.data) // changes to that question,
     : await supabase.from("training_questions").insert(values); // or a new question.
-  if (error) return plain(error, "Couldn't save the question. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the question. Please try again."); // Failed: plain message.
   revalidatePath(`${ADMIN_PAGE}/${moduleId.data}`); // Refreshes the module's admin page.
   return { message: id.success ? "Question saved." : "Question added." }; // Says it's saved.
 } // End of saveQuestion.
@@ -288,7 +288,7 @@ export async function deleteQuestion(_prev: FormState, formData: FormData): Prom
   if (!id.success || !moduleId.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.from("training_questions").delete().eq("id", id.data); // Deletes it.
-  if (error) return plain(error, "Couldn't delete the question. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not delete the question. Please try again."); // Failed: plain message.
   revalidatePath(`${ADMIN_PAGE}/${moduleId.data}`); // Refreshes the module's admin page.
   return { message: "Question deleted." }; // Says it's done.
 } // End of deleteQuestion.
@@ -301,7 +301,7 @@ export async function deleteQuestion(_prev: FormState, formData: FormData): Prom
 export async function saveTrainingSettings(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
   const viewer = await requireAdmin(); // Only owner and operations admins.
   const parsed = z.object({ // The rules:
-    grace_days: z.coerce.number().int().min(0, "Days allowed can't be negative.").max(180, "Days allowed can be up to 180."), // days allowed, 0 to 180,
+    grace_days: z.coerce.number().int().min(0, "Days allowed cannot be negative.").max(180, "Days allowed can be up to 180."), // days allowed, 0 to 180,
     quarter_hours: z.coerce.number().min(0).max(40, "Up to 40 hr a quarter."), // hours each quarter, 0 to 40,
     video_max_mb: z.coerce.number().int().min(1).max(5000, "The largest upload can be up to 5000 MB."), // largest upload, 1 to 5000 MB,
   }).safeParse(Object.fromEntries(formData)); // (checked against the form)
@@ -314,7 +314,7 @@ export async function saveTrainingSettings(_prev: FormState, formData: FormData)
     updated_by: viewer.id, // who changed them,
     updated_at: new Date().toISOString(), // and when.
   }).eq("id", true); // (the one settings row)
-  if (error) return plain(error, "Couldn't save the settings. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the settings. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
   return { message: "Settings saved." }; // Says it's saved.
 } // End of saveTrainingSettings.
@@ -341,14 +341,14 @@ export async function saveHandbookPage(_prev: FormState, formData: FormData): Pr
   const id = uuid.safeParse(formData.get("id")); // An existing page's id, if sent.
   if (id.success) { // Changing a page:
     const { error } = await supabase.from("handbook_pages").update(values).eq("id", id.data); // saves the changes,
-    if (error) return plain(error, "Couldn't save the page. Please try again."); // failed: plain message.
+    if (error) return plain(error, "Could not save the page. Please try again."); // failed: plain message.
     revalidatePath(ADMIN_PAGE, "layout"); // refreshes the admin pages,
     revalidatePath("/handbook", "layout"); // and the handbook,
     return { message: "Page saved." }; // and says it's saved.
   } // End of changing.
   const newId = crypto.randomUUID(); // A new page's id.
   const { error } = await supabase.from("handbook_pages").insert({ id: newId, ...values }); // Adds the page.
-  if (error) return plain(error, "Couldn't add the page. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not add the page. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
   redirect(`${ADMIN_PAGE}/handbook/${newId}`); // Opens the new page for editing.
 } // End of saveHandbookPage.
@@ -360,7 +360,7 @@ export async function deleteHandbookPage(_prev: FormState, formData: FormData): 
   if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.from("handbook_pages").delete().eq("id", id.data); // Deletes it.
-  if (error) return plain(error, "Couldn't delete the page. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not delete the page. Please try again."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
   revalidatePath("/handbook", "layout"); // And the handbook.
   redirect(`${ADMIN_PAGE}?section=handbook`); // Goes back to the handbook list.

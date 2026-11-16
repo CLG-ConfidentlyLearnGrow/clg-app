@@ -16,7 +16,7 @@ returning id as unconfirmed \gset
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.fails(format($$select public.offer_other_time(%L, 'General Maths', '00000000-0000-0000-0000-000000000014', -- Checks families can't offer another time:
-  7::smallint, '07:00', 60, 'online', null, current_date + 7, current_date + 60)$$, :'sam'), 'families can''t offer another time'); -- (Sunday 7am online).
+  7::smallint, '07:00', 60, 'online', null, current_date + 7, current_date + 60)$$, :'sam'), 'families cannot offer another time'); -- (Sunday 7am online).
 -- Nor skip the availability check by setting the switch themselves.
 select tests.fails(format($$select set_config('clg.offer_other_time', 'on', false), public.request_booking(%L, 'General Maths', -- Checks the admin switch does nothing for families:
   '00000000-0000-0000-0000-000000000014', 7::smallint, '07:00', 60, 'online', null, current_date + 7, current_date + 60)$$, :'sam'), -- (turning it on, then asking for a Sunday 7am booking),

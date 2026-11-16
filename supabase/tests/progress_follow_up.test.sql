@@ -45,7 +45,7 @@ select tests.eq((select count(*) from public.progress_notices where session_id i
   ('00000000-0000-0000-0000-0000000e00f0', '00000000-0000-0000-0000-0000000e00c0', '00000000-0000-0000-0000-0000000e00a0')), 0, -- (those three sessions),
   'no reminders for future, cancelled or no-show sessions'); -- (the label).
 select tests.eq((select count(*) from public.progress_notices where kind = 'note_overdue' -- Checks tutors don't get admin notices:
-  and account_id = '00000000-0000-0000-0000-000000000011'), 0, 'tutors don''t get admin notices'); -- (none for tutor T1).
+  and account_id = '00000000-0000-0000-0000-000000000011'), 0, 'tutors do not get admin notices'); -- (none for tutor T1).
 select private.queue_note_reminders(); -- Queues the reminders again (should not repeat).
 select tests.eq((select count(*) from public.progress_notices where session_id in -- Checks reminders are queued only once:
   ('00000000-0000-0000-0000-0000000e0001', '00000000-0000-0000-0000-0000000e0003') -- (for the two finished sessions)
@@ -59,7 +59,7 @@ update public.progress_notices set deliver_at = now() - interval '1 minute'; -- 
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.list_notes_due() where session_id::text like '00000000-0000-0000-0000-0000000e%'), 2, 'tutor sees own sessions needing a note'); -- Checks: tutor sees own sessions needing a note.
-select tests.eq((select count(*) from public.list_notes_due() where student_id = :'vic'), 0, 'tutor doesn''t see other tutors'' sessions'); -- Checks: tutor doesn't see other tutors' sessions.
+select tests.eq((select count(*) from public.list_notes_due() where student_id = :'vic'), 0, 'tutor does not see other tutors'' sessions'); -- Checks: tutor doesn't see other tutors' sessions.
 select tests.eq((select count(*) from public.progress_notices where account_id <> '00000000-0000-0000-0000-000000000011'), 0, 'tutor sees only own notices'); -- Checks: tutor sees only own notices.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
@@ -102,8 +102,8 @@ select tests.fails(format($$select public.save_session_note(p_student => %L, p_s
   'note for a cancelled session'); -- (the label).
 select tests.fails(format($$select public.save_session_note(p_student => %L, p_session_date => current_date, p_minutes => 60, -- Checks a note for a session that hasn't happened is refused:
   p_attendance => 'attended', p_went_well => 'ok', p_next_step => 'next', p_session => '00000000-0000-0000-0000-0000000e00f0')$$, :'cara'), -- (the future one),
-  'note for a session that hasn''t happened'); -- (the label).
-select tests.eq((select count(*) from public.session_note_stats), 0, 'tutor can''t read writing times'); -- Checks: tutor can't read writing times.
+  'note for a session that has not happened'); -- (the label).
+select tests.eq((select count(*) from public.session_note_stats), 0, 'tutor cannot read writing times'); -- Checks: tutor can't read writing times.
 select tests.fails($$insert into public.session_note_stats (note_id, writing_seconds) select id, 1 from public.session_notes limit 1$$, 'tutor writes stats directly'); -- Checks this is refused: tutor writes stats directly.
 select tests.fails($$insert into public.progress_notices (account_id, student_id, kind, title, body, deliver_at) values ('00000000-0000-0000-0000-000000000001', (select id from public.students limit 1), 'session_update', 'x', 'x', now())$$, 'tutor writes notices directly'); -- Checks this is refused: tutor writes notices directly.
 update public.session_notes set home_tip = 'Ask Cara to explain one fraction to you.' where id = :'linked'; -- Tries to change the home tip.
@@ -120,7 +120,7 @@ select tests.eq((select writing_seconds from public.session_note_stats where not
 select tests.eq((select count(*) from public.progress_notices where note_id = :'linked' and kind = 'session_update' -- Checks the parent gets the update with the tip:
   and account_id = '00000000-0000-0000-0000-000000000001' and body like '%Try at home: Ask Cara%'), 1, 'parent gets the update with the tip'); -- (one notice mentioning "Try at home").
 select tests.eq((select count(*) from public.progress_notices where note_id = :'linked' -- Checks the writer isn't told about their own note:
-  and account_id = '00000000-0000-0000-0000-000000000011'), 0, 'the writer isn''t told about their own note'); -- (none for tutor T1).
+  and account_id = '00000000-0000-0000-0000-000000000011'), 0, 'the writer is not told about their own note'); -- (none for tutor T1).
 update public.progress_notices set deliver_at = now() - interval '1 minute' where note_id is not null; -- Makes the note notices due now.
 
 -- ===========================================================================
@@ -131,7 +131,7 @@ set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.session_notes where home_tip is not null), 1, 'parent sees the tip'); -- Checks: parent sees the tip.
 update public.session_notes set home_tip = 'changed' where id = :'linked'; -- Tries to change the home tip.
 select tests.eq((select count(*) from public.session_notes where home_tip = 'changed'), 0, 'parent cannot change the tip'); -- Checks: parent cannot change the tip.
-select tests.eq((select count(*) from public.session_note_stats), 0, 'parent can''t read writing times'); -- Checks: parent can't read writing times.
+select tests.eq((select count(*) from public.session_note_stats), 0, 'parent cannot read writing times'); -- Checks: parent can't read writing times.
 -- Three: the two notes above, plus the first note in progress.test.sql.
 select tests.eq((select count(*) from public.progress_notices where kind = 'session_update' and read_at is null), 3, 'parent sees updates'); -- Checks: parent sees updates.
 select tests.eq((select count(*) from public.progress_notices where kind <> 'session_update'), 0, 'parent sees no tutor or admin reminders'); -- Checks: parent sees no tutor or admin reminders.
@@ -153,7 +153,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.progress_students_to_check() where student_id = :'cara'), 1, 'tutor sees own student'); -- Checks: tutor sees own student.
-select tests.eq((select count(*) from public.progress_students_to_check() where student_id = :'vic'), 0, 'tutor doesn''t see other students'); -- Checks: tutor doesn't see other students.
+select tests.eq((select count(*) from public.progress_students_to_check() where student_id = :'vic'), 0, 'tutor does not see other students'); -- Checks: tutor doesn't see other students.
 -- Two attended notes since a skill last moved.
 select tests.eq((select notes_since_movement from public.progress_students_to_check() where student_id = :'cara'), 2, 'sessions since a skill moved'); -- Checks: sessions since a skill moved.
 select tests.eq((select active_goals from public.progress_students_to_check() where student_id = :'cara'), 3, 'active goals counted'); -- Checks: active goals counted.

@@ -82,7 +82,7 @@ select tests.eq((select count(*) from public.session_notices where booking_id = 
   and account_id = :'offer2_tutor'), 1, 'tutor told'); -- (one declined notice).
 select tests.claims(:'offer2_tutor', 'aal2'); -- Signs in as the offered tutor with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select public.respond_to_booking(%L, true)$$, :'offer2'), 'tutor can''t accept a declined offer'); -- Checks this is refused: tutor can't accept a declined offer.
+select tests.fails(format($$select public.respond_to_booking(%L, true)$$, :'offer2'), 'tutor cannot accept a declined offer'); -- Checks this is refused: tutor can't accept a declined offer.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- The admin picked something other than the suggestion: the reason is kept.
@@ -94,18 +94,18 @@ select tests.eq((select changes from public.offer_change_reasons() where reason 
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select public.record_offer_change(%L, null, null, null, null, null, 'other')$$, :'offer2'), 'families can''t record changes'); -- Checks this is refused: families can't record changes.
-select tests.eq((select count(*) from public.offer_changes), 0, 'families can''t see changes'); -- Checks: families can't see changes.
+select tests.fails(format($$select public.record_offer_change(%L, null, null, null, null, null, 'other')$$, :'offer2'), 'families cannot record changes'); -- Checks this is refused: families can't record changes.
+select tests.eq((select count(*) from public.offer_changes), 0, 'families cannot see changes'); -- Checks: families can't see changes.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.offer_change_reasons()$$, 'tutors can''t see change reasons'); -- Checks this is refused: tutors can't see change reasons.
+select tests.fails($$select * from public.offer_change_reasons()$$, 'tutors cannot see change reasons'); -- Checks this is refused: tutors can't see change reasons.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- A family's own booking needs only the tutor.
 select tests.claims(null); -- Signs out, so no one is signed in.
 select tests.eq((select count(*) from public.bookings where needs_family_ok and requested_by = '00000000-0000-0000-0000-000000000003'), 0, -- Checks bookings families make themselves don't ask them again:
-  'family bookings don''t ask the family again'); -- (the label).
+  'family bookings do not ask the family again'); -- (the label).
 
 -- Preferred days come first in the options.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.

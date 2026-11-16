@@ -25,7 +25,7 @@ type Tokens = { access_token: string; refresh_token: string; expires_in: number 
 // Locks text with the encryption key, so the stored Xero sign-in is unreadable without it.
 function encrypt(text: string): string {
   const key = encryptionKey(); // Reads the encryption key.
-  if (!key) throw new Error("BILLING_ENCRYPTION_KEY is missing, so the Xero sign-in can't be stored safely."); // No key: refuses to store it.
+  if (!key) throw new Error("BILLING_ENCRYPTION_KEY is missing, so the Xero sign-in cannot be stored safely."); // No key: refuses to store it.
   const iv = randomBytes(12); // A fresh random starting value, so the same text never locks the same way twice.
   const cipher = createCipheriv("aes-256-gcm", key, iv); // Sets up strong AES-256-GCM encryption.
   const data = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]); // Locks the text.
@@ -45,7 +45,7 @@ function decrypt(stored: string): string {
 // The Xero sign-in page address the owner is sent to.
 export function xeroSignInUrl(redirectUri: string, state: string): string {
   const cfg = xeroConfig(); // Reads the Xero settings.
-  if (!cfg) throw new Error("Xero isn't set up yet (XERO_CLIENT_ID and XERO_CLIENT_SECRET are missing)."); // Not set up: plain message.
+  if (!cfg) throw new Error("Xero is not set up yet (XERO_CLIENT_ID and XERO_CLIENT_SECRET are missing)."); // Not set up: plain message.
   const params = new URLSearchParams({ // The details Xero needs:
     response_type: "code", // send back a one-time code,
     client_id: cfg.clientId, // for CLG's Xero app,
@@ -59,7 +59,7 @@ export function xeroSignInUrl(redirectUri: string, state: string): string {
 // Asks Xero for sign-in passes (first sign-in or refresh).
 async function tokenRequest(body: Record<string, string>): Promise<Tokens> {
   const cfg = xeroConfig(); // Reads the Xero settings.
-  if (!cfg) throw new Error("Xero isn't set up yet."); // Not set up.
+  if (!cfg) throw new Error("Xero is not set up yet."); // Not set up.
   const res = await fetch(TOKEN_URL, { // Sends the request:
     method: "POST", // as a new request,
     headers: { // with these headers:
@@ -84,7 +84,7 @@ async function saveTokens(tokens: Tokens, tenantId: string, tenantName: string |
     expires_at: new Date(Date.now() + (tokens.expires_in - 60) * 1000).toISOString(), // when the pass runs out (a minute early, to be safe),
     ...(by ? { connected_by: by, connected_at: new Date().toISOString() } : {}), // and who connected it and when (first sign-in only).
   }); // End of the save.
-  if (error) throw new Error("Couldn't save the Xero connection."); // Save failed: plain message.
+  if (error) throw new Error("Could not save the Xero connection."); // Save failed: plain message.
 } // End of saveTokens.
 
 // After the owner signs in to Xero: swap the code for tokens and pick the
@@ -132,7 +132,7 @@ async function xero<T>(
   base = "api.xro/2.0", // Which part of Xero (accounting by default).
 ): Promise<T> {
   const auth = await accessToken(); // Gets a fresh pass.
-  if (!auth) throw new Error("Xero isn't connected."); // Not connected: plain message.
+  if (!auth) throw new Error("Xero is not connected."); // Not connected: plain message.
   for (let attempt = 0; attempt < 2; attempt++) { // Tries up to twice.
     const res = await fetch(`${API}/${base}/${path}`, { // Sends the request:
       method, // with this action,

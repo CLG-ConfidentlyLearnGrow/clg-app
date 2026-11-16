@@ -276,7 +276,7 @@ export function BookForm({ // Its settings:
         <TextArea label={isAdmin ? "Note for the tutor and family (optional)" : "Note for the tutor (optional)"} name="note" maxLength={1000} rows={2} />{/* A note, worded for admins or families. */}
         <p className="text-xs text-zinc-600">{/* A small note: */}
           {isAdmin // for admins,
-            ? "The tutor and family each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes." // says both sides have 3 days to approve,
+            ? "The tutor and family each have 3 days to approve, with a reminder after 2 days. It is confirmed once both say yes." // says both sides have 3 days to approve,
             : "This books the time each week, subject to the tutor confirming within 48 hours."}{/* for families, says the tutor confirms within 48 hr. */}
         </p>{/* End of the paragraph. */}
       </ActionForm>{/* End of the form. */}
@@ -419,7 +419,7 @@ export function OfferForm({ // Its settings:
               ))}{/* End of the loop. */}
             </Select>{/* End of the drop-down. */}
             <p className="text-xs text-zinc-600 sm:col-span-2">{/* A small note: */}
-              This time isn&apos;t in the tutor&apos;s availability, so check with them first. The app still checks their weekly
+              This time is not in the tutor&apos;s availability, so check with them first. The app still checks their weekly
               maximum and other bookings.{/* (to check with the tutor first) */}
             </p>{/* End of the paragraph. */}
           </div> // End of the block.
@@ -445,7 +445,7 @@ export function OfferForm({ // Its settings:
         )}{/* End of this part. */}
         <TextArea label="Note for the tutor and family (optional)" name="note" maxLength={1000} rows={2} />{/* A note for the tutor and family. */}
         <p className="text-xs text-zinc-600">{/* A small note: */}
-          The tutor and family each have 3 days to approve, with a reminder after 2 days. It&apos;s confirmed once both say yes.{/* says both sides have 3 days to approve. */}
+          The tutor and family each have 3 days to approve, with a reminder after 2 days. It is confirmed once both say yes.{/* says both sides have 3 days to approve. */}
         </p>{/* End of the paragraph. */}
       </ActionForm>{/* End of the form. */}
     </div> // End of the block.
@@ -465,7 +465,7 @@ export function ApproveForm({ bookingId }: { bookingId: string }) { // (takes th
               Approve{/* "Approve". */}
             </Button>{/* (end of the button) */}
             <BusyButton type="submit" name="answer" value="decline" disabled={pending} className={quietButton}>{/* a quiet decline button: */}
-              This time doesn&apos;t suit{/* "This time doesn't suit". */}
+              This time does not suit{/* "This time doesn't suit". */}
             </BusyButton>{/* (end of the button) */}
           </div>{/* End of the block. */}
         </> // End of the group.
@@ -581,7 +581,7 @@ export function CancelForm({ // Its settings:
           name="note" // sent as note,
           maxLength={300} // up to 300 characters,
           required={reason === "other"} // needed for "Other",
-          hint="Shared with the tutor, the family and CLG. Please don't include health details." // a privacy reminder.
+          hint="Shared with the tutor, the family and CLG. Please do not include health details." // a privacy reminder.
         />{/* (end of the box) */}
         <fieldset className="space-y-3">{/* the make-up times: */}
           <legend className="text-sm font-medium text-zinc-800">Two other times this week</legend>{/* the heading, */}
@@ -657,9 +657,9 @@ export function MakeupConfirmForm({ offerId, pickedAt }: { offerId: string; pick
           <Button type="submit" name="answer" value="yes" disabled={pending}>{/* the confirm button: */}
             Confirm {sessionWhen(pickedAt)}{/* e.g. "Confirm Thu 20 Nov, 4:00pm". */}
           </Button>{/* (end of the button) */}
-          <TextArea label="If it doesn't work, please say why" name="note" maxLength={500} rows={2} />{/* why it doesn't work, */}
+          <TextArea label="If it does not work, please say why" name="note" maxLength={500} rows={2} />{/* why it doesn't work, */}
           <BusyButton type="submit" name="answer" value="no" disabled={pending} className={quietButton}>{/* a quiet "doesn't work" button: */}
-            That time doesn&apos;t work{/* "That time doesn't work". */}
+            That time does not work{/* "That time doesn't work". */}
           </BusyButton>{/* (end of the button) */}
         </> // End of the group.
       )}{/* End of this part. */}
@@ -715,7 +715,7 @@ export function PlacesForm({ // Its settings:
       </fieldset>{/* End of the group box. */}
       <fieldset className="space-y-2">{/* A group box: */}
         <legend className="mb-1 text-sm font-medium text-zinc-800">Libraries you can work at</legend>{/* its title, */}
-        {libraries.length === 0 && <p className="text-sm text-zinc-500">CLG hasn&apos;t added any libraries yet.</p>}{/* a note if there are no libraries yet, */}
+        {libraries.length === 0 && <p className="text-sm text-zinc-500">CLG has not added any libraries yet.</p>}{/* a note if there are no libraries yet, */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{/* a grid: */}
           {libraries.map((l) => ( // for each library:
             <label key={l.id} className={box}>{/* a label: */}
@@ -728,7 +728,7 @@ export function PlacesForm({ // Its settings:
           ))}{/* End of the loop. */}
         </div>{/* End of the block. */}
         <p className="text-xs text-zinc-600">{/* A small note: */}
-          You&apos;ll stay at one library for the day. Online sessions can be taken from the library on library days.{/* about staying at one library for the day. */}
+          You will stay at one library for the day. Online sessions can be taken from the library on library days.{/* about staying at one library for the day. */}
         </p>{/* End of the paragraph. */}
       </fieldset>{/* End of the group box. */}
     </ActionForm> // End of the form.
@@ -913,7 +913,7 @@ export function NoticeSettingsForm({ // Its settings:
       </Select>{/* End of the drop-down. */}
       <p className="text-xs text-zinc-600">{/* A small note: */}
         A final reminder always comes 1 hr before. Nothing arrives between {quiet}, your local time. Reminders and notices
-        show here in the app; CLG doesn&apos;t send them by email.{/* (about the final reminder and quiet hours) */}
+        show here in the app; CLG does not send them by email.{/* (about the final reminder and quiet hours) */}
       </p>{/* End of the paragraph. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
@@ -1009,7 +1009,7 @@ export function AvailabilityCheckForm({ id }: { id: string }) { // (takes the ch
               No changes{/* "No changes". */}
             </Button>{/* (end of the button) */}
             <BusyButton type="submit" name="answer" value="changed" disabled={pending} className={quietButton}>{/* a quiet "updated" button: */}
-              I&apos;ve updated it{/* "I've updated it". */}
+              I have updated it{/* "I've updated it". */}
             </BusyButton>{/* (end of the button) */}
           </div>{/* End of the block. */}
         </> // End of the group.
@@ -1062,7 +1062,7 @@ export function StudentPlacesForm({ // Its settings:
               </label> // End of the label.
             ))}{/* End of the loop. */}
           </div>{/* End of the block. */}
-          <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match isn&apos;t guaranteed.</p>{/* A note that more places mean more tutors. */}
+          <p className="text-xs text-zinc-600">More places mean more tutors to choose from, though a match is not guaranteed.</p>{/* A note that more places mean more tutors. */}
         </> // End of the group.
       ) : ( // Otherwise:
         <input type="hidden" name="keep_places" value="1" /> // tells the server to keep the places as they are (hidden).
@@ -1095,9 +1095,9 @@ export function StudentPlacesForm({ // Its settings:
           ))}{/* End of the loop. */}
         </div>{/* End of the block. */}
         <p className="text-xs text-amber-900">{/* An amber note: */}
-          These are preferences, not guarantees. They may not be met: it depends on which tutors are free. We&apos;ll
-          offer matching times first. If none are available, we&apos;ll offer the closest time we can, and you can say if
-          it doesn&apos;t suit.{/* (that preferences aren't guaranteed) */}
+          These are preferences, not guarantees. They may not be met: it depends on which tutors are free. We will
+          offer matching times first. If none are available, we will offer the closest time we can, and you can say if
+          it does not suit.{/* (that preferences aren't guaranteed) */}
         </p>{/* End of the paragraph. */}
       </fieldset>{/* End of the group box. */}
       <TextArea // A big text box:
@@ -1106,7 +1106,7 @@ export function StudentPlacesForm({ // Its settings:
         maxLength={1000} // up to 1000 letters,
         rows={2} // two rows high,
         defaultValue={tutorPreferences} // filled with what's saved,
-        hint="For example, experience with dyslexia or exam preparation. CLG reads this when choosing a tutor; it's a preference, not a guarantee. Please don't ask for things like gender, age, religion or background." // with examples and what not to ask for.
+        hint="For example, experience with dyslexia or exam preparation. CLG reads this when choosing a tutor; it is a preference, not a guarantee. Please do not ask for things like gender, age, religion or background." // with examples and what not to ask for.
       />{/* (end of the element) */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

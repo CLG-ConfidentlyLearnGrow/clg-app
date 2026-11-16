@@ -53,7 +53,7 @@ The first time you open your dashboard, a short **app tour** shows the main part
 
 ### Use your progress page
 - **Next step** is what your tutor suggests next, with practice or something to try.
-- **Roadmap** shows this week's steps and what's coming up, like tests and assignments.
+- **Roadmap** shows this week's steps and what is coming up, like tests and assignments.
 - **Goals and skills** shows what you are working on and how far you have come.
 - **Recent sessions** has the notes from each session.
 
@@ -82,7 +82,7 @@ Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**,
 ### See upcoming sessions and join online
 1. In **Sessions**, choose **Overview**.
 2. **Upcoming sessions** lists each session with your tutor, the subject and the place.
-3. For an online session, choose **Join** a few minutes before it starts. It opens Microsoft Teams. You don't need a Microsoft account.
+3. For an online session, choose **Join** a few minutes before it starts. It opens Microsoft Teams. You do not need a Microsoft account.
 
 ### See your week, and add sessions to your own calendar
 1. In the side menu, choose **Weekly calendar**.
@@ -92,7 +92,7 @@ Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**,
 ### Approve a session time
 When CLG offers a time, you see a notice and a number on **Sessions**.
 1. In **Sessions**, choose **Bookings**.
-2. Check the day, time, tutor and place, then choose **Approve**, or **This time doesn't suit** and say why.
+2. Check the day, time, tutor and place, then choose **Approve**, or **This time does not suit** and say why.
 
 Tip: You or your parent can answer. The first answer counts.
 
@@ -104,7 +104,7 @@ Tip: You or your parent can answer. The first answer counts.
 Credit: more than 24 hr before gets full credit, 24 to 2 hr before gets half, under 2 hr gets none.
 
 ### Pick or confirm a make-up time, or a change
-If your tutor or CLG cancels a session, or CLG needs to change your tutor or time, a card shows at the top of the **Overview** (**Pick a make-up time**, **Confirm a make-up time** or **Please confirm a change**). Choose an answer, or say why it doesn't work.
+If your tutor or CLG cancels a session, or CLG needs to change your tutor or time, a card shows at the top of the **Overview** (**Pick a make-up time**, **Confirm a make-up time** or **Please confirm a change**). Choose an answer, or say why it does not work.
 
 ### Tell CLG which times suit, and for how long
 1. In **Sessions**, choose **Preferred times**. Tick the days and parts of the day that suit, then **Save preferences**.
@@ -136,22 +136,22 @@ In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder 
 3. Choose **Set up automatic payment** and enter your card or bank details on Stripe's secure page. CLG never sees them.
 4. Pay any invoice with **Pay (amount) now**.
 
-Tip: Only the person or people paying see Billing. If your parent or someone else pays, you won't see it, unless CLG has made you the bill payer or an extra payer. If your sessions are on hold, your dashboard says so: check with whoever pays.
+Tip: Only the person or people paying see Billing. If your parent or someone else pays, you will not see it, unless CLG has made you the bill payer or an extra payer. If your sessions are on hold, your dashboard says so: check with whoever pays.
 
 ## Help, privacy and safety
 
-### If you don't feel safe
+### If you do not feel safe
 1. If you are in danger now, call 000.
 2. You can talk to someone any time, for free: Kids Helpline 1800 55 1800 (ages 5 to 25) or Lifeline 13 11 14.
 3. You can also tell an adult you trust, or choose **Child safety** at the top of any page and use the form to tell CLG. It is kept confidential.
 
 ### Give feedback or report an app issue
 - **Feedback** (top of the page): tell CLG what is going well, an idea, or a worry.
-- **Report app issue**: tell CLG if something in the app isn't working, with a screenshot if you can.
+- **Report app issue**: tell CLG if something in the app is not working, with a screenshot if you can.
 
 ### Your privacy
 Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email.
 
-Tip: Your profile is private. If your brothers or sisters have their own login, they can't see your sessions, progress or anything else on your profile, and you can't see theirs. Your parent can see all their children.
+Tip: Your profile is private. If your brothers or sisters have their own login, they cannot see your sessions, progress or anything else on your profile, and you cannot see theirs. Your parent can see all their children.
 `, // End of the guide's text.
 }; // End of the student guide.

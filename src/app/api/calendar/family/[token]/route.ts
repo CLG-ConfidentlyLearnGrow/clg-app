@@ -14,7 +14,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/calendar/fa
   const { token: raw } = await ctx.params; // The secret part of the address.
   const token = raw.replace(/\.ics$/i, "").toLowerCase(); // Drops the ".ics" ending (added so every calendar app accepts the link) and uses lower case.
   const notFound = () => // The reply for a wrong or old link:
-    new Response("This calendar link isn't working. Make a new one in the CLG app (Weekly calendar).", { // a plain message,
+    new Response("This calendar link is not working. Make a new one in the CLG app (Weekly calendar).", { // a plain message,
       status: 404, // "not found",
       headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" }, // never saved, plain text.
     }); // End of the reply.
@@ -26,7 +26,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/calendar/fa
   const { data, error } = await supabase.rpc("family_calendar_feed", { p_token: token }); // Asks for the sessions for this secret.
   if (error) { // The database had a problem:
     console.error("Calendar feed failed:", error.message); // notes it in the server log (never the secret),
-    return new Response("The calendar couldn't be loaded just now. Your calendar app will try again.", { // and replies plainly,
+    return new Response("The calendar could not be loaded just now. Your calendar app will try again.", { // and replies plainly,
       status: 503, // "try again later",
       headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" }, // never saved, plain text.
     }); // End of the reply.

@@ -53,17 +53,17 @@ Open **Sessions** in the side menu. Its sections include **Overview**, **Booking
 
 ### Book a session for a family
 1. In **Sessions**, choose **Book a session**.
-2. Choose who it's for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
+2. Choose who it is for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
 3. Choose **Find times**. **Available times** shows only tutors who suit: checks in date for the student's state, teach the subject at the student's level, free then, and under their weekly hours. Libraries are offered when they are within the tutor's travel distance for that time and the family's travel distance (or you ticked them). **At home** times are offered when the learner's address is within a tutor's distance and the tutor ticked learners' homes for that time.
-4. Choose a time. If you didn't pick the suggested one, say why (it helps improve the suggestions).
-5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes. If not, the offer closes for now: the tutor and family are told, you get a notice saying who didn't answer, and the student is back in **Matching**.
+4. Choose a time. If you did not pick the suggested one, say why (it helps improve the suggestions).
+5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It is confirmed once both say yes. If not, the offer closes for now: the tutor and family are told, you get a notice saying who did not answer, and the student is back in **Matching**.
 
 Tip: A student needs their details, preferred times and **How long to book** filled in before times can be offered. The family's address and travel distance are under **Session places** (from **Matching**). Libraries need a map point to be matched by distance; libraries loaded from OpenStreetMap have one.
 
 ### Cancel a session for someone
 1. In **Sessions**, choose **Overview**, find the session and choose **Cancel**.
 2. Choose a reason and who asked (the family, the tutor or CLG).
-3. Offer two other times that week. When CLG offers the times, one side picks and the other confirms before it's booked.
+3. Offer two other times that week. When CLG offers the times, one side picks and the other confirms before it is booked.
 4. Choose **Cancel this session**.
 
 ### Stop a booking
@@ -80,10 +80,10 @@ Tip: A student needs their details, preferred times and **How long to book** fil
 ### Help with requests for extra or one-off sessions
 1. In **Sessions**, choose **Requests**. Families' requests are listed oldest first.
 2. To offer a time, choose the tutor, date, start, length and place, add a note for the family, and choose **Offer this time**. The family approves it.
-3. If it can't be arranged, choose **Couldn't arrange it** and say why.
+3. If it cannot be arranged, choose **Could not arrange it** and say why.
 
 ### Follow up a block
-When a family blocks a tutor, or a tutor blocks a student, it shows in **Sessions**, **Blocks**. The other person isn't told. Contact the person who made the block, then record what happened and choose **Save follow-up**.
+When a family blocks a tutor, or a tutor blocks a student, it shows in **Sessions**, **Blocks**. The other person is not told. Contact the person who made the block, then record what happened and choose **Save follow-up**.
 
 ### Look after the waitlist
 1. In **Sessions**, choose **Waitlist**. Everyone waiting is listed, oldest first, with how many times would now suit.
@@ -112,14 +112,14 @@ Use this during a phone call, or when a family would rather CLG fills it in.
 
 ### Link another parent or guardian
 1. In **Families**, open **Link another parent or guardian**.
-2. Choose the student, and enter the parent's email, their full name (if they're new to CLG) and their relationship to the student.
+2. Choose the student, and enter the parent's email, their full name (if they are new to CLG) and their relationship to the student.
 3. Save. Both parents see the same profile.
 
 Tip: **Parents of each student** shows who can see each student. Use **Remove this link** to undo a link made by mistake.
 
 ### Sort out possible double-ups
 **Possible double-ups** lists students with the same name and date of birth, usually because a second parent added a child CLG already has. The parent's link waits until you decide.
-1. Check with the family if you aren't sure.
+1. Check with the family if you are not sure.
 2. Choose **Same child: merge**, **Same child: keep the newer one**, or **Different children**.
 
 ### Give a student their own login
@@ -130,7 +130,7 @@ Tip: **Parents of each student** shows who can see each student. Use **Remove th
 If a family's or student's link ran out before they used it, open **Send a new login link**, enter their email and send.
 
 ### See which families are paused
-**Families paused for an overdue bill** lists families whose sessions are on hold until they pay. Don't discuss the bill with the tutor: tutors are only told sessions are on hold.
+**Families paused for an overdue bill** lists families whose sessions are on hold until they pay. Do not discuss the bill with the tutor: tutors are only told sessions are on hold.
 `;
 
 // Matching students with tutors (front-desk admins).
@@ -159,7 +159,7 @@ const YOUR_OWN = `
 3. Download your certificate when you finish.
 
 ### Use the handbook
-Choose **Handbooks** in the side menu, and search for a word. **Something's happened** is pinned at the top in red.
+Choose **Handbooks** in the side menu, and search for a word. **Something has happened** is pinned at the top in red.
 
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
@@ -183,11 +183,11 @@ const SAFETY = `
 The **Child safety** button shows a number when something is waiting for you.
 1. Choose **Child safety**, then **Open concerns sent to you**.
 2. For each concern, read it, add follow-up notes with **Add note**, and set where it is up to.
-3. If it names a tutor, you can take quiet steps while it's looked into: **Stop new students** (they keep their current students), or end a match so the child is marked **Urgent: needs a new tutor**. Lift a step later with a reason.
+3. If it names a tutor, you can take quiet steps while it is looked into: **Stop new students** (they keep their current students), or end a match so the child is marked **Urgent: needs a new tutor**. Lift a step later with a reason.
 4. If needed, choose **Pass it on** or **Share it**, with a reason.
 5. Choose **Flagged words** to review writing the app has flagged. A match is only a prompt to look: read it in context, choose what you decided, add a note, and choose **Save decision**. Nobody is told about a flag.
 
-Tip: Keep concerns confidential. Don't copy details into emails, Teams or other parts of the app.
+Tip: Keep concerns confidential. Do not copy details into emails, Teams or other parts of the app.
 `;
 
 // Help: feedback and app issues (every admin level).
@@ -196,7 +196,7 @@ const HELP = `
 
 ### Give feedback or report an app issue
 - **Feedback** (top of the page, or under **Menu** on a phone): praise, ideas or worries.
-- **Report app issue**: something in the app isn't working. Add a screenshot if you can.
+- **Report app issue**: something in the app is not working. Add a screenshot if you can.
 
 ### Your privacy and name
 Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
@@ -228,18 +228,18 @@ People who want to tutor apply on the public page **app.clgtutoring.com/apply** 
 
 ### Review an application
 1. Choose **Open** next to an application to see every answer, the referees and the CV.
-2. Set the status to **Shortlisted** if you'd like to interview them, and choose **Save screening record**.
+2. Set the status to **Shortlisted** if you would like to interview them, and choose **Save screening record**.
 3. Use the child-safe questions under **Questions to use** (choose **Show**) in the interview and when you phone each referee.
 4. Record the **Interview date**, each **Referee checked on** date and what was said, then choose **Save screening record**.
 5. If they hold a Working with Children Check, verify it with the state's screening unit and record **Working with Children Check verified on**.
 
-Tip: Set the status to **Withdrawn** if they pull out or stop replying. It's deleted 12 months later.
+Tip: Set the status to **Withdrawn** if they pull out or stop replying. It is deleted 12 months later.
 
 ### Approve an application
-1. Record the interview and both referee checks first. **Approve and send invite** won't work without them.
+1. Record the interview and both referee checks first. **Approve and send invite** will not work without them.
 2. Choose **Approve and send invite**. They get the usual tutor invite link (works once, for 7 days).
-3. If the email can't be sent, the link is shown for you to pass on. Choose **Send invite again** for a fresh link.
-4. Once they join, confirm their checks under **Checks to confirm** as usual before they're matched with students.
+3. If the email cannot be sent, the link is shown for you to pass on. Choose **Send invite again** for a fresh link.
+4. Once they join, confirm their checks under **Checks to confirm** as usual before they are matched with students.
 
 ### Decline an application
 1. Under **Decline**, choose a reason (only admins see it) and add a note if useful.
@@ -258,7 +258,7 @@ Open **Progress** in the side menu.
 
 ### Keep notes on track
 - **Notes overdue** lists sessions with no note after the due time. Follow up with the tutor.
-- **Students to check** lists students with no goals, or whose skills haven't moved for a while.
+- **Students to check** lists students with no goals, or whose skills have not moved for a while.
 - **Recent notes to spot-check**: is the next step specific, and the tip for home a small habit?
 - **How progress tracking is going** shows the measures for any dates you choose.
 
@@ -281,7 +281,7 @@ Under **Set a student's curriculum**, choose the student and the confirmed curri
 ### Add staff
 1. Open **Staff and accounts** in the side menu.
 2. Under **Add staff**, enter the person's email and role, and send. The link works once, for 7 days, only for that email.
-3. **Invitations not used yet** shows who hasn't joined. Choose **Cancel** to withdraw an invitation, or add them again for a new link.
+3. **Invitations not used yet** shows who has not joined. Choose **Cancel** to withdraw an invitation, or add them again for a new link.
 
 ### Unlock an account
 If someone is locked out after too many wrong tries, enter their email under **Unlock an account**. They can sign in straight away.
@@ -297,22 +297,22 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. Record every suspected data breach under **Record a suspected breach** as soon as you know, even small ones.
 
 ### Records due for deletion
-**Privacy and records** lists records that have reached the end of their keeping period. To keep one longer (for example during a complaint), add a hold with a reason. **Holds** lists what is being kept; choose **Release** when it's no longer needed.
+**Privacy and records** lists records that have reached the end of their keeping period. To keep one longer (for example during a complaint), add a hold with a reason. **Holds** lists what is being kept; choose **Release** when it is no longer needed.
 
 ## Other admin tools
 
 ### App feedback
 **Feedback** in the side menu shows what people are saying, grouped by area. Set where each item is up to and add private notes.
 
-### What's new pop-ups
-1. Open **What's new**, start a new update with a short title, and add each change (added, updated or removed), ticking the dashboards it applies to.
+### What is new pop-ups
+1. Open **What is new**, start a new update with a short title, and add each change (added, updated or removed), ticking the dashboards it applies to.
 2. Publish now, or choose a day to start showing it. People see only changes for their own dashboards, once.
 
 ### Teams links
 **Teams links** shows online sessions for the next 4 weeks and their meeting links. Choose **Make links now** if one is missing.
 
 ### Materials library
-1. Open **Materials library**, then **Add materials** to upload one file or many. They're saved as drafts.
+1. Open **Materials library**, then **Add materials** to upload one file or many. They are saved as drafts.
 2. Open each one, tag its curriculum skills, and publish it. Tutors only see published materials for subjects and year levels they teach.
 3. **Who opened what** shows recent use.
 
@@ -332,7 +332,7 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
 3. If two people share invoices, choose who also pays and their share, then **Save split**.
 
-Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students don't, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
+Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students do not, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
@@ -340,7 +340,7 @@ In **Family billing**, find the family, enter the amount and reason, and choose 
 ### Waive a late cancellation (Owner and Operations)
 1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14.
 2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
-3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Don't keep a copy of the proof. Tutors never see waivers.
+3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Do not keep a copy of the proof. Tutors never see waivers.
 
 ### Paused families
 **Paused families** lists families on hold for an overdue invoice. Sessions start again as soon as they pay. Only the owner (or admins, if the owner allows it in Settings) can choose **Lift the pause** without payment, with a new due date or an agreed payment plan.
@@ -414,7 +414,7 @@ Open **App issues** to check each report, reply to the person, set its priority,
 On the **Child safety** page, **Who receives concerns** sets the Child Safety Officer and deputy. On **Flagged words**, add or remove the words the app watches for.
 
 ### Emergency owner access
-If an Operations admin asks for emergency owner access, you are emailed at once with their reason. Cancel it if it isn't needed. Otherwise it starts 24 hr later, lasts 7 days and ends by itself. Everything is logged.
+If an Operations admin asks for emergency owner access, you are emailed at once with their reason. Cancel it if it is not needed. Otherwise it starts 24 hr later, lasts 7 days and ends by itself. Everything is logged.
 
 ### Quiet hours and summary time
 - **Sessions**, **Notices**: **Quiet hours (all of CLG)** sets when nothing is sent (9pm to 5am now).
@@ -431,7 +431,7 @@ You can see **Staff pay** under Billing, but only the owner and Finance admins c
 ## Emergency owner access
 
 ### Ask for emergency owner access
-Use this only if the owner can't be reached and something only the owner can do is urgent.
+Use this only if the owner cannot be reached and something only the owner can do is urgent.
 1. Open **Staff and accounts**, then **Emergency owner access**.
 2. Write why you need owner access (required), and send. The owner is emailed at once with your reason.
 3. Access starts 24 hr later unless the owner cancels or approves it sooner, lasts 7 days, then ends by itself. You are emailed when it starts and ends.

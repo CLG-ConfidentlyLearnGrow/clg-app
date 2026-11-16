@@ -34,7 +34,7 @@ select public.billing_choose_plan(:'fam', 'monthly'); -- The parent chooses mont
 select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam' and chosen and plan = 'monthly'), 1, 'parent chose monthly'); -- Checks: parent chose monthly.
 update public.billing_accounts set plan = 'upfront'; -- Tries to change the plan directly.
 reset role; -- Goes back to the all-powerful test user (access rules off).
-select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam' and plan = 'monthly'), 1, 'parent can''t change the plan directly'); -- Checks: parent can't change the plan directly.
+select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam' and plan = 'monthly'), 1, 'parent cannot change the plan directly'); -- Checks: parent can't change the plan directly.
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.billing_choose_plan(:'fam', 'term'); -- The parent changes to per term.

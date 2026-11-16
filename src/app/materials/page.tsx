@@ -100,7 +100,7 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
     <>{/* (a group:) */}
       <DashboardFrame role={materialsRole} roles={viewer.roles} current="materials">{/* the dashboard tabs and menu, with Materials open: */}
         <p className="text-sm text-zinc-600">{/* the rules for using them: */}
-          CLG&apos;s own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and don&apos;t share, upload or keep copies.
+          CLG&apos;s own materials for the subjects and year levels you teach. Each opens as a copy with your name and email on every page, and CLG keeps a record of what you open (seen only by admins, kept 2 years). Please use them only in your CLG sessions, and do not share, upload or keep copies.
         </p>{/* End of the rules. */}
 
         {byStudent.size > 0 && ( // If there are suggestions:

@@ -78,11 +78,11 @@ export async function SeniorCertificateCard({
       title={`${cert.code === "ACT_SSC" ? "Senior certificate" : cert.code} progress${
         total ? ` (${total.credits_done} of ${total.min_credits} credits)` : ""
       }`} // titled with the certificate and credits done,
-      description={`${cert.name}: subjects and what's still needed. The school's record is the official one.`} // with a short explanation.
+      description={`${cert.name}: subjects and what is still needed. The school's record is the official one.`} // with a short explanation.
     >{/* (end of the card's settings) */}
       {!cert.rules_loaded ? ( // If the rules aren't loaded:
         <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber note: */}
-          CLG hasn&apos;t loaded the {cert.code} completion rules yet, so the app can&apos;t work out what&apos;s still
+          CLG has not loaded the {cert.code} completion rules yet, so the app cannot work out what is still
           needed. You can still list subjects and results.{/* that progress can't be worked out yet. */}
         </p> // End of the note.
       ) : ( // Otherwise:

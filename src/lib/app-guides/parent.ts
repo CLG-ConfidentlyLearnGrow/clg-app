@@ -50,7 +50,7 @@ The first time you sign in, the app shows **Welcome to CLG**. Read the summary o
 Your name is shown at the top right under **Signed in as** (on a phone, tap **Menu** at the top right to see it). Tap it to change your first or last name.
 
 ### See what has changed in the app
-After an app update, a **What's new** box shows the changes for your dashboard once. To see them again, choose **What's new** at the bottom of any page.
+After an app update, a **What is new** box shows the changes for your dashboard once. To see them again, choose **What is new** at the bottom of any page.
 
 ### Take the app tour again
 The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
@@ -112,15 +112,15 @@ Tip: These are preferences, not guarantees. CLG offers libraries within your tra
 When CLG offers a time, you see a notice and a number on **Sessions**.
 1. In **Sessions**, choose **Bookings** (or **See offers** on the Overview).
 2. Check the day, time, tutor and place.
-3. Choose **Approve**, or **This time doesn't suit** and say why.
-4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2. If it isn't approved by everyone in time, the offer closes for now and CLG gets in touch about another time.
+3. Choose **Approve**, or **This time does not suit** and say why.
+4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2. If it is not approved by everyone in time, the offer closes for now and CLG gets in touch about another time.
 
 Tip: One parent (or a child 16+ with their own login) can answer for the family. The first answer counts.
 
 ### See upcoming sessions and join online
 1. In **Sessions**, choose **Overview**.
 2. **Upcoming sessions** lists each session with the tutor, subject and place.
-3. For an online session, choose **Join** a few minutes before it starts. It opens Microsoft Teams. You don't need a Microsoft account.
+3. For an online session, choose **Join** a few minutes before it starts. It opens Microsoft Teams. You do not need a Microsoft account.
 
 ### See your week, and add sessions to your own calendar
 1. In the side menu, choose **Weekly calendar** to see one week at a time. Use **Last week**, **This week** and **Next week** to move around.
@@ -132,23 +132,23 @@ Tip: Calendar apps can take a few hours to update, and online session links stay
 ### Cancel one session
 1. In **Sessions**, choose **Overview** and find the session.
 2. Choose **Cancel**.
-3. Choose a reason (please don't include health details).
+3. Choose a reason (please do not include health details).
 4. Offer two other times that week for a make-up session. Your tutor picks one. If no other time works, tick that box and CLG will help.
 5. Choose **Cancel this session**.
 
 Credit for a session you cancel with no make-up: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If a make-up is booked, there is nothing extra to pay with 2 hr notice or more, or half the cancelled session with less. Notice counts from when you save the cancel in the app. If CLG or the tutor cancels, you get full credit.
 
-Tip: If your child is suddenly unwell or there's a family emergency, contact CLG (not your tutor). CLG can waive the late-cancel rule once a year for each child; after that, CLG needs to see proof.
+Tip: If your child is suddenly unwell or there is a family emergency, contact CLG (not your tutor). CLG can waive the late-cancel rule once a year for each child; after that, CLG needs to see proof.
 
 ### Pick or confirm a make-up time
 If your tutor or CLG cancels a session, a **Pick a make-up time** card shows on the **Overview**.
 1. Choose one of the two times to book it, or choose **Neither works** and say why.
-2. If CLG offered the times and the tutor picked one, you see **Confirm a make-up time** instead. Confirm it, or say it doesn't work.
+2. If CLG offered the times and the tutor picked one, you see **Confirm a make-up time** instead. Confirm it, or say it does not work.
 
 ### Confirm a change of tutor or time
 Sometimes CLG needs to move sessions to a new tutor or a new day and time. A **Please confirm a change** card shows on the **Overview**.
 1. Read what will change and from when.
-2. Choose **Confirm**, or **Decline** and say why it doesn't suit.
+2. Choose **Confirm**, or **Decline** and say why it does not suit.
 3. Nothing changes until you and the new tutor have both confirmed.
 
 ### Stop a booking
@@ -182,9 +182,9 @@ Before a term ends, CLG asks about each booking that ends that term.
 3. If you want a change, say what (day and time, tutor, or both) and why.
 4. Choose **Send answer**.
 
-### If a tutor isn't the right fit
+### If a tutor is not the right fit
 1. In **Sessions**, choose **Blocks**, then **Block a tutor**.
-2. Choose the tutor and write why. Only CLG sees the reason, and the tutor isn't told.
+2. Choose the tutor and write why. Only CLG sees the reason, and the tutor is not told.
 3. Choose **Block this tutor**. The app stops suggesting that tutor for your child, and CLG will contact you to talk it through.
 
 ### Read notices and choose when reminders come
@@ -198,7 +198,7 @@ Tip: Nothing is sent between 9pm and 5am your local time. Notices also come by e
 ### See your child's progress
 1. In **Your children**, choose **Progress** next to your child.
 2. **Next step** shows what your tutor suggests next, with a tip to try at home.
-3. **Roadmap** shows this week's steps and what's coming up.
+3. **Roadmap** shows this week's steps and what is coming up.
 4. **Goals and skills** shows what your child is working on and how far they have come.
 5. **Recent sessions** shows the notes from each session.
 
@@ -224,7 +224,7 @@ Before a term ends, you may be offered a written review of the term from your tu
 
 ## Billing and payments
 
-Only the person or people paying see billing. If you pay, open **Billing** in the side menu. If another parent or carer pays, you won't see Billing, but you'll still see **Sessions on hold** on your dashboard if an invoice is overdue.
+Only the person or people paying see billing. If you pay, open **Billing** in the side menu. If another parent or carer pays, you will not see Billing, but you will still see **Sessions on hold** on your dashboard if an invoice is overdue.
 
 Tip: Until your family has a bill payer, any parent can set it up. The first parent to choose how often to pay (or agree to the payment terms) becomes the bill payer. To change who pays, or to share invoices between two people, contact CLG.
 
@@ -256,7 +256,7 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 ### If you are worried about a child
 1. If a child is in danger right now, call 000.
 2. Choose **Child safety** (in red, top of every page) and follow the steps: report to the child protection line, then tell CLG using the form.
-3. Your concern is kept confidential. **Concerns you've raised** on that page shows only you what you sent.
+3. Your concern is kept confidential. **Concerns you have raised** on that page shows only you what you sent.
 
 ### Give feedback
 1. Choose **Feedback** at the top of any page.

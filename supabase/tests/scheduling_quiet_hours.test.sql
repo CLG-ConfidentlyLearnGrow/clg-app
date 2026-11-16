@@ -70,17 +70,17 @@ delete from public.sessions where id = :'s_dawn'; -- tidies up the test session 
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- signs in as tutor T3
 set role authenticated; -- acts as a signed-in person, so access rules apply
 select tests.eq((select count(*) from public.quiet_hours_settings), 1::bigint, 'signed-in people can read quiet hours'); -- reading is fine
-select tests.fails($q$select public.set_quiet_hours('22:00', '06:00')$q$, 'tutors can''t change quiet hours'); -- refused for a tutor
+select tests.fails($q$select public.set_quiet_hours('22:00', '06:00')$q$, 'tutors cannot change quiet hours'); -- refused for a tutor
 select tests.fails($q$update public.quiet_hours_settings set ends_at = '07:00'$q$, 'nobody edits the setting directly'); -- only through the function
 reset role; -- back to the database itself
 select tests.claims(null); -- signs out
 set role anon; -- acts as someone not signed in
-select tests.fails($q$select * from public.quiet_hours_settings$q$, 'signed-out visitors can''t read quiet hours'); -- refused for anon
+select tests.fails($q$select * from public.quiet_hours_settings$q$, 'signed-out visitors cannot read quiet hours'); -- refused for anon
 reset role; -- back to the database itself
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- signs in as the owner admin
 set role authenticated; -- acts as a signed-in person
-select tests.fails($q$select public.set_quiet_hours('21:00', '21:00')$q$, 'start and end can''t be the same'); -- refused: same time
+select tests.fails($q$select public.set_quiet_hours('21:00', '21:00')$q$, 'start and end cannot be the same'); -- refused: same time
 select tests.fails($q$select public.set_quiet_hours('21:15', '05:00')$q$, 'only on the hour or half hour'); -- refused: 9:15pm
 select public.set_quiet_hours('22:00', '06:00'); -- the owner changes them to 10pm to 6am
 reset role; -- back to the database itself

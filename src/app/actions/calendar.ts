@@ -32,7 +32,7 @@ export async function makeCalendarLink(): Promise<CalendarLinkState> { // No inp
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("reset_calendar_link"); // Asks the database for a new link (it checks again).
   if (error || typeof data !== "string") { // It didn't work:
-    return { error: error?.code === "42501" ? error.message : "Couldn't make a calendar link. Please try again." }; // shows the database's plain refusal, or a general message.
+    return { error: error?.code === "42501" ? error.message : "Could not make a calendar link. Please try again." }; // shows the database's plain refusal, or a general message.
   } // End of the problem check.
   revalidatePath(PAGE); // Refreshes the calendar page (so it shows the new "made on" date).
   return { // Hands back:
@@ -47,7 +47,7 @@ export async function turnOffCalendarLink(): Promise<CalendarLinkState> { // No 
   if (problem) return { error: problem }; // Not allowed: shows why.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("remove_calendar_link"); // Asks the database to remove the link (it checks again).
-  if (error) return { error: "Couldn't turn off the calendar link. Please try again." }; // It didn't work: plain message.
+  if (error) return { error: "Could not turn off the calendar link. Please try again." }; // It didn't work: plain message.
   revalidatePath(PAGE); // Refreshes the calendar page.
   return { message: "Calendar link turned off. You can remove the CLG calendar from your calendar app too." }; // Tells the tutor it worked.
 } // End of turnOffCalendarLink.
@@ -71,7 +71,7 @@ export async function makeFamilyCalendarLink(): Promise<CalendarLinkState> { // 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("reset_family_calendar_link"); // Asks the database for a new link (it checks again).
   if (error || typeof data !== "string") { // It didn't work:
-    return { error: error?.code === "42501" ? error.message : "Couldn't make a calendar link. Please try again." }; // shows the database's plain refusal, or a general message.
+    return { error: error?.code === "42501" ? error.message : "Could not make a calendar link. Please try again." }; // shows the database's plain refusal, or a general message.
   } // End of the problem check.
   revalidatePath(FAMILY_PAGE); // Refreshes the family calendar page (so it shows the new "made on" date).
   return { // Hands back:
@@ -86,7 +86,7 @@ export async function turnOffFamilyCalendarLink(): Promise<CalendarLinkState> { 
   if (problem) return { error: problem }; // Not allowed: shows why.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("remove_family_calendar_link"); // Asks the database to remove the link.
-  if (error) return { error: "Couldn't turn off the calendar link. Please try again." }; // It didn't work: plain message.
+  if (error) return { error: "Could not turn off the calendar link. Please try again." }; // It didn't work: plain message.
   revalidatePath(FAMILY_PAGE); // Refreshes the family calendar page.
   return { message: "Calendar link turned off. You can remove the CLG calendar from your calendar app too." }; // Says it worked.
 } // End of turnOffFamilyCalendarLink.

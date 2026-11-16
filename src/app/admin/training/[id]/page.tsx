@@ -65,7 +65,7 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
         </div>{/* End of the add part. */}
       </Card>{/* End of the lessons card. */}
 
-      <Card title="Quiz" description="Everyone needs 100%, with unlimited tries. They're told which questions to look at again, never the answers. For refreshers, ask where to find things in the handbook.">{/* the quiz card: */}
+      <Card title="Quiz" description="Everyone needs 100%, with unlimited tries. They are told which questions to look at again, never the answers. For refreshers, ask where to find things in the handbook.">{/* the quiz card: */}
         {questionRows.length === 0 && <Empty>No questions. Without a quiz, people just mark the module as finished.</Empty>}{/* none: says so. */}
         <div className="space-y-6">{/* the questions: */}
           {questionRows.map((q) => ( // each question:
@@ -88,14 +88,14 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
         <div className="space-y-4 text-sm">{/* a block: */}
           {m.status === "published" && ( // a published module:
             <div className="space-y-2">{/* the redo part: */}
-              <p>Changed something important? Ask everyone it&apos;s for to finish it again. They get the usual time allowed from today, and it&apos;s paid again if it&apos;s compulsory. Small fixes don&apos;t need this.</p>{/* what it does, */}
+              <p>Changed something important? Ask everyone it is for to finish it again. They get the usual time allowed from today, and it is paid again if it is compulsory. Small fixes do not need this.</p>{/* what it does, */}
               <SmallAction action={askRedo} fields={{ id: m.id }} label="Ask everyone to redo this" confirm="Everyone will need to finish this module again. Go ahead?" />{/* and the button. */}
             </div> // End of the redo part.
           )}{/* End of the published case. */}
           {m.status === "draft" ? ( // a draft:
             <SmallAction action={deleteDraftModule} fields={{ id: m.id }} label="Delete this draft" confirm="Delete this draft module, its lessons, files and questions?" /> // a delete button,
           ) : ( // otherwise:
-            <p className="text-zinc-600">Published modules can&apos;t be deleted, so training records stay. Set the status to Retired to hide it.</p> // explains to retire instead.
+            <p className="text-zinc-600">Published modules cannot be deleted, so training records stay. Set the status to Retired to hide it.</p> // explains to retire instead.
           )}{/* End of the choice. */}
         </div>{/* End of the block. */}
       </Card>{/* End of the last card. */}

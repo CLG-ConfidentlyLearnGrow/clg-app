@@ -95,7 +95,7 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
     completed_on: v.completed_on || null, // date done (or none),
     expires_on: expiresOn, // expiry date.
   }); // End of the save.
-  if (error) return { error: "Couldn't save the check. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not save the check. Please try again." }; // Failed: plain message.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Check saved and marked as verified by you." }; // Confirms it.
@@ -123,7 +123,7 @@ export async function assignTutor(_prev: FormState, formData: FormData): Promise
   const { error } = await supabase.from("tutor_assignments").insert(parsed.data); // Saves the assignment.
   // The database explains why an assignment isn't allowed (checks missing,
   // parent link not yet verified).
-  if (error) return { error: error.code === "23514" ? error.message : "Couldn't assign the tutor." }; // Shows the database's reason, or a general message.
+  if (error) return { error: error.code === "23514" ? error.message : "Could not assign the tutor." }; // Shows the database's reason, or a general message.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Tutor assigned." }; // Confirms it.
@@ -144,10 +144,10 @@ export async function unlockAccount(_prev: FormState, formData: FormData): Promi
   if (!account.data) return { error: "No account with that email." }; // Not found: says so.
 
   const { error } = await supabase.rpc("admin_unlock_account", { p_account: account.data.account_id }); // Asks the database to unlock it.
-  if (error) return { error: "Couldn't unlock the account." }; // Failed: plain message.
+  if (error) return { error: "Could not unlock the account." }; // Failed: plain message.
   // Unlocking sends no email, so the admin is told to let the person know
   // themselves, and where to send a password link if they've forgotten it.
-  return { message: "Account unlocked. No email is sent for this: let them know they can sign in now with their usual password. If they've forgotten it, use \"Send a password link\" on the Staff page, or they can use \"Forgot your password?\" on the sign-in page." }; // Confirms it and explains what happens next.
+  return { message: "Account unlocked. No email is sent for this: let them know they can sign in now with their usual password. If they have forgotten it, use \"Send a password link\" on the Staff page, or they can use \"Forgot your password?\" on the sign-in page." }; // Confirms it and explains what happens next.
 } // End of unlockAccount.
 
 // The rules for a tutor's work state:
@@ -167,7 +167,7 @@ export async function setTutorWorkState(_prev: FormState, formData: FormData): P
     .from("tutor_work_settings") // in the tutor work settings table,
     .update({ work_state: parsed.data.work_state || null }) // the state (or none),
     .eq("tutor_id", parsed.data.tutor_id); // for this tutor.
-  if (error) return { error: "Couldn't save the tutor's work state." }; // Failed: plain message.
+  if (error) return { error: "Could not save the tutor's work state." }; // Failed: plain message.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Work state saved." }; // Confirms it.
@@ -195,10 +195,10 @@ export async function placeHold(_prev: FormState, formData: FormData): Promise<F
   const { error } = await supabase // Saves the hold:
     .from("retention_holds") // in the holds table,
     .insert({ [kind === "student" ? "student_id" : "account_id"]: id, reason: parsed.data.reason }); // on the student or account, with the reason.
-  if (error) return { error: "Couldn't place the hold." }; // Failed: plain message.
+  if (error) return { error: "Could not place the hold." }; // Failed: plain message.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
-  return { message: "Hold placed. These records won't be deleted until it is released." }; // Confirms it.
+  return { message: "Hold placed. These records will not be deleted until it is released." }; // Confirms it.
 } // End of placeHold.
 
 // Releases a hold, so normal deletion rules apply again.
@@ -229,7 +229,7 @@ export async function markTutorLeft(_prev: FormState, formData: FormData): Promi
     .from("tutor_profiles") // in the tutor profiles table,
     .update({ active: false, ended_on: parsed.data.ended_on }) // not active, with the end date,
     .eq("account_id", parsed.data.tutor_id); // for this tutor.
-  if (error) return { error: "Couldn't update the tutor." }; // Failed: plain message.
+  if (error) return { error: "Could not update the tutor." }; // Failed: plain message.
 
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: "Tutor marked as finished." }; // Confirms it.
@@ -254,7 +254,7 @@ export async function eraseStudent(_prev: FormState, formData: FormData): Promis
   }); // End of the request.
   if (error) { // It failed:
     // The database gives a plain reason: wrong name, a hold, or not the owner.
-    return { error: error.message || "Couldn't erase the student." }; // shows the database's reason, or a general message.
+    return { error: error.message || "Could not erase the student." }; // shows the database's reason, or a general message.
   } // End of the failure case.
 
   revalidatePath("/admin"); // Refreshes the admin pages.
@@ -280,7 +280,7 @@ export async function setRetentionPeriod(_prev: FormState, formData: FormData): 
     .update({ keep_for: `${parsed.data.months} months` }) // the new period in months,
     .eq("kind", parsed.data.kind) // for this kind,
     .select("kind"); // and reads back the row to be sure it saved.
-  if (error || !data?.length) return { error: "Couldn't change the period. Only the owner can do this." }; // Failed or nothing saved: only the owner can do this.
+  if (error || !data?.length) return { error: "Could not change the period. Only the owner can do this." }; // Failed or nothing saved: only the owner can do this.
 
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: "Period saved. It applies from tonight's run." }; // Confirms it.
@@ -306,7 +306,7 @@ export async function declineCheck(_prev: FormState, formData: FormData): Promis
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("decline_tutor_check", { p_check: parsed.data.check_id, p_reason: parsed.data.reason }); // Asks the database to send it back with the reason.
-  if (error) return { error: "Couldn't send it back. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not send it back. Please try again." }; // Failed: plain message.
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: "Sent back to the tutor with your reason." }; // Confirms it.
 } // End of declineCheck.
@@ -334,7 +334,7 @@ export async function setAdminLevel(_prev: FormState, formData: FormData): Promi
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["42501", "22023"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't change the level. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not change the level. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: `Level changed to ${ADMIN_LEVEL_NAMES[parsed.data.level]}. It applies the next time they open a page.` }; // Confirms the new level and when it applies.
@@ -382,7 +382,7 @@ export async function requestEmergencyAccess(_prev: FormState, formData: FormDat
   const { data: id, error } = await supabase.rpc("request_emergency_owner_access", { p_reason: parsed.data.reason }); // Asks the database to record the request (it checks the level).
   if (error || typeof id !== "string") { // It failed:
     const plain = ["42501", "22023", "23505"].includes(error?.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain && error ? `${error.message}.` : "Couldn't send the request. Please try again." }; // shows that message, or a general one.
+    return { error: plain && error ? `${error.message}.` : "Could not send the request. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages.
 
@@ -402,11 +402,11 @@ export async function requestEmergencyAccess(_prev: FormState, formData: FormDat
       button: "Review the request", // the button's words,
       footer: "You get this email because you are the owner of the CLG app.", // and small print saying why they got it.
     })); // End of the emails.
-  const problem = emails.length === 0 ? "No owner email found." : emailIsSetUp() ? await sendEmails(emails) : "Email isn't set up yet."; // Sends them, or notes why they couldn't be sent.
+  const problem = emails.length === 0 ? "No owner email found." : emailIsSetUp() ? await sendEmails(emails) : "Email is not set up yet."; // Sends them, or notes why they couldn't be sent.
   if (problem) { // Something went wrong with the email:
     console.error("Emergency access email failed:", problem); // notes why in the server log,
     return { // and tells the admin:
-      message: `Request sent. The owner will see it in the app, but the email to them couldn't be sent, so please also try to reach them another way. Your access starts ${startsAt} unless they cancel.`, // the request went in, but to reach the owner another way too.
+      message: `Request sent. The owner will see it in the app, but the email to them could not be sent, so please also try to reach them another way. Your access starts ${startsAt} unless they cancel.`, // the request went in, but to reach the owner another way too.
     }; // End of the message.
   } // End of that case.
   return { message: `Request sent and the owner has been emailed. Your access starts ${startsAt} unless they cancel, and lasts 7 days.` }; // All sent: confirms it, and when access starts.
@@ -424,7 +424,7 @@ export async function approveEmergencyAccess(_prev: FormState, formData: FormDat
   const { error } = await supabase.rpc("approve_emergency_owner_access", { p_id: parsed.data.id }); // Asks the database to approve the request.
   if (error) { // It failed:
     const plain = ["42501", "22023"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't approve it. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not approve it. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: "Approved. Owner access has started and ends by itself in 7 days." }; // Confirms it.
@@ -440,7 +440,7 @@ export async function cancelEmergencyAccess(_prev: FormState, formData: FormData
   const { data: askedBy, error } = await supabase.rpc("cancel_emergency_owner_access", { p_id: parsed.data.id }); // Asks the database to cancel it, and gets who asked for it.
   if (error) { // It failed:
     const plain = ["42501", "22023"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? `${error.message}.` : "Couldn't cancel it. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? `${error.message}.` : "Could not cancel it. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages.
   if (typeof askedBy === "string" && askedBy !== viewer.id) { // Someone else asked for it:
@@ -452,7 +452,7 @@ export async function cancelEmergencyAccess(_prev: FormState, formData: FormData
           email: who.email, // their address,
           first_name: who.name.split(" ")[0] || null, // their first name (or none),
           subject: "Your emergency owner access was cancelled", // the subject line,
-          body: `${viewer.fullName || "The owner"} has cancelled your request for emergency owner access in the CLG app. Your own admin access hasn't changed.`, // the message: who cancelled it, and that their own access is unchanged,
+          body: `${viewer.fullName || "The owner"} has cancelled your request for emergency owner access in the CLG app. Your own admin access has not changed.`, // the message: who cancelled it, and that their own access is unchanged,
           link: "/admin", // the button opens the admin page,
           button: "Open the app", // the button's words.
         }, // (end of the email)

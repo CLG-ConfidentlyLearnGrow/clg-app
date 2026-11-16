@@ -22,7 +22,7 @@ export function CourseOverviewForm({ subjectId, overview }: { subjectId: string;
             rows={4} // four lines tall,
             maxLength={4000} // up to 4,000 characters,
             defaultValue={overview ?? ""} // starting with the current overview,
-            hint="A few lines from the course page: what the unit covers, how it's assessed, and key dates. Leave blank to remove it." // and a hint about what to write.
+            hint="A few lines from the course page: what the unit covers, how it is assessed, and key dates. Leave blank to remove it." // and a hint about what to write.
           />{/* (end of the text box) */}
         </ActionForm>{/* End of the form. */}
       </div>{/* End of the block. */}

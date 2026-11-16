@@ -55,7 +55,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
   return ( // Shows:
     <Page // a page:
       title="Child safety" // titled "Child safety",
-      intro="If you are worried about a child or young person, follow these steps in order. You don't need proof: a reasonable worry is enough." // with a short explanation.
+      intro="If you are worried about a child or young person, follow these steps in order. You do not need proof: a reasonable worry is enough." // with a short explanation.
     >{/* (end of the page's settings) */}
       {isContact && ( // If they receive concerns:
         <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">{/* a small box: */}
@@ -82,11 +82,11 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
           <p className="font-semibold">Thank you. Your concern has been sent to CLG.</p>{/* the confirmation, */}
           <p className="mt-2">{/* what happens next: */}
             It is kept confidential, and anyone you named who works for CLG is never shown it. CLG may need to
-            contact you about it, so we can&apos;t promise you won&apos;t be contacted. Please don&apos;t talk about it
+            contact you about it, so we cannot promise you will not be contacted. Please do not talk about it
             with the family or the person involved.{/* who can read it, that CLG may contact them, and what not to do, */}
           </p>{/* End of the paragraph. */}
           <p className="mt-2 font-medium">{/* a reminder: */}
-            Telling CLG doesn&apos;t replace reporting to the child protection line. If you haven&apos;t phoned {sa.phones[0].number} yet and you should, please do it now.{/* that reporting to CLG isn't enough on its own. */}
+            Telling CLG does not replace reporting to the child protection line. If you have not phoned {sa.phones[0].number} yet and you should, please do it now.{/* that reporting to CLG isn't enough on its own. */}
           </p>{/* End of the paragraph. */}
         </div> // End of the box.
       )}{/* End of that part. */}
@@ -144,7 +144,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
             CLG in step 3. Parents and students can phone the line too.{/* everyone reports, */}
           </p>{/* End of the paragraph. */}
           <p>{/* what not to do: */}
-            Don&apos;t investigate, question the child in detail, or confront the person you are worried about.
+            Do not investigate, question the child in detail, or confront the person you are worried about.
             Write down what you saw or heard, in the child&apos;s own words where you can.{/* don't investigate, */}
           </p>{/* End of the paragraph. */}
         </div>{/* End of who must report. */}
@@ -170,9 +170,9 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
       </Card>{/* End of step 2. */}
 
       {/* Step 3: tell CLG. */}
-      <Card title="3. Tell CLG" description="Your concern is kept confidential. If it's about someone who works for CLG, they never see it and aren't told who raised it. CLG may need to contact you about it.">{/* A card with the form: */}
+      <Card title="3. Tell CLG" description="Your concern is kept confidential. If it is about someone who works for CLG, they never see it and are not told who raised it. CLG may need to contact you about it.">{/* A card with the form: */}
         {!officer ? ( // If no officer has been named yet:
-          <Empty>CLG hasn&apos;t named its Child Safety Officer in the app yet. Please phone CLG directly.</Empty> // says to phone.
+          <Empty>CLG has not named its Child Safety Officer in the app yet. Please phone CLG directly.</Empty> // says to phone.
         ) : ( // Otherwise:
           <ActionForm action={raiseConcern} submitLabel="Send to CLG">{/* the form that sends the concern: */}
             <fieldset className="space-y-2">{/* the "who to send to" choice: */}
@@ -187,7 +187,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
                 <label className="flex items-start gap-2 text-sm">{/* the deputy option: */}
                   <input type="radio" name="send_to" value="deputy" className={`${tick} mt-0.5`} />{/* its radio button, */}
                   <span>{/* its words: */}
-                    <strong>{deputy.full_name}</strong>, {CONTACT_ROLE_LABELS.deputy}. Choose this if you can&apos;t
+                    <strong>{deputy.full_name}</strong>, {CONTACT_ROLE_LABELS.deputy}. Choose this if you cannot
                     reach {officer.full_name}.{/* the deputy's name, job and when to choose them. */}
                   </span>{/* end of the words. */}
                 </label> // End of the option.
@@ -203,7 +203,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
             {workerRows.length > 0 && ( // If there are CLG workers they can name:
               <fieldset className="space-y-2">{/* the "who is it about" choice: */}
                 <legend className="text-sm font-medium text-zinc-800">Is this about someone who works for CLG? (optional)</legend>{/* its question, */}
-                <p className="text-xs text-zinc-600">Tick anyone it&apos;s about. They will never see this concern or be told who raised it.</p>{/* the promise, */}
+                <p className="text-xs text-zinc-600">Tick anyone it is about. They will never see this concern or be told who raised it.</p>{/* the promise, */}
                 <div className="grid gap-1 sm:grid-cols-2">{/* the tick boxes, in two columns on wide screens: */}
                   {workerRows.map((w) => ( // for each worker:
                     <label key={w.account_id} className="flex items-center gap-2 text-sm">{/* a tick box: */}
@@ -265,7 +265,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
               minLength={10} // at least a sentence,
               maxLength={8000} // at most 8,000 letters,
               rows={6} // six lines tall,
-              hint="What you saw, heard or were told, and when. Use the child's own words where you can. Facts only: please don't guess or investigate." // and what to write.
+              hint="What you saw, heard or were told, and when. Use the child's own words where you can. Facts only: please do not guess or investigate." // and what to write.
             />{/* End of the box. */}
             <Field label="When did it happen or when did you notice? (optional)" name="happened_on" type="date" />{/* the date box. */}
 
@@ -290,7 +290,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
       </Card>{/* End of step 3. */}
 
       {/* For children and young people using the app themselves. */}
-      <Card title="If you are a young person and don't feel safe">{/* A card for young people: */}
+      <Card title="If you are a young person and do not feel safe">{/* A card for young people: */}
         <p className="text-sm text-zinc-700">{/* what to do: */}
           If you are in danger now, call 000. You can also talk to someone any time, for free:{/* call 000 or a helpline: */}
         </p>{/* End of the paragraph. */}
@@ -319,7 +319,7 @@ export default async function SafetyPage({ searchParams }: PageProps<"/safety">)
       </Card>{/* End of the card. */}
 
       {/* The concerns this person raised. */}
-      <Card title="Concerns you've raised" description="Only you and the person you sent each one to can see these." collapsible defaultOpen={myRows.length > 0}>{/* A card of their concerns: */}
+      <Card title="Concerns you have raised" description="Only you and the person you sent each one to can see these." collapsible defaultOpen={myRows.length > 0}>{/* A card of their concerns: */}
         {myRows.length === 0 ? ( // if none:
           <Empty>None.</Empty> // says so.
         ) : ( // Otherwise:

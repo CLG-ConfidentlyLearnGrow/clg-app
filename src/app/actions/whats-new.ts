@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 // for people (codes 42501 and 22023) are shown as they are; anything else
 // gets the general message.
 function plainError(error: { code?: string; message: string }): string { // Takes the database error.
-  return ["42501", "22023"].includes(error.code ?? "") ? error.message : "We couldn't save that. Please try again."; // The database's own words, or the general message.
+  return ["42501", "22023"].includes(error.code ?? "") ? error.message : "We could not save that. Please try again."; // The database's own words, or the general message.
 } // End of plainError.
 
 // The four dashboards, for checking form answers.
@@ -76,7 +76,7 @@ export async function saveWhatsNewItem(_prev: FormState, formData: FormData): Pr
 export async function deleteWhatsNewItem(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireViewer(); // Makes sure someone is signed in.
   const id = z.uuid().safeParse(formData.get("id")); // Which change.
-  if (!id.success) return { error: "That change can't be found." }; // No valid id.
+  if (!id.success) return { error: "That change cannot be found." }; // No valid id.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("whats_new_delete_item", { p_id: id.data }); // Removes it.
   if (error) return { error: plainError(error) }; // Failed: plain message.
@@ -88,7 +88,7 @@ export async function deleteWhatsNewItem(_prev: FormState, formData: FormData): 
 export async function deleteWhatsNewNote(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireViewer(); // Makes sure someone is signed in.
   const id = z.uuid().safeParse(formData.get("id")); // Which update.
-  if (!id.success) return { error: "That update can't be found." }; // No valid id.
+  if (!id.success) return { error: "That update cannot be found." }; // No valid id.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("whats_new_delete_note", { p_id: id.data }); // Deletes it.
   if (error) return { error: plainError(error) }; // Failed: plain message.
@@ -115,10 +115,10 @@ export async function publishWhatsNewNote(_prev: FormState, formData: FormData):
 export async function unpublishWhatsNewNote(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireViewer(); // Makes sure someone is signed in.
   const id = z.uuid().safeParse(formData.get("id")); // Which update.
-  if (!id.success) return { error: "That update can't be found." }; // No valid id.
+  if (!id.success) return { error: "That update cannot be found." }; // No valid id.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("whats_new_unpublish", { p_id: id.data }); // Takes it back.
   if (error) return { error: plainError(error) }; // Failed: plain message.
   refresh(); // Refreshes the pages.
-  return { message: "Back to a draft. It's hidden until you publish it again." }; // Confirms.
+  return { message: "Back to a draft. It is hidden until you publish it again." }; // Confirms.
 } // End of unpublishWhatsNewNote.

@@ -124,10 +124,10 @@ exception when others then -- If it was refused:
 end; -- End of the helper.
 $f$; -- (end of its code)
 select tests.fails_with(format($$insert into public.tutor_assignments (tutor_id, student_id, subject) values ('00000000-0000-0000-0000-000000000011', %L, 'English')$$, :'gus'), -- Checks no tutor can be assigned before Gus's details are finished:
-  'details aren''t finished', 'no tutor before details are finished'); -- (the message says details aren't finished).
+  'details are not finished', 'no tutor before details are finished'); -- (the message says details aren't finished).
 select tests.fails_with(format($$insert into public.bookings (student_id, tutor_id, subject, weekday, start_time, minutes, delivery, first_date, last_date) -- Checks no booking can be made before then either:
   values (%L, '00000000-0000-0000-0000-000000000011', 'English', 1, '16:00', 60, 'online', current_date, current_date + 7)$$, :'gus'), -- (Monday 4pm online for a week),
-  'details aren''t finished', 'no booking before details are finished'); -- (the message says details aren't finished).
+  'details are not finished', 'no booking before details are finished'); -- (the message says details aren't finished).
 
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.

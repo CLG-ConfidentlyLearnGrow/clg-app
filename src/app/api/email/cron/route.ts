@@ -29,7 +29,7 @@ async function run(request: Request) {
   } // End of the check.
   if (!emailIsSetUp()) { // Email not set up:
     // Leave everything waiting; notices still show in the app.
-    return Response.json({ sent: 0, problem: "Email isn't set up yet (RESEND_API_KEY is missing)." }); // says so and sends nothing.
+    return Response.json({ sent: 0, problem: "Email is not set up yet (RESEND_API_KEY is missing)." }); // says so and sends nothing.
   } // End of that check.
 
   const supabase = createAdminClient(); // Connects with full access.

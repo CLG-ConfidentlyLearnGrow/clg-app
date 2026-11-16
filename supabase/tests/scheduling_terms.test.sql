@@ -70,14 +70,14 @@ select id as renewal from public.term_renewals where booking_id = :'ending' \gse
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' -- Checks the parent gets a notice:
   and booking_id = :'ending' and kind = 'renewal_due'), 1, 'parent gets a notice'); -- (one renewal notice).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor isn't asked:
-  and booking_id = :'ending' and kind = 'renewal_due'), 0, 'tutor isn''t asked'); -- (none for tutor T3).
+  and booking_id = :'ending' and kind = 'renewal_due'), 0, 'tutor is not asked'); -- (none for tutor T3).
 select private.queue_renewals(); -- Queues them again (should not repeat).
 select tests.eq((select count(*) from public.term_renewals where booking_id = :'ending'), 1, 'asked only once'); -- Checks: asked only once.
 
 -- Who can see and answer.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.term_renewals), 0, 'tutor can''t see renewal answers'); -- Checks: tutor can't see renewal answers.
+select tests.eq((select count(*) from public.term_renewals), 0, 'tutor cannot see renewal answers'); -- Checks: tutor can't see renewal answers.
 select tests.fails(format($$select public.answer_renewal(%L, true, false)$$, :'renewal'), 'tutor answers'); -- Checks this is refused: tutor answers.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as test account ...04.

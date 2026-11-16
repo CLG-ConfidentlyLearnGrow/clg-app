@@ -15,7 +15,7 @@ export function NewLinkForm() {
         name="email" // its field name,
         type="email" // an email address,
         required // that must be filled in,
-        hint="For accounts that haven't signed in yet. The old link stops working." // and a hint about when to use it.
+        hint="For accounts that have not signed in yet. The old link stops working." // and a hint about when to use it.
       />{/* (end of the box) */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

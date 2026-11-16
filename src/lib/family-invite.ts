@@ -26,7 +26,7 @@ export async function makeAccount(email: string, data: Record<string, string>): 
   const made = await admin.auth.admin.generateLink({ type: "invite", email, options: { data, redirectTo } });
   if (made.error || !made.data.user || !made.data.properties?.action_link) { // That failed too.
     console.error("Family invitation link failed:", made.error?.code, made.error?.message); // Notes it in the server log.
-    return { error: "We couldn't make the account. Please check the details and try again." }; // Plain message for the admin.
+    return { error: "We could not make the account. Please check the details and try again." }; // Plain message for the admin.
   } // End of the failure case.
   return { userId: made.data.user.id, link: made.data.properties.action_link }; // Account made; admin sends this link themselves.
 } // End of makeAccount.
@@ -34,7 +34,7 @@ export async function makeAccount(email: string, data: Record<string, string>): 
 // The sentence shown to the admin afterwards, depending on whether the email went.
 export function sentText(email: string, link: string | null): string {
   return link // If there's a link, the email didn't go.
-    ? ` The email couldn't be sent, because CLG's own email sender isn't set up yet. Copy this link and send it to ${email} yourself (for example by text or email). It works once, for a short time: ${link}` // Tells the admin to send the link.
-    : ` We've emailed ${email} a link to choose a password.`; // Otherwise confirms the email went.
+    ? ` The email could not be sent, because CLG's own email sender is not set up yet. Copy this link and send it to ${email} yourself (for example by text or email). It works once, for a short time: ${link}` // Tells the admin to send the link.
+    : ` We have emailed ${email} a link to choose a password.`; // Otherwise confirms the email went.
 } // End of sentText.
 

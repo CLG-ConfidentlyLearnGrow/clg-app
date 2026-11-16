@@ -21,7 +21,7 @@ const BUCKET = "problem-screenshots"; // The private file store for screenshots.
 
 // The plain database messages we're happy to show as they are (they start
 // with these words); anything else gets a general message.
-const PLAIN = /^(Please|You've|That |A screenshot|Only |Choose)/; // The starts of the database's own plain messages.
+const PLAIN = /^(Please|You've|You have|That |A screenshot|Only |Choose)/; // The starts of the database's own plain messages (old and written-out wording).
 
 // The rules for the report form:
 const reportSchema = z.object({
@@ -66,13 +66,13 @@ export async function submitProblemReport(_prev: FormState, formData: FormData):
     const kind = documentType(bytes); // Works out its real type from the bytes (not the name).
     if (!kind || kind.type === "application/pdf") { // Not a picture:
       await removeUploaded(); // removes any already stored,
-      return { error: `Screenshot ${i + 1} isn't a picture. Please use a JPG, PNG or WebP screenshot.` }; // and says which one.
+      return { error: `Screenshot ${i + 1} is not a picture. Please use a JPG, PNG or WebP screenshot.` }; // and says which one.
     } // End of the type check.
     const path = `${me}/${randomUUID()}.${kind.ext}`; // Their folder and a random name.
     const stored = await supabase.storage.from(BUCKET).upload(path, bytes, { contentType: kind.type, upsert: false }); // Stores it privately, never replacing another file.
     if (stored.error) { // Couldn't store it:
       await removeUploaded(); // removes any already stored,
-      return { error: `Screenshot ${i + 1} didn't upload. Please try again.` }; // and says which one.
+      return { error: `Screenshot ${i + 1} did not upload. Please try again.` }; // and says which one.
     } // End of the failure case.
     uploaded.push({ path, type: kind.type }); // Notes it as stored.
   } // End of the screenshots loop.
@@ -86,7 +86,7 @@ export async function submitProblemReport(_prev: FormState, formData: FormData):
   }); // End of the save.
   if (error) { // Saving failed:
     await removeUploaded(); // removes the stored screenshots so nothing is left behind,
-    return { error: PLAIN.test(error.message) ? error.message : "Couldn't send your report. Please try again." }; // and shows the database's plain message, or a general one.
+    return { error: PLAIN.test(error.message) ? error.message : "Could not send your report. Please try again." }; // and shows the database's plain message, or a general one.
   } // End of the failure case.
 
   revalidatePath("/report-problem"); // Refreshes the page so the report shows under "Your reports".
@@ -119,7 +119,7 @@ export async function updateProblemReport(_prev: FormState, formData: FormData):
     p_notes: v.reviewer_notes ?? "", // the private notes,
     p_fix_summary: v.fix_summary ?? "", // the fix summary.
   }); // End of the request.
-  if (error) return { error: PLAIN.test(error.message) ? error.message : "Couldn't save. Please try again." }; // Failed: the plain message, or a general one.
+  if (error) return { error: PLAIN.test(error.message) ? error.message : "Could not save. Please try again." }; // Failed: the plain message, or a general one.
   revalidatePath("/admin/problems"); // Refreshes the queue.
   return { message: "Saved." }; // Confirms it.
 } // End of updateProblemReport.
@@ -169,9 +169,9 @@ function githubSettings(): { token: string; repo: string } | null { // Gives bac
 export async function sendProblemToGitHub(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const id = z.uuid().safeParse(formData.get("id")); // Checks the report id looks right.
-  if (!id.success) return { error: "That report wasn't found." }; // Not a real id: says so.
+  if (!id.success) return { error: "That report was not found." }; // Not a real id: says so.
   const settings = githubSettings(); // The GitHub settings.
-  if (!settings) return { error: "GitHub isn't set up yet. Add GITHUB_ISSUES_TOKEN and GITHUB_ISSUES_REPO in Vercel first." }; // Not set up: says what's needed.
+  if (!settings) return { error: "GitHub is not set up yet. Add GITHUB_ISSUES_TOKEN and GITHUB_ISSUES_REPO in Vercel first." }; // Not set up: says what's needed.
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data: level } = await supabase.rpc("my_admin_level"); // Reads the person's admin level.
@@ -181,7 +181,7 @@ export async function sendProblemToGitHub(_prev: FormState, formData: FormData):
     .select("id, status, page, fix_summary, github_issue_url, created_at") // only what's needed,
     .eq("id", id.data) // this one,
     .maybeSingle(); // (one or none).
-  if (!report) return { error: "That report wasn't found." }; // Not found (or not allowed): says so.
+  if (!report) return { error: "That report was not found." }; // Not found (or not allowed): says so.
   if (report.github_issue_url) return { error: "This report is already on GitHub." }; // Already sent: says so.
   if (report.status !== "approved") return { error: "Mark the report \"Approved to fix\" and save before sending it to GitHub." }; // Not approved: a person must check it first.
   if (!report.fix_summary || report.fix_summary.length < 10) return { error: "Write the fix for the developer (no names or personal details) and save before sending." }; // No fix summary: asks for one.
@@ -214,10 +214,10 @@ export async function sendProblemToGitHub(_prev: FormState, formData: FormData):
   } catch (e) { // The request itself failed (for example, no connection):
     console.error("GitHub issue:", e); // notes why in the server log.
   } // End of the attempt.
-  if (!url) return { error: "GitHub didn't accept the issue. Check the key in Vercel can add issues to the repository, then try again." }; // Failed: says what to check.
+  if (!url) return { error: "GitHub did not accept the issue. Check the key in Vercel can add issues to the repository, then try again." }; // Failed: says what to check.
 
   const { error } = await supabase.rpc("problem_report_github_saved", { p_id: report.id, p_url: url }); // Saves the issue's address on the report.
-  if (error) return { error: `The issue was made (${url}) but couldn't be saved on the report.` }; // Saving failed: gives the address anyway.
+  if (error) return { error: `The issue was made (${url}) but could not be saved on the report.` }; // Saving failed: gives the address anyway.
   revalidatePath("/admin/problems"); // Refreshes the queue.
   return { message: `Sent to GitHub: ${url}` }; // Confirms it, with the address.
 } // End of sendProblemToGitHub.

@@ -32,7 +32,7 @@ export default async function JoinPage({ searchParams }: PageProps<"/join">) {
       <Page title="Join CLG">{/* a page titled "Join CLG", */}
         <Card>{/* with a card: */}
           <p className="text-sm">{/* a line: */}
-            This invitation link doesn&apos;t work. It may be incomplete, or CLG may have sent you a newer one. Please
+            This invitation link does not work. It may be incomplete, or CLG may have sent you a newer one. Please
             use the newest invitation email, or ask CLG for a new link.{/* saying the link doesn't work and what to do. */}
           </p>{/* End of the line. */}
           <p className="mt-4 text-sm">{/* A line: */}
@@ -74,9 +74,9 @@ export default async function JoinPage({ searchParams }: PageProps<"/join">) {
       <Card>{/* with a card: */}
         <p className="mb-4 text-sm text-zinc-600">{/* a grey line: */}
           CLG has invited <strong>{invite.email}</strong> to join as {roleWords}. Enter your first and last name and choose a password to
-          finish. Next, you&apos;ll set up two-step login with an authenticator app.{/* who was invited, and what happens next, */}
+          finish. Next, you will set up two-step login with an authenticator app.{/* who was invited, and what happens next, */}
           {invite.role === "tutor" && // for tutors:
-            " Then add your checks (Working with Children Check, RRHAN-EC and first aid) on your dashboard. CLG confirms them before you're matched with students."}{/* also about adding their checks. */}
+            " Then add your checks (Working with Children Check, RRHAN-EC and first aid) on your dashboard. CLG confirms them before you are matched with students."}{/* also about adding their checks. */}
         </p>{/* End of the line. */}
         <ActionForm action={joinAsStaff} submitLabel="Join CLG">{/* A form that creates the account: */}
           <input type="hidden" name="t" value={token} />{/* the link's code (hidden), */}
@@ -93,7 +93,7 @@ export default async function JoinPage({ searchParams }: PageProps<"/join">) {
           />{/* (end of the box) */}
         </ActionForm>{/* End of the form. */}
         <p className="mt-4 text-sm text-zinc-500">{/* A grey line: */}
-          Not {invite.email}? Please don&apos;t use this link. It only works for the person it was sent to.{/* telling anyone else not to use the link. */}
+          Not {invite.email}? Please do not use this link. It only works for the person it was sent to.{/* telling anyone else not to use the link. */}
         </p>{/* End of the line. */}
       </Card>{/* End of the card. */}
     </Page> // End of the page.

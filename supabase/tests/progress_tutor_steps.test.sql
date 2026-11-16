@@ -23,7 +23,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 update public.roadmap_steps set title = 'Changed by parent' where id = '00000000-0000-0000-0000-0000000e5001'; -- Tries to change the step's words.
-select tests.eq((select count(*) from public.roadmap_steps where title = 'Changed by parent'), 0, 'parent can''t change a step'); -- Checks: parent can't change a step.
+select tests.eq((select count(*) from public.roadmap_steps where title = 'Changed by parent'), 0, 'parent cannot change a step'); -- Checks: parent can't change a step.
 select public.tick_roadmap_step('00000000-0000-0000-0000-0000000e5001'); -- Ticks the step as done.
 select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000e5001' and done_at is not null), 1, 'parent ticks it off'); -- Checks: parent ticks it off.
 reset role; -- Goes back to the all-powerful test user (access rules off).

@@ -58,7 +58,7 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const lookup = await supabase.rpc("admin_find_account", { p_email: email }); // Looks up the email.
-  if (lookup.error) return { error: "We couldn't check that email. Please try again." }; // Lookup failed: plain message.
+  if (lookup.error) return { error: "We could not check that email. Please try again." }; // Lookup failed: plain message.
   const found = ((lookup.data ?? []) as Found[])[0]; // The first match (if any).
 
   if (who === "learner") return setUpLearner(formData, contact_name, email, subjects, found); // Students 16+ are set up separately.
@@ -99,7 +99,7 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
     console.error("Admin add child failed:", added.error.code, added.error.message); // notes why in the server log,
     const start = isNew ? `The account for ${email} was made, but` : ""; // mentions the account was made, if it was,
     return { // and explains:
-      error: `${start} we couldn't add ${child.data.full_name}. ${added.error.code === "22023" ? added.error.message + "." : "Please try again."} Adding the child again won't make a second account.`.trim(), // (the message)
+      error: `${start} we could not add ${child.data.full_name}. ${added.error.code === "22023" ? added.error.message + "." : "Please try again."} Adding the child again will not make a second account.`.trim(), // (the message)
     }; // End of the message.
   } // End of the failure case.
 
@@ -112,7 +112,7 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   if (!isNew) { // Existing parent:
-    return { message: `${child.data.full_name} has been added to ${found!.full_name}'s account. They'll see it next time they sign in.` }; // says the child was added to their account.
+    return { message: `${child.data.full_name} has been added to ${found!.full_name}'s account. They will see it next time they sign in.` }; // says the child was added to their account.
   } // End of that case.
   return { // New parent:
     message: `Account made for ${contact_name}, with ${child.data.full_name} added.${sentText(email, link)} To add another child, fill in the form again with the same email.`, // says the account was made, how the invite was sent, and how to add another child.
@@ -191,7 +191,7 @@ async function setUpLearner(
       ).error); // (no error means saved)
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
-  const note = saved ? "" : " Their subjects or goal didn't save, so please add them from the student's details."; // A note if anything didn't save.
+  const note = saved ? "" : " Their subjects or goal did not save, so please add them from the student's details."; // A note if anything didn't save.
   return { message: `Account made for ${name}.${sentText(email, made.link)}${note}` }; // Says the account was made, how the invite was sent, and any note.
 } // End of setUpLearner.
 
@@ -231,7 +231,7 @@ async function offerOwnLogin(
   const offer = await supabase.rpc(rpc, { p_student: student_id, p_email: email }); // Asks the database to record the offer (it checks age, email and rights).
   if (offer.error) { // It failed:
     console.error("Student login offer failed:", offer.error.code, offer.error.message); // notes why in the server log,
-    return { error: offer.error.code === "22023" ? `${offer.error.message}.` : "We couldn't do that. Please try again." }; // shows the database's plain message, or a general one.
+    return { error: offer.error.code === "22023" ? `${offer.error.message}.` : "We could not do that. Please try again." }; // shows the database's plain message, or a general one.
   } // End of the failure case.
 
   const student = await supabase.from("students").select("full_name").eq("id", student_id).single(); // Reads the student's name.
@@ -261,25 +261,25 @@ export async function sendNewLink(_prev: FormState, formData: FormData): Promise
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const lookup = await supabase.rpc("admin_find_account", { p_email: email }); // Looks up the email.
-  if (lookup.error) return { error: "We couldn't check that email. Please try again." }; // Lookup failed: plain message.
+  if (lookup.error) return { error: "We could not check that email. Please try again." }; // Lookup failed: plain message.
   const found = ((lookup.data ?? []) as Found[])[0]; // The first match (if any).
   if (!found) return { error: `No CLG account uses ${email}. To make one, use "Set up a family".` }; // No account: suggests "Set up a family".
 
   const admin = createAdminClient(); // Connects with full access.
   const roles = await admin.from("account_roles").select("role").eq("account_id", found.account_id); // Reads the account's roles.
   const roleNames = (roles.data ?? []).map((r) => r.role as string); // Their role names.
-  if (roles.error) return { error: "We couldn't check that account. Please try again." }; // Couldn't read them: plain message.
+  if (roles.error) return { error: "We could not check that account. Please try again." }; // Couldn't read them: plain message.
   if (roleNames.includes("admin") || roleNames.includes("tutor")) { // A staff account:
-    return { error: "That's a staff account. To send staff a new link, invite them again under Staff." }; // explains staff are invited again under Staff.
+    return { error: "That is a staff account. To send staff a new link, invite them again under Staff." }; // explains staff are invited again under Staff.
   } // End of that case.
   if (roleNames.length === 0) { // No roles (a student's own login in waiting):
     return { error: `That account was made for a student's own login. Use "Give a student their own login" again with the same email.` }; // explains to offer the login again.
   } // End of that case.
   const user = await admin.auth.admin.getUserById(found.account_id); // Reads their sign-in account.
-  if (user.error || !user.data.user) return { error: "We couldn't check that account. Please try again." }; // Couldn't read it: plain message.
+  if (user.error || !user.data.user) return { error: "We could not check that account. Please try again." }; // Couldn't read it: plain message.
   if (user.data.user.last_sign_in_at) { // Already signed in:
     return { // explains:
-      error: `${found.full_name} has already signed in. If they've forgotten their password, they can use "Forgot password" on the sign-in page.`, // they can use "Forgot password".
+      error: `${found.full_name} has already signed in. If they have forgotten their password, they can use "Forgot password" on the sign-in page.`, // they can use "Forgot password".
     }; // End of the message.
   } // End of that case.
 
@@ -288,7 +288,7 @@ export async function sendNewLink(_prev: FormState, formData: FormData): Promise
   const sent = confirmed // Sends the right email:
     ? await admin.auth.resetPasswordForEmail(email, { redirectTo }) // a password reset if confirmed,
     : await admin.auth.admin.inviteUserByEmail(email, { redirectTo }); // otherwise a fresh invitation.
-  if (!sent.error) return { message: `We've emailed ${email} a new link to choose a password.` }; // It sent: confirms it.
+  if (!sent.error) return { message: `We have emailed ${email} a new link to choose a password.` }; // It sent: confirms it.
   console.error("New login link email failed:", sent.error.code ?? sent.error.name, sent.error.message); // Notes the email failure in the server log.
 
   const made = await admin.auth.admin.generateLink( // Makes the link without emailing it:
@@ -296,7 +296,7 @@ export async function sendNewLink(_prev: FormState, formData: FormData): Promise
   ); // End of making the link.
   if (made.error || !made.data.properties?.action_link) { // That failed too:
     console.error("New login link failed:", made.error?.code, made.error?.message); // notes it in the server log,
-    return { error: "We couldn't make a new link. Please try again." }; // and tells the admin plainly.
+    return { error: "We could not make a new link. Please try again." }; // and tells the admin plainly.
   } // End of the failure case.
   return { message: `New link made for ${found.full_name}.${sentText(email, made.data.properties.action_link)}` }; // Gives the admin the link to send themselves.
 } // End of sendNewLink.
@@ -311,7 +311,7 @@ export async function agreeToPolicies(_prev: FormState, formData: FormData): Pro
     { account_id: viewer.id, kind: "privacy_policy", document_version: POLICY_VERSION }, // to the privacy policy,
     { account_id: viewer.id, kind: "terms_of_service", document_version: POLICY_VERSION }, // and the terms, at the current version.
   ]); // End of the save.
-  if (error) return { error: "We couldn't save that. Please try again." }; // Failed: plain message.
+  if (error) return { error: "We could not save that. Please try again." }; // Failed: plain message.
   // News and offers only when they ticked the separate, optional box.
   if (formData.get("marketing") === "on") { // The optional news box was ticked:
     const news = await supabase.rpc("set_marketing_email", { p_on: true, p_version: POLICY_VERSION }); // saves that choice,

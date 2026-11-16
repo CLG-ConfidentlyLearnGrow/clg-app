@@ -47,7 +47,7 @@ export async function setAddOn(_prev: FormState, formData: FormData): Promise<Fo
     .update({ mode: v.mode, price_cents: cents, price_period: v.price_period, gst_applies: formData.get("gst_applies") === "on" }) // the mode, price, period and whether GST applies (tick box),
     .eq("code", v.code) // for this add-on,
     .select("code"); // and reports which row changed.
-  if (error || !data?.length) return { error: "Couldn't save it. Please try again." }; // Nothing saved: plain message.
+  if (error || !data?.length) return { error: "Could not save it. Please try again." }; // Nothing saved: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page.
   return { // Tells the admin:
     message: // (the message)
@@ -83,7 +83,7 @@ export async function giveAddOn(_prev: FormState, formData: FormData): Promise<F
   }; // End of the row.
   if (v.starts_on) row.starts_on = v.starts_on; // Adds the start date only if given (otherwise the database uses today).
   const { error } = await supabase.from("add_on_members").upsert(row, { onConflict: "add_on,student_id" }); // Saves it, replacing any existing row for this add-on and student.
-  if (error) return { error: "Couldn't save it. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not save it. Please try again." }; // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page.
   return { message: "Saved." }; // Tells the person it worked.
 } // End of giveAddOn.

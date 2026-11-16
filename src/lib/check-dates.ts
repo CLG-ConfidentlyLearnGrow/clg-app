@@ -23,7 +23,7 @@ export function checkDates(
 ): { expiresOn: string } | { error: string } {
   if (NEEDS_REFERENCE.has(kind) && !reference) return { error: "Enter the card or registration number." }; // Screening checks need a number.
   const today = new Date().toISOString().slice(0, 10); // Today's date as YYYY-MM-DD.
-  if (completedOn && completedOn > today) return { error: "The date done can't be in the future." }; // Catches a typo in the year.
+  if (completedOn && completedOn > today) return { error: "The date done cannot be in the future." }; // Catches a typo in the year.
 
   if (kind === "police_check") { // Police checks follow their own rule:
     if (!completedOn) return { error: "Enter the date the police check was issued." }; // The issue date is needed.

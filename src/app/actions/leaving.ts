@@ -38,7 +38,7 @@ export async function recordLeaving(_prev: FormState, formData: FormData): Promi
     p_left_happy: v.left_happy === "yes" ? true : v.left_happy === "no" ? false : null, // left happy: yes, no, or not said,
     p_review_asked: formData.get("review_asked") === "on", // and whether a review was asked for (tick box).
   }); // End of the save.
-  if (error) return { error: "Couldn't save the record. Only full admins can record why someone left." }; // Failed: explains only full admins can do this.
+  if (error) return { error: "Could not save the record. Only full admins can record why someone left." }; // Failed: explains only full admins can do this.
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Saved." }; // Tells the person it worked.
 } // End of recordLeaving.

@@ -77,11 +77,11 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
       suggestion.data.suggested_start.slice(0, 5) !== v.start_time.slice(0, 5) || // or the start time (hours and minutes),
       suggestion.data.suggested_delivery !== v.delivery || // or the place,
       (suggestion.data.suggested_library || "") !== (v.library_id || "")); // or the library.
-  if (changed && !suggestion.data.change_reason) return { error: "Please say why you didn't use the suggested time." }; // Changed without a reason: asks for one.
+  if (changed && !suggestion.data.change_reason) return { error: "Please say why you did not use the suggested time." }; // Changed without a reason: asks for one.
 
   // "Another time or place" (CLG admins only): outside the tutor's availability.
   const other = isAdmin && formData.get("other") === "1"; // True if an admin chose "another time or place".
-  if (other && suggestion?.success && !suggestion.data.change_reason) return { error: "Please say why you didn't use the suggested time." }; // That also needs a reason when there's a suggestion.
+  if (other && suggestion?.success && !suggestion.data.change_reason) return { error: "Please say why you did not use the suggested time." }; // That also needs a reason when there's a suggestion.
 
   const supabase = await createClient(); // Connects to the database.
   const { data: bookingId, error } = await supabase.rpc(other ? "offer_other_time" : "request_booking", { // Asks the database to make the booking (an "other time" offer, or a normal one), and gets its id:
@@ -97,7 +97,7 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
     p_last_date: v.last_date, // the last date,
     p_note: v.note || null, // the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't send the request. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not send the request. Please try again.") }; // Failed: plain message.
 
   if (changed && suggestion?.success) { // If the admin changed the suggestion:
     await supabase.rpc("record_offer_change", { // records the change for later review:
@@ -113,8 +113,8 @@ export async function requestBooking(_prev: FormState, formData: FormData): Prom
   } // End of that step.
   return done( // Refreshes, updates Teams, and tells them:
     isAdmin // for admins,
-      ? "Offer sent. The tutor and family each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes." // how the offer is approved,
-      : "Request sent. The tutor has 48 hours to confirm. You'll see it under Bookings.", // for families, how the request is confirmed.
+      ? "Offer sent. The tutor and family each have 3 days to approve, with a reminder after 2 days. It is confirmed once both say yes." // how the offer is approved,
+      : "Request sent. The tutor has 48 hours to confirm. You will see it under Bookings.", // for families, how the request is confirmed.
   ); // (end of the message)
 } // End of requestBooking.
 
@@ -141,10 +141,10 @@ export async function answerBooking(_prev: FormState, formData: FormData): Promi
     p_accept: parsed.data.answer === "accept", // accepted or not,
     p_note: parsed.data.note || null, // the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams, and tells them:
     parsed.data.answer === "accept" // if accepted,
-      ? "Accepted. If the family still needs to approve, it's confirmed once they do." // that it's confirmed once the family approves,
+      ? "Accepted. If the family still needs to approve, it is confirmed once they do." // that it's confirmed once the family approves,
       : "Declined. CLG will offer the family other times.", // if declined, that CLG will offer other times.
   ); // (end of the message)
 } // End of answerBooking.
@@ -164,10 +164,10 @@ export async function approveBooking(_prev: FormState, formData: FormData): Prom
     p_ok: parsed.data.answer === "accept", // approved or not,
     p_note: parsed.data.note || null, // the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams, and tells them:
     parsed.data.answer === "accept" // if approved,
-      ? "Approved. It's confirmed once the tutor has said yes too." // that it's confirmed once the tutor agrees,
+      ? "Approved. It is confirmed once the tutor has said yes too." // that it's confirmed once the tutor agrees,
       : "Thanks for letting us know. CLG will offer another time.", // if declined, that CLG will offer another time.
   ); // (end of the message)
 } // End of approveBooking.
@@ -201,7 +201,7 @@ const sessionCancelSchema = z.object({
 export async function cancelSession(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = sessionCancelSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Couldn't read that request." }; // Problem: the first plain message.
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Could not read that request." }; // Problem: the first plain message.
   const v = parsed.data; // The checked answers.
   const noTimes = v.no_times === "on"; // Whether "no other time works" was ticked.
 
@@ -217,7 +217,7 @@ export async function cancelSession(_prev: FormState, formData: FormData): Promi
     p_no_times: noTimes, // whether no other time works,
     p_for: v.on_behalf || null, // who it's for (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't cancel the session.") }; // Failed: plain message (the database explains what's wrong with a time).
+  if (error) return { error: plainError(error, "Could not cancel the session.") }; // Failed: plain message (the database explains what's wrong with a time).
   return done( // Refreshes, updates Teams, and confirms it:
     noTimes // if no times were offered:
       ? "Session cancelled. CLG will help arrange a make-up session." // says CLG will help,
@@ -245,7 +245,7 @@ export async function answerMakeup(_prev: FormState, formData: FormData): Promis
     p_choice: Number(parsed.data.choice), // which time (0 for neither),
     p_note: parsed.data.note || null, // and the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams (a new online session needs a link), and confirms it:
     parsed.data.choice === "0" // if neither works:
       ? "Thanks. CLG will be in touch to arrange another time." // says CLG will be in touch,
@@ -266,7 +266,7 @@ const makeupConfirmSchema = z.object({
 export async function confirmMakeup(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = makeupConfirmSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Please confirm the time, or say it doesn't work." }; // Problem: plain message.
+  if (!parsed.success) return { error: "Please confirm the time, or say it does not work." }; // Problem: plain message.
 
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("confirm_makeup_time", { // Asks the database to record the answer:
@@ -274,7 +274,7 @@ export async function confirmMakeup(_prev: FormState, formData: FormData): Promi
     p_ok: parsed.data.answer === "yes", // yes or no,
     p_note: parsed.data.note || null, // and the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams (a new online session needs a link), and confirms it:
     parsed.data.answer === "yes" // if confirmed:
       ? "Make-up session booked. Everyone has been told." // says it's booked,
@@ -286,7 +286,7 @@ export async function confirmMakeup(_prev: FormState, formData: FormData): Promi
 export async function stopBooking(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = cancelSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Couldn't read that request." }; // Problem: plain message.
+  if (!parsed.success) return { error: "Could not read that request." }; // Problem: plain message.
 
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("cancel_booking", { // Asks the database to stop it:
@@ -294,7 +294,7 @@ export async function stopBooking(_prev: FormState, formData: FormData): Promise
     p_reason: parsed.data.reason || null, // the reason (or none),
     p_for: parsed.data.on_behalf || null, // who it's for (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't stop the booking.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not stop the booking.") }; // Failed: plain message.
   return done("Booking stopped. Its future sessions are cancelled."); // Refreshes, updates Teams, and confirms it.
 } // End of stopBooking.
 
@@ -314,7 +314,7 @@ export async function recordOutcome(_prev: FormState, formData: FormData): Promi
     p_session: parsed.data.id, // which session,
     p_status: parsed.data.outcome, // and the outcome.
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save that.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save that.") }; // Failed: plain message.
   return done("Saved."); // Refreshes, updates Teams, and confirms it.
 } // End of recordOutcome.
 
@@ -331,7 +331,7 @@ export async function saveTutorPlaces(_prev: FormState, formData: FormData): Pro
   const learningSupport = formData.get("learning_support") === "on"; // True if "learning support" is ticked.
   if (!online && !inPerson) return { error: "Choose online, in person, or both." }; // At least one way of working is needed.
   const libraries = z.array(z.uuid()).safeParse(formData.getAll("library")); // Checks the ticked libraries' ids.
-  if (!libraries.success) return { error: "Couldn't read the libraries you chose." }; // Odd ids: plain message.
+  if (!libraries.success) return { error: "Could not read the libraries you chose." }; // Odd ids: plain message.
   if (inPerson && libraries.data.length === 0) return { error: "Tick at least one library for in-person sessions." }; // In person needs at least one library.
 
   const supabase = await createClient(); // Connects to the database.
@@ -341,7 +341,7 @@ export async function saveTutorPlaces(_prev: FormState, formData: FormData): Pro
     in_person: inPerson, // in person or not,
     learning_support: learningSupport, // learning support or not.
   }); // End of the save.
-  if (settings.error) return { error: "Couldn't save your settings." }; // Failed: plain message.
+  if (settings.error) return { error: "Could not save your settings." }; // Failed: plain message.
 
   const current = await supabase.from("tutor_places").select("library_id").eq("tutor_id", viewer.id); // Reads the tutor's current libraries.
   const had = new Set((current.data ?? []).map((r) => r.library_id as string)); // The libraries they had.
@@ -350,11 +350,11 @@ export async function saveTutorPlaces(_prev: FormState, formData: FormData): Pro
   const add = [...want].filter((id) => !had.has(id)).map((library_id) => ({ tutor_id: viewer.id, library_id })); // Ones to add: wanted but not had.
   if (remove.length) { // If any to remove:
     const r = await supabase.from("tutor_places").delete().eq("tutor_id", viewer.id).in("library_id", remove); // deletes them,
-    if (r.error) return { error: "Couldn't update your libraries." }; // failed: plain message.
+    if (r.error) return { error: "Could not update your libraries." }; // failed: plain message.
   } // End of removing.
   if (add.length) { // If any to add:
     const r = await supabase.from("tutor_places").insert(add); // adds them,
-    if (r.error) return { error: "Couldn't update your libraries." }; // failed: plain message.
+    if (r.error) return { error: "Could not update your libraries." }; // failed: plain message.
   } // End of adding.
   return done("Saved."); // Refreshes, updates Teams, and confirms it.
 } // End of saveTutorPlaces.
@@ -386,7 +386,7 @@ export async function addLibrary(_prev: FormState, formData: FormData): Promise<
     latitude: parsed.data.latitude === "" ? null : (parsed.data.latitude ?? null), // the latitude (or none),
     longitude: parsed.data.longitude === "" ? null : (parsed.data.longitude ?? null), // the longitude (or none).
   }); // End of the save.
-  if (error) return { error: error.code === "23505" ? "That library is already listed." : "Couldn't add the library." }; // Failed: says if it's already listed, or a general message.
+  if (error) return { error: error.code === "23505" ? "That library is already listed." : "Could not add the library." }; // Failed: says if it's already listed, or a general message.
   return done("Library added."); // Refreshes, updates Teams, and confirms it.
 } // End of addLibrary.
 
@@ -436,7 +436,7 @@ export async function addAwayDates(_prev: FormState, formData: FormData): Promis
     p_reason: v.reason || null, // the reason (or none),
     p_tutor_offer: studentId ? null : v.tutor_offer || null, // the tutor's offer (tutors only, or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save the away dates.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save the away dates.") }; // Failed: plain message.
   // A tutor's away dates wait 2 hours before sessions are cancelled, so a
   // mistake can be fixed by removing them.
   if (!studentId) // For a tutor's own dates:
@@ -477,10 +477,10 @@ const waitSchema = z.object({
 export async function joinWaitlist(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = waitSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Couldn't read that request." }; // Problem: plain message.
+  if (!parsed.success) return { error: "Could not read that request." }; // Problem: plain message.
   const v = parsed.data; // The checked values.
   const libraries = (v.libraries ?? "").split(",").filter(Boolean); // The libraries as a list.
-  if (!z.array(z.uuid()).safeParse(libraries).success) return { error: "Couldn't read the libraries." }; // Odd ids: plain message.
+  if (!z.array(z.uuid()).safeParse(libraries).success) return { error: "Could not read the libraries." }; // Odd ids: plain message.
   const weekdays = (v.weekdays ?? "").split(",").filter(Boolean).map(Number); // The weekdays as a list of numbers.
 
   const supabase = await createClient(); // Connects to the database.
@@ -496,7 +496,7 @@ export async function joinWaitlist(_prev: FormState, formData: FormData): Promis
     p_tutor: null, // no particular tutor,
     p_note: v.note || null, // the note (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't add to the waitlist.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not add to the waitlist.") }; // Failed: plain message.
   return done("Added to the waitlist. CLG will be in touch when a suitable tutor is available."); // Refreshes, updates Teams, and confirms it.
 } // End of joinWaitlist.
 
@@ -526,7 +526,7 @@ export async function signOn(_prev: FormState, formData: FormData): Promise<Form
   await requireViewer(); // Makes sure someone is signed in.
   const raw = Object.fromEntries([...formData.entries()].filter(([, v]) => v !== "")); // The form's fields, leaving out blank ones.
   const parsed = signOnSchema.safeParse(raw); // Checks them against the rules.
-  if (!parsed.success) return { error: "Couldn't read that request." }; // Problem: plain message.
+  if (!parsed.success) return { error: "Could not read that request." }; // Problem: plain message.
 
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("sign_on", { // Asks the database to sign on, and gets how it went:
@@ -534,11 +534,11 @@ export async function signOn(_prev: FormState, formData: FormData): Promise<Form
     p_latitude: parsed.data.latitude ?? null, // latitude (or none),
     p_longitude: parsed.data.longitude ?? null, // longitude (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't sign you on.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not sign you on.") }; // Failed: plain message.
   const messages: Record<string, string> = { // The message for each result:
     online: "Signed on.", // online,
     at_library: "Signed on at the library.", // at the library,
-    not_at_library: "Signed on. The check didn't place you at the library, so CLG will take a look.", // not placed at the library,
+    not_at_library: "Signed on. The check did not place you at the library, so CLG will take a look.", // not placed at the library,
     no_location: "Signed on without a location check. CLG will take a look.", // no location given.
   }; // End of the messages.
   return done(messages[String(data)] ?? "Signed on."); // Refreshes, updates Teams, and shows the right message.
@@ -566,7 +566,7 @@ export async function recordEndTime(_prev: FormState, formData: FormData): Promi
     p_end: `${v.date} ${v.end_time} Australia/Adelaide`, // the finish date and time,
     p_note: v.note, // and why.
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save the time.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save the time.") }; // Failed: plain message.
   return done("Saved. CLG will confirm the time."); // Refreshes, updates Teams, and confirms it.
 } // End of recordEndTime.
 
@@ -592,7 +592,7 @@ export async function confirmTimes(_prev: FormState, formData: FormData): Promis
     p_from: `${v.date} ${v.from_time} Australia/Adelaide`, // the start, in Adelaide time,
     p_to: `${v.date} ${v.to_time} Australia/Adelaide`, // the end, in Adelaide time.
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't confirm the times.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not confirm the times.") }; // Failed: plain message.
   return done("Times confirmed."); // Refreshes, updates Teams, and confirms it.
 } // End of confirmTimes.
 
@@ -623,7 +623,7 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
     account_id: viewer.id, // for this person,
     first_reminder_hours: parsed.data.first_reminder_hours, // the hours.
   }); // End of the save.
-  if (error) return { error: "Couldn't save your settings." }; // Failed: plain message.
+  if (error) return { error: "Could not save your settings." }; // Failed: plain message.
   return done("Saved. New reminders will use these settings."); // Refreshes, updates Teams, and confirms it.
 } // End of saveNoticeSettings.
 
@@ -633,8 +633,8 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
 // The rules for the family's next-term answer:
 const renewalSchema = z.object({
   id: z.uuid(), // which renewal,
-  same_again: z.enum(["yes", "no"], "Please say whether you'd like the same again."), // the same again, yes or no,
-  holidays: z.enum(["yes", "no"], "Please say whether you'd like holiday sessions."), // holiday sessions, yes or no,
+  same_again: z.enum(["yes", "no"], "Please say whether you would like the same again."), // the same again, yes or no,
+  holidays: z.enum(["yes", "no"], "Please say whether you would like holiday sessions."), // holiday sessions, yes or no,
   change_what: z.enum(["time", "tutor", "both"]).optional(), // what to change (optional),
   change_reason: z.string().trim().max(1000).optional(), // why (optional),
   feedback: z.string().trim().max(2000).optional(), // feedback (optional).
@@ -646,7 +646,7 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
   const parsed = renewalSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const v = parsed.data; // The checked values.
-  if (v.same_again === "no" && !v.change_what) return { error: "Please say what you'd like to change." }; // "No" needs what to change.
+  if (v.same_again === "no" && !v.change_what) return { error: "Please say what you would like to change." }; // "No" needs what to change.
 
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("answer_renewal", { // Asks the database to save the answer:
@@ -658,7 +658,7 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
     p_feedback: v.feedback || null, // feedback (or none),
     p_testimonial_ok: formData.get("testimonial_ok") === "on", // and whether their feedback may be quoted.
   }); // End of the request.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams, and tells them:
     v.same_again === "yes" // if the same again,
       ? "Thank you. Your tutor has been asked to confirm next term." // that the tutor will confirm,
@@ -695,7 +695,7 @@ export async function addTerm(_prev: FormState, formData: FormData): Promise<For
     }, // (end of the values)
     { onConflict: "state,calendar,year,term" }, // The same state, calendar, year and term means the same row.
   ); // End of the save.
-  if (error) return { error: "Couldn't save the term. Only CLG admins can change term dates." }; // Failed: plain message.
+  if (error) return { error: "Could not save the term. Only CLG admins can change term dates." }; // Failed: plain message.
   return done("Term saved."); // Refreshes, updates Teams, and confirms it.
 } // End of addTerm.
 
@@ -706,11 +706,11 @@ export async function addTerm(_prev: FormState, formData: FormData): Promise<For
 export async function confirmAvailability(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const id = z.uuid().safeParse(formData.get("id")); // Reads and checks the id.
-  if (!id.success) return { error: "Couldn't read that check." }; // Bad id: plain message.
+  if (!id.success) return { error: "Could not read that check." }; // Bad id: plain message.
   const changed = formData.get("answer") === "changed"; // True if they said it has changed.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("confirm_availability", { p_check: id.data, p_changed: changed }); // Asks the database to save the answer.
-  if (error) return { error: plainError(error, "Couldn't save your answer.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done("Thanks. Your availability is confirmed for next term."); // Refreshes, updates Teams, and thanks them.
 } // End of confirmAvailability.
 
@@ -719,7 +719,7 @@ export async function confirmAvailability(_prev: FormState, formData: FormData):
 // ---------------------------------------------------------------------------
 // How long the family wants to book for (families and CLG admins).
 const bookingLengthSchema = z.object({
-  student_id: z.uuid("Couldn't read which child this is for."), // which child,
+  student_id: z.uuid("Could not read which child this is for."), // which child,
   book_until: z.iso.date("Please choose the last date."), // the last date to book until,
   school_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead in school holidays."), // sessions in school holidays, yes or no,
   public_holidays: z.enum(["yes", "no"], "Please say whether sessions go ahead on public holidays."), // sessions on public holidays, yes or no.
@@ -738,7 +738,7 @@ export async function saveBookingLength(_prev: FormState, formData: FormData): P
     p_public_holidays: v.data.public_holidays === "yes", // public holidays or not.
   }); // End of the request.
   if (error) { // It failed:
-    return { error: error.code === "23514" ? "The last date must be from today and within a year." : plainError(error, "Couldn't save this.") }; // explains the date rule, or a plain message.
+    return { error: error.code === "23514" ? "The last date must be from today and within a year." : plainError(error, "Could not save this.") }; // explains the date rule, or a plain message.
   } // End of the failure case.
   return done("Saved. You can change this at any time."); // Refreshes, updates Teams, and confirms it.
 } // End of saveBookingLength.
@@ -747,9 +747,9 @@ export async function saveBookingLength(_prev: FormState, formData: FormData): P
 export async function saveStudentPlaces(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const student = z.uuid().safeParse(formData.get("student_id")); // Reads and checks the child's id.
-  if (!student.success) return { error: "Couldn't read which child this is for." }; // Bad id: plain message.
+  if (!student.success) return { error: "Could not read which child this is for." }; // Bad id: plain message.
   const libraries = z.array(z.uuid()).safeParse(formData.getAll("library")); // Checks the ticked libraries' ids.
-  if (!libraries.success) return { error: "Couldn't read the libraries you chose." }; // Odd ids: plain message.
+  if (!libraries.success) return { error: "Could not read the libraries you chose." }; // Odd ids: plain message.
   let online = formData.get("online") === "on"; // True if "online" is ticked.
   let libraryIds = libraries.data; // The chosen libraries.
   const supabase = await createClient(); // Connects to the database.
@@ -786,7 +786,7 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
     preferred_school_hours: formData.get("preferred_school_hours") === "on", // whether school hours suit,
     tutor_preferences: String(formData.get("tutor_preferences") ?? "").trim().slice(0, 1000) || null, // any tutor preferences (up to 1,000 characters, or none).
   }); // End of the save.
-  if (error) return { error: "Couldn't save the places." }; // Failed: plain message.
+  if (error) return { error: "Could not save the places." }; // Failed: plain message.
   return done("Saved. Offers will start from these places and preferences."); // Refreshes, updates Teams, and confirms it.
 } // End of saveStudentPlaces.
 

@@ -46,7 +46,7 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
           {me?.due_on && (me.state === "to_do" || me.state === "overdue") && <span className="ml-2">Due {plainDate(me.due_on)}</span>}{/* and the due date. */}
         </p>{/* End of the details. */}
         {m.summary && <p className="text-sm text-zinc-700">{m.summary}</p>}{/* the summary, if any. */}
-        {m.status !== "published" && <p className="text-sm text-amber-800">Admin preview: this module isn&apos;t published yet.</p>}{/* a note when an admin previews a draft. */}
+        {m.status !== "published" && <p className="text-sm text-amber-800">Admin preview: this module is not published yet.</p>}{/* a note when an admin previews a draft. */}
       </div>{/* End of the heading block. */}
 
       {lessonRows.length === 0 && <Empty>This module has no lessons yet.</Empty>}{/* No lessons: says so. */}
@@ -55,7 +55,7 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
           <div className="space-y-4">{/* a block: */}
             {files[i] && isVideo(l.file_path) && ( // a video:
               <video controls preload="metadata" className="w-full rounded-xl bg-black" src={files[i]!}>{/* a video player, */}
-                Your browser can&apos;t play this video. <a href={files[i]!}>Download it instead</a>.{/* (with a download link for old browsers) */}
+                Your browser cannot play this video. <a href={files[i]!}>Download it instead</a>.{/* (with a download link for old browsers) */}
               </video> // End of the player.
             )}{/* End of the video. */}
             {files[i] && !isVideo(l.file_path) && ( // a PDF:
@@ -70,11 +70,11 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
       ))}{/* End of the lessons. */}
 
       {me ? ( // If the module is for them:
-        <Card title={(questions.data ?? []).length ? "Quiz" : "Finish this module"} description={(questions.data ?? []).length ? "Answer every question. You need them all right, and you can try as many times as you like. Use the handbook and the lessons above." : "Mark it as finished once you've worked through the lessons."}>{/* the quiz card: */}
+        <Card title={(questions.data ?? []).length ? "Quiz" : "Finish this module"} description={(questions.data ?? []).length ? "Answer every question. You need them all right, and you can try as many times as you like. Use the handbook and the lessons above." : "Mark it as finished once you have worked through the lessons."}>{/* the quiz card: */}
           <QuizForm moduleId={m.id} questions={(questions.data ?? []) as QuizQuestion[]} done={me.state === "done"} />{/* the quiz. */}
         </Card> // End of the card.
       ) : ( // Otherwise (an admin previewing):
-        <Empty>This module isn&apos;t one of yours, so there&apos;s no quiz to do here.</Empty> // says so.
+        <Empty>This module is not one of yours, so there is no quiz to do here.</Empty> // says so.
       )}{/* End of the quiz. */}
       <p><BackButton href={`/training?as=${role}`}>Back to all modules</BackButton></p>{/* The same back button at the bottom, so it's there after the quiz. */}
     </DashboardFrame> // End of the frame.

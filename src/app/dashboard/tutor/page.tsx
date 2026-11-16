@@ -162,7 +162,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         {/* Session times to accept or decline, and new notices, on every section so they aren't missed. */}
         <SessionAnswersCard waiting={offers.as_tutor} notices={todo.get("sessions", "notices") ?? 0} who="tutor" />
         {section === "students" && pauses.length > 0 && ( // On the students section, if there are on hold notices:
-          <Card title="Sessions on hold or back on" description="From the last 2 weeks. Your schedule shows what's on.">{/* a card: */}
+          <Card title="Sessions on hold or back on" description="From the last 2 weeks. Your schedule shows what is on.">{/* a card: */}
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
               {pauses.map((p) => ( // for each notice:
                 <li key={p.id} className="py-2.5 first:pt-0">{/* a row: */}
@@ -170,7 +170,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                   <span className="text-zinc-600">{/* in grey: */}
                     {" · "}{/* a dot, */}
                     {p.kind === "on_hold" // if on hold:
-                      ? "on hold for now. Please don't run these sessions until CLG says they're back on." // says not to run sessions,
+                      ? "on hold for now. Please do not run these sessions until CLG says they are back on." // says not to run sessions,
                       : "back on."}{/* otherwise back on. */}
                     {" · "}{/* a dot, */}
                     {shortDate(p.created_at.slice(0, 10))}{/* the date. */}
@@ -342,7 +342,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
               <MyCheckForm />{/* the check form. */}
             </Card>{/* End of the card. */}
 
-            <Card collapsible defaultOpen={false} title="What you've sent" description="Every check you add is logged here with its dates.">{/* the "What you've sent" fold-up card: */}
+            <Card collapsible defaultOpen={false} title="What you have sent" description="Every check you add is logged here with its dates.">{/* the "What you've sent" fold-up card: */}
               {myChecks.length === 0 ? ( // if nothing sent:
                 <Empty>Nothing sent yet.</Empty> // says so.
               ) : ( // otherwise:

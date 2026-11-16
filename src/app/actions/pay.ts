@@ -55,7 +55,7 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
     admin_rate_cents: rate(formData.get("admin_rate")), // office admin.
   }; // End of the rates.
   if (Object.values(rates).some((r) => r === undefined)) { // Any rate typed wrongly:
-    return { error: "Enter hourly rates in dollars, for example 34 or 62.88. Leave a rate empty if it doesn't apply." }; // shows an example.
+    return { error: "Enter hourly rates in dollars, for example 34 or 62.88. Leave a rate empty if it does not apply." }; // shows an example.
   } // End of that check.
   // Agreed weekly hours, for part-time and full-time staff only.
   const agreed = String(formData.get("guaranteed_hours") ?? "").trim(); // The typed agreed hours.
@@ -81,9 +81,9 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
         } // (end of the Xero links)
       : {}), // otherwise nothing.
   }); // End of the save.
-  if (error) return plain(error, "Couldn't save the pay details."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the pay details."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
-  return { message: "Pay details saved. Pay already sent to Xero doesn't change. If you changed their employment type, agreed hours or a rate, make the same change to their employee record in Xero; it's on the Xero to-do list below." }; // Confirms, and reminds them to update Xero.
+  return { message: "Pay details saved. Pay already sent to Xero does not change. If you changed their employment type, agreed hours or a rate, make the same change to their employee record in Xero; it is on the Xero to-do list below." }; // Confirms, and reminds them to update Xero.
 } // End of saveStaffPay.
 
 // Ticks off a line on the Xero to-do list once Xero matches the app.
@@ -93,7 +93,7 @@ export async function markXeroTaskDone(_prev: FormState, formData: FormData): Pr
   if (!id.success) return { error: "Please try again." }; // Problem: plain message.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_xero_task_done", { p_task: id.data, p_how: "by_hand" }); // Asks the database to tick it off.
-  if (error) return plain(error, "Couldn't tick it off. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not tick it off. Please try again."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   return { message: "Ticked off." }; // Confirms.
 } // End of markXeroTaskDone.
@@ -107,7 +107,7 @@ export async function linkXeroByEmail(): Promise<FormState> { // (The form sends
   try { // Tries:
     employees = await listXeroEmployees(); // to read it.
   } catch (e) { // If Xero refused:
-    return { error: `Couldn't read Xero's employees: ${(e as Error).message}` }; // says why.
+    return { error: `Could not read Xero's employees: ${(e as Error).message}` }; // says why.
   } // End of the try.
   const xeroByEmail = new Map(employees.filter((e) => e.Email).map((e) => [e.Email!.trim().toLowerCase(), e.EmployeeID])); // Each Xero employee's id, by email in lower case.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -122,7 +122,7 @@ export async function linkXeroByEmail(): Promise<FormState> { // (The form sends
     .filter((l) => l.xero_employee_id); // and keeps those with a match.
   if (links.length === 0) return { message: "Nobody new matched. Check their email is the same in the app and in Xero, or choose their Xero employee by hand." }; // Nothing matched: says what to check.
   const { data, error } = await supabase.rpc("billing_link_xero_employees", { p_links: links }); // Asks the database to save the links.
-  if (error) return plain(error, "Couldn't link them. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not link them. Please try again."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   return { message: `Linked ${data} ${data === 1 ? "person" : "people"} to Xero by email. Now choose their Xero earnings rates in Pay rates.` }; // Confirms, with the next step.
 } // End of linkXeroByEmail.
@@ -143,7 +143,7 @@ export async function addAdminTime(_prev: FormState, formData: FormData): Promis
     p_minutes: Math.round(hours * 60), // this many minutes,
     p_note: parsed.data.note ?? "", // with this note.
   }); // End of the request.
-  if (error) return plain(error, "Couldn't record the admin hours."); // Failed: plain message.
+  if (error) return plain(error, "Could not record the admin hours."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   return { message: "Admin hours recorded." }; // Confirms it.
 } // End of addAdminTime.
@@ -165,13 +165,13 @@ export async function workOutPay(_prev: FormState, formData: FormData): Promise<
   if (!parsed.success) return { error: "Choose the pay period." }; // Problem: asks for the period.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("billing_build_pay", { p_from: parsed.data.from, p_to: parsed.data.to }); // Asks the database to build the pay lines.
-  if (error) return plain(error, "Couldn't work out pay."); // Failed: plain message.
+  if (error) return plain(error, "Could not work out pay."); // Failed: plain message.
   // Add summary-writing time for each completed session (before the agreed-hours check, so it counts).
   const summaries = await supabase.rpc("billing_build_summary_pay", { p_from: parsed.data.from, p_to: parsed.data.to }); // Builds the session summary pay lines.
-  if (summaries.error) return plain(summaries.error, "Couldn't work out session summary pay."); // Failed: plain message.
+  if (summaries.error) return plain(summaries.error, "Could not work out session summary pay."); // Failed: plain message.
   // Add compulsory training as hours waiting for approval (before the agreed-hours check, so it counts).
   const training = await supabase.rpc("billing_build_training_hours", { p_from: parsed.data.from, p_to: parsed.data.to }); // Adds training hours for the period.
-  if (training.error) return plain(training.error, "Couldn't add training hours."); // Failed: plain message.
+  if (training.error) return plain(training.error, "Could not add training hours."); // Failed: plain message.
   // Then check agreed hours for part-time and full-time staff (only once the pay period has ended).
   const topUps = await supabase.rpc("billing_check_guaranteed_hours", { p_day: parsed.data.to }); // Adds any guaranteed-hours top-ups for the period.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
@@ -246,10 +246,10 @@ export async function logMyHours(_prev: FormState, formData: FormData): Promise<
     p_note: parsed.data.note, // the description,
     p_type: type, // and the kind of work.
   }); // End of the request.
-  if (error) return plain(error, "Couldn't log the hours. Please try again."); // Failed: plain message.
+  if (error) return plain(error, "Could not log the hours. Please try again."); // Failed: plain message.
   revalidatePath("/pay"); // Refreshes the staff pay page.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
-  return { message: "Hours logged. They're paid once CLG approves them." }; // Confirms, noting they're paid once approved.
+  return { message: "Hours logged. They are paid once CLG approves them." }; // Confirms, noting they're paid once approved.
 } // End of logMyHours.
 
 // A staff member takes back hours they logged (before approval).
@@ -281,7 +281,7 @@ export async function declineHours(_prev: FormState, formData: FormData): Promis
   if (!parsed.success) return { error: "Please say why." }; // Problem: asks why.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_review_hours", { p_log: parsed.data.id, p_approve: false, p_note: parsed.data.reason }); // Asks the database to decline it with the reason.
-  if (error) return plain(error, "Couldn't decline the hours."); // Failed: plain message.
+  if (error) return plain(error, "Could not decline the hours."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   revalidatePath("/pay"); // Refreshes the staff pay page.
   return { message: "Declined. They can see your reason on their pay page." }; // Confirms, noting the reason is shown to them.
@@ -307,14 +307,14 @@ export async function uploadAwardRates(_prev: FormState, formData: FormData): Pr
     const [work, employment, amount, ...award] = parts; // The four columns (the award name may contain commas).
     const cents = parseDollars((amount ?? "").replace("$", "")); // Turns the rate into cents.
     if (!work || !employment || cents === null) { // A line that doesn't make sense:
-      return { error: `Line ${i + 1} isn't right: "${line}". Each line needs work, employment, hourly rate and award name.` }; // says which line.
+      return { error: `Line ${i + 1} is not right: "${line}". Each line needs work, employment, hourly rate and award name.` }; // says which line.
     } // End of that check.
     rows.push({ work_kind: work.toLowerCase(), employment: employment.toLowerCase().replace("-", "_").replace(" ", "_"), rate_cents: cents, award: award.join(", ") }); // Adds the rate.
   } // End of the lines.
   if (rows.length === 0) return { error: "The file has no rates in it." }; // Nothing found.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("billing_upload_award_rates", { p_effective: effective.data, p_rows: rows }); // Saves the rates (and raises staff now if the date has come).
-  if (error) return plain(error, "Couldn't save the award rates."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the award rates."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   const raised = data ?? 0; // How many staff rates went up now.
   return { message: `${rows.length} award rate(s) saved from ${effective.data}.${raised > 0 ? ` ${raised} staff rate(s) raised to the new minimum.` : " Staff below the new minimum are raised on that date."}` }; // Tells the admin what happened.

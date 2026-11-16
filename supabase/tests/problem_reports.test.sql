@@ -38,7 +38,7 @@ select public.problem_report_submit( -- sends the report:
   'Safari on iPhone', -- the device,
   jsonb_build_array(jsonb_build_object('path', :'shot1', 'type', 'image/png'), jsonb_build_object('path', :'shot2', 'type', 'image/jpeg')) -- and both screenshots
 ) as report \gset
-select tests.eq((select count(*) from public.problem_reports), 0, 'reporter can''t read the reports table'); -- checks the queue is hidden from them
+select tests.eq((select count(*) from public.problem_reports), 0, 'reporter cannot read the reports table'); -- checks the queue is hidden from them
 select tests.eq((select count(*) from public.my_problem_reports()), 1, 'reporter sees their own report'); -- checks they see their own
 select tests.eq((select screenshots from public.my_problem_reports()), 2, 'reporter sees both screenshots counted'); -- checks the count
 select tests.eq((select count(*) from storage.objects where bucket_id = 'problem-screenshots'), 2, 'reporter can open their own screenshots'); -- checks they can open their own
@@ -61,7 +61,7 @@ reset role; -- back to the test user
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- acting as the operations admin (not on the list yet)
 set role authenticated; -- as a signed-in person
 select tests.eq((select count(*) from public.problem_reports), 0, 'admin not on the list sees nothing'); -- checks the list decides
-select tests.eq((select count(*) from storage.objects where bucket_id = 'problem-screenshots'), 0, 'admin not on the list can''t open screenshots'); -- checks the files too
+select tests.eq((select count(*) from storage.objects where bucket_id = 'problem-screenshots'), 0, 'admin not on the list cannot open screenshots'); -- checks the files too
 select tests.fails($$select public.problem_reviewer_add('00000000-0000-0000-0000-0000000000b0')$$, 'admin adds themselves to the list'); -- checks only the owner chooses
 reset role; -- back to the test user
 
@@ -76,7 +76,7 @@ reset role; -- back to the test user
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- acting as the owner
 set role authenticated; -- as a signed-in person
-select tests.fails($$select public.problem_reviewer_add('00000000-0000-0000-0000-000000000011')$$, 'owner adds a tutor who isn''t an admin'); -- checks only admins can review
+select tests.fails($$select public.problem_reviewer_add('00000000-0000-0000-0000-000000000011')$$, 'owner adds a tutor who is not an admin'); -- checks only admins can review
 select public.problem_reviewer_add('00000000-0000-0000-0000-0000000000b0'); -- adds the operations admin
 select public.problem_reviewer_add('00000000-0000-0000-0000-0000000000b0'); -- adding twice is fine
 select tests.eq((select count(*) from public.problem_reviewer_choices() where on_list), 1, 'one admin on the list'); -- checks the list
@@ -86,7 +86,7 @@ select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- acting a
 set role authenticated; -- as a signed-in person
 select tests.eq((select count(*) from public.problem_reports), 1, 'reviewer sees the report'); -- checks they now see it
 select tests.eq((select count(*) from storage.objects where bucket_id = 'problem-screenshots'), 2, 'reviewer can open the screenshots'); -- checks the files too
-select tests.eq((select count(*) from public.problem_reviewer_choices()), 0, 'reviewer can''t read the admin choices'); -- checks only the owner gets the choices
+select tests.eq((select count(*) from public.problem_reviewer_choices()), 0, 'reviewer cannot read the admin choices'); -- checks only the owner gets the choices
 select public.problem_report_update(:'report', 'checking', 'urgent', 'Thanks, we are looking into it.', 'Happens on iPhone only', ''); -- marks it as being checked, with a reply and a note
 select public.problem_report_update(:'report', 'fixed', 'urgent', 'Thanks, we are looking into it.', 'Happens on iPhone only', 'Booking page freezes on Safari after pressing Book.'); -- marks it fixed
 select tests.eq((select count(*) from public.problem_reports where closed_at is not null and reviewed_by = '00000000-0000-0000-0000-0000000000b0'), 1, 'fixed reports get a closed time'); -- checks the closed time is stamped

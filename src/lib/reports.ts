@@ -162,7 +162,7 @@ export function reportCsv(r: SavedReport): string { // Takes the report.
   add("Enquiries", "New students added", f.enquiries.new_students); // New students.
   add("Enquiries", "Booked", f.enquiries.booked); // Booked.
   add("Enquiries", "Still waiting", f.enquiries.still_waiting); // Still waiting.
-  add("Enquiries", "Didn't go ahead", f.enquiries.did_not_go_ahead); // Didn't go ahead.
+  add("Enquiries", "Did not go ahead", f.enquiries.did_not_go_ahead); // Didn't go ahead.
   add("Enquiries", "Booked (%)", f.enquiries.booked_percent); // Share booked.
   add("Enquiries", "Average days from added to booked", f.enquiries.average_days_to_book); // Days to book.
   add(); // A blank line.

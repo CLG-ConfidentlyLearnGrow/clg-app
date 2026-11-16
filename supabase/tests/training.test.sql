@@ -12,6 +12,8 @@ begin;
 \ir ../migrations/20261116300100_training.sql
 -- Runs the automatic safety-hours change again too (the training file above replaced its step).
 \ir ../migrations/20261118400100_training_safety_hours_auto.sql
+-- Writes out the short forms in the database's messages again (the file above put back the old wording).
+\ir ../migrations/20261119500200_messages_no_contractions.sql
 
 -- A test helper: checks a statement is refused with a message containing certain words.
 create or replace function tests.fails_with(p_sql text, p_words text, p_label text) returns void -- takes the statement, the words and a label
@@ -85,7 +87,7 @@ select tests.eq((select count(*) from public.training_questions), 2, 'tutor sees
 select tests.fails($$select correct_option from public.training_questions$$, 'tutor reads the right answers'); -- checks the right answers are hidden
 select tests.fails($$select * from public.training_questions_for_admin('10000000-0000-0000-0000-000000000001')$$, 'tutor uses the admin answers list'); -- checks the admin list is refused
 select tests.fails($$insert into public.training_completions (account_id, module_id, module_version, module_title, audience, minutes, paid, counts_toward_certified, completed_on, certificate_no) values (auth.uid(), '10000000-0000-0000-0000-000000000001', 1, 'x', 'tutor', 5, true, false, current_date, 'FAKE')$$, 'tutor adds a completion directly'); -- checks completions can't be faked
-select tests.fails_with($$select public.training_finish('10000000-0000-0000-0000-000000000003', '{}')$$, 'isn''t available', 'tutor finishes an admin module'); -- checks admin modules are refused
+select tests.fails_with($$select public.training_finish('10000000-0000-0000-0000-000000000003', '{}')$$, 'is not available', 'tutor finishes an admin module'); -- checks admin modules are refused
 select tests.fails_with($$select public.training_finish('10000000-0000-0000-0000-000000000001', '{2}')$$, 'answer every question', 'quiz with a missing answer'); -- checks every question must be answered
 
 -- Marking: one wrong answer fails (100% needed); all right passes.
@@ -191,7 +193,7 @@ select tests.eq(private.training_matching_ok('00000000-0000-0000-0000-0000000000
 -- Handbook.
 -- ---------------------------------------------------------------------------
 insert into public.handbook_pages (title, body, urgent, audience, status) values -- adds three pages:
-  ('Something''s happened', 'Call 000 first.', true, 'everyone', 'published'), -- a published urgent page for everyone
+  ('Something has happened', 'Call 000 first.', true, 'everyone', 'published'), -- a published urgent page for everyone
   ('Admin only page', 'For admins.', false, 'admin', 'published'), -- a published admin page
   ('Draft page', 'Not ready.', false, 'everyone', 'draft'); -- a draft
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- acting as T1
