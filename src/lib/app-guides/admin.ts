@@ -159,7 +159,7 @@ const YOUR_OWN = `
 3. Download your certificate when you finish.
 
 ### Use the handbook
-Choose **Handbook** in the side menu, and search for a word. **Something's happened** is pinned at the top in red.
+Choose **Handbooks** in the side menu, and search for a word. **Something's happened** is pinned at the top in red.
 
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
@@ -318,7 +318,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 
 ### Training setup
 1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module. **Back to all modules** (top and bottom of the page) returns to the list. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
-2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
+2. **Progress** shows everyone's compulsory modules. **Handbooks** is where you write the tutor handbook pages.
 `;
 
 // Billing for every level that can open it (Owner, Operations, Finance).

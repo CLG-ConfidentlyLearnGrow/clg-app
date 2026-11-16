@@ -30,7 +30,7 @@ export default async function HandbookPage({ searchParams }: PageProps<"/handboo
   const shown = words.length ? pages.filter((p) => words.every((w) => `${p.title} ${p.body}`.toLowerCase().includes(w))) : pages; // Pages containing every word (or all pages).
 
   return ( // Shows:
-    <DashboardFrame role={role} roles={viewer.roles} current="handbook">{/* the dashboard tabs and menu, with Handbook open: */}
+    <DashboardFrame role={role} roles={viewer.roles} current="handbook">{/* the dashboard tabs and menu, with Handbooks open: */}
       <p className="text-sm text-zinc-600">{/* a short explanation: */}
         Where to go and what to do. If a child is in danger right now, call 000 first, then use the red{" "}{/* 000 first, */}
         <TextLink href="/safety">Child safety</TextLink> button at the top of every page.{/* and the Child safety page. */}
