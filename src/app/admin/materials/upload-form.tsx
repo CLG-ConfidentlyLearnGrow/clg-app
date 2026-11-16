@@ -195,7 +195,7 @@ export function UploadMaterialsForm() {
         maxLength={1000} // up to 1,000 characters,
         hint="What it is and how to use it, for example: 20 minutes, use after introducing equivalent fractions." // and a hint.
       />{/* (end of the box) */}
-      <Button type="submit" disabled={busy}>{/* The button (greyed out while busy): */}
+      <Button type="submit" busy={busy}>{/* The button (greyed out and showing a spinner while busy): */}
         {uploading ? "Uploading…" : saving ? "Checking files…" : "Upload and save as drafts"}{/* its words show what's happening. */}
       </Button>{/* End of the button. */}
     </form> // End of the form.

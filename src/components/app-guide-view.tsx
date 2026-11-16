@@ -9,7 +9,7 @@ import type { ReactNode } from "react"; // The type for "anything that can be sh
 import type { Guide, GuideBlock, GuideTask } from "@/lib/app-guides"; // The guide shapes (for type checking only).
 
 // Shows a line of text with **starred** words in bold (the names of buttons and menu items).
-function Rich({ text }: { text: string }) { // Takes the line.
+export function Rich({ text }: { text: string }) { // Takes the line (also used by the app tour).
   const pieces = text.split(/\*\*(.+?)\*\*/g); // Splits around starred words: odd pieces are the starred ones.
   return ( // Shows:
     <>{/* (a group) */}

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui"; // The main button.
 export function SubmitOnce({ label }: { label: string }) {
   const { pending } = useFormStatus(); // Whether the form is busy.
   return ( // Shows:
-    <Button type="submit" disabled={pending} aria-busy={pending}>{/* the button, switched off while busy, telling screen readers it's busy, */}
+    <Button type="submit" busy={pending}>{/* the button, switched off and showing a spinner while busy (which also tells screen readers it is busy), */}
       {pending ? "One moment…" : label}{/* showing "One moment…" while busy, otherwise its words. */}
     </Button> // End of the button.
   ); // End of what's shown.

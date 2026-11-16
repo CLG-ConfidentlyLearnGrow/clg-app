@@ -146,7 +146,7 @@ export function LessonFileForm({ lessonId, maxMb }: { lessonId: string; maxMb: n
         <span className="font-medium text-zinc-800">Video or PDF (up to {maxMb} MB)</span>{/* its label, */}
         <input type="file" name="file" accept="video/mp4,video/webm,video/quicktime,application/pdf,.mp4,.webm,.mov,.pdf" className="block text-sm" />{/* the picker. */}
       </label>{/* End of the picker. */}
-      <BusyButton type="submit" disabled={busy} className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50">{busy ? "Uploading…" : "Upload and attach"}</BusyButton>{/* the send button. */}
+      <BusyButton type="submit" busy={busy} className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50">{busy ? "Uploading…" : "Upload and attach"}</BusyButton>{/* the send button. */}
     </form> // End of the form.
   ); // End of what's shown.
 } // End of LessonFileForm.
