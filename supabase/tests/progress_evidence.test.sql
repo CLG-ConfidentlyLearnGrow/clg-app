@@ -35,7 +35,7 @@ insert into public.learning_evidence (id, student_id, kind, subject, title, date
 select tests.eq((select count(*) from public.learning_evidence where uploaded_by_role = 'parent' -- Checks the parent's upload is labelled as from the parent:
   and uploaded_by = '00000000-0000-0000-0000-000000000001'), 1, 'parent uploads graded work (labelled parent)'); -- (one record by parent P1).
 select tests.fails(format($$insert into public.learning_evidence (student_id, kind, title, file_path, file_type, uploaded_by_role) -- Checks a record for a file that didn't upload is refused:
-  values (%L, 'school_report', 'Report', %L, 'application/pdf', 'parent')$$, :'cara', :'cara' || '/33333333-3333-3333-3333-333333333333.pdf'), 'record for a file that didn''t upload'); -- (a school report for a file that isn't in storage).
+  values (%L, 'school_report', 'Report', %L, 'application/pdf', 'parent')$$, :'cara', :'cara' || '/33333333-3333-3333-3333-333333333333.pdf'), 'record for a file that did not upload'); -- (a school report for a file that isn't in storage).
 select tests.fails(format($$insert into public.learning_evidence (student_id, kind, title, file_path, file_type, uploaded_by_role) -- Checks a record for a file in another student's folder is refused:
   values (%L, 'school_report', 'Report', %L, 'application/pdf', 'parent')$$, :'vic', :'file2'), 'record for a file in another student''s folder'); -- (Vic's record pointing at Cara's file).
 select tests.fails(format($$insert into public.learning_evidence (student_id, kind, title, dated_on, file_path, file_type, uploaded_by_role) -- Checks a date in the future is refused:
@@ -49,18 +49,18 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.learning_evidence), 0, 'other parent sees no uploads'); -- Checks: other parent sees no uploads.
-select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'other parent can''t open the files'); -- Checks: other parent can't open the files.
+select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'other parent cannot open the files'); -- Checks: other parent can't open the files.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2'); -- Signs in as test account ...12 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.learning_evidence), 0, 'other tutor sees no uploads'); -- Checks: other tutor sees no uploads.
-select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'other tutor can''t open the files'); -- Checks: other tutor can't open the files.
+select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'other tutor cannot open the files'); -- Checks: other tutor can't open the files.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal1'); -- Signs in as test account ...11.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'tutor without two-step can''t open the files'); -- Checks: tutor without two-step can't open the files.
+select tests.eq((select count(*) from storage.objects where bucket_id = 'learning-evidence'), 0, 'tutor without two-step cannot open the files'); -- Checks: tutor without two-step can't open the files.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ===========================================================================
@@ -97,7 +97,7 @@ select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.evidence_skills), 1, 'family sees the linked skill'); -- Checks: family sees the linked skill.
 delete from storage.objects where name = :'file1'; -- Tries to delete the photo from storage.
-select tests.eq((select count(*) from storage.objects where name = :'file1'), 1, 'a file in use can''t be removed directly'); -- Checks: a file in use can't be removed directly.
+select tests.eq((select count(*) from storage.objects where name = :'file1'), 1, 'a file in use cannot be removed directly'); -- Checks: a file in use can't be removed directly.
 select tests.fails($$select * from public.evidence_files_to_remove()$$, 'family reads the removal queue'); -- Checks this is refused: family reads the removal queue.
 delete from public.learning_evidence where id = '00000000-0000-0000-0000-0000000e1001'; -- Deletes the quiz record.
 select tests.eq((select count(*) from public.learning_evidence where id = '00000000-0000-0000-0000-0000000e1001'), 0, 'parent removes the upload'); -- Checks: parent removes the upload.

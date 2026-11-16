@@ -44,11 +44,11 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as the operations admin.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Away')$$, 'Only the owner', 'operations admin can''t remove staff'); -- Checks: refused for an operations admin.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Away')$$, 'Only the owner', 'operations admin cannot remove staff'); -- Checks: refused for an operations admin.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000007e2', 'aal2'); -- Signs in as Ada (a support admin).
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e1', current_date, 'moved', null, 'Lou Leaver')$$, 'Only the owner', 'support admin can''t remove staff'); -- Checks: refused for a support admin.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e1', current_date, 'moved', null, 'Lou Leaver')$$, 'Only the owner', 'support admin cannot remove staff'); -- Checks: refused for a support admin.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal1'); -- Signs in as the owner WITHOUT two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
@@ -60,10 +60,10 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Someone')$$, 'doesn''t match', 'wrong name typed'); -- Checks: the typed name must match.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000000a0', current_date, 'moved', null, 'Olive Owner')$$, 'remove yourself', 'owner can''t remove themselves'); -- Checks: the owner can't remove themselves.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-000000000001', current_date, 'moved', null, (select full_name from public.accounts where id = '00000000-0000-0000-0000-000000000001'))$$, 'isn''t a current tutor or admin', 'a parent isn''t staff'); -- Checks: a parent (not staff) is refused.
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date + 1, 'moved', null, 'Ada Away')$$, 'can''t be in the future', 'last day in the future'); -- Checks: the last day can't be in the future.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Someone')$$, 'does not match', 'wrong name typed'); -- Checks: the typed name must match.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000000a0', current_date, 'moved', null, 'Olive Owner')$$, 'remove yourself', 'owner cannot remove themselves'); -- Checks: the owner can't remove themselves.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-000000000001', current_date, 'moved', null, (select full_name from public.accounts where id = '00000000-0000-0000-0000-000000000001'))$$, 'is not a current tutor or admin', 'a parent is not staff'); -- Checks: a parent (not staff) is refused.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date + 1, 'moved', null, 'Ada Away')$$, 'cannot be in the future', 'last day in the future'); -- Checks: the last day can't be in the future.
 select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date - 400, 'moved', null, 'Ada Away')$$, 'within the past year', 'last day too long ago'); -- Checks: the last day must be within the past year.
 select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'bored', null, 'Ada Away')$$, 'Choose why they left', 'unknown reason'); -- Checks: the reason must be on the list.
 select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e1', current_date, 'own_study_or_work', null, 'Lou Leaver')$$, 'booking(s) coming up', 'tutor with bookings is refused'); -- Checks: a tutor with bookings coming up is refused.
@@ -96,7 +96,7 @@ select tests.eq((select count(*) from public.audit_log where action = 'staff_lef
 select tests.claims('00000000-0000-0000-0000-0000000007e2', 'aal2'); -- Signs in as Ada (a support admin).
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.staff_directory() where account_id = '00000000-0000-0000-0000-0000000007e1' and left_on is not null and leaving_reason is null), 1, 'support admin sees they left, not why'); -- Checks: support admins see the last day but not the reason.
-select tests.eq((select count(*) from public.staff_departures), 0, 'support admin can''t read the leaving records'); -- Checks: the table itself is hidden from support admins.
+select tests.eq((select count(*) from public.staff_departures), 0, 'support admin cannot read the leaving records'); -- Checks: the table itself is hidden from support admins.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as parent P1.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
@@ -110,7 +110,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'clg_ended', null, 'Ada Away'); -- Removes Ada (CLG ended her employment).
-select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Away')$$, 'isn''t a current tutor or admin', 'can''t remove someone twice'); -- Checks: someone already gone can't be removed again.
+select tests.fails_with($$select public.staff_leave('00000000-0000-0000-0000-0000000007e2', current_date, 'moved', null, 'Ada Away')$$, 'is not a current tutor or admin', 'cannot remove someone twice'); -- Checks: someone already gone can't be removed again.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.account_roles where account_id = '00000000-0000-0000-0000-0000000007e2' and role = 'admin'), 0, 'admin role ended'); -- Checks: Ada is no longer an admin.
 select tests.eq((select count(*) from public.staff_departures where account_id = '00000000-0000-0000-0000-0000000007e2' and roles_removed = '{admin}' and details is null), 1, 'admin leaving recorded'); -- Checks: Ada's leaving is written down.
@@ -124,7 +124,7 @@ set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.admin_add_role('00000000-0000-0000-0000-0000000007e1', 'tutor'); -- Lou rejoins as a tutor.
 select tests.eq((select count(*) from public.staff_directory() where account_id = '00000000-0000-0000-0000-0000000007e1' and is_tutor and left_on is null), 1, 'rejoined tutor shows as current'); -- Checks: Lou shows as current again.
 reset role; -- Goes back to the all-powerful test user (access rules off).
-select tests.eq((select count(*) from public.tutor_calendar_links where tutor_id = '00000000-0000-0000-0000-0000000007e1'), 0, 'old calendar link doesn''t come back'); -- Checks: the old calendar link stays gone.
+select tests.eq((select count(*) from public.tutor_calendar_links where tutor_id = '00000000-0000-0000-0000-0000000007e1'), 0, 'old calendar link does not come back'); -- Checks: the old calendar link stays gone.
 select tests.eq((select count(*) from public.staff_departures where account_id = '00000000-0000-0000-0000-0000000007e1'), 1, 'leaving history kept after rejoining'); -- Checks: the earlier leaving record stays.
 
 -- ---------------------------------------------------------------------------

@@ -91,7 +91,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as parent P2.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.students where id = '00000000-0000-0000-0000-00000000c0b0'), 0, 'P2 can''t see the child before being linked'); -- Checks: P2 can't see the child yet.
+select tests.eq((select count(*) from public.students where id = '00000000-0000-0000-0000-00000000c0b0'), 0, 'P2 cannot see the child before being linked'); -- Checks: P2 can't see the child yet.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as the admin, with two-step sign-in.
@@ -111,7 +111,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as parent P2.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.students where id = '00000000-0000-0000-0000-00000000c0b0'), 0, 'P2 can''t see the child once unlinked'); -- Checks: P2 can't see the child after unlinking.
+select tests.eq((select count(*) from public.students where id = '00000000-0000-0000-0000-00000000c0b0'), 0, 'P2 cannot see the child once unlinked'); -- Checks: P2 can't see the child after unlinking.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------

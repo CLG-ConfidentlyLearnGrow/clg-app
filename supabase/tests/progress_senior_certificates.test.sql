@@ -68,7 +68,7 @@ select tests.eq((select count(*) from public.certificate_progress(:'cara') where
 select tests.eq((select count(*) from public.certificate_progress(:'cara') where code = 'literacy' and met), 1, 'literacy met with a C'); -- Checks: literacy met with a C.
 select tests.eq((select count(*) from public.certificate_progress(:'cara') where code = 'numeracy' and met), 0, 'numeracy not met with a D'); -- Checks: numeracy not met with a D.
 select tests.eq((select credits_under_way from public.certificate_progress(:'cara') where code = 'aif'), 10, 'AIF under way'); -- Checks: AIF under way.
-select tests.eq((select credits_done from public.certificate_progress(:'cara') where code = 'stage2'), 20, 'Biology counts at Stage 2, AIF doesn''t'); -- Checks: Biology counts at Stage 2, AIF doesn't.
+select tests.eq((select credits_done from public.certificate_progress(:'cara') where code = 'stage2'), 20, 'Biology counts at Stage 2, AIF does not'); -- Checks: Biology counts at Stage 2, AIF doesn't.
 select tests.eq((select credits_under_way from public.certificate_progress(:'cara') where code = 'stage2'), 20, 'Chemistry under way'); -- Checks: Chemistry under way.
 select tests.eq((select credits_done from public.certificate_progress(:'cara') where code = 'total'), 60, 'total counts every finished subject'); -- Checks: total counts every finished subject.
 -- The tutor can update a result.

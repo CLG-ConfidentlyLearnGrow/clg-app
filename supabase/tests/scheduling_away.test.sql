@@ -62,7 +62,7 @@ select tests.eq((select count(*) from public.sessions where booking_id = :'booki
 update public.away_dates set applies_at = now() - interval '1 minute' where tutor_id = '00000000-0000-0000-0000-000000000013' and applied_at is null; -- Makes the away date due a minute ago.
 select tests.eq(private.apply_due_away_dates(), 1, 'tutor away cancels one session after 2 hours'); -- Checks: tutor away cancels one session after 2 hours.
 select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled' and cancelled_by_role = 'tutor' -- Checks the session is cancelled by the tutor, with a polite reason:
-  and cancel_reason like 'Your tutor isn''t available that day%'), 1, 'cancelled by the tutor, politely'); -- (one cancelled session).
+  and cancel_reason like 'Your tutor is not available that day%'), 1, 'cancelled by the tutor, politely'); -- (one cancelled session).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' -- Checks the family is told, with the tutor's other times:
   and kind = 'tutor_away' and body like '%Thursday 4pm that week%' and body like '%Requests%'), 1, 'family told, with the tutor''s other times'); -- (one notice mentioning Thursday 4pm and Requests).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks admins are told:

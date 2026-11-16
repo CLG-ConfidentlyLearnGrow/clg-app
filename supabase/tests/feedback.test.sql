@@ -42,12 +42,12 @@ select tests.fails($q$select public.give_feedback('nowhere', 'idea', null, 'Not 
 select tests.fails($q$select public.give_feedback('app_other', 'rant', null, 'Not a real kind.')$q$, 'the kind must be praise, idea or worry'); -- refused
 select tests.fails($q$select public.give_feedback('app_other', 'idea', 9::smallint, 'Rating too high.')$q$, 'ratings go from 1 to 5'); -- refused
 select tests.fails($q$select public.give_feedback('app_other', 'idea', null, 'x')$q$, 'a few words are needed'); -- refused
-select tests.fails(format($q$select public.give_feedback('people_person', 'worry', null, 'About a tutor I have never had.', %L)$q$, :'t2'), 'a parent can''t give feedback about someone not on their list'); -- refused
+select tests.fails(format($q$select public.give_feedback('people_person', 'worry', null, 'About a tutor I have never had.', %L)$q$, :'t2'), 'a parent cannot give feedback about someone not on their list'); -- refused
 select tests.fails($q$select public.give_feedback('people_person', 'worry', null, 'No person chosen.')$q$, 'feedback about a person needs a person'); -- refused
 select tests.fails(format($q$select public.give_feedback('app_other', 'idea', null, 'A person on an app area.', %L)$q$, :'t1'), 'a person can only go with "A person at CLG"'); -- refused
 select tests.fails(format($q$insert into public.feedback (given_by_name, area_id, kind, comment) values ('x', 'app_other', 'idea', 'Direct insert')$q$), 'nobody adds feedback directly'); -- refused
 select tests.eq((select count(*) from public.my_feedback()), 4::bigint, 'the giver sees their own feedback'); -- all four
-select tests.eq((select count(*) from public.feedback), 0::bigint, 'a parent can''t read the feedback table'); -- not a reviewer
+select tests.eq((select count(*) from public.feedback), 0::bigint, 'a parent cannot read the feedback table'); -- not a reviewer
 reset role; -- back to the database itself
 select tests.eq((select count(*) from public.feedback where id = :'f_tutor' and reader_id = :'olive'), 1::bigint, 'feedback about a tutor goes to the officer'); -- routed to Olive
 select tests.eq((select count(*) from public.feedback where id = :'f_owner' and reader_id = :'sam'), 1::bigint, 'feedback about the officer goes to the deputy'); -- routed to Sam
@@ -60,20 +60,20 @@ select public.give_feedback('people_person', 'praise', null, 'T2 shared great wo
 select tests.fails(format($q$select public.give_feedback('people_person', 'praise', null, 'I am great.', %L)$q$, :'t1'), 'nobody gives feedback about themselves'); -- refused
 
 -- 3. The person feedback is about never sees it.
-select tests.eq((select count(*) from public.feedback where about_account = :'t1'), 0::bigint, 'the tutor can''t see feedback about them'); -- hidden
+select tests.eq((select count(*) from public.feedback where about_account = :'t1'), 0::bigint, 'the tutor cannot see feedback about them'); -- hidden
 reset role; -- back to the database itself
 select tests.claims(:'olive', 'aal2'); -- signs in as Olive (owner and officer)
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.feedback where id = :'f_owner'), 0::bigint, 'the officer, even as owner, can''t see feedback about herself'); -- hidden
+select tests.eq((select count(*) from public.feedback where id = :'f_owner'), 0::bigint, 'the officer, even as owner, cannot see feedback about herself'); -- hidden
 select tests.eq((select count(*) from public.feedback where id in (:'f_tutor', :'f_colleague')), 2::bigint, 'the officer reads feedback about other people'); -- visible
 select tests.eq((select count(*) from public.feedback where id in (:'f_app', :'f_service')), 2::bigint, 'the owner reads app and service feedback'); -- visible
-select tests.fails(format($q$select public.feedback_update(%L, 'done', 'Spoke to her.')$q$, :'f_owner'), 'the officer can''t update feedback about herself'); -- refused
+select tests.fails(format($q$select public.feedback_update(%L, 'done', 'Spoke to her.')$q$, :'f_owner'), 'the officer cannot update feedback about herself'); -- refused
 select public.feedback_update(:'f_tutor', 'acting', 'Spoke to the tutor about being on time.'); -- the officer records what was done
 reset role; -- back to the database itself
 select tests.claims(:'sam', 'aal2'); -- signs in as Sam (operations admin and deputy)
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.feedback where id = :'f_owner'), 1::bigint, 'the deputy reads feedback about the officer'); -- visible
-select tests.eq((select count(*) from public.feedback where id in (:'f_tutor', :'f_colleague')), 0::bigint, 'the deputy (an admin) can''t read other feedback about people'); -- hidden: only the officer
+select tests.eq((select count(*) from public.feedback where id in (:'f_tutor', :'f_colleague')), 0::bigint, 'the deputy (an admin) cannot read other feedback about people'); -- hidden: only the officer
 select tests.eq((select count(*) from public.feedback where id in (:'f_app', :'f_service')), 2::bigint, 'operations admins read app and service feedback'); -- visible
 reset role; -- back to the database itself
 select tests.claims(:'sam', 'aal1'); -- Sam WITHOUT two-step sign-in
@@ -83,13 +83,13 @@ reset role; -- back to the database itself
 select tests.claims(:'t2', 'aal2'); -- signs in as tutor T2
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.feedback), 0::bigint, 'a tutor reads no one''s feedback'); -- hidden
-select tests.fails(format($q$select public.feedback_update(%L, 'done', null)$q$, :'f_app'), 'a tutor can''t update feedback'); -- refused
+select tests.fails(format($q$select public.feedback_update(%L, 'done', null)$q$, :'f_app'), 'a tutor cannot update feedback'); -- refused
 reset role; -- back to the database itself
 
 -- 4. The giver sees where it's up to, but not the admins' note.
 select tests.claims(:'p1'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.my_feedback() where id = :'f_tutor' and status = 'acting'), 1::bigint, 'the giver sees that it''s being acted on'); -- status visible
+select tests.eq((select count(*) from public.my_feedback() where id = :'f_tutor' and status = 'acting'), 1::bigint, 'the giver sees that it is being acted on'); -- status visible
 reset role; -- back to the database itself
 
 -- 5. Only the owner changes the areas.
@@ -101,12 +101,12 @@ select tests.claims(:'olive', 'aal2'); -- signs in as the owner
 set role authenticated; -- acts as a signed-in person
 select public.set_feedback_area('app_messages', 'app', 'Messages', true); -- adds an area
 select public.set_feedback_area('app_other', 'app', 'Something else in the app', false); -- hides one
-select tests.fails($q$select public.set_feedback_area('people_extra', 'people', 'Another person area', true)$q$, 'the person area can''t be added to'); -- refused
+select tests.fails($q$select public.set_feedback_area('people_extra', 'people', 'Another person area', true)$q$, 'the person area cannot be added to'); -- refused
 reset role; -- back to the database itself
 select tests.eq((select count(*) from public.feedback_areas where id = 'app_messages' and active), 1::bigint, 'the new area is there'); -- added
 select tests.claims(:'p1'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person
-select tests.fails($q$select public.give_feedback('app_other', 'idea', null, 'A hidden area.')$q$, 'a hidden area can''t be picked'); -- refused
+select tests.fails($q$select public.give_feedback('app_other', 'idea', null, 'A hidden area.')$q$, 'a hidden area cannot be picked'); -- refused
 reset role; -- back to the database itself
 
 -- 6. Concerning words: checked for app feedback, not for feedback about a person.
@@ -118,7 +118,7 @@ select public.give_feedback('people_person', 'worry', null, 'My child said they 
 -- (and feedback about Olive with the same words; keeps its id as f_words_person)
 reset role; -- back to the database itself
 select tests.eq((select count(*) from public.safety_word_flags where source_table = 'feedback' and source_id = :'f_words'), 1::bigint, 'app feedback with concerning words is flagged'); -- flagged
-select tests.eq((select count(*) from public.safety_word_flags where source_table = 'feedback' and source_id = :'f_words_person'), 0::bigint, 'feedback about a person isn''t flagged (that would show it to them)'); -- not flagged
+select tests.eq((select count(*) from public.safety_word_flags where source_table = 'feedback' and source_id = :'f_words_person'), 0::bigint, 'feedback about a person is not flagged (that would show it to them)'); -- not flagged
 
 -- 7. The activity log has ids only.
 select tests.eq((select count(*) from public.audit_log where details::text like '%late%' or details::text like '%invoices%'), 0::bigint, 'no feedback words in the activity log'); -- nothing leaked

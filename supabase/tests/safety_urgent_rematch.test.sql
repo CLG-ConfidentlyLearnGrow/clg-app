@@ -56,14 +56,14 @@ select tests.claims(:'sam', 'aal2'); -- signs in as Sam (operations, not handlin
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.urgent_rematches() where student_name = 'Cara One' and paid_sessions = 2), 1::bigint, 'a matching admin sees the urgent flag'); -- visible
 select tests.fails($q$select * from public.safety_rematch_flags$q$, 'nobody reads the flags table directly'); -- refused
-select tests.eq((select count(*) from public.safety_concern_rematch(:'c1')), 0::bigint, 'but can''t see it on the concern (not handling it)'); -- hidden
+select tests.eq((select count(*) from public.safety_concern_rematch(:'c1')), 0::bigint, 'but cannot see it on the concern (not handling it)'); -- hidden
 reset role; -- back to the database itself
 
 -- 3. Tutors and families don't see it.
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.urgent_rematches()), 0::bigint, 'the tutor sees no flags'); -- hidden
-select tests.fails(format($q$select public.urgent_rematch_sorted(%L, 'Trying')$q$, (select id from public.urgent_rematches() limit 1)), 'the tutor can''t mark it sorted'); -- refused
+select tests.fails(format($q$select public.urgent_rematch_sorted(%L, 'Trying')$q$, (select id from public.urgent_rematches() limit 1)), 'the tutor cannot mark it sorted'); -- refused
 reset role; -- back to the database itself
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person

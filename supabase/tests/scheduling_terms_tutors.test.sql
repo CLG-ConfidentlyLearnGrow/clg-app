@@ -16,7 +16,7 @@ select id as t3_check from public.availability_checks where tutor_id = '00000000
 -- Who can see and answer.
 select tests.claims('00000000-0000-0000-0000-000000000014', 'aal2'); -- Signs in as test account ...14 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.availability_checks where tutor_id = '00000000-0000-0000-0000-000000000013'), 0, 'other tutor can''t see it'); -- Checks: other tutor can't see it.
+select tests.eq((select count(*) from public.availability_checks where tutor_id = '00000000-0000-0000-0000-000000000013'), 0, 'other tutor cannot see it'); -- Checks: other tutor can't see it.
 select tests.fails(format($$select public.confirm_availability(%L, false)$$, :'t3_check'), 'other tutor confirms'); -- Checks this is refused: other tutor confirms.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.

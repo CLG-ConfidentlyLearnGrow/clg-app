@@ -36,7 +36,7 @@ select tests.eq((select count(*) from public.find_session_times(:'sam', 'General
 
 -- Offering another time inside the summary time is refused.
 select tests.fails(format($$select public.offer_other_time(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 7::smallint, '11:05', 60, 'online', null, current_date + 7, current_date + 70, 'test')$$, :'sam'),
-  'an offered time can''t start inside the tutor''s summary time');
+  'an offered time cannot start inside the tutor''s summary time');
 -- 11:15, straight after the summary time, is accepted (proves the refusal above was about the gap).
 select public.offer_other_time(:'sam', 'General Maths', '00000000-0000-0000-0000-000000000013', 7::smallint, '11:15', 60, 'online', null, current_date + 7, current_date + 70, 'test') as offered \gset
 select tests.eq((select count(*) from public.bookings where id = :'offered'), 1::bigint, 'a time straight after the summary time can be offered');
@@ -51,7 +51,7 @@ set role authenticated; -- acts as a signed-in person
 reset role; -- back to the database itself
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- signs in as tutor T3
 set role authenticated; -- acts as a signed-in person
-select tests.fails($q$select public.set_summary_minutes(5)$q$, 'tutors can''t change the summary time');
+select tests.fails($q$select public.set_summary_minutes(5)$q$, 'tutors cannot change the summary time');
 reset role; -- back to the database itself
 
 -- The owner changes it: 31 is refused, 0 means back-to-back times are allowed.

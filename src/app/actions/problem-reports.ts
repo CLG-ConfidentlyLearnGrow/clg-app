@@ -21,7 +21,7 @@ const BUCKET = "problem-screenshots"; // The private file store for screenshots.
 
 // The plain database messages we're happy to show as they are (they start
 // with these words); anything else gets a general message.
-const PLAIN = /^(Please|You've|That |A screenshot|Only |Choose)/; // The starts of the database's own plain messages.
+const PLAIN = /^(Please|You've|You have|That |A screenshot|Only |Choose)/; // The starts of the database's own plain messages (old and written-out wording).
 
 // The rules for the report form:
 const reportSchema = z.object({

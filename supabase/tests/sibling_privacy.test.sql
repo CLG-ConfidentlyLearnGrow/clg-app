@@ -205,8 +205,8 @@ select tests.none(tests.sibling_leaks(:'kid', :'fam', :'kid_sessions', :'kid_boo
 select tests.eq((select count(*) from public.students), 1, 'Ash sees only their own student profile'); -- checks: only Ash's own profile
 select tests.eq((select count(*) from public.billing_my_plan_choices()), 0, 'Ash is not offered the whole family''s billing'); -- checks: no family billing
 select tests.eq(coalesce((select public.billing_credit_balance(:'fam')), 0), 0, 'Ash sees no family credit balance'); -- checks: no family credit
-select tests.fails_with(format($$select public.billing_accept_terms(%L, 'test')$$, :'fam'), 'Only the person who pays', 'Ash can''t accept terms for the whole family'); -- checks: refused, with the plain message
-select tests.fails_with(format($$select public.billing_choose_plan(%L, 'monthly')$$, :'fam'), '', 'Ash can''t choose the plan for the whole family'); -- checks: refused
+select tests.fails_with(format($$select public.billing_accept_terms(%L, 'test')$$, :'fam'), 'Only the person who pays', 'Ash cannot accept terms for the whole family'); -- checks: refused, with the plain message
+select tests.fails_with(format($$select public.billing_choose_plan(%L, 'monthly')$$, :'fam'), '', 'Ash cannot choose the plan for the whole family'); -- checks: refused
 select tests.eq((select count(*) from (select public.my_data_export()::text as x) d where position(:'kid'::text in d.x) > 0 or position(:'kid_name' in d.x) > 0), 0, 'Ash''s data download leaves out the sibling'); -- checks: the download has no sibling id or name
 reset role; -- back to the test user
 
@@ -237,14 +237,14 @@ select tests.claims('00000000-0000-0000-0000-000000000082', 'aal2'); -- signs in
 set role authenticated; -- acts as a signed-in user, so the access rules apply
 select tests.eq((select count(*) from public.billing_invoices where id = :'kid_invoice'), 1, 'named bill payer sees the family''s invoice'); -- checks: the invoice shows
 select tests.eq((select count(*) from public.students), 1, 'named bill payer still sees only their own profile'); -- checks: still only their own profile
-select tests.eq((select count(*) from public.sessions where student_id = :'kid'), 0, 'named bill payer still can''t see the sibling''s sessions'); -- checks: still no sibling sessions
+select tests.eq((select count(*) from public.sessions where student_id = :'kid'), 0, 'named bill payer still cannot see the sibling''s sessions'); -- checks: still no sibling sessions
 reset role; -- back to the test user
 -- Now Ash pays, the parent no longer sees the family's billing (only the
 -- people paying see it, Carla 16 Nov 2026), but still sees every child.
 select tests.claims(:'kid_parent', 'aal2'); -- signs in as the shared parent
 set role authenticated; -- acts as a signed-in user, so the access rules apply
-select tests.eq((select count(*) from public.billing_invoices where id = :'kid_invoice'), 0, 'a parent who no longer pays doesn''t see the invoice'); -- checks: hidden
-select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0, 'and isn''t offered the family''s billing'); -- checks: hidden
+select tests.eq((select count(*) from public.billing_invoices where id = :'kid_invoice'), 0, 'a parent who no longer pays does not see the invoice'); -- checks: hidden
+select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0, 'and is not offered the family''s billing'); -- checks: hidden
 select tests.eq(public.billing_i_pay()::int, 0, 'and gets no Billing tab'); -- checks: no tab
 select tests.eq((select count(*) from public.students where id in (:'kid', :'kit', :'ash')), 3, 'but still sees all three children'); -- checks: children unchanged
 reset role; -- back to the test user

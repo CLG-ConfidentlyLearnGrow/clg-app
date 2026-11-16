@@ -48,19 +48,19 @@ reset role; -- back to the database itself
 -- 3. P2 is a parent but doesn't pay: no billing at all.
 select tests.claims(:'p2'); -- signs in as P2
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0::bigint, 'a parent who doesn''t pay isn''t offered the family''s billing'); -- hidden
-select tests.eq((select count(*) from public.billing_invoices where id = :'inv'), 0::bigint, 'and can''t see the invoice'); -- hidden
-select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam'), 0::bigint, 'and can''t see the family''s billing account'); -- hidden
-select tests.eq(coalesce(public.billing_credit_balance(:'fam'), 0), 0, 'and can''t see the family''s credit'); -- hidden
-select tests.fails(format($q$select public.billing_choose_plan(%L, 'weekly')$q$, :'fam'), 'and can''t change how the family pays'); -- refused
-select tests.fails(format($q$select public.billing_accept_terms(%L, 'test')$q$, :'fam'), 'and can''t accept the payment terms'); -- refused
+select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam'), 0::bigint, 'a parent who does not pay is not offered the family''s billing'); -- hidden
+select tests.eq((select count(*) from public.billing_invoices where id = :'inv'), 0::bigint, 'and cannot see the invoice'); -- hidden
+select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam'), 0::bigint, 'and cannot see the family''s billing account'); -- hidden
+select tests.eq(coalesce(public.billing_credit_balance(:'fam'), 0), 0, 'and cannot see the family''s credit'); -- hidden
+select tests.fails(format($q$select public.billing_choose_plan(%L, 'weekly')$q$, :'fam'), 'and cannot change how the family pays'); -- refused
+select tests.fails(format($q$select public.billing_accept_terms(%L, 'test')$q$, :'fam'), 'and cannot accept the payment terms'); -- refused
 reset role; -- back to the database itself
 
 -- 4. On hold: every parent is told, payer or not.
 update public.billing_accounts set paused = true where family_id = :'fam'; -- the family is paused (overdue)
 select tests.claims(:'p2'); -- signs in as P2
 set role authenticated; -- acts as a signed-in person
-select tests.eq(public.my_support_on_hold()::int, 1, 'a parent who doesn''t pay is still told sessions are on hold'); -- told
+select tests.eq(public.my_support_on_hold()::int, 1, 'a parent who does not pay is still told sessions are on hold'); -- told
 reset role; -- back to the database itself
 update public.billing_accounts set paused = false where family_id = :'fam'; -- back to normal
 

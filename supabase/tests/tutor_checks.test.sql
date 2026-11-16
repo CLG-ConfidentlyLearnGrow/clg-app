@@ -83,7 +83,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000012', 'aal2'); -- Signs in as test account ...12 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.tutor_checks where tutor_id = '00000000-0000-0000-0000-000000000011'), 0, 'tutors see only their own checks'); -- Checks: tutors see only their own checks.
-select tests.eq((select count(*) from storage.objects where name like '00000000-0000-0000-0000-000000000011/%'), 0, 'other tutor can''t open T1''s copies'); -- Checks: other tutor can't open T1's copies.
+select tests.eq((select count(*) from storage.objects where name like '00000000-0000-0000-0000-000000000011/%'), 0, 'other tutor cannot open T1''s copies'); -- Checks: other tutor can't open T1's copies.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
 

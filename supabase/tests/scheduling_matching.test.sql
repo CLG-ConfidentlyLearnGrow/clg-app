@@ -43,7 +43,7 @@ select tests.fails(format($$insert into public.student_places (student_id) value
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.student_places), 0, 'tutors don''t see family places'); -- Checks: tutors don't see family places.
+select tests.eq((select count(*) from public.student_places), 0, 'tutors do not see family places'); -- Checks: tutors don't see family places.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
 set role anon; -- Acts as someone who is not signed in.
@@ -77,12 +77,12 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.list_matching()$$, 'families can''t see the pipeline'); -- Checks this is refused: families can't see the pipeline.
-select tests.fails($$select * from public.matching_pipeline()$$, 'families can''t see the counts'); -- Checks this is refused: families can't see the counts.
+select tests.fails($$select * from public.list_matching()$$, 'families cannot see the pipeline'); -- Checks this is refused: families can't see the pipeline.
+select tests.fails($$select * from public.matching_pipeline()$$, 'families cannot see the counts'); -- Checks this is refused: families can't see the counts.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.list_matching()$$, 'tutors can''t see the pipeline'); -- Checks this is refused: tutors can't see the pipeline.
+select tests.fails($$select * from public.list_matching()$$, 'tutors cannot see the pipeline'); -- Checks this is refused: tutors can't see the pipeline.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Put things back for the later tests.
