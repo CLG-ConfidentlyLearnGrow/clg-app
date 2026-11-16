@@ -58,7 +58,7 @@ Where: **Matching** in the side menu. **Gaps** shows who to recruit next.
 
 ## Sessions and bookings
 
-Book sessions for families, cancel or stop bookings for someone, change the tutor on booked sessions, and help with requests, blocks, away dates, the waitlist and next term answers.
+Book sessions for families, cancel or stop bookings for someone, change the tutor on booked sessions, and help with requests, blocks, away dates, the waitlist and book again answers.
 
 Why: Every offer and change needs the tutor and family to confirm, and offers close after 3 days. Following up quickly keeps students learning without gaps.
 

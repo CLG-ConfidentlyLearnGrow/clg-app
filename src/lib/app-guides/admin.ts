@@ -49,7 +49,7 @@ Tip: If you help families and tutors, the App guide for parents, students or tut
 const SESSIONS = `
 ## Sessions and bookings
 
-Open **Sessions** in the side menu. Its sections include **Overview**, **Bookings**, **Book a session**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices**, **Next term** and **Waitlist**. Times are Adelaide time.
+Open **Sessions** in the side menu. Its sections include **Overview**, **Bookings**, **Book a session**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices**, **Book again** and **Waitlist**. Times are Adelaide time.
 
 ### Book a session for a family
 1. In **Sessions**, choose **Book a session**.
@@ -93,8 +93,8 @@ When a family blocks a tutor, or a tutor blocks a student, it shows in **Session
 ### Add away dates for a student or tutor
 In **Sessions**, choose **Away dates**, choose who will be away and the dates, and choose **Save away dates**. Booked sessions on those days are cancelled.
 
-### Next term answers
-Before each term ends, families say whether they want the same time and tutor next term. See their answers in **Sessions**, **Next term**, and arrange any changes they asked for.
+### Book again answers
+About 3 weeks before each student's book-till date (or the booking's last date, if that comes first), families are asked whether they want to keep going. They choose a new book-till date and answer the school holiday and public holiday questions again. If they choose the same again, the tutor is asked to confirm. See their answers in **Sessions**, **Book again**, and arrange any changes they asked for.
 `;
 
 // Families: setting up, linking parents, logins (front-desk admins).

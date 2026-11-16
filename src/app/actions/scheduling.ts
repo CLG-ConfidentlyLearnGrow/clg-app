@@ -628,19 +628,22 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
 } // End of saveNoticeSettings.
 
 // ---------------------------------------------------------------------------
-// Next term: the family's answer, and school term dates (admins)
+// Book again: the family's answer, and school term dates (admins)
 // ---------------------------------------------------------------------------
-// The rules for the family's next-term answer:
+// The rules for the family's "book again?" answer:
 const renewalSchema = z.object({
-  id: z.uuid(), // which renewal,
+  id: z.uuid(), // which question,
   same_again: z.enum(["yes", "no"], "Please say whether you would like the same again."), // the same again, yes or no,
-  holidays: z.enum(["yes", "no"], "Please say whether you would like holiday sessions."), // holiday sessions, yes or no,
+  book_until: z.iso.date("Please choose a new book-till date."), // the new book-till date,
+  school_holidays: z.enum(["yes", "no"], "Please say whether you would like sessions during school holidays."), // school holiday sessions, yes or no,
+  public_holidays: z.enum(["yes", "no"], "Please say whether you would like sessions on public holidays."), // public holiday sessions, yes or no,
   change_what: z.enum(["time", "tutor", "both"]).optional(), // what to change (optional),
   change_reason: z.string().trim().max(1000).optional(), // why (optional),
   feedback: z.string().trim().max(2000).optional(), // feedback (optional).
 }); // End of the rules.
 
-// A family answers whether they'd like the same again next term.
+// A family answers "book again?": same again or not, a new book-till date,
+// and the two holiday questions.
 export async function answerRenewal(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = renewalSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
@@ -649,10 +652,12 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
   if (v.same_again === "no" && !v.change_what) return { error: "Please say what you would like to change." }; // "No" needs what to change.
 
   const supabase = await createClient(); // Connects to the database.
-  const { error } = await supabase.rpc("answer_renewal", { // Asks the database to save the answer:
-    p_renewal: v.id, // which renewal,
+  const { error } = await supabase.rpc("answer_book_again", { // Asks the database to save the answer:
+    p_renewal: v.id, // which question,
     p_same_again: v.same_again === "yes", // same again or not,
-    p_holidays: v.holidays === "yes", // holiday sessions or not,
+    p_book_until: v.book_until, // the new book-till date,
+    p_school_holidays: v.school_holidays === "yes", // school holiday sessions or not,
+    p_public_holidays: v.public_holidays === "yes", // public holiday sessions or not,
     p_change_what: v.same_again === "no" ? (v.change_what ?? null) : null, // what to change (only when "no"),
     p_change_reason: v.change_reason || null, // why (or none),
     p_feedback: v.feedback || null, // feedback (or none),
@@ -661,7 +666,7 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
   if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams, and tells them:
     v.same_again === "yes" // if the same again,
-      ? "Thank you. Your tutor has been asked to confirm next term." // that the tutor will confirm,
+      ? "Thank you. Your tutor has been asked to confirm the new dates." // that the tutor will confirm,
       : "Thank you. CLG will be in touch to arrange the change.", // otherwise that CLG will be in touch.
   ); // (end of the message)
 } // End of answerRenewal.
