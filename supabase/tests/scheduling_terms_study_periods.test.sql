@@ -85,7 +85,9 @@ select tests.eq((select (own_term_id = :'own1' and ends_on = current_date + 6)::
 select tests.eq(private.student_in_holidays(:'sam', current_date + 20)::int, 1, 'between own study periods is holidays'); -- Checks: between own study periods is holidays.
 select tests.eq(private.student_in_holidays(:'sam', current_date + 50)::int, 0, 'inside a study period is not'); -- Checks: inside a study period is not.
 
--- The renewal question follows the own study period (3 weeks before it ends).
+-- The "book again?" question no longer follows the study period: it
+-- follows the book-till date, or the booking's last date if that comes
+-- first (20261119700100_renewals_book_till.sql).
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery, -- Adds a confirmed booking for Sam with tutor T3:
                              first_date, last_date, status, confirmed_at) -- (with its dates and status)
 select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General Maths', -- (for Sam, General Maths)
@@ -93,8 +95,8 @@ select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General M
        current_date + 1, current_date + 1, 'confirmed', now() -- just tomorrow, confirmed now,
 -- and keeps its id as tertiary.
 returning id as tertiary \gset
-select private.queue_renewals(); -- Queues "same again next term?" questions.
-select tests.eq((select count(*) from public.term_renewals where booking_id = :'tertiary' and own_term_id = :'own1' and term_id is null), 1, 'asked about the next study period'); -- Checks: asked about the next study period.
+select private.queue_renewals(); -- Queues the "book again?" questions.
+select tests.eq((select count(*) from public.term_renewals where booking_id = :'tertiary' and book_until = current_date + 1 and own_term_id is null and term_id is null), 1, 'asked about the last date, not the study period'); -- Checks: asked about the last date, not the study period.
 select private.queue_renewals(); -- Queues them again (should not repeat).
 select tests.eq((select count(*) from public.term_renewals where booking_id = :'tertiary'), 1, 'asked only once'); -- Checks: asked only once.
 -- Keeps the question's id as renewal.
@@ -102,19 +104,16 @@ select id as renewal from public.term_renewals where booking_id = :'tertiary' \g
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.list_renewals() where booking_id = :'tertiary' and term_label = 'Semester 2' and term_ends_on = current_date + 6), 1, 'family sees the study period'); -- Checks: family sees the study period.
-select tests.fails(format($$select public.remove_own_term(%L)$$, :'own1'), 'a study period with answers cannot be removed'); -- Checks this is refused: a study period with answers can't be removed.
--- The family says same again, no holidays, and keeps the new booking's id.
-select public.answer_renewal(:'renewal', true, false) as next_booking \gset
+select tests.eq((select count(*) from public.list_renewals() where booking_id = :'tertiary' and book_until = current_date + 1 and term_label is null), 1, 'family sees the date the sessions stop'); -- Checks: family sees the date the sessions stop.
+-- The family says same again until Semester 1 ends, no holidays, and keeps the new booking's id.
+select public.answer_book_again(:'renewal', true, current_date + 120, false, false) as next_booking \gset
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
-select tests.eq((select count(*) from public.bookings where id = :'next_booking' and first_date >= current_date + 40 -- Checks same again runs through the next own study period:
-  and last_date = current_date + 120 and skip_holidays), 1, 'same again runs through the next own study period'); -- (from Semester 1's start to its end, skipping breaks).
+select tests.eq((select count(*) from public.bookings where id = :'next_booking' and first_date = current_date + 8 -- Checks same again runs from the next session day to the new book-till date:
+  and last_date = current_date + 120 and skip_holidays and skip_public_holidays), 1, 'same again runs to the new book-till date, skipping breaks'); -- (skipping breaks and public holidays).
 
 -- Admins see study dates to check.
 delete from public.bookings where id in (:'next_booking', :'tertiary'); -- Removes both bookings.
--- (Sam's other bookings from earlier tests were asked too.)
-delete from public.term_renewals where own_term_id in (:'own1', :'own2'); -- Removes the questions.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.remove_own_term(:'own1'); -- Removes Semester 2.

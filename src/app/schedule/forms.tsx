@@ -11,7 +11,7 @@ import { // The server actions these forms send to:
   addAwayDates, // add away dates,
   addLibrary, // add a library,
   addTerm, // add a school term,
-  answerRenewal, // answer next term's renewal,
+  answerRenewal, // answer the "book again?" question,
   joinWaitlist, // join the waitlist,
   answerBooking, // the tutor answers a booking,
   answerMakeup, // pick a make-up time,
@@ -917,14 +917,40 @@ export function NoticeSettingsForm({ // Its settings:
   ); // End of what's shown.
 } // End of NoticeSettingsForm.
 
-// Next term: same again, holidays, and what to change if not.
-export function RenewalForm({ id }: { id: string }) { // (takes the renewal)
+// Book again: same again or not, a new book-till date, the two holiday
+// questions again, and what to change if not the same.
+export function RenewalForm({ // Its settings:
+  id, // the question,
+  min, // the earliest new book-till date allowed (the day after the last session, or tomorrow),
+  terms, // the student's term dates, to pick an end from,
+  schoolHolidays, // the student's current answer about school holidays (yes, no or not answered),
+  publicHolidays, // and about public holidays (yes, no or not answered).
+}: { // The settings' types:
+  id: string; // id is text,
+  min: string; // earliest date is text,
+  terms: StudentTerm[]; // terms is a list of terms,
+  schoolHolidays: boolean | null; // yes, no, or not answered,
+  publicHolidays: boolean | null; // yes, no, or not answered.
+}) { // End of the settings.
   const [sameAgain, setSameAgain] = useState(""); // The family's answer to "same again?" (none yet).
+  const yesNo = (name: string, label: string, current: boolean | null) => ( // Makes a yes or no question (ticked as before, if answered before):
+    <fieldset className="space-y-1">{/* a group box: */}
+      <legend className="text-sm font-medium text-zinc-800">{label}</legend>{/* the question, */}
+      <div className="flex gap-4 text-sm">{/* a row: */}
+        <label className="flex items-center gap-2">{/* a label: */}
+          <input type="radio" name={name} value="yes" defaultChecked={current === true} required /> Yes{/* a round "Yes" choice (picked if the answer was yes). */}
+        </label>{/* End of the label. */}
+        <label className="flex items-center gap-2">{/* A label: */}
+          <input type="radio" name={name} value="no" defaultChecked={current === false} required /> No{/* a round "No" choice (picked if the answer was no). */}
+        </label>{/* End of the label. */}
+      </div>{/* End of the row. */}
+    </fieldset> // End of the group box.
+  ); // End of yesNo.
   return ( // Shows:
     <ActionForm action={answerRenewal} submitLabel="Send answer">{/* the form, sending to answerRenewal, with a "Send answer" button, */}
-      <input type="hidden" name="id" value={id} />{/* the renewal (hidden), */}
+      <input type="hidden" name="id" value={id} />{/* the question (hidden), */}
       <fieldset className="space-y-2">{/* a group box: */}
-        <legend className="mb-1 text-sm font-medium text-zinc-800">Same time and tutor next term?</legend>{/* its question, */}
+        <legend className="mb-1 text-sm font-medium text-zinc-800">Same day, time and tutor again?</legend>{/* its question, */}
         <label className="flex items-start gap-2 text-sm">{/* a label: */}
           <input type="radio" name="same_again" value="yes" required onChange={() => setSameAgain("yes")} className="mt-1" />{" "}{/* a round "yes" choice (required), then a space, */}
           Yes, the same again{/* its words. */}
@@ -944,22 +970,23 @@ export function RenewalForm({ id }: { id: string }) { // (takes the renewal)
           <TextArea label="Why? (helps us find a better fit)" name="change_reason" maxLength={1000} rows={2} />{/* Why. */}
         </> // End of the group.
       )}{/* End of this part. */}
-      <fieldset className="space-y-2">{/* A group box: */}
-        <legend className="mb-1 text-sm font-medium text-zinc-800">Sessions in the school holidays?</legend>{/* its question, */}
-        <label className="flex items-start gap-2 text-sm">{/* a label: */}
-          <input type="radio" name="holidays" value="yes" required className="mt-1" /> Yes, keep going in the holidays{/* a round "yes" choice (required). */}
-        </label>{/* End of the label. */}
-        <label className="flex items-start gap-2 text-sm">{/* A label: */}
-          <input type="radio" name="holidays" value="no" className="mt-1" /> No, pause for the holidays{/* a round "no" choice. */}
-        </label>{/* End of the label. */}
-      </fieldset>{/* End of the group box. */}
-      <TextArea label="How is it going? (optional)" name="feedback" maxLength={2000} rows={3} />{/* How it's going (optional). */}
+      <LastDateField // The new book-till date box:
+        name="book_until" // sent as book_until,
+        label="New book-till date" // labelled "New book-till date",
+        min={min} // no earlier than the earliest date allowed,
+        defaultValue="" // starting blank, so the family chooses it,
+        terms={terms} // with the student's term dates to pick from,
+        hint="Sessions will be booked up to this date (up to a year ahead)." // and a hint.
+      />{/* (end of the element) */}
+      {yesNo("school_holidays", "Sessions during school holidays?", schoolHolidays)}{/* The school holidays question. */}
+      {yesNo("public_holidays", "Sessions on public holidays?", publicHolidays)}{/* The public holidays question. */}
+      <TextArea label="How is it going? (optional)" name="feedback" maxLength={2000} rows={3} />{/* How it is going (optional). */}
       <label className="flex items-start gap-2 text-sm">{/* A label: */}
         <input type="checkbox" name="testimonial_ok" className="mt-1" /> CLG may share my feedback as a testimonial
         (first name only){/* (a tick box to allow sharing as a testimonial) */}
       </label>{/* End of the label. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of RenewalForm.
 
 // An admin adds a school term's dates.

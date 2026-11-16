@@ -77,7 +77,7 @@ Tip: Your parent or carer and your tutor can also see your progress page and roa
 
 ## Sessions
 
-Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Next term**. Times are Adelaide time.
+Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Book again**. Times are Adelaide time.
 
 ### See upcoming sessions and join online
 1. In **Sessions**, choose **Overview**.
@@ -121,8 +121,8 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 2. Choose the subject and what you would like (for example an extra session before a test), the date, and times that suit.
 3. Choose **Send request**.
 
-### Answer the next term question
-Before your study period ends, go to **Sessions**, then **Next term**. Say whether you want the same time and tutor, then choose **Send answer**.
+### Book again before your book-till date
+About 3 weeks before your book-till date, you get a notice called **Book again?**. Go to **Sessions**, then **Book again**. Say whether you want the same day, time and tutor, choose a new book-till date, say again whether you want sessions during school holidays and on public holidays, then choose **Send answer**.
 
 ### Notices and reminders
 In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder settings** to choose when your first reminder comes. Nothing is sent between 9pm and 5am your time.

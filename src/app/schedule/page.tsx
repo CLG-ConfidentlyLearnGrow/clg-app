@@ -1,5 +1,5 @@
 // Summary: the Sessions page: sessions, bookings, booking, session places, how
-// long to book, away dates, requests, blocks, notices, next term, waitlist,
+// long to book, away dates, requests, blocks, notices, book again, waitlist,
 // where tutors teach, times to check, tutor availability and libraries.
 // It shows as the Sessions tab inside one dashboard at a time (Carla,
 // 12 Nov 2026): "?as=tutor" shows the tutor's sessions in the tutor
@@ -59,7 +59,7 @@ import { // The scheduling forms:
   NoticeSettingsForm, // notice settings,
   OutcomeForm, // record what happened in a session,
   PlacesForm, // where a tutor teaches,
-  RenewalForm, // answer about next term,
+  RenewalForm, // answer "book again?",
   SignOnForm, // sign on,
   BookingLengthForm, // how long to book,
   StudentPlacesForm, // a student's session places,
@@ -186,7 +186,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []), // requests (those who can book, and tutors),
       { id: "blocks", label: "Blocks" }, // blocks,
       { id: "notices", label: "Notices" }, // notices,
-      ...(canBook ? [{ id: "next-term", label: "Next term" }] : []), // next term (those who can book),
+      ...(canBook ? [{ id: "next-term", label: "Book again" }] : []), // book again (those who can book),
       ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []), // waitlist (front desk),
       ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []), // where you teach (tutors),
       ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []), // times to check (admins),
@@ -220,7 +220,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     .select("id", { count: "exact", head: true }) // counting only,
     .is("read_at", null); // not yet read.
   const unread = unreadRes.count ?? 0; // The unread count.
-  const renewalsRes = canBook // Counts next-term questions to answer (if they can book):
+  const renewalsRes = canBook // Counts "book again?" questions to answer (if they can book):
     ? await supabase.from("term_renewals").select("id", { count: "exact", head: true }).is("answered_at", null) // from term_renewals, not yet answered,
     : null; // otherwise none.
   const renewalsToAnswer = renewalsRes?.count ?? 0; // The count.
@@ -352,7 +352,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
             ? waitingForMe.length + familyToApprove.length // that number,
             : s.id === "notices" && unread // for notices, unread ones,
               ? unread // that number,
-              : s.id === "next-term" && renewalsToAnswer // for next term, questions to answer,
+              : s.id === "next-term" && renewalsToAnswer // for book again, questions to answer,
                 ? renewalsToAnswer // that number,
                 : counts[s.id] || undefined, // otherwise the to-do number (if any).
       }))} // (end of the sections)
@@ -684,7 +684,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "waitlist" && isDesk && <WaitlistSection isAdmin={isDesk} />}{/* The waitlist section (front desk). */}
 
-      {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}{/* The next term section. */}
+      {section === "next-term" && canBook && <NextTermSection isAdmin={isDesk} />}{/* The book again section. */}
 
 
       {section === "child-places" && canBook && <ChildPlacesSection viewerId={viewer.id} isAdmin={isAdmin} params={params} />}{/* The session places section. */}
@@ -1374,12 +1374,13 @@ async function ChildPlacesSection({ // Takes:
 } // End of ChildPlacesSection.
 
 // ---------------------------------------------------------------------------
-// Next term: the renewal question for each booking ending this term, and
-// school term dates (admins)
+// Book again: the question for each booking nearing the student's book-till
+// date (asked 3 weeks before), and school term dates (admins)
 // ---------------------------------------------------------------------------
-type Renewal = { // A next-term question as listed:
+type Renewal = { // A "book again?" question as listed:
   id: string; // its id,
   booking_id: string; // the booking,
+  student_id: string; // the student's id,
   student_name: string; // the student's name,
   subject: string; // the subject,
   tutor_name: string | null; // the tutor's name (if any),
@@ -1387,12 +1388,15 @@ type Renewal = { // A next-term question as listed:
   start_time: string; // the start time,
   minutes: number; // the length in minutes,
   last_date: string; // the last session date,
-  term_label: string; // the term's name,
-  term_ends_on: string; // the term's last day,
+  term_label: string | null; // the term's name (older questions only),
+  term_ends_on: string | null; // the term's last day (older questions only),
+  book_until: string | null; // the date the sessions stop (the book-till date, or the last date if earlier),
+  new_book_until: string | null; // the new book-till date chosen (if answered),
   asked_at: string; // when asked,
   answered_at: string | null; // when answered (if yet),
-  same_again: boolean | null; // same again next term (if answered),
-  holidays: boolean | null; // sessions in the holidays (if answered),
+  same_again: boolean | null; // same again (if answered),
+  holidays: boolean | null; // sessions in the school holidays (if answered),
+  public_holidays: boolean | null; // sessions on public holidays (if answered),
   change_what: string | null; // what to change (if anything),
   change_reason: string | null; // why (if given),
   feedback: string | null; // feedback (if any),
@@ -1402,10 +1406,10 @@ type Renewal = { // A next-term question as listed:
 
 const CHANGE_NAMES: Record<string, string> = { time: "day and time", tutor: "tutor", both: "day, time and tutor" }; // The words for what to change.
 
-async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next term section.
+async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The book again section.
   const supabase = await createClient(); // Connects to the database.
   const [renewalsRes, termsRes] = await Promise.all([ // Reads two things at once:
-    supabase.rpc("list_renewals"), // the next-term questions they can see,
+    supabase.rpc("list_renewals"), // the "book again?" questions they can see,
     isAdmin // for admins:
       ? supabase // school terms:
           .from("school_terms") // from school_terms,
@@ -1418,6 +1422,23 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next 
   const renewals = (renewalsRes.data ?? []) as Renewal[]; // The questions.
   const open = renewals.filter((r) => !r.answered_at); // Not yet answered.
   const answered = renewals.filter((r) => r.answered_at); // Answered.
+  const openStudents = [...new Set(open.map((r) => r.student_id))]; // The students with questions to answer (each once).
+  const [placesRes, ...termLists] = await Promise.all([ // Reads, all at once:
+    openStudents.length // if there are any,
+      ? supabase // their current "How long to book" answers:
+          .from("student_places") // from student_places,
+          .select("student_id, include_school_holidays, include_public_holidays") // the two holiday answers,
+          .in("student_id", openStudents) // for those students,
+      : Promise.resolve({ data: [] }), // (otherwise none)
+    ...openStudents.map((id) => supabase.rpc("student_term_dates", { p_student: id })), // and each student's term dates.
+  ]); // End of the reads.
+  const holidaysFor = new Map( // Each student's holiday answers, by student:
+    ((placesRes.data ?? []) as { student_id: string; include_school_holidays: boolean | null; include_public_holidays: boolean | null }[]).map( // (the rows)
+      (p) => [p.student_id, p] as const, // each by student.
+    ), // (end of the map)
+  ); // End of holidaysFor.
+  const termsFor = new Map(openStudents.map((id, i) => [id, (termLists[i]?.data ?? []) as StudentTerm[]] as const)); // Each student's term dates, by student.
+  const tomorrow = addDays(localToday(), 1); // Tomorrow.
   const terms = (termsRes.data ?? []) as { // The school terms:
     id: string; // each has an id,
     state: string; // a state,
@@ -1433,12 +1454,12 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next 
 
   return ( // Shows:
     <>{/* (a group) */}
-      <Card // the next term card:
-        title="Next term" // its title,
+      <Card // the book again card:
+        title="Book again" // its title,
         description={ // its help text:
           isAdmin // for admins,
-            ? "Families are asked 3 weeks before each student's study period ends, and tutors 4 weeks before. Unanswered questions are listed first." // their wording,
-            : "Before each term ends, tell us whether you would like the same again next term, and whether you would like sessions in the holidays." // otherwise the family's.
+            ? "Families are asked 3 weeks before each student's book-till date (or the booking's last date, if that comes first). They choose a new book-till date and answer the holiday questions again. Unanswered questions are listed first." // their wording,
+            : "Before your book-till date, tell us whether you would like the same again, choose a new book-till date, and say whether you would like sessions in the school holidays and on public holidays." // otherwise the family's.
         } // (end of the help text)
       >{/* (end of the card's settings) */}
         {open.length === 0 ? ( // if nothing to answer:
@@ -1450,10 +1471,16 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next 
                 <p>{/* a line: */}
                   <span className="font-medium">{bookingLine(r)}</span>{/* the booking, */}
                   <span className="block text-zinc-600">{/* in grey: */}
-                    Last session {shortDate(r.last_date)} · {r.term_label} ends {shortDate(r.term_ends_on)}{/* the last session and when the term ends. */}
+                    Last session {shortDate(r.last_date)}{r.book_until ? ` · Booked until ${shortDate(r.book_until)}` : ""}{/* the last session and the date the sessions stop (if known). */}
                   </span>{/* End of the grey part. */}
                 </p>{/* End of the line. */}
-                <RenewalForm id={r.id} />{/* the answer form. */}
+                <RenewalForm // the answer form:
+                  id={r.id} // for this question,
+                  min={r.last_date >= localToday() ? addDays(r.last_date, 1) : tomorrow} // new date after the last session (and not in the past),
+                  terms={termsFor.get(r.student_id) ?? []} // the student's term dates,
+                  schoolHolidays={holidaysFor.get(r.student_id)?.include_school_holidays ?? null} // their school holidays answer so far,
+                  publicHolidays={holidaysFor.get(r.student_id)?.include_public_holidays ?? null} // and their public holidays answer so far.
+                />{/* (end of the form) */}
               </li> // End of the row.
             ))}{/* End of the loop. */}
           </ul> // End of the list.
@@ -1468,9 +1495,11 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next 
                 <p className="font-medium">{bookingLine(r)}</p>{/* the booking, */}
                 <p className="text-zinc-700">{/* a line: */}
                   {r.same_again // if same again,
-                    ? `Same again next term${r.next_status ? ` (${(BOOKING_STATUS_NAMES[r.next_status] ?? r.next_status).toLowerCase()})` : ""}` // says so (and what's happened since),
+                    ? `Same again${r.next_status ? ` (${(BOOKING_STATUS_NAMES[r.next_status] ?? r.next_status).toLowerCase()})` : ""}` // says so (and what has happened since),
                     : `Wants a different ${CHANGE_NAMES[r.change_what ?? ""] ?? "arrangement"}`}{/* otherwise what they'd like changed, */}
-                  {r.holidays ? " · with holiday sessions" : " · no holiday sessions"}{/* and whether they want holiday sessions. */}
+                  {r.new_book_until ? ` · until ${shortDate(r.new_book_until)}` : ""}{/* the new book-till date (if given), */}
+                  {r.holidays ? " · with school holiday sessions" : " · no school holiday sessions"}{/* whether they want school holiday sessions, */}
+                  {r.public_holidays === null ? "" : r.public_holidays ? " · with public holiday sessions" : " · no public holiday sessions"}{/* and public holiday sessions (if asked). */}
                 </p>{/* End of the line. */}
                 {r.change_reason && <p className="text-zinc-600">Why: {r.change_reason}</p>}{/* why (if given). */}
                 {r.feedback && ( // If they gave feedback:

@@ -89,7 +89,7 @@ A child aged 16 or over can have their own login. They keep their details, histo
 
 ## Sessions
 
-Sessions are booked by CLG for now. CLG finds a time with a tutor who suits, and you approve it in the app. Open **Sessions** in the side menu. Along the top (or in the side menu on a phone) are its sections: **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Next term**. All times are Adelaide time.
+Sessions are booked by CLG for now. CLG finds a time with a tutor who suits, and you approve it in the app. Open **Sessions** in the side menu. Along the top (or in the side menu on a phone) are its sections: **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Book again**. All times are Adelaide time.
 
 ### Tell CLG which days and times suit
 1. In **Sessions**, choose **Preferred times**.
@@ -174,12 +174,14 @@ Tip: Adding away dates early gets you full credit for those sessions.
 2. **Public holiday weeks** lists sessions that fall on a public holiday.
 3. Choose **Skip public holidays** for that booking, then ask for a one-off at another time that week if you like.
 
-### Answer the next term question
-Before a term ends, CLG asks about each booking that ends that term.
-1. In **Sessions**, choose **Next term**.
-2. Say whether you want the same time and tutor next term, and whether you want sessions in the holidays.
-3. If you want a change, say what (day and time, tutor, or both) and why.
-4. Choose **Send answer**.
+### Book again before your book-till date
+About 3 weeks before your child's book-till date (the date you chose in **How long to book**), CLG asks whether you would like to keep going. You get a notice called **Book again?**.
+1. In **Sessions**, choose **Book again**.
+2. Say whether you want the same day, time and tutor again.
+3. Choose a new book-till date. You can pick the end of a term from the list.
+4. Say again whether you want sessions during school holidays and on public holidays.
+5. If you want a change, say what (day and time, tutor, or both) and why.
+6. Choose **Send answer**. If you chose the same again, the tutor is asked to confirm the new dates.
 
 ### If a tutor is not the right fit
 1. In **Sessions**, choose **Blocks**, then **Block a tutor**.

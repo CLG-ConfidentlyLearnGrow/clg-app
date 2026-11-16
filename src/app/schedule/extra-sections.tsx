@@ -80,7 +80,7 @@ export async function StudyPeriodBlock({ studentId, yearLevel }: { studentId: st
 } // End of StudyPeriodBlock.
 
 // ---------------------------------------------------------------------------
-// Admins: study dates still to check (inside Next term)
+// Admins: study dates still to check (inside Book again)
 // ---------------------------------------------------------------------------
 export async function StudyDatesToCheck() { // The admin list of study dates still to check.
   const supabase = await createClient(); // Connects to the database.
