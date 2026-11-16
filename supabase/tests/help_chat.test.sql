@@ -233,5 +233,41 @@ select private.help_chat_tidy(); -- runs the nightly tidy-up
 select tests.eq((select count(*) from public.help_chats where id = :'chat_bill'), 0::bigint, 'chats are deleted 2 years after their last message'); -- deleted
 select tests.eq((select count(*) from public.help_messages where chat_id = :'chat_bill'), 0::bigint, 'their messages go with them'); -- deleted
 
+-- ---------------------------------------------------------------------------
+-- 10. Permission to quote without a name, and keeping chats past 2 years
+-- ---------------------------------------------------------------------------
+select tests.claims(:'cal_login'); -- signs in as Cal (16, his own login)
+set role authenticated; -- acts as a signed-in person
+select tests.eq((select count(*) from public.my_quote_permission() where not agreed and not can_choose), 1::bigint, 'a learner under 18 cannot choose to be quoted'); -- not offered
+select tests.fails($q$select public.set_quote_permission(true, 'test')$q$, 'a learner under 18 cannot agree to be quoted'); -- refused
+reset role; -- back to the database itself
+select tests.claims(:'p2'); -- signs in as parent P2
+set role authenticated; -- acts as a signed-in person
+select tests.eq((select count(*) from public.my_quote_permission() where not agreed and can_choose), 1::bigint, 'quoting is off until the person turns it on'); -- off to start
+select public.set_quote_permission(true, 'test'); -- P2 agrees to be quoted without their name
+select tests.eq((select count(*) from public.my_quote_permission() where agreed), 1::bigint, 'the choice is saved'); -- saved
+select tests.fails(format($q$select public.help_keep_chat(%L, 'practice')$q$, :'chat_vic'), 'a parent cannot keep a chat'); -- refused
+select tests.eq((select count(*) from public.help_chat_is_kept(:'chat_vic') k where k), 0::bigint, 'families are never told whether a chat is kept'); -- not shown
+reset role; -- back to the database itself
+select tests.claims(:'sue', 'aal2'); -- signs in as Sue (support admin)
+set role authenticated; -- acts as a signed-in person
+select tests.fails(format($q$select public.help_keep_chat(%L, 'practice')$q$, :'chat_vic'), 'a support admin cannot keep a chat'); -- refused
+reset role; -- back to the database itself
+select tests.claims(:'olive', 'aal2'); -- signs in as Olive (owner)
+set role authenticated; -- acts as a signed-in person
+select tests.fails(format($q$select public.help_keep_chat(%L, 'testimonial')$q$, :'chat1'), 'a chat cannot be a testimonial unless everyone who wrote in it agreed to be quoted'); -- refused (P1 has not agreed)
+select public.help_keep_chat(:'chat_vic', 'testimonial'); -- keeps P2's chat as a testimonial (P2 agreed)
+select tests.fails(format($q$select public.help_keep_chat(%L, 'forever')$q$, :'chat_tutor'), 'the reason must be on the list'); -- refused
+select tests.eq((select count(*) from public.help_chat_is_kept(:'chat1') k where k), 1::bigint, 'admins see that a chat with a safety flag is kept'); -- shown
+reset role; -- back to the database itself
+update public.help_chats set last_message_at = now() - interval '25 months'; -- makes every chat over 2 years old
+select private.help_chat_tidy(); -- runs the nightly tidy-up
+select tests.eq((select count(*) from public.help_chats where id = :'chat1'), 1::bigint, 'a chat with a possible safety concern is kept'); -- kept
+select tests.eq((select count(*) from public.help_chats where id = :'chat_vic'), 1::bigint, 'a chat CLG chose to keep is kept'); -- kept
+select tests.eq((select count(*) from public.help_chats where id = :'chat_tutor'), 0::bigint, 'other old chats are deleted'); -- deleted
+update public.safety_word_flags set status = 'no_concern' where source_table = 'help_messages' and source_id = :'msg_words'; -- the flag is checked and closed as "No concern"
+select private.help_chat_tidy(); -- runs the nightly tidy-up again
+select tests.eq((select count(*) from public.help_chats where id = :'chat1'), 0::bigint, 'once the flag is closed as no concern, the old chat is deleted'); -- deleted
+
 -- Undoes everything above.
 rollback;

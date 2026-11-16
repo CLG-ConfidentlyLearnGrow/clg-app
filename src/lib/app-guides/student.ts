@@ -160,7 +160,7 @@ Tip: Only you and CLG's admins can read your chats. Your brothers and sisters ca
 - **Report app issue**: tell CLG if something in the app is not working, with a screenshot if you can.
 
 ### Your privacy
-Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email.
+Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email. If you are 18 or over, you can also choose whether CLG may quote what you write in its advertising without your name (off unless you turn it on).
 
 Tip: Your profile is private. If your brothers or sisters have their own login, they cannot see your sessions, progress or anything else on your profile, and you cannot see theirs. Your parent can see all their children.
 `, // End of the guide's text.

@@ -63,3 +63,12 @@ export type HelpChatRow = { // Its fields:
   last_message_at: string; // when the latest message was written,
   unread: boolean; // whether there is a message they have not read.
 }; // End of the shape.
+
+// Why CLG can keep a chat past the usual 2 years (Carla, 16 Nov 2026).
+// Chats with a possible safety concern are kept automatically as well.
+export const HELP_KEEP_REASONS: Record<string, string> = { // reason id -> words on screen:
+  testimonial: "Testimonial (everyone who wrote in it agreed to be quoted without their name)", // for advertising, with permission,
+  practice: "Practice scenario for staff training", // for training,
+  concern_tracking: "Tracking a concern", // to follow a worry over time.
+}; // End of the reasons.
+

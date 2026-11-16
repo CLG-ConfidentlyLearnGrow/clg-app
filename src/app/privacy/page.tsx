@@ -82,6 +82,11 @@ export default function PrivacyPage() {
             and an optional CV. To decide whether to offer a tutoring role, including contacting referees and verifying
             checks. Only CLG&apos;s owner and operations staff can see applications.{/* people applying to tutor. */}
           </li>{/* (end of point) */}
+          <li>{/* Point (Carla, 16 Nov 2026): */}
+            <strong>Help chat:</strong> the questions you ask CLG and CLG&apos;s answers, with who wrote them and when. To
+            answer your questions and keep a record of what was agreed. Only the people in the chat and the CLG staff who
+            answer that kind of question can read it. Emails about a chat only say there is a new message.{/* the help chat. */}
+          </li>{/* (end of point) */}
           <li>{/* Point: */}
             <strong>Security records:</strong> sign-in times, failed sign-ins and an activity log of who changed what (not
             the content). To keep accounts safe and investigate problems.{/* security records. */}
@@ -93,14 +98,19 @@ export default function PrivacyPage() {
         </ul>{/* End of the list. */}
         <p className="mt-3 text-sm">{/* A line: */}
           The legal reasons: to carry out our agreement with you, to meet legal duties (such as child safety, tax and pay
-          law), and your consent (for children&apos;s information and for news emails). Where a parent gives us a
+          law), and your consent (for children&apos;s information, for news emails, and for quoting what you write without your name). Where a parent gives us a
           child&apos;s information, we tell the child through this notice and through their parent.{/* the legal reasons, and how children are told. */}
         </p>{/* End of the line. */}
       </Card>{/* End of the card. */}
 
       <Card title="What we never do">{/* A card on what CLG never does: */}
         <ul className="list-disc space-y-2 pl-5 text-sm">{/* a bulleted list: */}
-          <li>Sell or rent information, or use it for advertising or profiling.</li>{/* sell or advertise, */}
+          <li>Sell or rent information, or use it for profiling.</li>{/* sell or profile, */}
+          <li>{/* advertising (Carla, 16 Nov 2026): */}
+            Use what you write in advertising, unless you turn on &quot;Quoting what you write&quot; in Your privacy. Even
+            then, quotes never show your name or anything that could identify you or your child, and you can turn it off
+            any time. Learners under 18 are never quoted.{/* quotes only with permission, without names. */}
+          </li>{/* (end of point) */}
           <li>Send news or offers unless you turn them on in Your privacy. Session, invoice and safety messages always come.</li>{/* send news unless turned on, */}
           <li>Let tutors see students they do not teach, or parents see other families.</li>{/* show other people's children, */}
           <li>Let tutors and children message each other privately. Contact goes through CLG and the family.</li>{/* allow private tutor-child messages. */}
@@ -155,6 +165,11 @@ export default function PrivacyPage() {
           <li>Invoices and payment records: 7 years (tax law).</li>{/* invoices, */}
           <li>Tutor records and child safety checks: 7 years after the tutor leaves.</li>{/* tutor records, */}
           <li>Tutor applications not offered a role (or withdrawn): 12 months after the decision. Successful applications: 7 years.</li>{/* tutor applications, */}
+          <li>{/* help chats (Carla, 16 Nov 2026): */}
+            Help chats: 2 years after the last message, then deleted automatically. Chats that may hold a child safety
+            concern are kept as safety records. CLG may also keep a chat for staff training or to follow a concern, and,
+            only if everyone who wrote in it agreed to be quoted, as a testimonial.{/* help chats. */}
+          </li>{/* (end of point) */}
           <li>The activity log, privacy requests and breach records: 7 years.</li>{/* activity log and privacy records, */}
           <li>Failed sign-in records: 90 days.</li>{/* failed sign-ins. */}
         </ul>{/* End of the list. */}

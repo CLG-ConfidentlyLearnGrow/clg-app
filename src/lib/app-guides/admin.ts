@@ -223,6 +223,12 @@ Families, students, tutors and staff ask CLG questions in the **Help chat**. Own
 3. Owner and Operations admins can instead pick a tutor or staff member.
 4. Choose the topic, write a short title and message, and choose **Start the chat**.
 
+### Keep a chat past 2 years (Owner and Operations)
+Chats are deleted 2 years after their last message. Chats with writing flagged by the child safety check (not closed as "No concern") are kept by themselves.
+1. Open the chat. Under **For CLG**, find **Keep this chat past 2 years?**.
+2. Choose **Testimonial**, **Practice scenario for staff training** or **Tracking a concern**, and choose **Save**.
+3. A testimonial is only allowed when everyone who wrote in the chat is 18 or over and has turned on **Quoting what you write** on their Your privacy page. Never show a name or anything that could identify them or their child.
+
 Tip: Billing details should only go to the person who pays. Messages are checked for child safety words like other writing in the app.
 
 ### Give feedback or report an app issue

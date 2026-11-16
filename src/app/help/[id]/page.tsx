@@ -8,16 +8,16 @@
 //
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { notFound } from "next/navigation"; // Shows the "not found" page.
-import { replyHelpChat, updateHelpChat } from "@/app/actions/help-chat"; // The server actions for replying and updating.
+import { keepHelpChat, replyHelpChat, updateHelpChat } from "@/app/actions/help-chat"; // The server actions for replying, updating and keeping a chat.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { BackButton, Card, Page, Select, TextArea } from "@/components/ui"; // The back button, card, page frame, drop-down and multi-line box.
-import { FINANCE, FRONT_DESK, getAdminLevel, requireViewer } from "@/lib/auth"; // The admin level groups, the level reader, and the sign-in check.
-import { HELP_STATUS_FOR_CLG, HELP_STATUS_FOR_MEMBER, HELP_TOPICS, MISSING_ITEMS } from "@/lib/help-chat"; // The words for stages, topics and missing details.
+import { FINANCE, FRONT_DESK, FULL_ADMIN, getAdminLevel, requireViewer } from "@/lib/auth"; // The admin level groups, the level reader, and the sign-in check.
+import { HELP_KEEP_REASONS, HELP_STATUS_FOR_CLG, HELP_STATUS_FOR_MEMBER, HELP_TOPICS, MISSING_ITEMS } from "@/lib/help-chat"; // The words for stages, topics, missing details and reasons to keep a chat.
 import { plainDateTime } from "@/lib/privacy"; // Dates and times in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
 // The chat, as the database gives it.
-type Chat = { id: string; subject: string; topic: string; status: string; student_id: string | null; missing_item: string | null; started_by_name: string; started_by_clg: boolean; assigned_to: string | null; created_at: string }; // its details.
+type Chat = { id: string; subject: string; topic: string; status: string; student_id: string | null; missing_item: string | null; started_by_name: string; started_by_clg: boolean; assigned_to: string | null; created_at: string; keep_reason: string | null }; // its details.
 
 // One message, as the database gives it.
 type Message = { id: string; author_id: string | null; author_name: string; from_clg: boolean; body: string; created_at: string }; // who wrote it, what and when.
@@ -28,7 +28,7 @@ export default async function HelpChatPage({ params }: PageProps<"/help/[id]">) 
   const { id } = await params; // The chat's id.
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound(); // Not an id at all: not found.
   const supabase = await createClient(); // Connects to the database.
-  const { data: chat } = await supabase.from("help_chats").select("id, subject, topic, status, student_id, missing_item, started_by_name, started_by_clg, assigned_to, created_at").eq("id", id).maybeSingle<Chat>(); // Reads the chat (only if they may see it).
+  const { data: chat } = await supabase.from("help_chats").select("id, subject, topic, status, student_id, missing_item, started_by_name, started_by_clg, assigned_to, created_at, keep_reason").eq("id", id).maybeSingle<Chat>(); // Reads the chat (only if they may see it).
   if (!chat) notFound(); // Not theirs (or no such chat): not found.
   await supabase.rpc("help_mark_read", { p_chat: id }); // Marks it as read now they have opened it.
 
@@ -50,6 +50,8 @@ export default async function HelpChatPage({ params }: PageProps<"/help/[id]">) 
   const { data: memberNames } = isClg && memberIds.length ? await supabase.from("accounts").select("id, full_name").in("id", memberIds) : { data: [] }; // Their names (help desk only).
   const adminRows = (admins.data ?? []) as { account_id: string; full_name: string }[]; // The admins who can look after it.
   const statusWords = isClg ? HELP_STATUS_FOR_CLG : HELP_STATUS_FOR_MEMBER; // The stage words that suit the reader.
+  const canKeep = isClg && level !== null && FULL_ADMIN.includes(level); // Only the owner and operations admins choose to keep a chat.
+  const { data: kept } = isClg ? await supabase.rpc("help_chat_is_kept", { p_chat: id }) : { data: false }; // Whether it will be kept past 2 years (help desk only).
 
   return ( // Shows:
     <Page title={chat.subject} intro={`${HELP_TOPICS[chat.topic] ?? chat.topic}${studentName ? `, about ${studentName}` : ""}. ${statusWords[chat.status] ?? chat.status}.`}>{/* the page, titled with the chat's title, with the topic, student and stage: */}
@@ -114,6 +116,23 @@ export default async function HelpChatPage({ params }: PageProps<"/help/[id]">) 
               ))}{/* End of the loop. */}
             </Select>{/* End of the drop-down. */}
           </ActionForm>{/* End of the form. */}
+          <p className="mt-6 text-sm text-zinc-700">{/* how long it is kept: */}
+            <strong>Kept:</strong> {kept === true ? (chat.keep_reason ? `past 2 years (${HELP_KEEP_REASONS[chat.keep_reason] ?? chat.keep_reason})` : "past 2 years, because some writing in it was flagged by the child safety check") : "deleted 2 years after the last message"}.{/* the reason it is kept, or when it goes. */}
+          </p>{/* End of the note. */}
+          {canKeep && ( // For the owner and operations admins:
+            <div className="mt-3">{/* the keep form: */}
+              <ActionForm action={keepHelpChat} submitLabel="Save">{/* the form: */}
+                <input type="hidden" name="chat" value={chat.id} />{/* which chat, */}
+                <Select label="Keep this chat past 2 years?" name="reason" defaultValue={chat.keep_reason ?? ""}>{/* the reason drop-down: */}
+                  <option value="">No (delete 2 years after the last message)</option>{/* not kept, */}
+                  {Object.entries(HELP_KEEP_REASONS).map(([value, words]) => ( // for each reason:
+                    <option key={value} value={value}>{words}</option> // an option.
+                  ))}{/* End of the loop. */}
+                </Select>{/* End of the drop-down. */}
+                <p className="text-xs text-zinc-500">A testimonial must never show a name or anything that could identify the person or their child.</p>{/* a reminder about quoting. */}
+              </ActionForm>{/* End of the form. */}
+            </div> // End of the keep form.
+          )}{/* End of the keep part. */}
         </Card> // End of the card.
       )}{/* End of the help desk part. */}
     </Page> // End of the page.

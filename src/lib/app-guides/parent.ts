@@ -297,6 +297,7 @@ Tip: Only you and CLG's admins can read your chats. Other parents, your child's 
 2. Choose **Download your information** for a copy of what CLG holds about you and your children.
 3. Use **Ask CLG about your information** to see, fix or delete information, withdraw consent, or make a complaint. CLG replies within 28 days.
 4. Under **Emails from CLG**, choose whether you get CLG news and offers (off unless you turn it on).
+5. Under **Quoting what you write**, choose whether CLG may use short quotes from what you write in its advertising, without your name or anything that could identify you or your child (off unless you turn it on).
 
 ### Learn with CLG yourself
 At the bottom of your dashboard, choose **Add a student profile**. You keep the same login and get a Student tab. You need to be 16 or over.

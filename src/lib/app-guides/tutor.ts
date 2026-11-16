@@ -221,6 +221,6 @@ Tip: Families talk to CLG in their own chats, which tutors do not see, so you do
 - **Report app issue**: something in the app is not working. Add a screenshot if you can.
 
 ### Your privacy and name
-Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
+Choose **Your privacy** to download your information or ask CLG about it. Under **Quoting what you write**, you can let CLG quote what you write in its advertising without your name (off unless you turn it on). Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `, // End of the guide's text.
 }; // End of the tutor guide.

@@ -23,10 +23,16 @@
 --     until quiet hours end (9pm to 5am in the person's own time);
 --   * the activity log holds ids only;
 --   * chats are deleted 2 years after their last message, and straight away
---     when the student they are about is erased.
+--     when the student they are about is erased. Chats with a possible
+--     safety concern are kept, and so are chats the owner or an operations
+--     admin chose to keep (testimonial with permission, practice scenario,
+--     or concern tracking);
+--   * a person can agree once, on Your privacy, to be quoted in CLG's
+--     advertising without their name (quote_permissions). Off by default;
+--     learners under 18 cannot agree.
 --
 -- Module: help_chat. Tables: help_chats, help_chat_members, help_messages,
--- help_chat_reads, help_chat_emails. It reads (never writes) other modules'
+-- help_chat_reads, help_chat_emails, quote_permissions. It reads (never writes) other modules'
 -- tables. Needs 20261114100100_safety_watch_words.sql (the concerning-words
 -- check) and 20261113200100_quiet_hours.sql (quiet hours). Safe to run more
 -- than once.
@@ -53,6 +59,9 @@ create table if not exists public.help_chats ( -- the chats table
 ); -- end of the table
 create index if not exists help_chats_status on public.help_chats (status, last_message_at); -- finds chats waiting for CLG quickly
 create index if not exists help_chats_student on public.help_chats (student_id) where student_id is not null; -- finds a student's chats quickly
+alter table public.help_chats add column if not exists keep_reason text check (keep_reason in ('testimonial', 'practice', 'concern_tracking')); -- why CLG chose to keep this chat past 2 years, if it did (Carla, 16 Nov 2026)
+alter table public.help_chats add column if not exists kept_by uuid references public.accounts (id) on delete set null; -- the admin who chose to keep it
+alter table public.help_chats add column if not exists kept_at timestamptz; -- when they chose to keep it
 alter table public.help_chats enable row level security; -- turns on access rules
 revoke all on public.help_chats from anon, authenticated; -- no direct changes: everything goes through the functions below
 grant select on public.help_chats to authenticated; -- signed-in people may read, but only the rows the rules below allow
@@ -748,15 +757,167 @@ end; -- ends the block
 $$; -- end of the code
 
 -- ---------------------------------------------------------------------------
--- 9. Tidying up: chats go 2 years after their last message (the same as
---    other student records), and sent email rows after 30 days.
+-- 9. Permission to quote without a name (Carla, 16 Nov 2026)
+--
+-- A person can agree, once, on the Your privacy page, that CLG may use short
+-- quotes from what they write to CLG in its advertising, without their name
+-- or anything that could identify them or their child. It is off unless
+-- they turn it on, and they can turn it off any time. Learners under 18
+-- cannot agree here (their words are never used as testimonials).
+-- ---------------------------------------------------------------------------
+
+-- One row per person who has made the choice.
+create table if not exists public.quote_permissions ( -- the choices table
+  account_id uuid primary key references public.accounts (id) on delete cascade, -- the person (removed with their account)
+  agreed boolean not null, -- true when they agree to be quoted without their name
+  policy_version text not null default 'unknown' check (char_length(policy_version) <= 40), -- the privacy policy version they saw
+  decided_at timestamptz not null default now() -- when they last made the choice
+); -- end of the table
+alter table public.quote_permissions enable row level security; -- turns on access rules
+revoke all on public.quote_permissions from anon, authenticated; -- changed only through the function below
+grant select on public.quote_permissions to authenticated; -- read, within the rule below
+drop policy if exists "own choice and full admins read" on public.quote_permissions; -- removes the old rule if the file is run again
+create policy "own choice and full admins read" on public.quote_permissions -- the reading rule
+  for select to authenticated -- for signed-in people reading
+  using (account_id = auth.uid() or private.is_admin()); -- their own choice, or owner and operations admins
+
+-- True when this account belongs to a learner under 18 (who cannot agree to be quoted).
+create or replace function private.is_learner_under_18(p_account uuid) -- takes the account
+returns boolean -- gives back yes or no
+language sql stable security definer -- reads the students table whoever asks
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the check
+  select exists (select 1 from public.students s where s.account_id = p_account and s.date_of_birth > current_date - interval '18 years') -- a student login for someone not yet 18
+$$; -- end of the function
+revoke all on function private.is_learner_under_18(uuid) from public; -- for the database's own use only
+
+-- The signed-in person's choice, and whether they can make it.
+create or replace function public.my_quote_permission() -- no inputs
+returns table (agreed boolean, can_choose boolean) -- whether they agreed, and whether the choice is open to them
+language sql stable security definer -- reads their own row and age
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the answer
+  select coalesce((select q.agreed from public.quote_permissions q where q.account_id = auth.uid()), false), -- their choice (no if they never chose)
+    not private.is_learner_under_18(auth.uid()) -- learners under 18 cannot choose
+$$; -- end of the function
+revoke all on function public.my_quote_permission() from public, anon; -- not for signed-out visitors
+grant execute on function public.my_quote_permission() to authenticated; -- signed-in people
+
+-- Saves the signed-in person's choice.
+create or replace function public.set_quote_permission(p_agreed boolean, p_version text) -- takes their choice and the policy version shown
+returns void -- gives nothing back
+language plpgsql security definer -- writes a table people cannot write directly
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the code
+begin -- starts the code
+  if auth.uid() is null then -- nobody signed in
+    raise exception 'Please sign in first.' using errcode = '42501'; -- plain message
+  end if; -- end of the check
+  if coalesce(p_agreed, false) and private.is_learner_under_18(auth.uid()) then -- a learner under 18 trying to agree
+    raise exception 'Learners under 18 cannot agree to be quoted. CLG never uses their words in advertising.' using errcode = '22023'; -- plain message
+  end if; -- end of the check
+  insert into public.quote_permissions (account_id, agreed, policy_version, decided_at) -- saves the choice:
+  values (auth.uid(), coalesce(p_agreed, false), left(coalesce(nullif(btrim(p_version), ''), 'unknown'), 40), now()) -- theirs, with the policy version and time
+  on conflict (account_id) do update set agreed = excluded.agreed, policy_version = excluded.policy_version, decided_at = excluded.decided_at; -- or replaces their earlier choice
+  perform private.log_event('set_quote_permission', 'quote_permissions', auth.uid()::text, jsonb_build_object('agreed', coalesce(p_agreed, false))); -- notes the choice (yes or no only)
+end; -- ends the code
+$$; -- end of the function
+revoke all on function public.set_quote_permission(boolean, text) from public, anon; -- not for signed-out visitors
+grant execute on function public.set_quote_permission(boolean, text) to authenticated; -- signed-in people
+
+-- ---------------------------------------------------------------------------
+-- 10. Keeping a chat (Carla, 16 Nov 2026). Chats are normally deleted 2
+--     years after their last message. They are kept when:
+--       * any of their writing was flagged by the concerning-words check and
+--         the flag was not closed as "No concern" (a possible safety concern);
+--       * the owner or an operations admin chose to keep it, as a testimonial
+--         (only when everyone who wrote in it, apart from CLG, agreed to be
+--         quoted without their name and is 18 or over), a practice scenario
+--         for training, or for tracking a concern.
+-- ---------------------------------------------------------------------------
+
+-- True when any writing in the chat has a concerning-words flag that was not closed as "No concern".
+create or replace function private.help_chat_has_safety_flag(p_chat uuid) -- takes the chat
+returns boolean -- gives back yes or no
+language sql stable security definer -- reads the flags, which most people cannot
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the check
+  select to_regclass('public.safety_word_flags') is not null -- the flags table is there,
+    and exists ( -- and there is a flag:
+      select 1 from public.safety_word_flags f -- in the flags,
+      where f.status <> 'no_concern' -- not closed as "No concern",
+        and ((f.source_table = 'help_chats' and f.source_id = p_chat::text) -- on the chat's title,
+          or (f.source_table = 'help_messages' and f.source_id in (select m.id::text from public.help_messages m where m.chat_id = p_chat))) -- or on one of its messages
+    ) -- end of the check
+$$; -- end of the function
+revoke all on function private.help_chat_has_safety_flag(uuid) from public; -- for the database's own use only
+
+-- The owner or an operations admin chooses to keep a chat (or stops keeping it, with no reason).
+create or replace function public.help_keep_chat(p_chat uuid, p_reason text) -- takes the chat and why (empty to stop keeping it)
+returns void -- gives nothing back
+language plpgsql security definer -- changes a table people cannot change directly
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the code
+declare -- the working values:
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), ''); -- the reason, or nothing
+begin -- starts the code
+  if not private.is_admin() then -- not the owner or an operations admin (with two-step sign-in)
+    raise exception 'Only the owner and operations admins can choose to keep a chat.' using errcode = '42501'; -- plain message
+  end if; -- end of the check
+  if not exists (select 1 from public.help_chats where id = p_chat) then -- no such chat
+    raise exception 'That chat could not be found.' using errcode = '22023'; -- plain message
+  end if; -- end of the check
+  if v_reason is not null and v_reason not in ('testimonial', 'practice', 'concern_tracking') then -- an unknown reason
+    raise exception 'Please choose why CLG is keeping this chat.' using errcode = '22023'; -- plain message
+  end if; -- end of the check
+  if v_reason = 'testimonial' and exists ( -- for a testimonial, someone who wrote in it (apart from CLG):
+    select 1 from public.help_messages m -- a message
+    where m.chat_id = p_chat and not m.from_clg -- in this chat, not written for CLG,
+      and (m.author_id is null -- whose writer no longer has an account,
+        or private.is_learner_under_18(m.author_id) -- or is a learner under 18,
+        or not exists (select 1 from public.quote_permissions q where q.account_id = m.author_id and q.agreed)) -- or has not agreed to be quoted
+  ) then -- if so:
+    raise exception 'This chat cannot be kept as a testimonial: everyone who wrote in it must be 18 or over and have agreed on their Your privacy page to be quoted without their name.' using errcode = '22023'; -- plain message
+  end if; -- end of the check
+  update public.help_chats -- saves the choice:
+  set keep_reason = v_reason, -- the reason (or none),
+      kept_by = case when v_reason is null then null else auth.uid() end, -- who chose it,
+      kept_at = case when v_reason is null then null else now() end -- and when
+  where id = p_chat; -- this chat
+  perform private.log_event('help_keep_chat', 'help_chats', p_chat::text, jsonb_build_object('reason', coalesce(v_reason, 'none'))); -- notes it (id and reason only)
+end; -- ends the code
+$$; -- end of the function
+revoke all on function public.help_keep_chat(uuid, text) from public, anon; -- not for signed-out visitors
+grant execute on function public.help_keep_chat(uuid, text) to authenticated; -- signed-in people can try (the check is inside)
+
+-- True when the chat will be kept past 2 years (chosen by CLG, or a possible safety concern). For the chat page.
+create or replace function public.help_chat_is_kept(p_chat uuid) -- takes the chat
+returns boolean -- gives back yes or no
+language sql stable security definer -- reads the flags, which most people cannot
+set search_path = '' -- only fully named tables, for safety
+as $$ -- the check
+  select private.can_read_help_chat(p_chat) -- only for a chat they can read,
+    and private.is_any_admin() -- and only for admins (families are not told about safety flags),
+    and (exists (select 1 from public.help_chats c where c.id = p_chat and c.keep_reason is not null) -- chosen to be kept,
+      or private.help_chat_has_safety_flag(p_chat)) -- or a possible safety concern
+$$; -- end of the function
+revoke all on function public.help_chat_is_kept(uuid) from public, anon; -- not for signed-out visitors
+grant execute on function public.help_chat_is_kept(uuid) to authenticated; -- signed-in people (the checks are inside)
+
+-- ---------------------------------------------------------------------------
+-- 11. Tidying up: chats go 2 years after their last message (the same as
+--     other student records) unless they are kept (see 10), and sent email
+--     rows go after 30 days.
 -- ---------------------------------------------------------------------------
 create or replace function private.help_chat_tidy() -- no inputs
 returns void -- gives nothing back
 language sql security definer -- deletes rows people cannot delete
 set search_path = '' -- only fully named tables, for safety
 as $$ -- the changes
-  delete from public.help_chats where last_message_at < now() - interval '2 years'; -- old chats (their members, messages, reads and emails go with them)
+  delete from public.help_chats c -- deletes chats:
+  where c.last_message_at < now() - interval '2 years' -- with no message for 2 years,
+    and c.keep_reason is null -- that CLG has not chosen to keep,
+    and not private.help_chat_has_safety_flag(c.id); -- and with no possible safety concern (their members, messages, reads and emails go with them)
   delete from public.help_chat_emails where emailed_at is not null and emailed_at < now() - interval '30 days'; -- old sent email rows
 $$; -- end of the function
 revoke all on function private.help_chat_tidy() from public; -- for the database's own use only

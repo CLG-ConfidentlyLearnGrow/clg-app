@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache"; // Lets the code refresh pages afte
 import { redirect } from "next/navigation"; // Sends the person to another page (the new chat).
 import { z } from "zod"; // The form-checking library.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
-import type { FormState } from "@/lib/forms"; // The form reply shape.
+import { POLICY_VERSION, type FormState } from "@/lib/forms"; // The form reply shape, and the privacy policy version (saved with a choice).
 import { HELP_TOPICS, isMissingItem } from "@/lib/help-chat"; // The topic list and the missing detail check.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
@@ -108,3 +108,31 @@ export async function updateHelpChat(_prev: FormState, formData: FormData): Prom
   refreshHelpPages(parsed.data.chat); // Refreshes the chat and the lists.
   return { message: parsed.data.status === "closed" ? "Chat closed. Write a new message any time to reopen it." : "Saved." }; // Confirms.
 } // End of updateHelpChat.
+
+// The owner or an operations admin keeps a chat past 2 years (or stops keeping it).
+export async function keepHelpChat(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z.object({ // The rules:
+    chat: z.uuid(), // which chat,
+    reason: z.enum(["", "testimonial", "practice", "concern_tracking"], { message: "Please choose why CLG is keeping this chat." }), // and why (empty to stop keeping it).
+  }).safeParse(Object.fromEntries(formData)); // Checks the form.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("help_keep_chat", { p_chat: parsed.data.chat, p_reason: parsed.data.reason || null }); // Saves the choice.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
+  refreshHelpPages(parsed.data.chat); // Refreshes the chat.
+  return { message: parsed.data.reason ? "Saved. This chat will be kept past 2 years." : "Saved. This chat will be deleted 2 years after its last message, unless it has a possible safety concern." }; // Confirms.
+} // End of keepHelpChat.
+
+// Saves whether the person agrees that CLG may quote what they write, without
+// their name, in its advertising (Carla, 16 Nov 2026). Off unless they turn it on.
+export async function setQuotePermission(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireViewer(); // Makes sure someone is signed in.
+  const agreed = formData.get("quote") === "on"; // True if the box is ticked.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("set_quote_permission", { p_agreed: agreed, p_version: POLICY_VERSION }); // Saves the choice, with the privacy policy version they saw.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
+  revalidatePath("/my-privacy"); // Refreshes the privacy page.
+  return { message: agreed ? "Thank you. CLG may quote what you write without your name. You can turn this off any time." : "Saved. CLG will not quote what you write." }; // Confirms.
+} // End of setQuotePermission.
+
