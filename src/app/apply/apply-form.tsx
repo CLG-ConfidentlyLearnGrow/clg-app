@@ -7,7 +7,7 @@
 import { useState, useTransition, type FormEvent } from "react"; // React's memory, busy-state and form event helpers.
 import { submitTutorApplication } from "@/app/actions/tutor-applications"; // The server action that saves the application.
 import { StateSelect } from "@/components/state-select"; // A list to pick the state.
-import { Field, FormMessage, Select, SubHeading, TextArea, TextLink } from "@/components/ui"; // Form boxes, headings, messages and links.
+import { BusyButton, Field, FormMessage, Select, SubHeading, TextArea, TextLink } from "@/components/ui"; // The button that shows a spinner while busy, form boxes, headings, messages and links.
 import { STATES, STATE_NAMES } from "@/lib/checks"; // The Australian states and their names.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import {
@@ -203,13 +203,13 @@ export function ApplyForm({ started }: { started: string }) {
       </label>{/* End of the line. */}
 
       <FormMessage state={state} />{/* Any problem, shown next to the button so it's seen. */}
-      <button // the send button:
+      <BusyButton // the send button:
         type="submit" // sends the form,
-        disabled={pending} // switched off while sending,
+        busy={pending} // switched off and showing a spinner while sending,
         className="rounded-full bg-teal-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-60" // a filled button, faded while busy,
       >{/* (end of the button's settings) */}
         {pending ? "Sending…" : "Send my application"}{/* its words ("Sending…" while busy). */}
-      </button>{/* End of the button. */}
+      </BusyButton>{/* End of the button. */}
     </form> // End of the form.
   ); // End of what's shown.
 } // End of ApplyForm.

@@ -17,6 +17,10 @@ type Props = ComponentProps<"button"> & { // A button's settings are a normal bu
   // For a very small button (such as a tick box), show only the spinner
   // while it works, in place of the button's own content.
   spinnerOnly?: boolean; // show only the spinner while busy (optional).
+  // For work the page runs itself (not through a form), such as uploading
+  // files first: set this to true while it runs, and the button shows the
+  // spinner and is switched off, the same as a form button (Carla, 16 Nov 2026).
+  busy?: boolean; // whether the page says this button is busy (optional).
 }; // End of the settings.
 
 // Works out whether this button's form is saving, and whether this is the
@@ -34,7 +38,7 @@ function useBusy({ type, name, value }: Pick<Props, "type" | "name" | "value">) 
 // A small spinning circle shown while something is working.
 export function Spinner() {
   return ( // Shows:
-    <svg className="h-4 w-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>{/* a small drawing that spins (hidden from screen readers), */}
+    <svg className="h-4 w-4 shrink-0 animate-spin motion-reduce:[animation-duration:3s]" viewBox="0 0 24 24" fill="none" aria-hidden>{/* a small drawing that spins (slowly for people who ask for less movement; hidden from screen readers), */}
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />{/* a faint full circle, */}
       <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />{/* and a darker quarter arc that appears to spin. */}
     </svg> // End of the drawing.
@@ -63,8 +67,10 @@ function Content({ pressed, spinnerOnly, children }: { pressed: boolean; spinner
 
 // A button with no styling of its own: pass the look in className. Use it
 // for link-style or small buttons that submit a form.
-export function BusyButton({ spinnerOnly, className = "", disabled, children, ...props }: Props) {
-  const { formBusy, pressed } = useBusy(props); // Whether the form is busy and this was pressed.
+export function BusyButton({ spinnerOnly, busy, className = "", disabled, children, ...props }: Props) { // Takes the button settings (including the optional "busy").
+  const form = useBusy(props); // Whether the form is busy and this was pressed.
+  const formBusy = form.formBusy || !!busy; // Busy if the form is saving or the page says so.
+  const pressed = form.pressed || !!busy; // Shows the spinner if pressed while saving or the page says it is busy.
   return ( // Shows:
     <button // a button:
       {...props} // with every setting passed in,
@@ -80,8 +86,10 @@ export function BusyButton({ spinnerOnly, className = "", disabled, children, ..
 } // End of BusyButton.
 
 // The app's main (teal, rounded) button.
-export function Button({ spinnerOnly, disabled, children, ...props }: Props) {
-  const { formBusy, pressed } = useBusy(props); // Whether the form is busy and this was pressed.
+export function Button({ spinnerOnly, busy, disabled, children, ...props }: Props) { // Takes the button settings (including the optional "busy").
+  const form = useBusy(props); // Whether the form is busy and this was pressed.
+  const formBusy = form.formBusy || !!busy; // Busy if the form is saving or the page says so.
+  const pressed = form.pressed || !!busy; // Shows the spinner if pressed while saving or the page says it is busy.
   return ( // Shows:
     <button // a button:
       className={`shrink-0 rounded-full bg-teal-700 px-5 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition hover:bg-teal-900 hover:font-bold hover:shadow-md disabled:opacity-50 disabled:hover:bg-teal-700 disabled:hover:font-medium${pressed ? " cursor-wait" : ""}`} // teal, rounded, white text, darker and bold on hover, faded when off, waiting cursor when pressed,

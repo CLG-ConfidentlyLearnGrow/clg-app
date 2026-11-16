@@ -5,7 +5,7 @@
 
 import { makeReport, saveReportSettings } from "@/app/actions/reports"; // The server actions that make a report and save settings.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { Field } from "@/components/ui"; // The labelled input box.
+import { BusyButton, Field } from "@/components/ui"; // The button that shows a spinner while busy, and the labelled input box.
 
 // The "make a report for your dates" form, with quick choices for common ranges.
 export function MakeReportForm({ today, ranges }: { today: string; ranges: { label: string; from: string; to: string }[] }) {
@@ -35,9 +35,9 @@ function ActionChip({ label, from, to }: { label: string; from: string; to: stri
     <form action={async (fd) => { await makeReport({}, fd); }}>{/* a form that makes the report straight away (it opens when done), */}
       <input type="hidden" name="from" value={from} />{/* the first day, hidden, */}
       <input type="hidden" name="to" value={to} />{/* the last day, hidden, */}
-      <button type="submit" className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:border-brand hover:text-brand">{/* a rounded button: */}
+      <BusyButton type="submit" className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:border-brand hover:text-brand">{/* a rounded button (shows a spinner and cannot be pressed twice while the report is made): */}
         {label}{/* showing the range's name. */}
-      </button>{/* End of the button. */}
+      </BusyButton>{/* End of the button. */}
     </form> // End of the form.
   ); // End of what's shown.
 } // End of ActionChip.

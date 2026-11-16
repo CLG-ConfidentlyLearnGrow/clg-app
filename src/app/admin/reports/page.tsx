@@ -5,7 +5,7 @@
 import type { ReactNode } from "react"; // The type for anything React can show.
 import { deleteReport } from "@/app/actions/reports"; // The action that deletes a report made for chosen dates.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty line, small heading, table and text link.
+import { BackButton, BusyButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, button that shows a spinner while saving, card, empty line, small heading, table and text link.
 import { requireAdminLevel } from "@/lib/auth"; // Makes sure the person is an admin at the right level.
 import { addDays, localToday, shortDate } from "@/lib/scheduling"; // Date helpers.
 import { REPORT_KIND_LABELS, money, num, periodLabel, reasonLabel, type SavedReport } from "@/lib/reports"; // Report names, number and money display, and the report type.
@@ -243,7 +243,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
                       {r.kind === "custom" && ( // reports for chosen dates can be deleted:
                         <form action={deleteReport}>{/* a delete form: */}
                           <input type="hidden" name="id" value={r.id} />{/* the report's id, hidden, */}
-                          <button type="submit" className="text-sm text-red-700 hover:underline">Delete</button>{/* and the delete button. */}
+                          <BusyButton type="submit" className="text-sm text-red-700 hover:underline">Delete</BusyButton>{/* and the delete button (shows a spinner and cannot be pressed twice while deleting). */}
                         </form> // End of the form.
                       )}{/* End of delete. */}
                     </div>{/* End of the actions. */}

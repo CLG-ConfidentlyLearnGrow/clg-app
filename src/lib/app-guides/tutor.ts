@@ -16,11 +16,11 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbook**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
+Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
-Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open the **Handbook**.
+Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open **Handbooks**.
 
 ### Join CLG from your invitation
 1. Open the invitation email from CLG. The link works once, for 7 days, and only for your email.
@@ -36,6 +36,9 @@ Tutors and admins need two-step login, because the app holds children's informat
 
 ### Put CLG on your phone's home screen
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
+
+### Take the app tour again
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 ## Your profile: checks, subjects and hours
 
@@ -178,7 +181,7 @@ When a family uploads a school report or marked work, it shows under **New uploa
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook
-In the side menu, choose **Handbook**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
+In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
 
 ### Check your pay and log extra hours
 1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.
@@ -198,6 +201,6 @@ In the side menu, choose **Handbook**. Search for a word (for example late, conc
 - **Report app issue**: something in the app is not working. Add a screenshot if you can.
 
 ### Your privacy and name
-Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it.
+Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `, // End of the guide's text.
 }; // End of the tutor guide.

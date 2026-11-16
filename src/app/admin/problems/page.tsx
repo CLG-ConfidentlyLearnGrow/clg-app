@@ -4,7 +4,7 @@
 //
 import { addProblemReviewer, deleteProblemReport, removeProblemReviewer } from "@/app/actions/problem-reports"; // The actions for the reviewer list and deleting a report.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty note, small heading, table and text link.
+import { BackButton, BusyButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, button that shows a spinner while saving, card, empty note, small heading, table and text link.
 import { ADMIN_LEVEL_NAMES, ANY_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth"; // Admin level names, the "any admin" group, and the admin check.
 import { PROBLEM_PRIORITY_LABELS, PROBLEM_STATUSES, PROBLEM_STATUS_LABELS, type ProblemReport, type ProblemStatus } from "@/lib/problem-reports"; // Status and priority words, and the report type.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
@@ -77,9 +77,9 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
                   <td className="text-right">{/* and a button to change it: */}
                     <form action={a.on_list ? removeProblemReviewer : addProblemReviewer}>{/* a form that adds or removes them: */}
                       <input type="hidden" name="account_id" value={a.account_id} />{/* their id, hidden, */}
-                      <button type="submit" className={`text-sm hover:underline ${a.on_list ? "text-red-700" : "text-teal-800"}`}>{/* the button: */}
+                      <BusyButton type="submit" className={`text-sm hover:underline ${a.on_list ? "text-red-700" : "text-teal-800"}`}>{/* the button (shows a spinner and cannot be pressed twice while saving): */}
                         {a.on_list ? "Remove" : "Add"}{/* "Remove" or "Add". */}
-                      </button>{/* End of the button. */}
+                      </BusyButton>{/* End of the button. */}
                     </form>{/* End of the form. */}
                   </td>{/* (end of the cell) */}
                 </tr> // End of the row.
@@ -151,7 +151,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
                 )}{/* End of the choice. */}
                 <form action={deleteProblemReport} className="mt-6 border-t border-zinc-100 pt-4">{/* the delete form: */}
                   <input type="hidden" name="id" value={report.id} />{/* the report's id, hidden, */}
-                  <button type="submit" className="text-sm text-red-700 hover:underline">Delete this report and its screenshots</button>{/* the delete button, */}
+                  <BusyButton type="submit" className="text-sm text-red-700 hover:underline">Delete this report and its screenshots</BusyButton>{/* the delete button (shows a spinner and cannot be pressed twice while deleting), */}
                   <p className="mt-1 text-xs text-zinc-500">For example, if it holds details that should not have been shared. This cannot be undone.</p>{/* and when to use it. */}
                 </form>{/* End of the delete form. */}
               </Card> // End of the GitHub card.

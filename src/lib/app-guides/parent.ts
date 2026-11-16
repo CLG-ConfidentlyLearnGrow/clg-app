@@ -22,7 +22,7 @@ The app has a few parts that are always there:
 - A page you open from your dashboard, such as a child's progress page, has a **Back** button at the top that takes you back.
 - The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
-- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too.
+- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 - If you have more than one role (for example you are a parent and also learn with CLG yourself), tabs at the top let you switch between your dashboards.
 
 ### Sign in
@@ -47,10 +47,13 @@ The first time you sign in, the app shows **Welcome to CLG**. Read the summary o
 2. Follow the steps for your phone or computer (iPhone uses Safari's **Share** button, Android uses Chrome's three dots).
 
 ### Change your name
-Your name is shown at the top right under **Signed in as**. Tap it to change your first or last name.
+Your name is shown at the top right under **Signed in as** (on a phone, tap **Menu** at the top right to see it). Tap it to change your first or last name.
 
 ### See what has changed in the app
 After an app update, a **What is new** box shows the changes for your dashboard once. To see them again, choose **What is new** at the bottom of any page.
+
+### Take the app tour again
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 ## Your children
 
@@ -260,7 +263,7 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 3. Write your feedback and choose **Send feedback**. You can see your past feedback on the same page.
 
 ### Report something not working in the app
-1. Choose **Report app issue** at the top of any page.
+1. Choose **Report app issue** at the top of any page (on a phone, tap **Menu** at the top right first).
 2. Say what went wrong and what you were trying to do. Add screenshots if you can.
 3. Send it. **Your reports** shows where each report is up to.
 

@@ -16,7 +16,7 @@ import { HandbookForm, NewModuleForm, SettingsForm } from "./forms"; // The admi
 const SECTIONS = [ // Each section's id and words:
   { id: "modules", label: "Modules" }, // the modules,
   { id: "progress", label: "Progress" }, // everyone's progress,
-  { id: "handbook", label: "Handbook" }, // the handbook,
+  { id: "handbook", label: "Handbooks" }, // the handbook,
   { id: "settings", label: "Settings" }, // the settings.
 ] as const; // End of the list (fixed).
 

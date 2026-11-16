@@ -120,7 +120,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
-    items.push({ id: "handbook", label: "Handbook", href: "/handbook?as=admin" }); // the handbook,
+    items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
@@ -134,7 +134,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       ...rest, // the other tutor sections,
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
-      { id: "handbook", label: "Handbook", href: "/handbook?as=tutor" }, // the tutor handbook,
+      { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
       { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.

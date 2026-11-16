@@ -185,7 +185,7 @@ export function ReportProblemForm({ page }: { page: string }) {
         )}{/* End of the previews. */}
       </div>{/* End of the screenshots part. */}
 
-      <Button type="submit" disabled={pending}>{/* the send button, switched off while sending, */}
+      <Button type="submit" busy={pending}>{/* the send button, switched off and showing a spinner while sending, */}
         {pending ? "Sending…" : "Send report"}{/* showing "Sending…" while busy, otherwise its words. */}
       </Button>{/* End of the button. */}
     </form> // End of the form.
