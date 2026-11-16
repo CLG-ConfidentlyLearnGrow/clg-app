@@ -100,6 +100,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),
+    items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
     items.push({ id: "handbook", label: "Handbook", href: "/handbook?as=admin" }); // the handbook,
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
@@ -116,6 +117,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
       { id: "handbook", label: "Handbook", href: "/handbook?as=tutor" }, // the tutor handbook,
+      { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
       { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.
@@ -126,7 +128,8 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       ...sessions, // Sessions,
       { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=parent" }, // the family's week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
       { id: "add", label: "Add a child", href: "/dashboard/parent?section=add" }, // Add a child,
-      { id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }, // and Billing (with anything to set up).
+      { id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }, // Billing (with anything to set up),
+      { id: "guide", label: "App guide", href: "/guide?as=parent" }, // and the step-by-step guide to the app for parents (Carla, 16 Nov 2026).
     ]; // End of the parent menu.
   } // End of the parent menu.
 
@@ -136,6 +139,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     { id: "learning", label: "Your learning", href: "/dashboard/student", count: todo.get("student", "learning") }, // Your learning (with steps overdue),
     ...sessions, // Sessions,
     { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=student" }, // their week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
-    ...(roles.includes("parent") ? [] : [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }]), // and Billing (unless they're also a parent).
+    ...(roles.includes("parent") ? [] : [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }]), // Billing (unless they're also a parent),
+    { id: "guide", label: "App guide", href: "/guide?as=student" }, // and the step-by-step guide to the app for students (Carla, 16 Nov 2026).
   ]; // End of the student menu.
 } // End of getDashboardMenu.
