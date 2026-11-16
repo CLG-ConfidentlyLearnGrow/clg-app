@@ -326,6 +326,8 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
 3. If two people share invoices, choose who also pays and their share, then **Save split**.
 
+Tip: The bill payer list shows the family's parents and any adult (18+) learners with their own login, marked "(adult learner)". An adult learner who is the family's only learner looks after billing anyway. In a family with more than one learner, billing stays with the parents unless you name the adult learner as bill payer here. They still can't see their brothers' or sisters' profiles.
+
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
 

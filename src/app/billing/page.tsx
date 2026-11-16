@@ -69,7 +69,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     ]), // (end of the set)
   ]; // End of the list.
 
-  const [accounts, families, invoices, onHold, splits] = await Promise.all([ // Reads five things at once:
+  const [accounts, families, invoices, onHold, splits, paidByOthers] = await Promise.all([ // Reads six things at once:
     supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused").in("family_id", myFamilies), // their own families' billing accounts,
     supabase.from("families").select("id, name").in("id", myFamilies), // their own families' names,
     supabase // the invoices:
@@ -83,7 +83,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       .limit(24), // at most 24;
     supabase.rpc("my_support_on_hold"), // whether this person's support is on hold,
     // Split payments: a payer sees their own row; the main payer sees the split.
-    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready").in("family_id", myFamilies), // and split payment shares in their own families.
+    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready").in("family_id", myFamilies), // split payment shares in their own families,
+    // An adult learner in a family with brothers or sisters doesn't look after
+    // its billing unless CLG names them bill payer (Carla, 16 Nov 2026).
+    supabase.rpc("billing_paid_by_others"), // and whether this is an adult learner whose family billing someone else looks after.
   ]); // End of the reads.
   const choiceRows = (choices.data ?? []) as { family_id: string; family_name: string; plan: BillingPlan; chosen: boolean; can_change: boolean }[]; // The plan choices.
   const choiceOf = new Map(choiceRows.map((c) => [c.family_id, c])); // Each family's plan choice, by family.
@@ -147,7 +150,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
           </Card> // End of the card.
         ))}{/* End of the loop. */}
 
-      {accountRows.length === 0 && choiceRows.length === 0 && onHold.data !== true && ( // No billing at all:
+      {accountRows.length === 0 && choiceRows.length === 0 && paidByOthers.data === true && ( // An adult learner whose family billing someone else looks after:
+        <Card title="Who looks after billing">{/* a card: */}
+          <p className="text-sm">{/* a line: */}
+            Billing for your family is looked after by your parent or carer, or by the bill payer CLG has set up,
+            because more than one person in your family has sessions with CLG. Please check with them, or contact CLG
+            if you would like to look after billing yourself.{/* who looks after billing, why, and what to do. */}
+          </p>{/* End of the line. */}
+        </Card> // End of the card.
+      )}{/* End of that part. */}
+
+      {accountRows.length === 0 && choiceRows.length === 0 && onHold.data !== true && paidByOthers.data !== true && ( // No billing at all (and not looked after by someone else):
         <Empty>There is no billing for you yet. CLG sets this up once sessions are booked.</Empty> // says so.
       )}{/* End of that part. */}
 

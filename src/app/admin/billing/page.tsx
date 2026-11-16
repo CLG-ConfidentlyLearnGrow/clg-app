@@ -39,6 +39,8 @@ type Family = { // A family as read here:
   name: string; // its name,
   students: { // its students:
     full_name: string; // each student's name,
+    account_id: string | null; // their own login (if they have one),
+    date_of_birth: string | null; // their date of birth (to tell if they're 18 or over),
     parent_student_links: { parent_id: string; parent: { account: { full_name: string } | null } | null }[]; // and their parents' ids and names.
   }[]; // (end of a student)
 }; // End of Family.
@@ -85,7 +87,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
     supabase.from("admin_profiles").select("level").eq("account_id", viewer.id).maybeSingle(), // this admin's own level,
     supabase // the families:
       .from("families") // from families,
-      .select("id, name, students(full_name, parent_student_links(parent_id, parent:parent_profiles(account:accounts(full_name))))") // with their students and parents,
+      .select("id, name, students(full_name, account_id, date_of_birth, parent_student_links(parent_id, parent:parent_profiles(account:accounts(full_name))))") // with their students (and any login and birth date, to spot adult learners) and parents,
       .order("name"), // by name.
     supabase // the billing accounts:
       .from("billing_accounts") // from billing_accounts,
@@ -173,9 +175,20 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
             {familyRows.length === 0 && <Empty>No families yet.</Empty>}{/* No families yet: says so. */}
             {familyRows.map((f) => { // For each family:
               const acct = accountOf.get(f.id); // its billing account,
-              const payers = new Map<string, string>(); // its parents (who can pay), by id:
+              const payers = new Map<string, string>(); // the people who can be named to pay, by id:
               for (const s of f.students) { // for each student,
                 for (const l of s.parent_student_links) payers.set(l.parent_id, l.parent?.account?.full_name ?? "Parent"); // adds each of their parents.
+              } // End of the loop.
+              // Adult (18+) learners with their own login can be named too. An adult
+              // learner who is the family's only learner looks after billing anyway;
+              // in a family with siblings, naming them is CLG's deliberate choice
+              // (Carla, 16 Nov 2026). It never shows them their siblings' profiles.
+              const adultCutoff = new Date(); // Today's date,
+              adultCutoff.setFullYear(adultCutoff.getFullYear() - 18); // moved back 18 years: anyone born on or before this is 18 or over.
+              for (const s of f.students) { // For each student,
+                if (s.account_id && s.date_of_birth && new Date(s.date_of_birth) <= adultCutoff && !payers.has(s.account_id)) { // if they have a login and are 18 or over (and aren't already listed as a parent):
+                  payers.set(s.account_id, `${s.full_name} (adult learner)`); // adds them, marked as an adult learner.
+                } // End of the check.
               } // End of the loop.
               const override = overrideOf.get(f.id); // its lifted pause (if any).
               return ( // Shows:
@@ -196,7 +209,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                     familyId={f.id} // the family,
                     plan={acct?.plan ?? "weekly"} // the plan (weekly to start),
                     billPayerId={acct?.bill_payer_id ?? null} // the bill payer,
-                    payers={[...payers].map(([id, name]) => ({ id, name }))} // the parents to choose from.
+                    payers={[...payers].map(([id, name]) => ({ id, name }))} // the parents and adult learners to choose from.
                   />{/* End of the form. */}
                   {acct && ( // If they have an account:
                     <>{/* (a group) */}
@@ -229,7 +242,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       {acct.bill_payer_id ? ( // If there's a bill payer:
                         <SplitForm // the add-a-split form:
                           familyId={f.id} // the family,
-                          payers={[...payers].filter(([id]) => id !== acct.bill_payer_id).map(([id, name]) => ({ id, name }))} // the other parents to choose from.
+                          payers={[...payers].filter(([id]) => id !== acct.bill_payer_id).map(([id, name]) => ({ id, name }))} // the other parents and adult learners to choose from.
                         /> // End of the form.
                       ) : ( // otherwise:
                         <p className="mb-3 text-sm text-zinc-600">Choose a bill payer first to split payments.</p> // says to choose a bill payer first.
