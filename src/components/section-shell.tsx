@@ -5,7 +5,7 @@
 "use client"; // Marks this file as code that runs in the browser.
 
 import Link from "next/link"; // The Next.js link, for moving between pages without a full reload.
-import { useState, type ReactNode } from "react"; // React's memory for on-screen choices, and the type for "anything that can be shown".
+import { useEffect, useRef, useState, type ReactNode } from "react"; // React's tools: run code after showing, point at a box on screen, memory for on-screen choices, and the type for "anything that can be shown".
 import { PageTitle } from "@/components/ui"; // The page heading.
 import type { Role } from "@/lib/auth"; // The list of role names, for type checking only.
 import { ROLE_THEME } from "@/lib/role-theme"; // The colours for each role.
@@ -49,6 +49,36 @@ export function SectionShell({
   // the top or bottom of the menu (Carla, 16 Nov 2026).
   const menuScroll = "overflow-y-auto overscroll-contain"; // Scroll inside the box when needed; don't pass the scroll on to the page.
   const [open, setOpen] = useState(true); // Whether the side menu is showing (starts showing).
+
+  // Fits the side menu into the space actually left on screen (Carla, 16 Nov
+  // 2026). Near the top of a page the top bar and dashboard tabs take up room
+  // above the menu, so "the whole screen's height" was too tall and the last
+  // tabs fell off the bottom. This measures where the menu starts and lets it
+  // reach only to just above the bottom of the window, checking again
+  // whenever the page scrolls or the window changes size.
+  const stickyRef = useRef<HTMLDivElement>(null); // Points at the block holding the Hide menu button and the menu.
+  const [menuMax, setMenuMax] = useState<number | null>(null); // How tall that block may be, in pixels (unknown until measured).
+  useEffect(() => { // After the page shows (and again if the menu is hidden or shown):
+    let frame = 0; // The waiting re-measure, if one is booked (0 means none).
+    function measure() { // Works out the room left and saves it.
+      frame = 0; // This re-measure is happening now, so none is waiting.
+      const box = stickyRef.current; // The block holding the menu.
+      if (!box) return; // Not on screen (e.g. leaving the page): nothing to measure.
+      const top = Math.max(box.getBoundingClientRect().top, 16); // Where it starts from the top of the window (at least the 16px gap it keeps when stuck).
+      setMenuMax(Math.max(window.innerHeight - top - 16, 160)); // Room from there to 16px above the window's bottom (never under 160px, so it stays usable).
+    } // End of measure.
+    function schedule() { // Books one re-measure for the next screen update (avoids measuring on every scroll tick).
+      if (!frame) frame = requestAnimationFrame(measure); // Only if one isn't already booked.
+    } // End of schedule.
+    schedule(); // Measures once to start.
+    window.addEventListener("scroll", schedule, { passive: true }); // Measures again when the page scrolls (the menu's start moves until it sticks).
+    window.addEventListener("resize", schedule); // Measures again when the window changes size.
+    return () => { // When leaving the page (or before measuring again):
+      window.removeEventListener("scroll", schedule); // stops listening for scrolling,
+      window.removeEventListener("resize", schedule); // stops listening for size changes,
+      cancelAnimationFrame(frame); // and cancels any booked re-measure.
+    }; // End of the clean-up.
+  }, [open]); // Runs again when the menu is hidden or shown.
   const [phoneOpen, setPhoneOpen] = useState(false); // Whether the phone menu is open (starts closed).
   // Clicking an open heading that has smaller sections under it (e.g.
   // Sessions) folds them away, and clicking it again unfolds them (Carla,
@@ -132,7 +162,11 @@ export function SectionShell({
       {/* Computers and tablets: side menu that can be hidden */}
       <aside className={`hidden shrink-0 md:block ${open ? "w-60" : "w-10"}`}>{/* the side menu, hidden on phones, wide when showing and narrow when hidden, */}
         {/* Carla, 16 Nov 2026: the menu scrolls on its own, without moving the page. */}
-        <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col">{/* staying in view while scrolling, never taller than the screen (less a small gap), stacking the button above the menu, */}
+        <div // a block:
+          ref={stickyRef} // that's measured (see above),
+          className="sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col" // staying in view while scrolling, never taller than the screen (less a small gap) before it's measured, stacking the button above the menu,
+          style={menuMax ? { maxHeight: menuMax } : undefined} // and once measured, never taller than the room actually left on screen.
+        >{/* (end of the block's settings) */}
           <button // a button:
             type="button" // that doesn't send any form,
             onClick={toggle} // that shows or hides the menu,
