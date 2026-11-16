@@ -15,12 +15,13 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const { id } = await params; // The module's id.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, settings, done] = await Promise.all([ // Reads five things at once:
+  const [mod, lessons, questions, settings, done, order] = await Promise.all([ // Reads six things at once:
     supabase.from("training_modules").select("id, title, summary, audience, stage, required, holds_matching, counts_toward_certified, minutes, renew_months, status, position, version").eq("id", id).maybeSingle(), // the module,
     supabase.from("training_lessons").select("id, title, body, position, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons,
     supabase.rpc("training_questions_for_admin", { p_module: id }), // its questions with answers,
     supabase.from("training_settings").select("video_max_mb").eq("id", true).maybeSingle(), // the largest upload allowed,
-    supabase.from("training_completions").select("id", { count: "exact", head: true }).eq("module_id", id), // and how many people have finished it.
+    supabase.from("training_completions").select("id", { count: "exact", head: true }).eq("module_id", id), // how many people have finished it,
+    supabase.from("training_modules").select("id, title").order("position").order("title"), // and every module in list order (for the previous and next links).
   ]); // End of the reads.
   if (!mod.data) notFound(); // No such module: not found.
   const m = mod.data as ModuleRow & { version: number }; // The module.
@@ -29,10 +30,15 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const maxMb = settings.data?.video_max_mb ?? 500; // The largest upload, in MB.
   const nextLesson = (lessonRows.at(-1)?.position ?? 0) + 1; // The next lesson's order number.
   const nextQuestion = (questionRows.at(-1)?.question_position ?? 0) + 1; // The next question's order number.
+  const allModules = (order.data ?? []) as { id: string; title: string }[]; // Every module, in the same order as the list.
+  const here = allModules.findIndex((x) => x.id === id); // Where this module sits in that order.
+  const prev = here > 0 ? allModules[here - 1] : null; // The module before it (none if it's first).
+  const next = here >= 0 && here < allModules.length - 1 ? allModules[here + 1] : null; // The module after it (none if it's last).
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="training-admin">{/* the dashboard tabs and menu, with Training setup open: */}
       <p className="flex flex-wrap gap-4"><TextLink href="/admin/training">← All modules</TextLink><TextLink href={`/training/${m.id}?as=admin`}>Preview as staff</TextLink></p>{/* links back and to a preview, */}
+      <ModuleSteps prev={prev} next={next} />{/* links to the module before and after, so modules can be reviewed in order, */}
       <Card title="Module details" description={`Version ${m.version}. ${done.count ?? 0} completion(s) so far.`}>{/* the details card: */}
         <ModuleForm m={m} />{/* the details form. */}
       </Card>{/* End of the details card. */}
@@ -99,6 +105,20 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
           )}{/* End of the choice. */}
         </div>{/* End of the block. */}
       </Card>{/* End of the last card. */}
+      <ModuleSteps prev={prev} next={next} />{/* the same links again at the bottom, after the last card. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of AdminTrainingModulePage.
+
+// Links to the module before and after this one (in the list's order), so
+// an admin can go through the modules one after another without going back
+// to the list each time (Carla, 16 Nov 2026).
+function ModuleSteps({ prev, next }: { prev: { id: string; title: string } | null; next: { id: string; title: string } | null }) { // Takes the modules before and after (either can be missing).
+  if (!prev && !next) return null; // Only one module: nothing to show.
+  return ( // Shows:
+    <p className="flex flex-wrap justify-between gap-4 text-sm">{/* a line with the links at each end: */}
+      {prev ? <TextLink href={`/admin/training/${prev.id}`}>← Previous: {prev.title}</TextLink> : <span />}{/* the previous module (or a gap, so "Next" stays on the right), */}
+      {next ? <TextLink href={`/admin/training/${next.id}`}>Next: {next.title} →</TextLink> : null}{/* and the next module. */}
+    </p> // End of the line.
+  ); // End of what's shown.
+} // End of ModuleSteps.
