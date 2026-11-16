@@ -3,7 +3,7 @@
 import { notFound, redirect } from "next/navigation"; // Shows "not found", or sends the person elsewhere.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { TrainingText } from "@/components/training-text"; // Shows the page's text with simple formatting.
-import { Card, TextLink } from "@/components/ui"; // The card and link style.
+import { BackButton, Card } from "@/components/ui"; // The back button and card.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
 import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -24,13 +24,14 @@ export default async function HandbookEntryPage({ params, searchParams }: PagePr
 
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="handbook">{/* the dashboard tabs and menu, with Handbook open: */}
-      <p><TextLink href={`/handbook?as=${role}`}>← All handbook pages</TextLink></p>{/* a link back to the list, */}
+      <p><BackButton href={`/handbook?as=${role}`}>Back to all handbook pages</BackButton></p>{/* a button back to the list, */}
       {page.status !== "published" && <p className="text-sm text-amber-800">Admin preview: this page is a draft.</p>}{/* a note when an admin previews a draft, */}
       <div className={page.urgent ? "rounded-2xl border-2 border-red-300 bg-red-50 p-1" : ""}>{/* a red frame when pinned: */}
         <Card title={page.title} description={`Last updated ${plainDate(page.updated_at.slice(0, 10))}`}>{/* a card with the heading and when it was updated: */}
           <TrainingText text={page.body} />{/* the page's text. */}
         </Card>{/* End of the card. */}
       </div>{/* End of the frame. */}
+      <p><BackButton href={`/handbook?as=${role}`}>Back to all handbook pages</BackButton></p>{/* The same back button at the bottom, so it's there after reading. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of HandbookEntryPage.

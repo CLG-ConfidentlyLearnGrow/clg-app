@@ -19,6 +19,7 @@ export const PARENT_GUIDE: GuideSource = { // The guide:
 The app has a few parts that are always there:
 
 - **Home** (top of every page) takes you back to your dashboard.
+- A page you open from your dashboard, such as a child's progress page, has a **Back** button at the top that takes you back.
 - The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
 - **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too.

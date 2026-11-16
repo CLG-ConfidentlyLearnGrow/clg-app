@@ -18,6 +18,8 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
 
 Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbook**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
 
+Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
+
 Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open the **Handbook**.
 
 ### Join CLG from your invitation

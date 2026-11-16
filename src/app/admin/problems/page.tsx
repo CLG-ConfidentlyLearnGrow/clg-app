@@ -4,7 +4,7 @@
 //
 import { addProblemReviewer, deleteProblemReport, removeProblemReviewer } from "@/app/actions/problem-reports"; // The actions for the reviewer list and deleting a report.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty note, small heading, table and text link.
+import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty note, small heading, table and text link.
 import { ADMIN_LEVEL_NAMES, ANY_ADMIN, requireAdminLevel, type AdminLevel } from "@/lib/auth"; // Admin level names, the "any admin" group, and the admin check.
 import { PROBLEM_PRIORITY_LABELS, PROBLEM_STATUSES, PROBLEM_STATUS_LABELS, type ProblemReport, type ProblemStatus } from "@/lib/problem-reports"; // Status and priority words, and the report type.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
@@ -108,6 +108,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
           </Card> // End of the card.
         ) : ( // Found:
           <>{/* (a group:) */}
+            <p><BackButton href="/admin/problems">Back to all reports</BackButton></p>{/* a button back to the queue, */}
             <Card title={`Reported by ${report.reporter_name}`} description={`Sent ${shortDate(report.created_at)} · ${PROBLEM_STATUS_LABELS[report.status]}`}>{/* the report card: */}
               <SubHeading>What went wrong</SubHeading>{/* a heading, */}
               <p className="text-sm whitespace-pre-line">{report.what_happened}</p>{/* what they wrote, */}
@@ -155,7 +156,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
                 </form>{/* End of the delete form. */}
               </Card> // End of the GitHub card.
             )}{/* End of the owner-only part. */}
-            <p><TextLink href="/admin/problems">Back to all reports</TextLink></p>{/* A link back to the queue. */}
+            <p><BackButton href="/admin/problems">Back to all reports</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
           </> // End of the group.
         )}{/* End of the choice. */}
       </DashboardFrame> // End of the frame.

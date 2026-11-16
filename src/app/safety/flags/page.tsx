@@ -11,7 +11,7 @@
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { addWatchWord, removeWatchWord, reviewWordFlag, setWatchWordActive } from "@/app/actions/watch-words"; // The server actions for decisions and the word list.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { BusyButton, Card, Empty, Field, Page, Select, TextArea } from "@/components/ui"; // The small button, card, "nothing yet" note, text box, page frame, drop-down and multi-line box.
+import { BackButton, BusyButton, Card, Empty, Field, Page, Select, TextArea } from "@/components/ui"; // The small button, card, "nothing yet" note, text box, page frame, drop-down and multi-line box.
 import { getAdminLevel, requireViewer } from "@/lib/auth"; // Makes sure someone is signed in, and reads their admin level.
 import { plainDateTime } from "@/lib/privacy"; // Dates with times, in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -132,6 +132,7 @@ export default async function FlagsPage() { // The page itself.
       title="Flagged words" // titled "Flagged words",
       intro="The app checks writing for words that can point to a child safety risk. A match is only a prompt to look: read it in context and decide. Nobody is told about a flag, and nothing happens to anyone automatically." // with what this is.
     >{/* (end of the page's settings) */}
+      <p><BackButton href="/safety">Back to Child safety</BackButton></p>{/* A button back to the Child safety page. */}
       {isContact ? ( // The officer or deputy sees the flags:
         <>{/* a group: */}
           <h2 className="text-lg font-semibold">To review</h2>{/* a heading, */}
@@ -208,7 +209,7 @@ export default async function FlagsPage() { // The page itself.
           }) // End of the loop.
         )}{/* End of the list. */}
       </Card>{/* End of the word list. */}
-      <p className="text-sm"><Link href="/safety" className="text-teal-800 underline underline-offset-4">Back to Child safety</Link></p>{/* A link back. */}
+      <p><BackButton href="/safety">Back to Child safety</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
     </Page> // End of the page.
   ); // End of what's shown.
 } // End of FlagsPage.

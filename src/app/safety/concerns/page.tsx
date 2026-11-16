@@ -11,7 +11,7 @@
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { addConcernNote, endMatch, liftHold, passOnConcern, setConcernStatus, shareConcern, stopNewStudents } from "@/app/actions/child-safety"; // The server actions for notes, stages, passing on, sharing and the quiet steps.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { Card, Empty, Page, Select, TextArea } from "@/components/ui"; // The card, "nothing yet" note, page frame, drop-down and multi-line box.
+import { BackButton, Card, Empty, Page, Select, TextArea } from "@/components/ui"; // The back button, card, "nothing yet" note, page frame, drop-down and multi-line box.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
 import { CONTACT_ROLE_LABELS, REPORTED_LABELS, STATUS_LABELS, lineFor, telHref } from "@/lib/child-safety"; // Labels, the state's reporting line and the phone link maker.
 import { plainDate, plainDateTime } from "@/lib/privacy"; // Dates (and dates with times) in words.
@@ -272,6 +272,7 @@ export default async function ConcernsPage() { // The page itself.
       title="Concerns sent to you" // titled "Concerns sent to you",
       intro="Only you (and anyone a concern was shared with) can read these. Keep them confidential: don't copy details into emails, Teams or other parts of the app." // with a confidentiality reminder.
     >{/* (end of the page's settings) */}
+      <p><BackButton href="/safety">Back to Child safety</BackButton></p>{/* A button back to the Child safety page. */}
       {open.length === 0 ? <Empty>No open concerns.</Empty> : open.map(concernCard)}{/* The open concerns, or "No open concerns". */}
       {closed.length > 0 && ( // If any are closed:
         <>{/* a group: */}
@@ -279,7 +280,7 @@ export default async function ConcernsPage() { // The page itself.
           {closed.map(concernCard)}{/* and the closed concerns. */}
         </> // End of the group.
       )}{/* End of the closed part. */}
-      <p className="text-sm"><Link href="/safety" className="text-teal-800 underline underline-offset-4">Back to Child safety</Link></p>{/* A link back. */}
+      <p><BackButton href="/safety">Back to Child safety</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
     </Page> // End of the page.
   ); // End of what's shown.
 } // End of ConcernsPage.
