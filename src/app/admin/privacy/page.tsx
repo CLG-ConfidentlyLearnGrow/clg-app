@@ -3,7 +3,7 @@
 import { recordIncident, updateIncident, updatePrivacyRequest } from "@/app/actions/privacy"; // The server actions for breaches and privacy requests.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Card, Empty, Field, Select, TextArea, TextLink } from "@/components/ui"; // The card, "nothing yet" note, input box, drop-down, text box and link style.
+import { BackButton, Card, Empty, Field, Select, TextArea, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note, input box, drop-down, text box and link style.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is an admin.
 import { REGIONS, REQUEST_STATUS_LABELS, plainDate, plainDateTime, requestKindLabel } from "@/lib/privacy"; // Regions and regulators, request statuses, dates in words, and request names.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -88,9 +88,7 @@ export default async function AdminPrivacyPage({ searchParams }: PageProps<"/adm
         sub={section} // on the open section,
         items={SECTIONS.map((s) => ({ ...s, href: `/admin/privacy?section=${s.id}`, count: s.id === "requests" ? open.length || undefined : openIncidents.length || undefined }))} // with this page's sections (and their numbers) under the tab.
       >{/* (end of the frame's settings) */}
-        <p className="text-sm">{/* A line: */}
-          <TextLink href="/admin?section=records">Back to privacy and records</TextLink>{/* with a link back. */}
-        </p>{/* End of the line. */}
+        <p><BackButton href="/admin?section=records">Back to privacy and records</BackButton></p>{/* A button back to privacy and records. */}
 
         {section === "requests" && ( // The requests section:
           <>{/* (a group:) */}

@@ -13,6 +13,8 @@
 begin;
 -- Runs this database change again (checks it can run twice).
 \ir ../migrations/20261118900200_billing_students_who_pay.sql
+-- Then the change that replaced its rule (only the people paying see billing).
+\ir ../migrations/20261118900300_billing_only_payers.sql
 
 select tests.claims(null); -- acts as the database itself while setting up
 \set p1 '00000000-0000-0000-0000-000000000001'

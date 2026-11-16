@@ -6,7 +6,7 @@
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty note, small heading, table and text link.
+import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty note, small heading, table and text link.
 import { FULL_ADMIN, requireAdminLevel } from "@/lib/auth"; // The owner-and-Operations group, and the admin check.
 import { STATE_NAMES, type AuState } from "@/lib/checks"; // State names.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
@@ -107,7 +107,7 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
           </Card> // End of the card.
         ) : ( // Found:
           <>{/* (a group:) */}
-            <p className="mb-4 text-sm"><TextLink href="/admin/applications">Back to all applications</TextLink></p>{/* A link back to the queue. */}
+            <p className="mb-4"><BackButton href="/admin/applications">Back to all applications</BackButton></p>{/* A button back to the queue. */}
             <Card title={`${app.first_name} ${app.last_name}`} description={`Sent ${shortDate(app.created_at)} · ${APPLICATION_STATUS_NAMES[app.status as ApplicationStatus]}`}>{/* the application card: */}
               <div className="grid gap-4 sm:grid-cols-2">{/* two columns on wider screens: */}
                 <Answer label="Email"><a href={`mailto:${app.email}`} className="text-teal-700 underline">{app.email}</a></Answer>{/* email (tap to write), */}
@@ -191,6 +191,7 @@ export default async function TutorApplicationsPage({ searchParams }: PageProps<
                 </Card>{/* End of the card. */}
               </div> // End of the cards.
             )}{/* End of the decision part. */}
+            <p><BackButton href="/admin/applications">Back to all applications</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
           </> // End of the group.
         )}{/* End of the choice. */}
       </DashboardFrame> // End of the frame.

@@ -16,9 +16,10 @@ export const STUDENT_GUIDE: GuideSource = { // The guide:
 ## Getting around
 
 - **Home** (top of every page) takes you back to your dashboard.
+- Your progress page has a **Back to home** button at the top.
 - The side menu has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you.
 - **Child safety** (in red, top of every page) is there if you ever feel unsafe or are worried about someone.
-- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too.
+- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 
 ### Sign in for the first time
 1. Your parent or CLG sends you a login link by email.
@@ -37,7 +38,7 @@ Tip: Students under 16 join through a parent's account.
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
 
 ### Change your name
-Tap your name under **Signed in as** (top right) to change it.
+Tap your name under **Signed in as** (top right) to change it. On a phone, tap **Menu** at the top right first.
 
 ### Take the app tour again
 The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
@@ -134,7 +135,7 @@ In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder 
 3. Choose **Set up automatic payment** and enter your card or bank details on Stripe's secure page. CLG never sees them.
 4. Pay any invoice with **Pay (amount) now**.
 
-Tip: If your parent pays, you won't see Billing. If your brothers or sisters also learn with CLG, a parent looks after the family's billing, unless CLG has made you the family's bill payer. If your sessions are on hold, check with your parent or carer.
+Tip: Only the person or people paying see Billing. If your parent or someone else pays, you won't see it, unless CLG has made you the bill payer or an extra payer. If your sessions are on hold, your dashboard says so: check with whoever pays.
 
 ## Help, privacy and safety
 

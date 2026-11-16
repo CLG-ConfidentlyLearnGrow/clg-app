@@ -18,6 +18,8 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
 
 Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbook**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
 
+Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
+
 Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open the **Handbook**.
 
 ### Join CLG from your invitation
@@ -199,6 +201,6 @@ In the side menu, choose **Handbook**. Search for a word (for example late, conc
 - **Report app issue**: something in the app isn't working. Add a screenshot if you can.
 
 ### Your privacy and name
-Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it.
+Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `, // End of the guide's text.
 }; // End of the tutor guide.

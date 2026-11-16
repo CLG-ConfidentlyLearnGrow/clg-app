@@ -35,7 +35,8 @@ All admins need two-step login, because the app holds children's information.
 ### Get around the admin dashboard
 - Choose the **Admin** tab at the top. If you also tutor or are a parent, the other tabs take you to those dashboards.
 - The side menu shows only what your admin level can use. A number next to an item means something is waiting there.
-- **Home**, **Child safety** (in red), **Feedback**, **Your privacy** and **Report app issue** are at the top of every page.
+- **Home**, **Child safety** (in red), **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
+- When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 - **App guide** in the side menu opens this guide. If you help families and tutors, their guides are listed under **Other guides you can open** at the bottom, so you can talk them through the app.
 
 ### Take the app tour again
@@ -194,11 +195,11 @@ const HELP = `
 ## Help
 
 ### Give feedback or report an app issue
-- **Feedback** (top of the page): praise, ideas or worries.
+- **Feedback** (top of the page, or under **Menu** on a phone): praise, ideas or worries.
 - **Report app issue**: something in the app isn't working. Add a screenshot if you can.
 
 ### Your privacy and name
-Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it.
+Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `;
 
 // Running CLG day to day: tutors, progress, curriculum, staff, records (Owner and Operations).
@@ -316,7 +317,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. **Who opened what** shows recent use.
 
 ### Training setup
-1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
+1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module. **Back to all modules** (top and bottom of the page) returns to the list. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
 `;
 
@@ -330,6 +331,8 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 1. In **Family billing**, find the family.
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
 3. If two people share invoices, choose who also pays and their share, then **Save split**.
+
+Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students don't, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.

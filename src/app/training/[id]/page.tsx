@@ -4,7 +4,7 @@
 import { notFound, redirect } from "next/navigation"; // Shows "not found", or sends the person elsewhere.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { TrainingText } from "@/components/training-text"; // Shows lesson text with simple formatting.
-import { Card, Empty, TextLink } from "@/components/ui"; // The card, "nothing yet" note and link style.
+import { BackButton, Card, Empty, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note and link style.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
 import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -37,7 +37,7 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
 
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="training">{/* the dashboard tabs and menu, with Training open: */}
-      <p><TextLink href={`/training?as=${role}`}>← Back to Training</TextLink></p>{/* a link back to Training, */}
+      <p><BackButton href={`/training?as=${role}`}>Back to all modules</BackButton></p>{/* a button back to the module list, */}
       <div className="space-y-2">{/* the module's heading block: */}
         <h2 className="text-xl font-semibold tracking-tight">{m.title}</h2>{/* its name, */}
         <p className="text-sm text-zinc-600">{/* its details: */}
@@ -76,6 +76,7 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
       ) : ( // Otherwise (an admin previewing):
         <Empty>This module isn&apos;t one of yours, so there&apos;s no quiz to do here.</Empty> // says so.
       )}{/* End of the quiz. */}
+      <p><BackButton href={`/training?as=${role}`}>Back to all modules</BackButton></p>{/* The same back button at the bottom, so it's there after the quiz. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of TrainingModulePage.

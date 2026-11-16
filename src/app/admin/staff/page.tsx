@@ -1,7 +1,7 @@
 // Summary: the staff directory page for admins.
 //
 import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard.
-import { PageTitle, TextLink } from "@/components/ui"; // The page heading and link style.
+import { BackButton, PageTitle } from "@/components/ui"; // The back button and page heading.
 import { ANY_ADMIN, FULL_ADMIN, requireAdminLevel } from "@/lib/auth"; // The admin level groups, and the admin level check.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { StaffDirectory, type Invitation, type StaffMember } from "./staff-directory"; // The directory itself, and the types of its rows.
@@ -53,9 +53,7 @@ export default async function StaffDirectoryPage() {
     <>{/* (a group:) */}
       <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, */}
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">{/* the main area: */}
-        <p className="mb-4 text-sm">{/* a small line: */}
-          <TextLink href={back.href}>{back.label}</TextLink>{/* with the back link. */}
-        </p>{/* End of the line. */}
+        <p className="mb-4"><BackButton href={back.href}>{back.label}</BackButton></p>{/* the back button, */}
         <PageTitle // The page heading:
           role="admin" // in the admin colour,
           title="Staff directory" // titled "Staff directory",

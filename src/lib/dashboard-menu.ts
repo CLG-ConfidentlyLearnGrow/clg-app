@@ -31,16 +31,16 @@ async function trainingToDo(): Promise<number | undefined> { // No inputs: it's 
   return n || undefined; // The number, or nothing when zero.
 } // End of trainingToDo.
 
-// The tutor dashboard's own sections (the page reads these to know which is open).
-// Whether a student's dashboard gets a Billing tab (Carla, 16 Nov 2026):
-// only students who pay for their own lessons. Someone who is also a parent
-// pays from their Parent tab, so their Student tab never has Billing.
-async function studentPaysOwn(roles: Role[]): Promise<boolean> { // Takes all of the person's roles.
-  if (roles.includes("parent")) return false; // Also a parent: Billing lives on the Parent tab instead.
-  const { data } = await (await createClient()).rpc("billing_i_pay"); // Asks the database whether they pay for a family (or a share).
+// Whether the person pays for a family (Carla, 16 Nov 2026: only the
+// people paying see billing). True for a family's bill payer or extra
+// payer, or someone who may start a family's payments because nobody pays
+// yet. Decides the Billing tab on the Parent and Student dashboards.
+async function paysForFamily(): Promise<boolean> { // No inputs: it's about the signed-in person.
+  const { data } = await (await createClient()).rpc("billing_i_pay"); // Asks the database whether they pay (or may start paying).
   return data === true; // Yes only when the database says so.
-} // End of studentPaysOwn.
+} // End of paysForFamily.
 
+// The tutor dashboard's own sections (the page reads these to know which is open).
 export const TUTOR_SECTIONS = [ // Each section's id and its name on screen:
   { id: "students", label: "Your students" }, // their students,
   { id: "teaching", label: "What you teach" }, // what they teach,
@@ -146,7 +146,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       ...sessions, // Sessions,
       { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=parent" }, // the family's week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
       { id: "add", label: "Add a child", href: "/dashboard/parent?section=add" }, // Add a child,
-      { id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }, // Billing (with anything to set up),
+      ...((await paysForFamily()) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for a parent who pays (Carla, 16 Nov 2026), with anything to set up,
       { id: "guide", label: "App guide", href: "/guide?as=parent" }, // and the step-by-step guide to the app for parents (Carla, 16 Nov 2026).
     ]; // End of the parent menu.
   } // End of the parent menu.
@@ -157,7 +157,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     { id: "learning", label: "Your learning", href: "/dashboard/student", count: todo.get("student", "learning") }, // Your learning (with steps overdue),
     ...sessions, // Sessions,
     { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=student" }, // their week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
-    ...((await studentPaysOwn(roles)) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay for their own lessons (Carla, 16 Nov 2026),
+    ...(!roles.includes("parent") && (await paysForFamily()) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay (Carla, 16 Nov 2026); someone who is also a parent sees it on their Parent tab,
     { id: "guide", label: "App guide", href: "/guide?as=student" }, // and the step-by-step guide to the app for students (Carla, 16 Nov 2026).
   ]; // End of the student menu.
 } // End of getDashboardMenu.

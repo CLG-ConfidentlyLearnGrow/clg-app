@@ -1,21 +1,18 @@
 // Summary: the frame around every page: fonts, page title, the top bar
 // (logo, Home, Child safety, privacy and "Report app issue" links, who is
-// signed in, sign out) and the footer.
+// signed in, sign out; built in src/components/site-header.tsx, with a Menu
+// button on phones since 16 Nov 2026) and the footer.
 // "Child safety" is on every page for everyone signed in, so a concern can
 // always be raised quickly (Carla, 12 Nov 2026).
 // Sessions and Matching are tabs in each dashboard's side menu now (Carla, 12 Nov 2026).
 //
 import type { Metadata, Viewport } from "next"; // Types for page details and screen settings.
-import Image from "next/image"; // Next.js picture tag (loads images quickly).
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { Poppins } from "next/font/google"; // Loads the Poppins font from Google.
-import { signOut } from "@/app/actions/auth"; // The sign-out action.
 import { getViewer } from "@/lib/auth"; // Reads who is signed in.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (for new child safety concerns).
-import { CountBadge } from "@/components/count-badge"; // The small number badge.
+import { SiteHeader } from "@/components/site-header"; // The top bar (with the phone Menu button).
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
-import { ReportProblemLink } from "@/components/report-problem-link"; // The "Report app issue" link (remembers the page you were on).
-import { Suspense } from "react"; // Lets part of the page wait for the address details without holding up the rest.
 import "./globals.css"; // The app-wide styles.
 
 const poppins = Poppins({ // Sets up the Poppins font:
@@ -35,63 +32,14 @@ export const viewport: Viewport = { // Screen settings:
 
 export default async function RootLayout({ children }: LayoutProps<"/">) { // The frame itself, wrapped around each page.
   const viewer = await getViewer(); // The signed-in person (or nobody).
-  const counts = viewer ? await getToDoCounts(viewer.roles) : undefined; // The to-do numbers (for the Child safety button).
+  const counts = viewer ? await getToDoCounts(viewer.roles) : undefined; // The to-do numbers (for the Child safety button in the top bar).
   const newConcerns = counts?.get("safety", "concerns"); // New child safety concerns sent to this person (only the officer and deputy ever have any).
   const newFlags = counts?.get("safety", "word_flags"); // Flagged words not yet reviewed (only the officer and deputy ever have any).
-  const safetyCount = (newConcerns ?? 0) + (newFlags ?? 0) || undefined; // Both added together for the badge (nothing when zero).
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
         <EmailLinkCatcher />{/* the email sign-in link catcher, */}
-        <header className="border-b border-zinc-200 bg-white/90 backdrop-blur">{/* the top bar: */}
-          <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">{/* its inner row, centred, */}
-            <Link href="/dashboard" className="flex items-center gap-3" aria-label="CLG Tutoring home">{/* the logo, linking home: */}
-              <Image src="/brand/clg-logo-book.png" alt="" width={453} height={256} priority className="h-14 w-auto sm:h-16" />{/* the open-book logo picture, */}
-              <span className="hidden text-xs text-zinc-600 sm:block">Confidently Learn &amp; Grow</span>{/* the company name (hidden on small screens). */}
-            </Link>{/* End of the logo link. */}
-            {viewer && ( // If someone is signed in:
-              <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1">{/* the menu on the right: */}
-                <Link href="/dashboard" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the Home link: */}
-                  Home{/* its words, */}
-                </Link>{/* end of the link. */}
-                <Link // the Child safety link, in red so it stands out:
-                  href={newConcerns ? "/safety/concerns" : newFlags ? "/safety/flags" : "/safety"} // to new concerns first, then flagged words (officer or deputy), otherwise the concern page,
-                  className="inline-flex items-center gap-1.5 rounded-full border border-red-700 px-3 py-0.5 text-sm font-semibold text-red-800 transition hover:bg-red-50" // a red outlined pill,
-                >{/* (end of the link's settings) */}
-                  Child safety{/* its words, */}
-                  <CountBadge n={safetyCount} className="bg-red-700 text-white" />{/* and the number of new concerns and flags, if any. */}
-                </Link>{/* end of the link. */}
-                <Link href="/feedback" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the feedback link (open to everyone signed in, Carla 15 Nov 2026): */}
-                  Feedback{/* its words, */}
-                </Link>{/* end of the link. */}
-                <Link href="/my-privacy" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">{/* the privacy link: */}
-                  Your privacy{/* its words, */}
-                </Link>{/* end of the link. */}
-                <Suspense // the "Report app issue" link (open to everyone signed in, Carla 12 Nov 2026; renamed 16 Nov), which waits for the page address:
-                  fallback={<Link href="/report-problem" className="text-sm font-medium text-teal-800 underline-offset-4 hover:underline">Report app issue</Link>} // a plain link while it waits,
-                >{/* (end of the wait settings) */}
-                  <ReportProblemLink />{/* then the link that remembers the page. */}
-                </Suspense>{/* End of the report link. */}
-                {/* Who is signed in sits above Sign out, in small grey text, so it
-                    doesn't look like another menu link. */}
-                <div className="flex flex-col items-end gap-0.5 border-l border-zinc-200 pl-3 text-right">{/* The signed-in box: */}
-                  <span className="text-[11px] leading-tight text-zinc-500">Signed in as</span>{/* "Signed in as", */}
-                  <Link href="/my-name" className="max-w-[10rem] truncate text-xs leading-tight text-zinc-700 underline-offset-2 hover:underline" title={`${viewer.fullName} (change your name)`}>{/* their name, linking to the page to change it (cut short if long, full name on hover): */}
-                    {viewer.fullName}{/* the name itself, */}
-                  </Link>{/* end of the name. */}
-                  <form action={signOut} className="mt-1">{/* the sign-out form: */}
-                    <button // its button:
-                      type="submit" // sends the form,
-                      className="rounded-full border border-zinc-300 bg-white px-3 py-0.5 text-xs text-zinc-700 transition hover:border-teal-700 hover:text-teal-800" // styled as a small rounded button,
-                    >{/* (end of the button's settings) */}
-                      Sign out{/* its words, */}
-                    </button>{/* end of the button. */}
-                  </form>{/* End of the form. */}
-                </div>{/* End of the signed-in box. */}
-              </div> // End of the menu.
-            )}{/* End of the signed-in part. */}
-          </div>{/* End of the inner row. */}
-        </header>{/* End of the top bar. */}
+        <SiteHeader viewer={viewer} newConcerns={newConcerns} newFlags={newFlags} />{/* the top bar (logo, links, Child safety, who is signed in; a Menu button on phones), */}
         <div className="flex-1">{children}</div>{/* The page's own content, filling the space. */}
         <footer className="mt-12 border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">{/* The footer: */}
           <p>CLG Tutoring · Confidently Learn &amp; Grow</p>{/* the company name, */}
