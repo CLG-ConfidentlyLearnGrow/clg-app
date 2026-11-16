@@ -16,11 +16,11 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbook**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
+Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
-Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open the **Handbook**.
+Tip: This guide is about using the app. For CLG's policies and what to do when something happens, open **Handbooks**.
 
 ### Join CLG from your invitation
 1. Open the invitation email from CLG. The link works once, for 7 days, and only for your email.
@@ -181,7 +181,7 @@ When a family uploads a school report or marked work, it shows under **New uploa
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook
-In the side menu, choose **Handbook**. Search for a word (for example late, concern, sick or privacy). **Something's happened** is pinned at the top in red.
+In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something's happened** is pinned at the top in red.
 
 ### Check your pay and log extra hours
 1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.

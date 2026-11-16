@@ -26,7 +26,7 @@ Everything you need is in the side menu (on a phone, the **Tutor menu** button a
 
 **Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 
-**App guide** has step-by-step help for each task. The **Handbook** has CLG's policies and what to do when something happens.
+**App guide** has step-by-step help for each task. **Handbooks** has CLG's policies and what to do when something happens.
 
 Why: The numbers are how the app tells you about booking requests, notes due and checks running out. Checking them each day keeps families and CLG in the loop.
 
@@ -100,7 +100,7 @@ Where: **Sessions**: **Overview** and **Away dates**.
 
 Why: Training keeps students safe and you up to date. Logging hours on time means you are paid correctly and on time.
 
-Where: **Training**, **Handbook** and **My pay** in the side menu.
+Where: **Training**, **Handbooks** and **My pay** in the side menu.
 
 ## Child safety and privacy
 
