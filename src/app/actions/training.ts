@@ -99,7 +99,7 @@ function moduleFields(formData: FormData) { // Takes the form.
       position: parsed.data.position, // order,
       required, // compulsory or not,
       holds_matching: required && formData.get("holds_matching") === "on", // holds matches (only if compulsory),
-      counts_toward_certified: formData.get("counts_toward_certified") === "on", // counts towards the quarter's hours,
+      // (whether it counts towards the quarter's hours is set by the database: every module except safety ones)
     }, // (end of the columns)
   } as const; // End of the values.
 } // End of moduleFields.

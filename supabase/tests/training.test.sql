@@ -10,6 +10,8 @@
 begin;
 -- Runs the training database change again (checks it can run twice).
 \ir ../migrations/20261116300100_training.sql
+-- Runs the automatic safety-hours change again too (the training file above replaced its step).
+\ir ../migrations/20261118400100_training_safety_hours_auto.sql
 
 -- A test helper: checks a statement is refused with a message containing certain words.
 create or replace function tests.fails_with(p_sql text, p_words text, p_label text) returns void -- takes the statement, the words and a label
@@ -61,6 +63,11 @@ select tests.eq((select count(*) from public.training_questions_for_admin('10000
 select tests.fails($$update public.training_modules set version = 5 where id = '10000000-0000-0000-0000-000000000001'$$, 'admin changes version directly'); -- checks the version only changes through "ask everyone to redo"
 reset role; -- back to the test runner
 select tests.eq((select count(*) from public.training_modules where required_since = private.training_today()), 3, 'published modules start their time allowed today'); -- checks the compulsory date is set on publishing
+-- Safety modules never count towards the quarter's hours, whatever is sent (set automatically).
+update public.training_modules set counts_toward_certified = true where id = '10000000-0000-0000-0000-000000000001'; -- tries to make the safety module count
+select tests.eq((select count(*) from public.training_modules where id = '10000000-0000-0000-0000-000000000001' and not counts_toward_certified), 1, 'safety module never counts towards quarter hours'); -- checks it still doesn't count
+update public.training_modules set counts_toward_certified = false where id = '10000000-0000-0000-0000-000000000002'; -- tries to stop an ordinary module counting
+select tests.eq((select count(*) from public.training_modules where id = '10000000-0000-0000-0000-000000000002' and counts_toward_certified), 1, 'other modules always count towards quarter hours'); -- checks it still counts
 
 -- ---------------------------------------------------------------------------
 -- What tutors can see.
