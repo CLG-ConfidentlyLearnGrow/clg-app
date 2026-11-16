@@ -140,13 +140,23 @@ const MATCHING = `
 Open **Matching** in the side menu.
 
 ### Find a tutor for a student
-1. In **Matching**, choose a stage along the top: **Needs a tutor**, **Waitlist**, **Waiting for confirmation**, **Assigned, no time** or **Active**. Search or filter by year level and state if needed.
-2. Choose a student. Their year, working level, goal, learning needs, tutor preferences, places, preferred times, siblings and past tutors are shown.
-3. **Tutors who suit** lists the best fit first: teaches the subject at the student's working level, then a sibling's tutor, then spare hours, then a place and time that suit. Pay rates are not shown. A tutor is never offered for their own child or anyone in their own family.
-4. Choose **Offer this tutor**, pick the time and place, and send it to the tutor and family to approve.
-5. Choose **Next student** to keep going.
+1. In **Matching**, choose a tab along the top: **Needs a tutor**, **Waiting for tutor**, **Waiting for family**, **Waitlist**, **Assigned, no time** or **Active**. Each tab shows how many are in it. Search or filter by year level and state if needed. The longest waiting are at the top.
+2. **Waitlist** means no suitable tutor is available yet. It is not the first weeks with a new tutor (those students are in **Active**).
+3. Choose a student. An amber dot beside a name means a detail is missing.
+4. **Ready to offer** (or **details missing**) at the top lists year level, school, session places and how long to book. For anything missing, choose **Fill in**, or choose **Ask the family**. The family gets an app notice and an email with a link to fill it in, and a pointer to the help chat if they have questions. You can ask once a day for each detail, and the list shows when you last asked.
+5. A summary line shows the year, school, working level, places and preferred times. Choose **More details** for goal, learning needs, tutor preferences, siblings and past tutors.
+6. **Recommended offer** shows the best fit tutor with the offer ready: teaches the subject at the student's working level, then a sibling's tutor, then spare hours, then a place and time that suit. Pay rates are not shown. A tutor is never offered for their own child or anyone in their own family.
+7. Check the time and place, and send it to the tutor and family to approve. To choose someone else, open **Other tutors who suit** and choose **Offer this tutor**.
+8. Choose **Next student** to keep going.
 
-Tip: Check **Gaps** to see subjects and levels students are waiting for where no tutor with current checks teaches them. It shows who to recruit next.
+### Set when a student started waiting
+If a student was on CLG's waitlist before they were added to the app, open them in **Needs a tutor** or **Waitlist**, open **Waiting since**, choose the day they first asked, and choose **Save date**. Leave it empty and save to go back to the day they were added.
+
+### Reports
+Choose **Reports** at the top of Matching to see:
+- **Response times**: the average time families and each tutor take to answer an offer, and how many offers ran out with no answer (last 180 days).
+- **Gaps**: subjects and levels students are waiting for where no tutor with current checks teaches them. It shows who to recruit next.
+- **Why suggestions were changed** (Owner and Operations admins).
 
 ### See the travel map
 1. In the side menu, choose **Travel map** (Owner and Operations admins).
