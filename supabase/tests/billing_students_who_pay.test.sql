@@ -12,7 +12,7 @@
 -- Starts a transaction so nothing here is kept.
 begin;
 -- Runs this database change again (checks it can run twice).
-\ir ../migrations/20261118230100_billing_students_who_pay.sql
+\ir ../migrations/20261118900200_billing_students_who_pay.sql
 
 select tests.claims(null); -- acts as the database itself while setting up
 \set p1 '00000000-0000-0000-0000-000000000001'
@@ -49,6 +49,19 @@ update public.billing_accounts set bill_payer_id = :'older' where family_id = :'
 select tests.claims(:'older'); -- signs in as the older student
 set role authenticated; -- acts as a signed-in person
 select tests.eq(public.billing_i_pay()::int, 1, 'a student who is the bill payer gets a Billing tab'); -- yes
+reset role; -- back to the database itself
+
+-- 3b. A 19-year-old who is the family's ONLY learner, but whose parent pays,
+-- still gets no billing (the gap sibling privacy left open).
+select tests.claims(null); -- acts as the database itself while setting up
+insert into public.families (name) values ('Solo family') returning id as solo_fam \gset
+-- (a new family, kept as solo_fam)
+insert into public.students (family_id, full_name, account_id, date_of_birth, state, year_level, school) values (:'solo_fam', 'Solo Student', '00000000-0000-0000-0000-000000000011', current_date - interval '19 years', 'SA', 'University or TAFE', 'Test University') returning id as solo \gset
+-- (a 19-year-old with their own login, the only learner; T1's login is reused for them)
+insert into public.parent_student_links (parent_id, student_id, verified_at) values (:'p1', :'solo', now()); -- P1 is their parent
+select tests.claims('00000000-0000-0000-0000-000000000011'); -- signs in as that student
+set role authenticated; -- acts as a signed-in person
+select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'solo_fam'), 0::bigint, 'an only learner whose parent pays isn''t asked how often to pay'); -- hidden
 reset role; -- back to the database itself
 
 -- 4. An adult learner with no parent linked pays for themselves.

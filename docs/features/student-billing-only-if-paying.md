@@ -18,13 +18,13 @@ Carla, 16 Nov 2026: "Students who are not the payee of the lessons do not get a 
 A person counts as paying for a family when they are:
 1. a linked parent or guardian of one of its students (unchanged),
 2. the family's chosen bill payer (unchanged), or
-3. an adult learner (18+) with their own login in a family with no parent or guardian linked, so they signed up for themselves (narrowed: before, any 18+ student counted).
+3. an adult learner (18+) with their own login who is the family's only learner (from sibling privacy, PR #146) and has no parent or guardian linked, so they signed up for themselves (narrowed: an only learner whose parent pays no longer counts).
 
 Split share payers keep their own rules. Someone who is a parent and also learns with CLG pays from their Parent tab, so their Student tab never shows Billing.
 
 ## How it works
 
-- Migration `20261118230100_billing_students_who_pay.sql` narrows `private.is_family_payer` (so a non-paying student can't read the family's plan or invoices or change how it pays) and adds `public.billing_i_pay()`.
+- Migration `20261118900200_billing_students_who_pay.sql` (run after `20261118900100_sibling_privacy.sql`, which it builds on) narrows `private.is_family_payer` (so a non-paying student can't read the family's plan or invoices or change how it pays) and adds `public.billing_i_pay()`.
 - `src/lib/dashboard-menu.ts` shows the student Billing tab only when `billing_i_pay()` says yes.
 
 ## Tests
