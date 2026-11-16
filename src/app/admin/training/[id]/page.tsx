@@ -3,7 +3,7 @@
 //
 import { notFound } from "next/navigation"; // Shows "not found".
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Card, Empty, TextLink } from "@/components/ui"; // The card, "nothing yet" note and link style.
+import { BackButton, Card, Empty, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note and link style.
 import { askRedo, deleteDraftModule, deleteLesson, deleteQuestion, removeLessonFile } from "@/app/actions/training"; // The server actions for the small buttons.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is a full admin.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -32,7 +32,7 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="training-admin">{/* the dashboard tabs and menu, with Training setup open: */}
-      <p className="flex flex-wrap gap-4"><TextLink href="/admin/training">← All modules</TextLink><TextLink href={`/training/${m.id}?as=admin`}>Preview as staff</TextLink></p>{/* links back and to a preview, */}
+      <p className="flex flex-wrap items-center gap-4"><BackButton href="/admin/training">Back to all modules</BackButton><TextLink href={`/training/${m.id}?as=admin`}>Preview as staff</TextLink></p>{/* a button back to the module list, and a link to a preview, */}
       <Card title="Module details" description={`Version ${m.version}. ${done.count ?? 0} completion(s) so far.`}>{/* the details card: */}
         <ModuleForm m={m} />{/* the details form. */}
       </Card>{/* End of the details card. */}
@@ -99,6 +99,7 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
           )}{/* End of the choice. */}
         </div>{/* End of the block. */}
       </Card>{/* End of the last card. */}
+      <p><BackButton href="/admin/training">Back to all modules</BackButton></p>{/* the same back button at the bottom, so it's there after scrolling down. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of AdminTrainingModulePage.

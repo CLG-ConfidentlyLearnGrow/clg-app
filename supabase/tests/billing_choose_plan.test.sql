@@ -7,6 +7,9 @@
 begin; -- Starts a transaction, so everything below can be undone at the end.
 -- Runs the database change 20261103230100_billing_choose_plan.sql first, as this test needs it.
 \ir ../migrations/20261103230100_billing_choose_plan.sql
+-- Then 20261118900300_billing_only_payers.sql, which updated these functions
+-- (only the people paying see billing; a parent can start when nobody pays yet).
+\ir ../migrations/20261118900300_billing_only_payers.sql
 
 -- Keeps Cal's student id as cal and his family id as fam.
 select id as cal, family_id as fam from public.students where full_name = 'Cal Two' \gset

@@ -312,7 +312,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. **Who opened what** shows recent use.
 
 ### Training setup
-1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
+1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module. **Back to all modules** (top and bottom of the page) returns to the list. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
 `;
 
@@ -326,6 +326,8 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 1. In **Family billing**, find the family.
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
 3. If two people share invoices, choose who also pays and their share, then **Save split**.
+
+Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students don't, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
