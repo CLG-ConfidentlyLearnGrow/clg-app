@@ -23,7 +23,7 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 ## Getting around
 
-The side menu on the left (on a phone, the menu button near the top of the page) has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**.
+The side menu on the left (on a phone, the **Student menu** button above the page) has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**.
 
 A number next to a menu item means something is waiting for you.
 
@@ -39,7 +39,7 @@ Where: **Your learning**, then **Open your progress page**.
 
 ## Reflecting after a session
 
-After each session, take a minute on **How did it go?** to say how confident you feel, what was hard, and what you'll try before next time.
+After each session, take a minute on **How did it go?** to say how confident you feel, what was hard, and what you will try before next time.
 
 Why: Thinking about how you learn, and planning what to do next, is one of the most powerful study habits there is. It also tells your tutor what to focus on.
 
@@ -47,17 +47,17 @@ Where: Your progress page, under **How did it go?**
 
 ## Your sessions
 
-**Sessions** shows what's coming up. For an online session, choose **Join** a few minutes before it starts. When CLG offers a new time, you or your parent can approve it.
+**Sessions** shows what is coming up. For an online session, choose **Join** a few minutes before it starts. When CLG offers a new time, you or your parent can approve it.
 
 **Weekly calendar** shows your week, and can add sessions to your own phone calendar.
 
-Why: A booking only goes ahead once it's approved, and an offer closes after 3 days. Joining on time gets you your full session.
+Why: A booking only goes ahead once it is approved, and an offer closes after 3 days. Joining on time gets you your full session.
 
 Where: **Sessions** and **Weekly calendar** in the side menu.
 
 ## Cancelling or changing a session
 
-If you can't make it, cancel in the app as early as you can and offer two other times that week for a make-up. If a time or tutor needs to change, you'll be asked to confirm first.
+If you cannot make it, cancel in the app as early as you can and offer two other times that week for a make-up. If a time or tutor needs to change, you will be asked to confirm first.
 
 Why: Notice counts from when the cancel is saved in the app, and earlier notice means more credit. It also tells your tutor straight away.
 
@@ -65,7 +65,7 @@ Where: **Sessions**, then **Overview**.
 
 ## Who can see what
 
-Your parent or carer (if they're on your account) and your tutor can see your progress page and roadmap. Brothers and sisters never see your profile.
+Your parent or carer (if they are on your account) and your tutor can see your progress page and roadmap. Brothers and sisters never see your profile.
 
 If you pay for yourself, **Billing** is where you choose how often to pay and set up automatic payment.
 
@@ -73,16 +73,16 @@ Why: Being open about who sees your learning helps everyone support you, and you
 
 ## Feeling safe, and getting help
 
-**Child safety** (in red, at the top of every page) is there if you ever feel unsafe or are worried about someone. If you're in danger right now, call 000.
+**Child safety** (in red, at the top of every page) is there if you ever feel unsafe or are worried about someone. If you are in danger right now, call 000.
 
-**Your privacy**, **Feedback** and **Report app issue** are at the top of every page too.
+**Your privacy**, **Feedback** and **Report app issue** are at the top of every page on a computer, and under **Menu** on a phone.
 
 Why: You should always be able to speak up, and know someone will listen.
 
-## You're all set
+## You are all set
 
-That's the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "roadmap".
+That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "roadmap".
 
-After an app update, a **What's new** box shows what's changed for you.
+After an app update, a **What's new** box shows what has changed for you.
 `, // End of the tour's text.
 }; // End of the student tour.

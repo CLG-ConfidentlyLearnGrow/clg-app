@@ -22,9 +22,9 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 ## Getting around
 
-The side menu on the left (on a phone, the menu button near the top of the page) has everything for your family. A number next to a menu item means something is waiting for you there.
+The side menu on the left (on a phone, the **Parent menu** button above the page) has everything for your family. A number next to a menu item means something is waiting for you there.
 
-**Home** at the top always brings you back here. If you have more than one role, tabs at the top switch between your dashboards.
+**Home** always brings you back here. It is at the top on a computer, and under **Menu** on a phone. If you have more than one role, tabs at the top switch between your dashboards.
 
 Why: The numbers are how the app tells you a session time needs your yes, or a detail is missing. Checking them when you sign in means nothing is missed.
 
@@ -50,7 +50,7 @@ Where: **Sessions**, then **Bookings**.
 
 ## Planning ahead
 
-In **Sessions**, tell CLG which days and times suit, how long to keep booking (for example to the end of the year), and any dates you'll be away.
+In **Sessions**, tell CLG which days and times suit, how long to keep booking (for example to the end of the year), and any dates you will be away.
 
 **Weekly calendar** shows your week, and can add sessions to your own phone calendar with a private link.
 
@@ -62,7 +62,7 @@ Where: **Sessions**: **Preferred times**, **How long to book** and **Away dates*
 
 Always cancel in the app: choose **Cancel** on the session, pick a reason, and offer two other times that week for a make-up.
 
-If CLG or the tutor needs to change a time or tutor, you'll be asked to confirm first. Nothing changes until you say yes.
+If CLG or the tutor needs to change a time or tutor, you will be asked to confirm first. Nothing changes until you say yes.
 
 Why: Notice counts from when you save the cancel in the app, not from a text or call. Cancelling more than 24 hr ahead gets full credit, 24 to 2 hr gets half, and under 2 hr gets none. Cancelling in the app also tells your tutor straight away.
 
@@ -82,22 +82,22 @@ Where: **Your children**, then **Progress** next to your child.
 
 If you pay for your family's sessions, **Billing** is where you choose how often to pay, agree to the payment terms, and set up automatic payment through Stripe's secure page.
 
-Why: Sessions are paid in advance. If an invoice becomes overdue, all your family's sessions go on hold until it's paid, so automatic payment keeps everything running.
+Why: Sessions are paid in advance. If an invoice becomes overdue, all your family's sessions go on hold until it is paid, so automatic payment keeps everything running.
 
 Where: **Billing** in the side menu.
 
 ## Safety, privacy and help
 
-**Child safety** (in red, at the top of every page) is there if you're ever worried about a child. If a child is in danger right now, call 000.
+**Child safety** (in red, at the top of every page) is there if you are ever worried about a child. If a child is in danger right now, call 000.
 
-**Your privacy** lets you download or ask about the information CLG holds. **Feedback** and **Report app issue** are at the top of every page too.
+**Your privacy** lets you download or ask about the information CLG holds. **Feedback** and **Report app issue** are for ideas, worries and anything not working. All three are at the top of every page on a computer, and under **Menu** on a phone.
 
 Why: Keeping children safe is everyone's job, and you should always know what CLG holds about your family and be able to ask about it.
 
-## You're all set
+## You are all set
 
-That's the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "invoice".
+That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "invoice".
 
-After an app update, a **What's new** box shows what's changed for you.
+After an app update, a **What's new** box shows what has changed for you.
 `, // End of the tour's text.
 }; // End of the parent tour.

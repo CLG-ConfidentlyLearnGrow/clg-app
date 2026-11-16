@@ -26,7 +26,9 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 ## Getting around
 
-The side menu shows only what your admin level can use. A number next to an item means something is waiting there. If you also tutor or are a parent, tabs at the top switch between your dashboards.
+The side menu (on a phone, the **Admin menu** button above the page) shows only what your admin level can use. A number next to an item means something is waiting there. If you also tutor or are a parent, tabs at the top switch between your dashboards.
+
+**Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top on a phone.
 
 You sign in with two-step login each time.
 
@@ -130,11 +132,11 @@ Why: Every adult at CLG shares the job of keeping children safe. Concerns stay c
 
 **Training** lists your compulsory modules, **Handbook** has CLG's policies, and **My pay** is where you log your office hours by the day after each pay week ends.
 
-Why: Training keeps you up to date on child safety and privacy, and logging hours on time means you're paid correctly.
+Why: Training keeps you up to date on child safety and privacy, and logging hours on time means you are paid correctly.
 
-## You're all set
+## You are all set
 
-That's the tour. Whenever you need the steps for something, open **App guide** in the side menu and search. Admins who help families and tutors can open their guides there too, to talk them through the app.
+That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search. Admins who help families and tutors can open their guides there too, to talk them through the app.
 `;
 
 // The tour for each admin level, built from the parts above.
@@ -156,7 +158,7 @@ Where: **Staff and accounts**, **Billing**, **Reports**, **Privacy and records**
     text: WELCOME + FAMILIES + MATCHING_SESSIONS + RUNNING + BILLING + `
 ## Emergency owner access
 
-If the owner can't be reached and something only the owner can do is urgent, ask for emergency owner access with your reason. It starts 24 hr later unless the owner approves or cancels it, and ends after 7 days.
+If the owner cannot be reached and something only the owner can do is urgent, ask for emergency owner access with your reason. It starts 24 hr later unless the owner approves or cancels it, and ends after 7 days.
 
 Why: CLG can keep running if the owner is unavailable, while the owner stays told and in control.
 

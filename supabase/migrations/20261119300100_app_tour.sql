@@ -71,14 +71,14 @@ begin -- starts the code
     raise exception 'Please sign in first.' using errcode = '42501'; -- plain message
   end if; -- end of the check
   if p_tour is null or p_tour not in ('parent', 'student', 'tutor', 'owner', 'operations', 'support', 'finance') then -- not a real tour
-    raise exception 'That tour doesn''t exist.' using errcode = '22023'; -- plain message
+    raise exception 'That tour does not exist.' using errcode = '22023'; -- plain message
   end if; -- end of the check
   v_role := case when p_tour in ('parent', 'student', 'tutor') then p_tour::public.app_role else 'admin'::public.app_role end; -- the admin level tours belong to the admin role
   if not private.has_role(v_role) then -- not their dashboard
     raise exception 'You can only save the tour for your own dashboards.' using errcode = '42501'; -- plain message
   end if; -- end of the check
   if p_version is null or p_version not between 1 and 1000 or p_step is null or p_step not between 0 and 100 then -- numbers out of range
-    raise exception 'That tour step doesn''t exist.' using errcode = '22023'; -- plain message
+    raise exception 'That tour step does not exist.' using errcode = '22023'; -- plain message
   end if; -- end of the check
   insert into public.app_tour_progress (account_id, tour, version, step, finished, updated_at) -- saves the progress,
   values (auth.uid(), p_tour, p_version, p_step, coalesce(p_finished, false), now()) -- for this person and tour,
