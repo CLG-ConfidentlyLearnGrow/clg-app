@@ -24,7 +24,7 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 The side menu on the left (on a phone, the **Parent menu** button above the page) has everything for your family. A number next to a menu item means something is waiting for you there.
 
-**Home** always brings you back here. It is at the top on a computer, and under **Menu** on a phone. If you have more than one role, tabs at the top switch between your dashboards.
+**Home** always brings you back here. It is at the top on a computer, and under **Menu** at the top right on a phone. If you have more than one role, tabs at the top switch between your dashboards.
 
 Why: The numbers are how the app tells you a session time needs your yes, or a detail is missing. Checking them when you sign in means nothing is missed.
 
@@ -90,7 +90,7 @@ Where: **Billing** in the side menu.
 
 **Child safety** (in red, at the top of every page) is there if you are ever worried about a child. If a child is in danger right now, call 000.
 
-**Your privacy** lets you download or ask about the information CLG holds. **Feedback** and **Report app issue** are for ideas, worries and anything not working. All three are at the top of every page on a computer, and under **Menu** on a phone.
+**Your privacy** lets you download or ask about the information CLG holds. **Feedback** and **Report app issue** are for ideas, worries and anything not working. All three are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 
 Why: Keeping children safe is everyone's job, and you should always know what CLG holds about your family and be able to ask about it.
 

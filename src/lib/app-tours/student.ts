@@ -75,7 +75,7 @@ Why: Being open about who sees your learning helps everyone support you, and you
 
 **Child safety** (in red, at the top of every page) is there if you ever feel unsafe or are worried about someone. If you are in danger right now, call 000.
 
-**Your privacy**, **Feedback** and **Report app issue** are at the top of every page on a computer, and under **Menu** on a phone.
+**Your privacy**, **Feedback** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 
 Why: You should always be able to speak up, and know someone will listen.
 

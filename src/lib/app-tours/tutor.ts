@@ -24,7 +24,7 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 Everything you need is in the side menu (on a phone, the **Tutor menu** button above the page). A number next to an item means something is waiting for you there.
 
-**Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top on a phone.
+**Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 
 **App guide** has step-by-step help for each task. The **Handbook** has CLG's policies and what to do when something happens.
 

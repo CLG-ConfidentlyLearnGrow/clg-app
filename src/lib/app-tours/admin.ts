@@ -28,7 +28,7 @@ You can skip it now and take it again any time from **App guide** in the side me
 
 The side menu (on a phone, the **Admin menu** button above the page) shows only what your admin level can use. A number next to an item means something is waiting there. If you also tutor or are a parent, tabs at the top switch between your dashboards.
 
-**Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top on a phone.
+**Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 
 You sign in with two-step login each time.
 
