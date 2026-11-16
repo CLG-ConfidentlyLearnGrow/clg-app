@@ -33,7 +33,7 @@ const BUCKET = "tutor-applications"; // The private file store for CVs.
 
 // The plain database messages we're happy to show as they are (they start
 // with these words); anything else gets a general message.
-const PLAIN = /^(Please|You already|Too many|We're|Your CV|Only |Choose|Record|This |That )/; // The starts of the database's own plain messages.
+const PLAIN = /^(Please|You already|Too many|We're|We are|Your CV|Only |Choose|Record|This |That )/; // The starts of the database's own plain messages (old and written-out wording).
 
 // A short text answer that must be filled in, with plain messages.
 const needed = (label: string, max: number, min = 1) => // Takes the question's name, the longest and shortest lengths:

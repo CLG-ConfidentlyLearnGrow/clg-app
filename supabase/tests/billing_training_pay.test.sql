@@ -50,7 +50,7 @@ select tests.eq(public.billing_build_training_hours('2026-08-01', '2026-08-10'),
 reset role; -- back to the test runner
 select tests.eq((select count(*) from public.billing_hour_logs where training_completion_id = '30000000-0000-0000-0000-000000000002'), 0, 'optional module not paid automatically'); -- checks the optional one was skipped
 select tests.eq((select count(*) from public.billing_hour_logs where training_completion_id = '30000000-0000-0000-0000-000000000001' and work_type = 'tutoring' and minutes = 60 and status = 'submitted'), 1, 'tutor training at the tutor rate, waiting for approval'); -- checks T1's entry
-select tests.eq((select count(*) from public.billing_hour_logs where training_completion_id = '30000000-0000-0000-0000-000000000003' and work_type = 'admin'), 1, 'training for everyone, for admin staff who don''t tutor: admin rate'); -- checks the admin's entry
+select tests.eq((select count(*) from public.billing_hour_logs where training_completion_id = '30000000-0000-0000-0000-000000000003' and work_type = 'admin'), 1, 'training for everyone, for admin staff who do not tutor: admin rate'); -- checks the admin's entry
 
 -- Training counts towards agreed hours: the top-up is the agreed time less the training.
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- acting as the owner

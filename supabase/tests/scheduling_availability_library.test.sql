@@ -24,7 +24,7 @@ select tests.eq((select count(*) from public.tutor_places where tutor_id = '0000
   'choosing a library for a time adds it to the tutor''s libraries'); -- (the label).
 select tests.fails(format($$insert into public.tutor_availability (tutor_id, weekday, starts_at, ends_at, online, in_person, library_id) -- Checks a library CLG hasn't confirmed (and the tutor didn't suggest) can't be chosen:
   values ('00000000-0000-0000-0000-000000000013', 6, '12:00', '13:00', false, true, %L)$$, :'lib_u'), -- (a Saturday noon time at the unconfirmed library),
-  'a library CLG hasn''t confirmed (and the tutor didn''t suggest) can''t be chosen'); -- (the label).
+  'a library CLG has not confirmed (and the tutor did not suggest) cannot be chosen'); -- (the label).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Saturday is offered at Gamma only, not at Alpha (another of T3's libraries).
@@ -34,7 +34,7 @@ select tests.eq((select count(*) from public.find_session_times(:'sam', 'General
   where tutor_id = '00000000-0000-0000-0000-000000000013' and library_id = :'lib_g'), 5::bigint, 'Saturday times at the chosen library'); -- (five start times at Gamma: 9am to 10am, every 15 min).
 select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, true, array[:'lib_a', :'lib_g']::uuid[], null, array[6]::smallint[]) -- Checks no times at the tutor's other library, and none online when online isn't ticked:
   where tutor_id = '00000000-0000-0000-0000-000000000013' and (library_id = :'lib_a' or delivery = 'online')), 0::bigint, -- (searching in person only, at Alpha or Gamma),
-  'not at the tutor''s other library, and not online when online isn''t ticked'); -- (the label).
+  'not at the tutor''s other library, and not online when online is not ticked'); -- (the label).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Put things back.

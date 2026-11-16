@@ -27,8 +27,8 @@ update public.child_safety_contacts set officer_id = '00000000-0000-0000-0000-00
 \set t1 '00000000-0000-0000-0000-000000000011'
 -- (tutor T1's account id)
 update public.tutor_assignments set starts_on = current_date - 30 where tutor_id = :'t1' and student_id = :'cara'; -- makes T1's match with Cara clearly current (started a month ago)
-select tests.eq(private.blocked_pair(:'t1', :'cara')::int, 0, 'set-up: T1 and Cara aren''t blocked'); -- starting point
-select tests.eq(private.blocked_pair(:'t1', :'vic')::int, 0, 'set-up: T1 and Vic aren''t blocked'); -- starting point
+select tests.eq(private.blocked_pair(:'t1', :'cara')::int, 0, 'set-up: T1 and Cara are not blocked'); -- starting point
+select tests.eq(private.blocked_pair(:'t1', :'vic')::int, 0, 'set-up: T1 and Vic are not blocked'); -- starting point
 
 -- P1 raises a concern about T1, about Cara. It goes to the officer.
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- signs in as parent P1
@@ -40,7 +40,7 @@ reset role; -- back to the database itself
 -- 1. Only the person handling the concern can take steps.
 select tests.claims(:'sam', 'aal2'); -- signs in as Sam (an admin, but not handling this concern)
 set role authenticated; -- acts as a signed-in person
-select tests.fails(format($q$select public.safety_stop_new_students(%L, %L, 'Trying without handling it')$q$, :'c1', :'t1'), 'someone not handling the concern can''t take a step'); -- refused
+select tests.fails(format($q$select public.safety_stop_new_students(%L, %L, 'Trying without handling it')$q$, :'c1', :'t1'), 'someone not handling the concern cannot take a step'); -- refused
 select tests.eq((select count(*) from public.safety_concern_quiet_steps(:'c1')), 0::bigint, 'and gets no options'); -- empty
 reset role; -- back to the database itself
 select tests.claims(:'olive', 'aal2'); -- signs in as the officer
@@ -51,15 +51,15 @@ select tests.fails(format($q$select public.safety_stop_new_students(%L, %L, '')$
 
 -- 2. Stop new students: current students stay, new ones are blocked.
 select public.safety_stop_new_students(:'c1', :'t1', 'While we look into the concern.'); -- takes the step
-select tests.fails(format($q$select public.safety_stop_new_students(%L, %L, 'Again')$q$, :'c1', :'t1'), 'can''t stop new students twice'); -- refused
+select tests.fails(format($q$select public.safety_stop_new_students(%L, %L, 'Again')$q$, :'c1', :'t1'), 'cannot stop new students twice'); -- refused
 reset role; -- back to the database itself
-select tests.eq(private.blocked_pair(:'t1', :'vic')::int, 1, 'T1 can''t be paired with a new student'); -- blocked
+select tests.eq(private.blocked_pair(:'t1', :'vic')::int, 1, 'T1 cannot be paired with a new student'); -- blocked
 select tests.eq(private.blocked_pair(:'t1', :'cara')::int, 0, 'T1 keeps their current student'); -- still allowed
 
 -- 3. The tutor sees nothing.
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.safety_holds), 0::bigint, 'the tutor can''t see the steps'); -- hidden
+select tests.eq((select count(*) from public.safety_holds), 0::bigint, 'the tutor cannot see the steps'); -- hidden
 select tests.eq((select count(*) from public.safety_concern_quiet_steps(:'c1')), 0::bigint, 'the tutor gets no options'); -- empty
 select tests.eq((select count(*) from public.students where id = :'cara'), 1::bigint, 'the tutor can still open Cara''s record (match not ended yet)'); -- still current
 reset role; -- back to the database itself
@@ -69,11 +69,11 @@ select tests.claims(:'olive', 'aal2'); -- signs in as the officer
 set role authenticated; -- acts as a signed-in person
 select public.safety_end_match(:'c1', :'t1', 'Keeping Cara safe while we look into it.') as bookings_left \gset
 -- (ends the match; keeps the number of bookings left as bookings_left)
-select tests.fails(format($q$select public.safety_end_match(%L, %L, 'Again')$q$, :'c1', :'t1'), 'can''t end the same match twice'); -- refused
+select tests.fails(format($q$select public.safety_end_match(%L, %L, 'Again')$q$, :'c1', :'t1'), 'cannot end the same match twice'); -- refused
 select tests.eq((select count(*) from public.safety_concern_notes where concern_id = :'c1' and note like 'Ended %'), 1::bigint, 'ending the match is recorded on the concern'); -- note kept
 reset role; -- back to the database itself
 select tests.eq((select count(*) from public.tutor_assignments where tutor_id = :'t1' and student_id = :'cara' and private.assignment_is_current(starts_on, ends_on)), 0::bigint, 'T1''s match with Cara has ended'); -- ended
-select tests.eq(private.blocked_pair(:'t1', :'cara')::int, 1, 'T1 and Cara can''t be paired again'); -- blocked
+select tests.eq(private.blocked_pair(:'t1', :'cara')::int, 1, 'T1 and Cara cannot be paired again'); -- blocked
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.students where id = :'cara'), 0::bigint, 'the tutor can no longer open Cara''s record'); -- access gone

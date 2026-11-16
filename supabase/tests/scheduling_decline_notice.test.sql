@@ -14,7 +14,7 @@ returning id as offer \gset
 -- The tutor must give a reason to decline.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select public.respond_to_booking(%L, false, '  ')$$, :'offer'), 'a tutor can''t decline without a reason'); -- Checks this is refused: a tutor can't decline without a reason.
+select tests.fails(format($$select public.respond_to_booking(%L, false, '  ')$$, :'offer'), 'a tutor cannot decline without a reason'); -- Checks this is refused: a tutor can't decline without a reason.
 select public.respond_to_booking(:'offer', false, 'Saturday mornings are taken'); -- The tutor declines, with a reason.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
@@ -24,7 +24,7 @@ select tests.eq((select count(*) from public.session_notices -- Checks the CLG a
     and body like '%Reason: Saturday mornings are taken%'), 1::bigint, 'CLG admin is told when a tutor declines, with the reason'); -- (that includes the reason).
 select tests.eq((select count(*) from public.session_notices -- Checks the tutor who declined isn't sent the CLG notice:
   where account_id = '00000000-0000-0000-0000-000000000013' and booking_id = :'offer' and title = 'Session declined'), 0::bigint, -- (none for tutor T3),
-  'the tutor who declined isn''t sent the CLG notice'); -- (the label).
+  'the tutor who declined is not sent the CLG notice'); -- (the label).
 
 delete from public.session_notices where booking_id = :'offer'; -- Removes the offer's notices.
 delete from public.bookings where id = :'offer'; -- Removes the offer.
@@ -37,7 +37,7 @@ values (:'sam', '00000000-0000-0000-0000-000000000013', 'General Maths', 6, '10:
 returning id as fam \gset
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select public.approve_booking(%L, false, null)$$, :'fam'), 'a family can''t decline without a reason'); -- Checks this is refused: a family can't decline without a reason.
+select tests.fails(format($$select public.approve_booking(%L, false, null)$$, :'fam'), 'a family cannot decline without a reason'); -- Checks this is refused: a family can't decline without a reason.
 select public.approve_booking(:'fam', false, 'Saturdays are sport'); -- The family declines, with a reason.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.

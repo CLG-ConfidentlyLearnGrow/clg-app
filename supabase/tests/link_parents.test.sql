@@ -19,7 +19,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- P2 can't see it yet.
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.students where id = :'sall'), 0, 'another parent can''t see the child'); -- Checks: another parent can't see the child.
+select tests.eq((select count(*) from public.students where id = :'sall'), 0, 'another parent cannot see the child'); -- Checks: another parent can't see the child.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ select tests.eq((select count(*) from public.students where id = :'sall'), 1, 's
 update public.students set school = 'Changed PS' where id = :'sall'; -- Tries to change Sall's school.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select count(*) from public.students where id = :'sall' and school = 'Hill PS'), 1, -- Checks a parent who can't manage can't change details:
-  'a parent who can''t manage can''t change details'); -- (the label).
+  'a parent who cannot manage cannot change details'); -- (the label).
 
 -- ---------------------------------------------------------------------------
 -- Removing links
@@ -69,7 +69,7 @@ select public.admin_unlink_parent('00000000-0000-0000-0000-000000000011', :'sall
 select public.admin_unlink_parent('00000000-0000-0000-0000-000000000002', :'sall'); -- Unlinks parent P2.
 select tests.eq((select count(*) from public.parent_student_links where student_id = :'sall'), 1, 'links removed'); -- Checks: links removed.
 select tests.fails_with(format($$select public.admin_unlink_parent('00000000-0000-0000-0000-000000000001', %L)$$, :'sall'), -- Checks the last parent who can manage can't be removed:
-  'only parent who can manage', 'can''t remove the last parent'); -- (the message says so).
+  'only parent who can manage', 'cannot remove the last parent'); -- (the message says so).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------

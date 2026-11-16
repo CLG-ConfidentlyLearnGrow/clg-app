@@ -28,7 +28,7 @@ select tests.eq((select count(*) from public.session_notices where account_id = 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.library_checks() where library_id = :'lib' and problem = 'Opening hours needed'), 1::bigint, 'to-do: hours needed'); -- Checks: to-do: hours needed.
-select tests.fails(format($$select public.mark_library_hours_checked(%L)$$, :'lib'), 'can''t say hours are right with none entered'); -- Checks this is refused: can't say hours are right with none entered.
+select tests.fails(format($$select public.mark_library_hours_checked(%L)$$, :'lib'), 'cannot say hours are right with none entered'); -- Checks this is refused: can't say hours are right with none entered.
 insert into public.library_hours (library_id, weekday, opens, closes) values (:'lib', 1, '09:00', '17:00'); -- Adds Monday hours, 9am to 5pm.
 select tests.eq((select count(*) from public.library_checks() where library_id = :'lib'), 0::bigint, 'off the list once hours are in'); -- Checks: off the list once hours are in.
 reset role; -- Goes back to the all-powerful test user (access rules off).
@@ -44,7 +44,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- Families and tutors can't see the list.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($q$select * from public.library_checks()$q$, 'tutors can''t see library checks'); -- Checks this is refused: tutors can't see library checks.
+select tests.fails($q$select * from public.library_checks()$q$, 'tutors cannot see library checks'); -- Checks this is refused: tutors can't see library checks.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- First sessions at the library: one holiday reminder.
@@ -76,7 +76,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select n from public.scheduling_counts() where key = 'booking-length'), 1, 'a family with an unanswered "How long to book" sees 1'); -- Checks: a family with an unanswered "How long to book" sees 1.
-select tests.eq((select count(*) from public.scheduling_counts() where key = 'matching'), 0::bigint, 'families don''t get the matching count'); -- Checks: families don't get the matching count.
+select tests.eq((select count(*) from public.scheduling_counts() where key = 'matching'), 0::bigint, 'families do not get the matching count'); -- Checks: families don't get the matching count.
 select public.set_booking_length(:'sam', current_date + 30, true, true); -- Sets Sam's booking to run 30 days, including school and public holidays.
 select tests.eq((select n from public.scheduling_counts() where key = 'booking-length'), 0, 'answered: 0'); -- Checks: answered: 0.
 reset role; -- Goes back to the all-powerful test user (access rules off).

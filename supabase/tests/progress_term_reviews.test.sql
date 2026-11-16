@@ -47,7 +47,7 @@ select id as review from public.term_reviews where student_id = :'cara' \gset
 select tests.eq((select count(*) from public.progress_notices where review_id = :'review' and kind = 'review_due' -- Checks the tutor is told a review is due:
   and account_id = '00000000-0000-0000-0000-000000000011'), 1, 'tutor told a review is due'); -- (one notice).
 select tests.eq((select count(*) from public.term_reviews where tutor_id = '00000000-0000-0000-0000-000000000012'), 0, -- Checks the other tutor gets no review:
-  'no review for a tutor who doesn''t write it'); -- (none for tutor T2).
+  'no review for a tutor who does not write it'); -- (none for tutor T2).
 update public.progress_notices set deliver_at = now() - interval '1 minute' where review_id is not null; -- Makes the review notices due now.
 
 -- ===========================================================================
@@ -73,9 +73,9 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.term_reviews), 0, 'family can''t see it before CLG checks it'); -- Checks: family can't see it before CLG checks it.
+select tests.eq((select count(*) from public.term_reviews), 0, 'family cannot see it before CLG checks it'); -- Checks: family can't see it before CLG checks it.
 select tests.eq((select count(*) from public.term_review_goals(:'review')), 0, 'or its goals'); -- Checks: or its goals.
-select tests.fails(format($$select public.reply_term_review(%L, 'Thanks')$$, :'review'), 'family replies before it''s ready'); -- Checks this is refused: family replies before it's ready.
+select tests.fails(format($$select public.reply_term_review(%L, 'Thanks')$$, :'review'), 'family replies before it is ready'); -- Checks this is refused: family replies before it's ready.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ===========================================================================
@@ -83,7 +83,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ===========================================================================
 select tests.claims(null); -- Signs out, so no one is signed in.
 select tests.eq((select count(*) from public.progress_notices where review_id = :'review' and kind = 'review_to_check' -- Checks the admin is told there's a review to check:
-  and account_id = '00000000-0000-0000-0000-0000000000a0'), 1, 'admin told there''s a review to check'); -- (one notice for the owner).
+  and account_id = '00000000-0000-0000-0000-0000000000a0'), 1, 'admin told there is a review to check'); -- (one notice for the owner).
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
@@ -117,7 +117,7 @@ update public.progress_notices set deliver_at = now() - interval '1 minute' wher
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.term_reviews where id = :'review'), 1, 'family sees the checked review'); -- Checks: family sees the checked review.
-select tests.eq((select count(*) from public.progress_notices where review_id = :'review' and kind = 'review_ready'), 1, 'family told it''s ready'); -- Checks: family told it's ready.
+select tests.eq((select count(*) from public.progress_notices where review_id = :'review' and kind = 'review_ready'), 1, 'family told it is ready'); -- Checks: family told it's ready.
 select tests.eq((select (count(*) > 0)::int from public.term_review_goals(:'review')), 1, 'family sees goals with start and end levels'); -- Checks: family sees goals with start and end levels.
 select public.reply_term_review(:'review', 'Thank you! Can we talk about adding a second session?', true); -- The parent replies and asks for a call.
 select tests.eq((select count(*) from public.term_reviews where id = :'review' and wants_call), 1, 'reply saved with a call request'); -- Checks: reply saved with a call request.

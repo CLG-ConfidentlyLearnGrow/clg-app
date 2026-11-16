@@ -81,7 +81,7 @@ reset role; -- back to the test user
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- acting as tutor T1
 set role authenticated; -- as a signed-in person
 select tests.eq((select count(*) from public.tutor_applications), 0, 'tutor sees nothing'); -- checks tutors can't see applications
-select tests.eq((select count(*) from storage.objects where bucket_id = 'tutor-applications'), 0, 'tutor can''t open CVs'); -- checks tutors can't open CVs
+select tests.eq((select count(*) from storage.objects where bucket_id = 'tutor-applications'), 0, 'tutor cannot open CVs'); -- checks tutors can't open CVs
 select tests.fails(format($$select public.tutor_application_approve(%L)$$, :'app1'), 'tutor approves an application'); -- checks tutors can't approve
 reset role; -- back to the test user
 

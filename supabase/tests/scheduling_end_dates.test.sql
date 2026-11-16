@@ -22,7 +22,7 @@ select tests.eq((select count(*) from public.student_places where student_id = :
 select tests.fails(format($$select public.set_booking_length(%L, current_date - 1, false, true)$$, :'sam'), 'not in the past'); -- Checks this is refused: not in the past.
 select tests.fails(format($$select public.set_booking_length(%L, current_date + 400, false, true)$$, :'sam'), 'not more than a year ahead'); -- Checks this is refused: not more than a year ahead.
 select tests.eq((select (count(*) >= 1 and bool_and(ends_on >= current_date))::int from public.student_term_dates(:'sam')), 1, -- Checks the parent sees Sam's term dates that haven't finished:
-  'the parent sees the student''s term dates that haven''t finished'); -- (at least one, all still to come).
+  'the parent sees the student''s term dates that have not finished'); -- (at least one, all still to come).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- CLG admins see the term dates and can change the booking length.
@@ -48,12 +48,12 @@ delete from public.bookings where id = :'hb'; -- Removes the test booking.
 -- Another family and tutors can't see the term dates or change the length.
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as test account ...04.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select * from public.student_term_dates(%L)$$, :'sam'), 'another family can''t'); -- Checks this is refused: another family can't.
-select tests.fails(format($$select public.set_booking_length(%L, current_date + 30, true, true)$$, :'sam'), 'another family can''t change the length'); -- Checks this is refused: another family can't change the length.
+select tests.fails(format($$select * from public.student_term_dates(%L)$$, :'sam'), 'another family cannot'); -- Checks this is refused: another family can't.
+select tests.fails(format($$select public.set_booking_length(%L, current_date + 30, true, true)$$, :'sam'), 'another family cannot change the length'); -- Checks this is refused: another family can't change the length.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails(format($$select * from public.student_term_dates(%L)$$, :'sam'), 'tutors can''t'); -- Checks this is refused: tutors can't.
+select tests.fails(format($$select * from public.student_term_dates(%L)$$, :'sam'), 'tutors cannot'); -- Checks this is refused: tutors can't.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims(null); -- Signs out, so no one is signed in.

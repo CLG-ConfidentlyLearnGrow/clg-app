@@ -45,7 +45,7 @@ reset role; -- back to the database itself
 -- Signed-out visitors can't call the count.
 select tests.claims(null); -- no one signed in
 set role anon; -- acts as a signed-out visitor
-select tests.fails($q$select * from public.my_offers_to_answer()$q$, 'signed-out visitors can''t see offer counts');
+select tests.fails($q$select * from public.my_offers_to_answer()$q$, 'signed-out visitors cannot see offer counts');
 reset role; -- back to the database itself
 
 -- Run the job once.
@@ -67,7 +67,7 @@ select tests.eq(private.notify_offers_not_answered(), 0, 'a second run sends not
 -- Families can't run the job themselves.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- signs in as Paula
 set role authenticated; -- acts as a signed-in person
-select tests.fails($q$select private.notify_offers_not_answered()$q$, 'families can''t run the job');
+select tests.fails($q$select private.notify_offers_not_answered()$q$, 'families cannot run the job');
 reset role; -- back to the database itself
 
 -- Put things back.

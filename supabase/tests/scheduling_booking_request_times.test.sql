@@ -29,7 +29,7 @@ reset role; -- back to the database itself
 -- Signed-out visitors can't call it.
 select tests.claims(null); -- no one signed in
 set role anon; -- acts as a signed-out visitor
-select tests.fails($q$select * from public.booking_request_times()$q$, 'signed-out visitors can''t see booking times');
+select tests.fails($q$select * from public.booking_request_times()$q$, 'signed-out visitors cannot see booking times');
 reset role; -- back to the database itself
 
 \echo '  scheduling booking request times: all checks passed'

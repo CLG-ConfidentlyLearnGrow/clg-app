@@ -25,11 +25,11 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- Only CLG admins can load libraries.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($q$select public.import_libraries('[]'::jsonb)$q$, 'tutors can''t load libraries'); -- Checks this is refused: tutors can't load libraries.
+select tests.fails($q$select public.import_libraries('[]'::jsonb)$q$, 'tutors cannot load libraries'); -- Checks this is refused: tutors can't load libraries.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($q$select public.import_libraries('[]'::jsonb)$q$, 'families can''t load libraries'); -- Checks this is refused: families can't load libraries.
+select tests.fails($q$select public.import_libraries('[]'::jsonb)$q$, 'families cannot load libraries'); -- Checks this is refused: families can't load libraries.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims(null); -- Signs out, so no one is signed in.

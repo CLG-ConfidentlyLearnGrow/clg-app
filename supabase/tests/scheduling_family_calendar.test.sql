@@ -54,7 +54,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner admin (not a parent or student).
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select public.reset_family_calendar_link()$$, 'admin who isn''t a parent makes a family link'); -- Checks this is refused: admin who isn't a parent makes a family link.
+select tests.fails($$select public.reset_family_calendar_link()$$, 'admin who is not a parent makes a family link'); -- Checks this is refused: admin who isn't a parent makes a family link.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------

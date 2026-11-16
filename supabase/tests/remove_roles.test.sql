@@ -35,8 +35,8 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails_with($$select public.admin_remove_role('00000000-0000-0000-0000-0000000007a1', 'parent', 'Someone Else')$$, 'doesn''t match', 'wrong name'); -- Checks this is refused with the expected message.
-select tests.fails_with($$select public.admin_remove_role('00000000-0000-0000-0000-0000000007a1', 'tutor', 'Rae Parent')$$, 'doesn''t have that role', 'role they don''t have'); -- Checks this is refused with the expected message.
+select tests.fails_with($$select public.admin_remove_role('00000000-0000-0000-0000-0000000007a1', 'parent', 'Someone Else')$$, 'does not match', 'wrong name'); -- Checks this is refused with the expected message.
+select tests.fails_with($$select public.admin_remove_role('00000000-0000-0000-0000-0000000007a1', 'tutor', 'Rae Parent')$$, 'does not have that role', 'role they do not have'); -- Checks this is refused with the expected message.
 select tests.fails_with($$select public.admin_remove_role('00000000-0000-0000-0000-0000000000a0', 'admin', 'Olive Owner')$$, 'your own admin role', 'owner removes own admin role'); -- Checks this is refused with the expected message.
 select tests.fails_with($$select public.admin_delete_account('00000000-0000-0000-0000-0000000000a0', 'Olive Owner')$$, 'your own account', 'owner deletes self'); -- Checks this is refused with the expected message.
 

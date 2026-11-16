@@ -34,7 +34,7 @@ select tests.claims('00000000-0000-0000-0000-000000000001'); -- signs in as pare
 set role authenticated; -- acts as a signed-in person, so access rules apply
 select tests.eq((select count(*) from public.safety_concern_people_choices() where account_id = :'t1'), 1::bigint, 'a parent can name their child''s tutor'); -- T1 listed
 select tests.eq((select count(*) from public.safety_concern_people_choices() where account_id in (:'olive', :'sam')), 2::bigint, 'a parent can name CLG''s admins'); -- Olive and Sam listed
-select tests.eq((select count(*) from public.safety_concern_people_choices() where account_id = :'t2'), 0::bigint, 'a parent can''t see other tutors in the list'); -- T2 hidden
+select tests.eq((select count(*) from public.safety_concern_people_choices() where account_id = :'t2'), 0::bigint, 'a parent cannot see other tutors in the list'); -- T2 hidden
 reset role; -- back to the database itself
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1
 set role authenticated; -- acts as a signed-in person
@@ -44,7 +44,7 @@ select tests.fails(format($q$select public.raise_safety_concern(%L, null, null, 
 reset role; -- back to the database itself
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person
-select tests.fails(format($q$select public.raise_safety_concern(%L, null, null, 'officer', false, false, 'no', null, null, 'Naming a tutor I have never met.', array[%L]::uuid[])$q$, :'cara', :'t2'), 'a parent can''t name someone not on their list'); -- refused
+select tests.fails(format($q$select public.raise_safety_concern(%L, null, null, 'officer', false, false, 'no', null, null, 'Naming a tutor I have never met.', array[%L]::uuid[])$q$, :'cara', :'t2'), 'a parent cannot name someone not on their list'); -- refused
 
 -- 2. A concern about a tutor goes to the officer and is hidden from the tutor.
 select public.raise_safety_concern(:'cara', null, null, 'officer', false, false, 'no', null, null, 'The tutor messaged Cara privately late at night.', array[:'t1']::uuid[]) as c_tutor \gset
@@ -54,8 +54,8 @@ reset role; -- back to the database itself
 select tests.eq((select count(*) from public.safety_concerns where id = :'c_tutor' and recipient_id = :'olive'), 1::bigint, 'it went to the officer'); -- routed to Olive
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1 (the person named)
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.safety_concerns where id = :'c_tutor'), 0::bigint, 'the tutor named can''t see the concern'); -- hidden
-select tests.eq((select count(*) from public.safety_concern_people where account_id = :'t1'), 0::bigint, 'the tutor can''t see that they were named'); -- hidden
+select tests.eq((select count(*) from public.safety_concerns where id = :'c_tutor'), 0::bigint, 'the tutor named cannot see the concern'); -- hidden
+select tests.eq((select count(*) from public.safety_concern_people where account_id = :'t1'), 0::bigint, 'the tutor cannot see that they were named'); -- hidden
 select tests.eq((select n from public.to_do_counts() where area = 'safety' and section = 'concerns'), 0, 'the tutor gets no to-do number'); -- nothing shows
 reset role; -- back to the database itself
 select tests.claims(:'olive', 'aal2'); -- signs in as the officer
@@ -72,8 +72,8 @@ reset role; -- back to the database itself
 select tests.eq((select count(*) from public.safety_concerns where id = :'c_officer' and recipient_id = :'sam' and sent_to = 'deputy'), 1::bigint, 'a concern about the officer goes to the deputy'); -- routed to Sam
 select tests.claims(:'olive', 'aal2'); -- signs in as the officer (also the owner)
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.safety_concerns where id = :'c_officer'), 0::bigint, 'the officer, even as owner, can''t see a concern about herself'); -- hidden
-select tests.fails(format($q$select public.safety_concern_add_note(%L, 'Trying to add a note')$q$, :'c_officer'), 'the officer can''t add notes to it'); -- refused
+select tests.eq((select count(*) from public.safety_concerns where id = :'c_officer'), 0::bigint, 'the officer, even as owner, cannot see a concern about herself'); -- hidden
+select tests.fails(format($q$select public.safety_concern_add_note(%L, 'Trying to add a note')$q$, :'c_officer'), 'the officer cannot add notes to it'); -- refused
 reset role; -- back to the database itself
 
 -- 4. A concern about the deputy goes to the officer, even if the deputy was picked.
@@ -85,7 +85,7 @@ reset role; -- back to the database itself
 select tests.eq((select count(*) from public.safety_concerns where id = :'c_deputy' and recipient_id = :'olive' and sent_to = 'officer'), 1::bigint, 'a concern about the deputy goes to the officer'); -- routed to Olive
 select tests.claims(:'sam', 'aal2'); -- signs in as the deputy
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.safety_concerns where id = :'c_deputy'), 0::bigint, 'the deputy can''t see a concern about himself'); -- hidden
+select tests.eq((select count(*) from public.safety_concerns where id = :'c_deputy'), 0::bigint, 'the deputy cannot see a concern about himself'); -- hidden
 reset role; -- back to the database itself
 
 -- 5. A concern naming both goes to both.
@@ -99,7 +99,7 @@ select tests.claims(:'sam', 'aal2'); -- signs in as the deputy
 set role authenticated; -- acts as a signed-in person
 select tests.eq((select count(*) from public.safety_concerns where id = :'c_both'), 1::bigint, 'the deputy can read it'); -- visible
 select public.safety_concern_add_note(:'c_both', 'Read by the deputy.'); -- a reader can add a note
-select tests.fails(format($q$select public.safety_concern_pass_on(%L, 'Reader trying to pass on')$q$, :'c_both'), 'a reader can''t pass it on'); -- refused
+select tests.fails(format($q$select public.safety_concern_pass_on(%L, 'Reader trying to pass on')$q$, :'c_both'), 'a reader cannot pass it on'); -- refused
 reset role; -- back to the database itself
 select tests.claims(:'olive', 'aal2'); -- signs in as the officer
 set role authenticated; -- acts as a signed-in person
@@ -110,10 +110,10 @@ reset role; -- back to the database itself
 -- 6. Passing on and sharing a concern about the other contact.
 select tests.claims(:'sam', 'aal2'); -- signs in as the deputy
 set role authenticated; -- acts as a signed-in person
-select tests.fails(format($q$select public.safety_concern_pass_on(%L, 'Passing it to the officer')$q$, :'c_officer'), 'a concern about the officer can''t be passed to her'); -- refused
+select tests.fails(format($q$select public.safety_concern_pass_on(%L, 'Passing it to the officer')$q$, :'c_officer'), 'a concern about the officer cannot be passed to her'); -- refused
 select tests.fails(format($q$select public.safety_concern_share(%L, '')$q$, :'c_officer'), 'sharing needs a reason'); -- refused: no reason
 select public.safety_concern_share(:'c_officer', 'Carla needs to know so we can sort out a misunderstanding.'); -- the deputy chooses to share it
-select tests.fails(format($q$select public.safety_concern_share(%L, 'Again')$q$, :'c_officer'), 'can''t share with someone who can already read it'); -- refused: already shared
+select tests.fails(format($q$select public.safety_concern_share(%L, 'Again')$q$, :'c_officer'), 'cannot share with someone who can already read it'); -- refused: already shared
 select tests.eq((select n from public.to_do_counts() where area = 'safety' and section = 'concerns'), (select count(*)::int from public.safety_concerns where status = 'new'), 'the deputy''s number counts every new concern they handle'); -- to-do number includes the both-named one
 reset role; -- back to the database itself
 select tests.claims(:'olive', 'aal2'); -- signs in as the officer
@@ -123,8 +123,8 @@ select tests.eq((select count(*) from public.safety_concern_notes where concern_
 reset role; -- back to the database itself
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.safety_concern_notes), 0::bigint, 'the person who raised it still can''t read notes'); -- hidden
-select tests.eq((select count(*) from public.safety_concern_readers), 0::bigint, 'the person who raised it can''t see who else reads it'); -- hidden
+select tests.eq((select count(*) from public.safety_concern_notes), 0::bigint, 'the person who raised it still cannot read notes'); -- hidden
+select tests.eq((select count(*) from public.safety_concern_readers), 0::bigint, 'the person who raised it cannot see who else reads it'); -- hidden
 reset role; -- back to the database itself
 
 -- 7. Lauren's emergency owner access (or any owner) doesn't open concerns. An

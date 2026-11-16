@@ -30,8 +30,8 @@ select tests.claims(:'p1'); -- signs in as parent P1
 set role authenticated; -- acts as a signed-in person, so access rules apply
 select public.app_tour_save('parent', 1, 3, false); -- P1 closes the parent tour at step 3
 select tests.eq((select step::bigint from public.app_tour_progress where tour = 'parent'), 3::bigint, 'a parent''s progress is saved'); -- step 3 kept
-select tests.fails($q$select public.app_tour_save('tutor', 1, 1, false)$q$, 'a parent can''t save the tutor tour'); -- refused
-select tests.fails($q$select public.app_tour_save('owner', 1, 1, false)$q$, 'a parent can''t save an admin tour'); -- refused
+select tests.fails($q$select public.app_tour_save('tutor', 1, 1, false)$q$, 'a parent cannot save the tutor tour'); -- refused
+select tests.fails($q$select public.app_tour_save('owner', 1, 1, false)$q$, 'a parent cannot save an admin tour'); -- refused
 select tests.fails($q$select public.app_tour_save('robot', 1, 1, false)$q$, 'only real tours can be saved'); -- refused
 select tests.fails($q$select public.app_tour_save('parent', 1, 500, false)$q$, 'steps out of range are refused'); -- refused
 select tests.fails($q$select public.app_tour_save('parent', 0, 1, false)$q$, 'versions out of range are refused'); -- refused
@@ -42,11 +42,11 @@ reset role; -- back to the database itself
 -- 2. People see only their own progress.
 select tests.claims(:'p2'); -- signs in as parent P2
 set role authenticated; -- acts as a signed-in person
-select tests.eq((select count(*) from public.app_tour_progress), 0::bigint, 'another parent can''t see P1''s progress'); -- hidden
+select tests.eq((select count(*) from public.app_tour_progress), 0::bigint, 'another parent cannot see P1''s progress'); -- hidden
 reset role; -- back to the database itself
 select tests.claims(null); -- signed out
 set role anon; -- acts as a visitor who isn't signed in
-select tests.fails($q$select public.app_tour_save('parent', 1, 1, false)$q$, 'signed-out visitors can''t save'); -- refused
+select tests.fails($q$select public.app_tour_save('parent', 1, 1, false)$q$, 'signed-out visitors cannot save'); -- refused
 reset role; -- back to the database itself
 
 -- 3. Finishing, replaying, and a new edition.
@@ -54,7 +54,7 @@ select tests.claims(:'p1'); -- signs in as parent P1 again
 set role authenticated; -- acts as a signed-in person
 select public.app_tour_save('parent', 1, 9, true); -- P1 finishes the tour
 select public.app_tour_save('parent', 1, 2, false); -- later replays it from the App guide and closes it at step 2
-select tests.eq((select count(*) from public.app_tour_progress where tour = 'parent' and finished), 1::bigint, 'a replay closed early doesn''t undo finishing'); -- still finished
+select tests.eq((select count(*) from public.app_tour_progress where tour = 'parent' and finished), 1::bigint, 'a replay closed early does not undo finishing'); -- still finished
 select tests.eq((select step::bigint from public.app_tour_progress where tour = 'parent'), 2::bigint, 'the replay''s step is kept for "carry on"'); -- step 2
 select public.app_tour_save('parent', 2, 1, false); -- a new edition of the tour comes out, and P1 closes it at step 1
 select tests.eq((select count(*) from public.app_tour_progress where tour = 'parent' and finished), 0::bigint, 'a new edition starts fresh'); -- not finished yet
@@ -65,7 +65,7 @@ reset role; -- back to the database itself
 select tests.claims(:'t1', 'aal2'); -- signs in as tutor T1
 set role authenticated; -- acts as a signed-in person
 select public.app_tour_save('tutor', 1, 1, false); -- a tutor saves the tutor tour
-select tests.fails($q$select public.app_tour_save('parent', 1, 1, false)$q$, 'a tutor can''t save the parent tour'); -- refused
+select tests.fails($q$select public.app_tour_save('parent', 1, 1, false)$q$, 'a tutor cannot save the parent tour'); -- refused
 reset role; -- back to the database itself
 select tests.claims(:'adult'); -- signs in as the adult learner
 set role authenticated; -- acts as a signed-in person

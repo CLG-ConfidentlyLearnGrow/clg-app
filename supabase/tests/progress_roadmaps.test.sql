@@ -73,7 +73,7 @@ select public.tick_roadmap_step('00000000-0000-0000-0000-0000000d0101', false); 
 select tests.eq((select count(*) from public.roadmap_steps where done_at is not null), 0, 'and un-ticks it'); -- Checks: and un-ticks it.
 select tests.fails($$update public.roadmap_steps set done_at = now()$$, 'ticking by direct edit'); -- Checks this is refused: ticking by direct edit.
 update public.roadmap_steps set title = 'Ask Ms Lee what the test covers' where id = '00000000-0000-0000-0000-0000000d0101'; -- Changes the step's words.
-select tests.eq((select count(*) from public.roadmap_steps where title like 'Ask Ms Lee%'), 0, 'parent can''t rename a step'); -- Checks: parent can't rename a step.
+select tests.eq((select count(*) from public.roadmap_steps where title like 'Ask Ms Lee%'), 0, 'parent cannot rename a step'); -- Checks: parent can't rename a step.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000002'); -- Signs in as test account ...02.
@@ -92,7 +92,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 delete from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0102'; -- Removes the reading step.
-select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0102'), 1, 'parent can''t remove the tutor''s step'); -- Checks: parent can't remove the tutor's step.
+select tests.eq((select count(*) from public.roadmap_steps where id = '00000000-0000-0000-0000-0000000d0102'), 1, 'parent cannot remove the tutor''s step'); -- Checks: parent can't remove the tutor's step.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as test account ...11 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.

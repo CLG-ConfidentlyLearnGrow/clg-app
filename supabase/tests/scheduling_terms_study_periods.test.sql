@@ -77,7 +77,7 @@ select public.add_own_term(:'sam', current_date + 40, current_date + 120, 'Semes
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as test account ...04.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.student_own_terms where student_id = :'sam'), 0, 'another family can''t see them'); -- Checks: another family can't see them.
+select tests.eq((select count(*) from public.student_own_terms where student_id = :'sam'), 0, 'another family cannot see them'); -- Checks: another family can't see them.
 select tests.fails(format($$select public.remove_own_term(%L)$$, :'own2'), 'another family removes one'); -- Checks this is refused: another family removes one.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
@@ -103,7 +103,7 @@ select id as renewal from public.term_renewals where booking_id = :'tertiary' \g
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.list_renewals() where booking_id = :'tertiary' and term_label = 'Semester 2' and term_ends_on = current_date + 6), 1, 'family sees the study period'); -- Checks: family sees the study period.
-select tests.fails(format($$select public.remove_own_term(%L)$$, :'own1'), 'a study period with answers can''t be removed'); -- Checks this is refused: a study period with answers can't be removed.
+select tests.fails(format($$select public.remove_own_term(%L)$$, :'own1'), 'a study period with answers cannot be removed'); -- Checks this is refused: a study period with answers can't be removed.
 -- The family says same again, no holidays, and keeps the new booking's id.
 select public.answer_renewal(:'renewal', true, false) as next_booking \gset
 reset role; -- Goes back to the all-powerful test user (access rules off).

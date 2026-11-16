@@ -56,7 +56,7 @@ update public.tutor_work_settings set max_weekly_hours = 3 where tutor_id = '000
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.matching_not_offered(:'sam', 'General Maths') -- Checks listed tutors aren't in the "why not" list:
-  where tutor_id in ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000014')), 0, 'listed tutors aren''t in the why-not list'); -- (neither T3 nor T4).
+  where tutor_id in ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000014')), 0, 'listed tutors are not in the why-not list'); -- (neither T3 nor T4).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Gap report: a subject nobody teaches.
@@ -65,7 +65,7 @@ insert into public.student_subjects (student_id, subject) values (:'sam', 'Japan
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select waiting from public.matching_gaps() where subject = 'Japanese' and state = 'SA'), 1::bigint, 'gap report shows what nobody teaches'); -- Checks: gap report shows what nobody teaches.
-select tests.eq((select count(*) from public.matching_gaps() where subject = 'General Maths'), 0, 'taught subjects aren''t gaps'); -- Checks: taught subjects aren't gaps.
+select tests.eq((select count(*) from public.matching_gaps() where subject = 'General Maths'), 0, 'taught subjects are not gaps'); -- Checks: taught subjects aren't gaps.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
 delete from public.student_subjects where student_id = :'sam' and subject = 'Japanese'; -- Removes Japanese again.
@@ -73,12 +73,12 @@ delete from public.student_subjects where student_id = :'sam' and subject = 'Jap
 -- Only CLG admins see matching.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.matching_queue()$$, 'families can''t see the queue'); -- Checks this is refused: families can't see the queue.
-select tests.fails(format($$select * from public.matching_shortlist(%L, 'General Maths')$$, :'sam'), 'families can''t see the shortlist'); -- Checks this is refused: families can't see the shortlist.
+select tests.fails($$select * from public.matching_queue()$$, 'families cannot see the queue'); -- Checks this is refused: families can't see the queue.
+select tests.fails(format($$select * from public.matching_shortlist(%L, 'General Maths')$$, :'sam'), 'families cannot see the shortlist'); -- Checks this is refused: families can't see the shortlist.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.matching_gaps()$$, 'tutors can''t see gaps'); -- Checks this is refused: tutors can't see gaps.
+select tests.fails($$select * from public.matching_gaps()$$, 'tutors cannot see gaps'); -- Checks this is refused: tutors can't see gaps.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ select tests.fails(format($$update public.student_places set tutor_preferences =
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.student_places where student_id = :'sam'), 0, 'tutors don''t see the note'); -- Checks: tutors don't see the note.
+select tests.eq((select count(*) from public.student_places where student_id = :'sam'), 0, 'tutors do not see the note'); -- Checks: tutors don't see the note.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ select tests.eq((select count(*) from public.list_bookings() where id = :'pendin
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.offer_card(:'pending')), 0, 'another tutor can''t see the offer card'); -- Checks: another tutor can't see the offer card.
+select tests.eq((select count(*) from public.offer_card(:'pending')), 0, 'another tutor cannot see the offer card'); -- Checks: another tutor can't see the offer card.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Once accepted (an assignment exists), the record opens.
