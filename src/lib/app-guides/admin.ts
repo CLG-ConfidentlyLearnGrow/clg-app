@@ -38,6 +38,11 @@ All admins need two-step login, because the app holds children's information.
 - **Home**, **Child safety** (in red), **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
 - When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 - **App guide** in the side menu opens this guide. If you help families and tutors, their guides are listed under **Other guides you can open** at the bottom, so you can talk them through the app.
+
+### Take the app tour again
+The first time you open the admin dashboard, a short **app tour** shows the parts your admin level uses and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+
+Tip: If you help families and tutors, the App guide for parents, students or tutors has **See their tour**, so you know what they were shown.
 `;
 
 // Sessions, as seen by front-desk admins (Owner, Operations, Support).

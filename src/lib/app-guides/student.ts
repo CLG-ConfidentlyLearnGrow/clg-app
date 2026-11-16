@@ -40,6 +40,9 @@ Choose **Add CLG to your home screen** at the bottom of any page and follow the 
 ### Change your name
 Tap your name under **Signed in as** (top right) to change it. On a phone, tap **Menu** at the top right first.
 
+### Take the app tour again
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+
 ## Your learning
 
 ### See what to do this week
