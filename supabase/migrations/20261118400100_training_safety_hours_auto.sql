@@ -6,7 +6,7 @@
 -- needed before new students (a safety module) never counts, and every
 -- other module does. The tick box is gone from the module form.
 --
--- Safe to run more than once. Run after 20261118200300_offer_closed_for_now.sql.
+-- Safe to run more than once. Run after 20261118300100_tutor_applications.sql.
 
 -- Keeps module dates right (same as before), and now also sets whether a
 -- module counts towards the quarter's hours from whether it's a safety module.

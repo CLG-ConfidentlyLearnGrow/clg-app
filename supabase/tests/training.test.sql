@@ -11,7 +11,7 @@ begin;
 -- Runs the training database change again (checks it can run twice).
 \ir ../migrations/20261116300100_training.sql
 -- Runs the automatic safety-hours change again too (the training file above replaced its step).
-\ir ../migrations/20261118300100_training_safety_hours_auto.sql
+\ir ../migrations/20261118400100_training_safety_hours_auto.sql
 
 -- A test helper: checks a statement is refused with a message containing certain words.
 create or replace function tests.fails_with(p_sql text, p_words text, p_label text) returns void -- takes the statement, the words and a label
