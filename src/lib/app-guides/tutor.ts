@@ -95,6 +95,8 @@ After a session, **Did these sessions happen?** shows on the Overview. Choose **
 2. Choose **Finished at a different time?** next to the session.
 3. Enter the time you finished and why, then choose **Send to CLG**. Do this within a week. CLG confirms it before pay.
 
+Tip: Only record a finish that's more than 15 minutes early, or a session that ran over. Finishing up to 15 minutes early counts as finishing on time.
+
 ### Cancel a session
 1. On the Overview, find the session and choose **Cancel**.
 2. Choose a reason (please don't include health details).
@@ -140,7 +142,7 @@ In **Sessions**, choose **Notices**. Open **Reminder settings** to choose when y
 3. You only see students you are matched with, and only what you need to teach them.
 
 ### Write a session note
-Notes are due within 24 hr of each session and take about three minutes.
+Notes are due within 6 hr of each session and take about three minutes. Families are promised them within 48 hr, so CLG follows up anything later than 6 hr.
 1. On **Your students**, **Session notes to write** lists what is due. Choose **Write note**.
 2. Fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home.
 3. Use **Note for CLG staff only** for anything just for CLG.
