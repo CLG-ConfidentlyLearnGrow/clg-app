@@ -77,7 +77,7 @@ Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**,
 3. Choose **Accept**, or **Decline** with a note to the family saying why.
 4. Answer within 48 hr, or the request runs out and the time is freed.
 
-Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time doesn't suit** instead. It's confirmed once you both say yes.
+Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time doesn't suit** instead. It's confirmed once you both say yes. You have 3 days, with a reminder after 2. After that the offer closes for now.
 
 ### Sign on to a session
 1. From 30 minutes before the session, **Sign on** appears next to it on the Overview.

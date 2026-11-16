@@ -108,7 +108,7 @@ When CLG offers a time, you see a notice and a number on **Sessions**.
 1. In **Sessions**, choose **Bookings** (or **See offers** on the Overview).
 2. Check the day, time, tutor and place.
 3. Choose **Approve**, or **This time doesn't suit** and say why.
-4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2.
+4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2. If it isn't approved by everyone in time, the offer closes for now and CLG gets in touch about another time.
 
 Tip: One parent (or a child 16+ with their own login) can answer for the family. The first answer counts.
 

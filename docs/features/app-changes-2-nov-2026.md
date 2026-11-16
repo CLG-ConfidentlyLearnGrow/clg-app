@@ -8,7 +8,8 @@ existing feature's brief has a short "Changes, 2 Nov 2026" note too.
 ## What it's for
 
 - **Fewer emails, calmer evenings.** Families and tutors get notices in the
-  app only. Nothing arrives between 9pm and 6am.
+  app only. Nothing arrives between 9pm and 5am (6am at first; 5am since
+  12 Nov 2026).
 - **The right term dates for each student.** SA government schools, SA
   private schools (an extra week off between Terms 2 and 3) or the
   student's own dates (university, TAFE). Each student's last day of

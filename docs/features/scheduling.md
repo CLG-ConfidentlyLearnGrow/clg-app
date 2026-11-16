@@ -257,13 +257,15 @@ teaching the tutor has agreed to.
 
 See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
 
-- Quiet hours are 9pm to 6am (since 12 Nov 2026: 9pm to 5am, local time). Notices are in the app only.
+- Quiet hours are 9pm to 5am, local time (9pm to 6am from 2 Nov, changed 12 Nov 2026 and confirmed by Carla 16 Nov 2026). Notices are in the app only.
 - Each student follows SA government terms, SA private terms (Term 2 a week
   shorter) or their own dates; each student's last day of Term 4 is
   confirmed. Families are asked about next term 3 weeks before their study
   period ends; tutors check availability 4 weeks before.
 - Offers that need both the tutor and the family are open 3 days, with
-  reminders after 2 days. Requests to a tutor still have 48 hours.
+  reminders after 2 days. Requests to a tutor still have 48 hours. When an
+  offer runs out, the family and tutor are told it is "closed for now"
+  (wording from 16 Nov 2026).
 - A tutor's away dates cancel sessions after 2 hours; families and CLG are
   told politely, the tutor can offer other times, and families can ask for
   another time or tutor.
