@@ -25,7 +25,7 @@ An adult learner (18 or over) with their own login was treated as paying for the
 
 Now an adult learner sees and manages a family's billing only when they are the family's only learner. In a family with brothers or sisters, billing stays with the parents, or with the person CLG names as the bill payer on Admin > Billing (for example an older sibling who pays for everyone). Naming them is CLG's deliberate choice, and they still can't see their siblings' profiles or sessions, only the invoices they pay.
 
-Database change: `supabase/migrations/20261118300100_sibling_privacy.sql` (`private.is_family_payer`, `private.can_pay_for_family`).
+Database change: `supabase/migrations/20261118900100_sibling_privacy.sql` (`private.is_family_payer`, `private.can_pay_for_family`).
 
 ## Tests
 

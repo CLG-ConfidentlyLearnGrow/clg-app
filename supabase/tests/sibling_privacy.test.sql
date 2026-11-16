@@ -16,8 +16,8 @@
 -- an older billing file that it updates, so this runs it again first.
 -- Keeps psql quiet so only problems are printed.
 \set QUIET on
--- Runs the database change 20261118300100_sibling_privacy.sql again.
-\ir ../migrations/20261118300100_sibling_privacy.sql
+-- Runs the database change 20261118900100_sibling_privacy.sql again.
+\ir ../migrations/20261118900100_sibling_privacy.sql
 
 -- ---------------------------------------------------------------------------
 -- Helper: what can the signed-in person see about another student?
