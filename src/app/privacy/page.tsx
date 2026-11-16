@@ -20,7 +20,8 @@ const SERVICES = [ // The outside services CLG uses, what each does and where:
   { name: "Resend", does: "Sends the app's emails (your email address and the short message only)", where: "United States" }, // Resend,
   { name: "Stripe", does: "Takes payments (card or bank details go straight to Stripe; CLG never sees them)", where: "Australia and the United States" }, // Stripe,
   { name: "Xero", does: "Invoices and accounts (names, emails, invoice lines)", where: "Australia, New Zealand and the United States" }, // Xero,
-  { name: "Microsoft 365", does: "Teams links for online sessions, and CLG's email", where: "Australia" }, // Microsoft 365.
+  { name: "Microsoft 365", does: "Teams links for online sessions, and CLG's email", where: "Australia" }, // Microsoft 365,
+  { name: "OpenStreetMap", does: "Finds the map point of an address you save for travel distances (only the address is sent, never your name or contact details), and shows the map pictures on CLG staff's travel map (no personal details are sent)", where: "Run by the OpenStreetMap Foundation, outside Australia (United Kingdom and Europe)" }, // OpenStreetMap (Carla, 16 Nov 2026): address search and map pictures, no contract, so only the address is sent.
 ]; // End of the list.
 
 // Shows the privacy policy.
@@ -131,7 +132,8 @@ export default function PrivacyPage() {
       <Card title="Where it is kept and who helps us">{/* A card on where it's kept: */}
         <p className="mb-3 text-sm">{/* a line: */}
           The app&apos;s information is stored in Sydney, Australia, encrypted while stored and while travelling. Some
-          services CLG uses are based overseas. Each has a contract that requires it to protect the information.{/* stored in Sydney, encrypted, with overseas services under contract. */}
+          services CLG uses are based overseas. Each has a contract that requires it to protect the information, except
+          OpenStreetMap, which receives only an address and never a name or contact details.{/* stored in Sydney, encrypted, overseas services under contract, and OpenStreetMap gets only an address. */}
         </p>{/* End of the line. */}
         <ul className="list-disc space-y-1 pl-5 text-sm">{/* A bulleted list: */}
           {SERVICES.map((s) => ( // for each service:
