@@ -871,7 +871,8 @@ export function EndTimeForm({ id, date, bookedEnd }: { id: string; date: string;
         <input type="hidden" name="id" value={id} />{/* the session (hidden), */}
         <input type="hidden" name="date" value={date} />{/* the date (hidden), */}
         <Field label="Time you finished" name="end_time" type="time" defaultValue={bookedEnd} required />{/* the finish time, starting at the booked end, */}
-        <Field label="Why was it different?" name="note" maxLength={500} required />{/* and why (required). */}
+        <Field label="Why was it different?" name="note" maxLength={500} required />{/* and why (required), */}
+        <p className="text-xs text-zinc-600">Only needed if you finished more than 15 minutes early, or ran over. Up to 15 minutes early counts as on time.</p>{/* and when it's needed. */}
       </ActionForm>{/* End of the form. */}
     </div> // End of the block.
   ); // End of what's shown.

@@ -52,14 +52,14 @@ What it adds, and the evidence behind each part:
 - **Notes for booked sessions.** The note form opens on the oldest session still waiting for a note, with the date and length filled in. Fewer fields means faster notes (EEF warns that feedback's cost is staff time). Notes for sessions arranged outside the app still work.
 - **One thing to try at home.** An optional line for the family: a small habit, not re-teaching. EEF Parental engagement (+4 months) finds tips on habits such as planning and practice help more than asking parents to teach content.
 - **An update for the family after each note.** It shows in the app with the next step and the tip, so parents see successes and next steps without reading a Teams channel (EEF Parental engagement). Updates written between 9pm and 5am (local time) wait until 5am. Email delivery comes once CLG's email sending is set up; it will read `progress_notices.email_sent_at`.
-- **Reminders.** The tutor is reminded 24 hr after a session with no note; admins are told at 48 hr (brief: "Due within 24 hours"). An hourly job (`clg-note-reminders`) checks sessions from the last 7 days.
+- **Reminders.** Notes are due 6 hr after a session (Carla, 16 Nov 2026; it was 24 hr). At 6 hr with no note, the tutor is reminded and admins are told, so a late tutor can be followed up well before families' 48 hr promise. An hourly job (`clg-note-reminders`) checks sessions from the last 7 days.
 - **Tutor caseload.** The tutor dashboard lists notes to write, and under each student the last note, missing goals, and when no skill has moved in 4 or more sessions (Stanford NSSA: monitor closely and adjust).
 - **Admin oversight** (Admin > Progress): the measures above per tutor for any dates, overdue notes, students to check, and recent notes to spot-check.
 - **Time to write a note.** Measured in the browser from first tap to last change, stored in `session_note_stats`, seen only by admins. It checks the pilot gate: notes under 3 minutes.
 
 Privacy and child safety:
 
-- Updates go only to the student's linked parents and the student's own login. Reminders name the student and go only to the tutor (24 hr) or admins (48 hr). Each person sees only their own notices, and only once they are due.
+- Updates go only to the student's linked parents and the student's own login. Reminders name the student and go only to the tutor or admins (both at 6 hr). Each person sees only their own notices, and only once they are due.
 - Writing times are staff data about the form, not about the child, and only admins can read them.
 - Notices are deleted with the student or the account. Progress reads scheduling's sessions but never writes them.
 - Children's Online Privacy Code (exposure draft): no new data about the child beyond the optional tip, which is written to the family.
