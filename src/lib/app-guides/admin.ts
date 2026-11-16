@@ -216,6 +216,31 @@ Under **Record a check**, choose the tutor and check, enter the number, dates an
 ### When a tutor finishes with CLG
 Use **Tutor finished with CLG** to end their matches. Then move their students to a new tutor with **Change tutor on booked sessions** in Sessions.
 
+## Tutor applications
+
+People who want to tutor apply on the public page **app.clgtutoring.com/apply** (also linked from the home and sign-up pages). Open **Tutor applications** in the side menu. A number shows how many are new.
+
+### Review an application
+1. Choose **Open** next to an application to see every answer, the referees and the CV.
+2. Set the status to **Shortlisted** if you'd like to interview them, and choose **Save screening record**.
+3. Use the child-safe questions under **Questions to use** (choose **Show**) in the interview and when you phone each referee.
+4. Record the **Interview date**, each **Referee checked on** date and what was said, then choose **Save screening record**.
+5. If they hold a Working with Children Check, verify it with the state's screening unit and record **Working with Children Check verified on**.
+
+Tip: Set the status to **Withdrawn** if they pull out or stop replying. It's deleted 12 months later.
+
+### Approve an application
+1. Record the interview and both referee checks first. **Approve and send invite** won't work without them.
+2. Choose **Approve and send invite**. They get the usual tutor invite link (works once, for 7 days).
+3. If the email can't be sent, the link is shown for you to pass on. Choose **Send invite again** for a fresh link.
+4. Once they join, confirm their checks under **Checks to confirm** as usual before they're matched with students.
+
+### Decline an application
+1. Under **Decline**, choose a reason (only admins see it) and add a note if useful.
+2. Leave **Email them a polite "not this time"** ticked to let them know, then choose **Decline**.
+
+Declined applications are deleted 12 months after the decision.
+
 ## Progress
 
 Open **Progress** in the side menu.

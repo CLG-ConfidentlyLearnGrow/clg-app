@@ -37,6 +37,9 @@ export default function Home() {
       <p className="mt-8 text-sm">{/* A small line: */}
         <TextLink href="/install">Add CLG to your home screen</TextLink>{/* with a link to install the app. */}
       </p>{/* End of the line. */}
+      <p className="mt-3 text-sm text-zinc-600">{/* Another small line: */}
+        Want to tutor with CLG? <TextLink href="/apply">Apply to tutor</TextLink>{/* with a link to the tutor application page (Carla, 16 Nov 2026). */}
+      </p>{/* End of the line. */}
     </main> // End of the column.
   ); // End of what's shown.
 } // End of Home.
