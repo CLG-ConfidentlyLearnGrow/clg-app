@@ -42,6 +42,10 @@ select tests.eq((select count(*) from public.training_questions where 'Within 6 
 select tests.eq((select count(*) from public.training_questions where options::text like '%within 48 hours%'), 0::bigint, 'no quiz answer says 48 hours'); -- checks the old answer is gone
 select tests.eq((select count(*) from public.training_questions where module_id = '7a000000-0000-4000-8000-000000000004'), 2::bigint, 'module 4 has its 2 questions'); -- checks the honest-work quiz
 
+-- Tutoring modules are for tutors only; safety and privacy stay for everyone (Carla, 16 Nov 2026).
+select tests.eq((select count(*) from public.training_modules where id::text like '7a000000-0000-4000-8000-0000000000%' and audience = 'everyone'), 6::bigint, 'only modules 1-3, 7, 8 and 17 are for everyone'); -- checks admins only get safety and privacy
+select tests.eq((select count(*) from public.training_modules where id in ('7a000000-0000-4000-8000-000000000004', '7a000000-0000-4000-8000-000000000005', '7a000000-0000-4000-8000-000000000006') and audience = 'tutor'), 3::bigint, 'modules 4-6 are for tutors'); -- checks the change
+
 -- Remember how much there is now, then run both changes again.
 select count(*) as lessons_before from public.training_lessons \gset
 select count(*) as questions_before from public.training_questions \gset

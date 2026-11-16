@@ -78,3 +78,7 @@ Carla answered the 8 review questions on the starter drafts. Two migrations load
   - Fewer sit-ins: modules 11 to 13 cover how a CLG session runs, so the sit-ins can be shorter (Carla wants as few as possible, to keep disruption to current clients low).
 - Evidence for the new modules: EEF *Feedback* and *Metacognition and self-regulation* (Teaching and Learning Toolkit) for drafting comments and building independence; EEF *Special Educational Needs in Mainstream Schools* (2020) for learning support; EEF *Parental engagement* for communicating with families. Legal notes are unchanged from section 5. The integrity rule protects students under school and SACE rules on acceptable help with assessed work.
 - Tests: `supabase/tests/training_review_content.test.sql`.
+
+## 8. Admins who don't tutor, 16 Nov 2026
+
+Carla: "Admins who are not tutors do not need to do the tutoring modules." Modules for tutors already only go to people with the tutor role. `20261118300100_training_tutoring_modules_for_tutors.sql` moves modules 4 (professional and honest), 5 (boundaries) and 6 (online sessions) from everyone to tutors only. An admin who doesn't tutor now does modules 1 to 3 (child safety), 7 and 8 (privacy) and the yearly refresher (17), which every staff member who can see children's information needs (National Principles, Principle 7; Privacy Act). An admin who also tutors does everything. Only draft modules change.
