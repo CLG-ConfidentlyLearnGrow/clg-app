@@ -77,7 +77,7 @@ Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**,
 3. Choose **Accept**, or **Decline** with a note to the family saying why.
 4. Answer within 48 hr, or the request runs out and the time is freed.
 
-Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time doesn't suit** instead. It's confirmed once you both say yes.
+Tip: When CLG offers a time to both you and the family, you see **Approve** and **This time doesn't suit** instead. It's confirmed once you both say yes. You have 3 days, with a reminder after 2. After that the offer closes for now.
 
 ### Sign on to a session
 1. From 30 minutes before the session, **Sign on** appears next to it on the Overview.
@@ -88,12 +88,14 @@ Tip: When CLG offers a time to both you and the family, you see **Approve** and 
 Choose **Join** next to the session on the Overview, or on your **Weekly calendar**. It opens Microsoft Teams.
 
 ### Mark whether a session happened
-After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one.
+After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one. If the student hasn't arrived, wait 15 minutes after the start, then log off or leave and choose **No-show**. The app won't take a no-show before then.
 
 ### Record a different finish time
 1. On the Overview, open **Your recent sessions**.
 2. Choose **Finished at a different time?** next to the session.
 3. Enter the time you finished and why, then choose **Send to CLG**. Do this within a week. CLG confirms it before pay.
+
+Tip: Only record a finish that's more than 15 minutes early, or a session that ran over. Finishing up to 15 minutes early counts as finishing on time.
 
 ### Cancel a session
 1. On the Overview, find the session and choose **Cancel**.
@@ -140,7 +142,7 @@ In **Sessions**, choose **Notices**. Open **Reminder settings** to choose when y
 3. You only see students you are matched with, and only what you need to teach them.
 
 ### Write a session note
-Notes are due within 24 hr of each session and take about three minutes.
+Notes are due within 6 hr of each session and take about three minutes. Families are promised them within 48 hr, so CLG follows up anything later than 6 hr.
 1. On **Your students**, **Session notes to write** lists what is due. Choose **Write note**.
 2. Fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home.
 3. Use **Note for CLG staff only** for anything just for CLG.

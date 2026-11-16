@@ -257,13 +257,15 @@ teaching the tutor has agreed to.
 
 See [app-changes-2-nov-2026.md](app-changes-2-nov-2026.md) for the full brief.
 
-- Quiet hours are 9pm to 6am (since 12 Nov 2026: 9pm to 5am, local time). Notices are in the app only.
+- Quiet hours are 9pm to 5am, local time (9pm to 6am from 2 Nov, changed 12 Nov 2026 and confirmed by Carla 16 Nov 2026). Notices are in the app only.
 - Each student follows SA government terms, SA private terms (Term 2 a week
   shorter) or their own dates; each student's last day of Term 4 is
   confirmed. Families are asked about next term 3 weeks before their study
   period ends; tutors check availability 4 weeks before.
 - Offers that need both the tutor and the family are open 3 days, with
-  reminders after 2 days. Requests to a tutor still have 48 hours.
+  reminders after 2 days. Requests to a tutor still have 48 hours. When an
+  offer runs out, the family and tutor are told it is "closed for now"
+  (wording from 16 Nov 2026).
 - A tutor's away dates cancel sessions after 2 hours; families and CLG are
   told politely, the tutor can offer other times, and families can ask for
   another time or tutor.
@@ -571,3 +573,12 @@ apply (APP 11, security of personal information).
 Research: clear, ordered lists with simple filters cut the effort of
 finding what needs action, which matters for staff and families checking
 on their phones (Nielsen Norman Group usability guidance on filtering).
+
+## Early finishes, 16 Nov 2026
+
+Carla: "Only if a session finishes more than 15 minutes early does it become a reportably early finish." Families are always charged the booked time.
+
+- A tutor can't record a finish that's up to 15 minutes early. The app says it counts as finishing on time.
+- **Times to check** only lists a recorded finish that's more than 15 minutes early, or after the booked end.
+- Running over, or finishing more than 15 minutes early, works as before: the tutor records the real end time and why, and CLG confirms it before pay.
+- Legal note: pay still follows the confirmed times (Fair Work Act 2009 record-keeping, reg 3.33). Short early finishes are paid as booked, which can only favour the tutor.

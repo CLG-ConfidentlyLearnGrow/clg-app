@@ -50,7 +50,7 @@ Open **Sessions** in the side menu. Its sections include **Overview**, **Booking
 2. Choose who it's for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
 3. Choose **Find times**. **Available times** shows only tutors who suit: checks in date for the student's state, teach the subject at the student's level, free then, and under their weekly hours.
 4. Choose a time. If you didn't pick the suggested one, say why (it helps improve the suggestions).
-5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes.
+5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It's confirmed once both say yes. If not, the offer closes for now: the tutor and family are told, you get a notice saying who didn't answer, and the student is back in **Matching**.
 
 Tip: A student needs their details, preferred times and **How long to book** filled in before times can be offered.
 
@@ -216,6 +216,31 @@ Under **Record a check**, choose the tutor and check, enter the number, dates an
 ### When a tutor finishes with CLG
 Use **Tutor finished with CLG** to end their matches. Then move their students to a new tutor with **Change tutor on booked sessions** in Sessions.
 
+## Tutor applications
+
+People who want to tutor apply on the public page **app.clgtutoring.com/apply** (also linked from the home and sign-up pages). Open **Tutor applications** in the side menu. A number shows how many are new.
+
+### Review an application
+1. Choose **Open** next to an application to see every answer, the referees and the CV.
+2. Set the status to **Shortlisted** if you'd like to interview them, and choose **Save screening record**.
+3. Use the child-safe questions under **Questions to use** (choose **Show**) in the interview and when you phone each referee.
+4. Record the **Interview date**, each **Referee checked on** date and what was said, then choose **Save screening record**.
+5. If they hold a Working with Children Check, verify it with the state's screening unit and record **Working with Children Check verified on**.
+
+Tip: Set the status to **Withdrawn** if they pull out or stop replying. It's deleted 12 months later.
+
+### Approve an application
+1. Record the interview and both referee checks first. **Approve and send invite** won't work without them.
+2. Choose **Approve and send invite**. They get the usual tutor invite link (works once, for 7 days).
+3. If the email can't be sent, the link is shown for you to pass on. Choose **Send invite again** for a fresh link.
+4. Once they join, confirm their checks under **Checks to confirm** as usual before they're matched with students.
+
+### Decline an application
+1. Under **Decline**, choose a reason (only admins see it) and add a note if useful.
+2. Leave **Email them a polite "not this time"** ticked to let them know, then choose **Decline**.
+
+Declined applications are deleted 12 months after the decision.
+
 ## Progress
 
 Open **Progress** in the side menu.
@@ -286,7 +311,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. **Who opened what** shows recent use.
 
 ### Training setup
-1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it.
+1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
 `;
 
@@ -303,6 +328,11 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
+
+### Waive a late cancellation (Owner and Operations)
+1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14.
+2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
+3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Don't keep a copy of the proof. Tutors never see waivers.
 
 ### Paused families
 **Paused families** lists families on hold for an overdue invoice. Sessions start again as soon as they pay. Only the owner (or admins, if the owner allows it in Settings) can choose **Lift the pause** without payment, with a new due date or an agreed payment plan.

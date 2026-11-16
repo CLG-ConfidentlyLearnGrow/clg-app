@@ -78,7 +78,7 @@ If CLG set up your child's profile during a phone call, **Your children** shows 
 3. Make your changes and save.
 
 ### Give your child their own login (16 and over)
-A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything.
+A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything. Each child with their own login sees only their own profile, never a brother's or sister's.
 1. In **Your children**, choose **Give (name) their own login** under their name.
 2. Enter your child's own email address.
 3. Choose **Send login link**. Your child gets an email to choose their password.
@@ -108,7 +108,7 @@ When CLG offers a time, you see a notice and a number on **Sessions**.
 1. In **Sessions**, choose **Bookings** (or **See offers** on the Overview).
 2. Check the day, time, tutor and place.
 3. Choose **Approve**, or **This time doesn't suit** and say why.
-4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2.
+4. The booking is confirmed once you and the tutor have both said yes. You have 3 days to answer, with a reminder after 2. If it isn't approved by everyone in time, the offer closes for now and CLG gets in touch about another time.
 
 Tip: One parent (or a child 16+ with their own login) can answer for the family. The first answer counts.
 
@@ -131,7 +131,9 @@ Tip: Calendar apps can take a few hours to update, and online session links stay
 4. Offer two other times that week for a make-up session. Your tutor picks one. If no other time works, tick that box and CLG will help.
 5. Choose **Cancel this session**.
 
-Credit for a session you cancel: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If CLG or the tutor cancels, you get full credit.
+Credit for a session you cancel with no make-up: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If a make-up is booked, there is nothing extra to pay with 2 hr notice or more, or half the cancelled session with less. Notice counts from when you save the cancel in the app. If CLG or the tutor cancels, you get full credit.
+
+Tip: If your child is suddenly unwell or there's a family emergency, contact CLG (not your tutor). CLG can waive the late-cancel rule once a year for each child; after that, CLG needs to see proof.
 
 ### Pick or confirm a make-up time
 If your tutor or CLG cancels a session, a **Pick a make-up time** card shows on the **Overview**.

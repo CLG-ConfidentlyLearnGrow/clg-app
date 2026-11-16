@@ -53,13 +53,13 @@ select private.notify_offers_not_answered(); -- sends what's due
 
 -- The tutor, the parent and CLG are told about the time that ran out.
 select tests.eq((select count(*) from public.session_notices where booking_id = :'late'
-  and account_id = '00000000-0000-0000-0000-000000000013' and title = 'Session time not answered in time'), 1::bigint, 'the tutor is told the time lapsed');
+  and account_id = '00000000-0000-0000-0000-000000000013' and title = 'Session offer closed for now'), 1::bigint, 'the tutor is told the offer is closed for now');
 select tests.eq((select count(*) from public.session_notices where booking_id = :'late'
-  and account_id = '00000000-0000-0000-0000-000000000003' and title = 'Session time not answered in time'), 1::bigint, 'the parent is told the time lapsed');
+  and account_id = '00000000-0000-0000-0000-000000000003' and title = 'Session offer closed for now'), 1::bigint, 'the parent is told the offer is closed for now');
 select tests.eq((select count(*) from public.session_notices where booking_id = :'late'
-  and account_id = '00000000-0000-0000-0000-0000000000a0' and title = 'Session time not answered'), 1::bigint, 'CLG''s owner is told, to find another time');
+  and account_id = '00000000-0000-0000-0000-0000000000a0' and title = 'Session offer closed for now'), 1::bigint, 'CLG''s owner is told, to find another time');
 -- Nothing is sent about the time that is still open.
-select tests.eq((select count(*) from public.session_notices where booking_id = :'open_one' and title like 'Session time not answered%'), 0::bigint, 'nothing about a time still open');
+select tests.eq((select count(*) from public.session_notices where booking_id = :'open_one' and title = 'Session offer closed for now'), 0::bigint, 'nothing about a time still open');
 
 -- Running again sends nothing new.
 select tests.eq(private.notify_offers_not_answered(), 0, 'a second run sends nothing new');
