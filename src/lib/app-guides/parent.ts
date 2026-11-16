@@ -78,7 +78,7 @@ If CLG set up your child's profile during a phone call, **Your children** shows 
 3. Make your changes and save.
 
 ### Give your child their own login (16 and over)
-A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything.
+A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything. Each child with their own login sees only their own profile, never a brother's or sister's.
 1. In **Your children**, choose **Give (name) their own login** under their name.
 2. Enter your child's own email address.
 3. Choose **Send login link**. Your child gets an email to choose their password.
