@@ -19,7 +19,7 @@ export const STUDENT_GUIDE: GuideSource = { // The guide:
 - Your progress page has a **Back to home** button at the top.
 - The side menu has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you.
 - **Child safety** (in red, top of every page) is there if you ever feel unsafe or are worried about someone.
-- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too.
+- **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 
 ### Sign in for the first time
 1. Your parent or CLG sends you a login link by email.
@@ -38,7 +38,7 @@ Tip: Students under 16 join through a parent's account.
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
 
 ### Change your name
-Tap your name under **Signed in as** (top right) to change it.
+Tap your name under **Signed in as** (top right) to change it. On a phone, tap **Menu** at the top right first.
 
 ## Your learning
 

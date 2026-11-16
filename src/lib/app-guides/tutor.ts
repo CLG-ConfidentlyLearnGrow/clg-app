@@ -198,6 +198,6 @@ In the side menu, choose **Handbook**. Search for a word (for example late, conc
 - **Report app issue**: something in the app isn't working. Add a screenshot if you can.
 
 ### Your privacy and name
-Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it.
+Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `, // End of the guide's text.
 }; // End of the tutor guide.
