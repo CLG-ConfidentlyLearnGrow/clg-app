@@ -136,7 +136,7 @@ Open **Matching** in the side menu.
 ### Find a tutor for a student
 1. In **Matching**, choose a stage along the top: **Needs a tutor**, **Waitlist**, **Waiting for confirmation**, **Assigned, no time** or **Active**. Search or filter by year level and state if needed.
 2. Choose a student. Their year, working level, goal, learning needs, tutor preferences, places, preferred times, siblings and past tutors are shown.
-3. **Tutors who suit** lists the best fit first: teaches the subject at the student's working level, then a sibling's tutor, then spare hours, then a place and time that suit. Pay rates are not shown.
+3. **Tutors who suit** lists the best fit first: teaches the subject at the student's working level, then a sibling's tutor, then spare hours, then a place and time that suit. Pay rates are not shown. A tutor is never offered for their own child or anyone in their own family.
 4. Choose **Offer this tutor**, pick the time and place, and send it to the tutor and family to approve.
 5. Choose **Next student** to keep going.
 

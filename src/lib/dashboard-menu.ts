@@ -32,6 +32,15 @@ async function trainingToDo(): Promise<number | undefined> { // No inputs: it's 
 } // End of trainingToDo.
 
 // The tutor dashboard's own sections (the page reads these to know which is open).
+// Whether a student's dashboard gets a Billing tab (Carla, 16 Nov 2026):
+// only students who pay for their own lessons. Someone who is also a parent
+// pays from their Parent tab, so their Student tab never has Billing.
+async function studentPaysOwn(roles: Role[]): Promise<boolean> { // Takes all of the person's roles.
+  if (roles.includes("parent")) return false; // Also a parent: Billing lives on the Parent tab instead.
+  const { data } = await (await createClient()).rpc("billing_i_pay"); // Asks the database whether they pay for a family (or a share).
+  return data === true; // Yes only when the database says so.
+} // End of studentPaysOwn.
+
 export const TUTOR_SECTIONS = [ // Each section's id and its name on screen:
   { id: "students", label: "Your students" }, // their students,
   { id: "teaching", label: "What you teach" }, // what they teach,
@@ -139,7 +148,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     { id: "learning", label: "Your learning", href: "/dashboard/student", count: todo.get("student", "learning") }, // Your learning (with steps overdue),
     ...sessions, // Sessions,
     { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=student" }, // their week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
-    ...(roles.includes("parent") ? [] : [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }]), // Billing (unless they're also a parent),
+    ...((await studentPaysOwn(roles)) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay for their own lessons (Carla, 16 Nov 2026),
     { id: "guide", label: "App guide", href: "/guide?as=student" }, // and the step-by-step guide to the app for students (Carla, 16 Nov 2026).
   ]; // End of the student menu.
 } // End of getDashboardMenu.
