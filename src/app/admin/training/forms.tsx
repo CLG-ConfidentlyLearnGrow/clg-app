@@ -60,7 +60,7 @@ function ModuleFields({ m }: { m?: ModuleRow }) { // Takes the module (none for 
       </div>{/* End of the columns. */}
       <Tick name="required" label="Compulsory" hint="Everyone it's for must finish it. It's paid automatically for the set time." defaultChecked={m?.required} />{/* compulsory, */}
       <Tick name="holds_matching" label="Needed before new students (safety)" hint="Tutors can't be matched with new students once it's overdue. Only works if it's compulsory." defaultChecked={m?.holds_matching} />{/* holds matches, */}
-      <Tick name="counts_toward_certified" label="Counts towards the hours each quarter" hint="Untick for safety modules (Carla, 16 Nov 2026)." defaultChecked={m ? m.counts_toward_certified : true} />{/* counts towards certification. */}
+      <p className="text-sm text-zinc-600">Safety modules (needed before new students) never count towards the training hours each quarter. Every other module does. The app sets this itself.</p>{/* how the quarterly hours are counted (automatic, Carla 16 Nov 2026). */}
     </> // End of the group.
   ); // End of what's shown.
 } // End of ModuleFields.

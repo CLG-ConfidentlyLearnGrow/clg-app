@@ -286,7 +286,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. **Who opened what** shows recent use.
 
 ### Training setup
-1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it.
+1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
 `;
 
