@@ -304,6 +304,11 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 ### Add credit
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
 
+### Waive a late cancellation (Owner and Operations)
+1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14.
+2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
+3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Don't keep a copy of the proof. Tutors never see waivers.
+
 ### Paused families
 **Paused families** lists families on hold for an overdue invoice. Sessions start again as soon as they pay. Only the owner (or admins, if the owner allows it in Settings) can choose **Lift the pause** without payment, with a new due date or an agreed payment plan.
 

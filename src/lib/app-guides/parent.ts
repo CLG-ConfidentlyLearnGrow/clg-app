@@ -131,7 +131,9 @@ Tip: Calendar apps can take a few hours to update, and online session links stay
 4. Offer two other times that week for a make-up session. Your tutor picks one. If no other time works, tick that box and CLG will help.
 5. Choose **Cancel this session**.
 
-Credit for a session you cancel: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If CLG or the tutor cancels, you get full credit.
+Credit for a session you cancel with no make-up: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If a make-up is booked, there is nothing extra to pay with 2 hr notice or more, or half the cancelled session with less. Notice counts from when you save the cancel in the app. If CLG or the tutor cancels, you get full credit.
+
+Tip: If your child is suddenly unwell or there's a family emergency, contact CLG (not your tutor). CLG can waive the late-cancel rule once a year for each child; after that, CLG needs to see proof.
 
 ### Pick or confirm a make-up time
 If your tutor or CLG cancels a session, a **Pick a make-up time** card shows on the **Overview**.

@@ -5,7 +5,7 @@ import { approveInvoice, removeSplit } from "@/app/actions/billing"; // The bill
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, small heading, table and text link.
-import { FINANCE, PAY, requireAdminLevel } from "@/lib/auth"; // Admin levels that can see billing and staff pay, and the level check.
+import { FINANCE, FULL_ADMIN, PAY, requireAdminLevel } from "@/lib/auth"; // Admin levels that can see billing, waive late cancels and change staff pay, and the level check.
 import { stripeIsTestMode, stripeKey, xeroConfig } from "@/lib/billing/config"; // Stripe and Xero setting readers.
 import { METHOD_LABELS, PLAN_LABELS, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money"; // Billing labels, money and date formatting, and their types.
 import { adelaideToday } from "@/lib/billing/run"; // Today's date in Adelaide.
@@ -22,7 +22,8 @@ import { // The billing forms:
   SchoolPeriodForm, // a school term or holiday,
   SettingsForm, // billing settings,
   SplitForm, // a split payer,
-  VoidInvoiceForm, // cancel an invoice.
+  VoidInvoiceForm, // cancel an invoice,
+  WaiverForm, // waive a late cancellation.
 } from "./forms"; // End of the forms.
 import { PaySection } from "./pay-section"; // The staff pay section.
 
@@ -67,6 +68,31 @@ type Invoice = { // An invoice as listed:
   discount_cents: number; // discount (in cents),
   xero_invoice_id: string | null; // and its Xero id (if sent there).
 }; // End of Invoice.
+
+type WaiverRow = { // A family cancel or no-show that could be waived:
+  session_id: string; // the session,
+  student_name: string; // the learner,
+  family_name: string | null; // the family,
+  starts_at: string; // when it was booked for,
+  cancelled_at: string | null; // when it was cancelled (nothing for a no-show),
+  status: "cancelled" | "no_show"; // cancelled or no-show,
+  credit_percent: number | null; // the credit it gets now (nothing while make-up times wait),
+  used_this_year: number; // the learner's waivers that year,
+  waived: boolean; // whether it's waived.
+}; // End of WaiverRow.
+
+// Writes a time as "Mon 5 Oct, 4:00pm" in Adelaide time.
+function whenText(value: string): string { // Takes the time.
+  return new Date(value).toLocaleString("en-AU", { timeZone: "Australia/Adelaide", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); // Formats it for Adelaide.
+} // End of whenText.
+
+// Writes the notice given for a cancel, such as "1 hr 30 min notice".
+function noticeText(row: WaiverRow): string { // Takes the row.
+  if (row.status === "no_show" || !row.cancelled_at) return "No-show"; // A no-show had no notice.
+  const minutes = Math.max(0, Math.round((new Date(row.starts_at).getTime() - new Date(row.cancelled_at).getTime()) / 60000)); // Minutes between the cancel and the start.
+  const hours = Math.floor(minutes / 60); // Whole hours.
+  return `Cancelled with ${hours > 0 ? `${hours} hr ` : ""}${minutes % 60} min notice`; // Hours (if any) and minutes.
+} // End of noticeText.
 
 // Xero connection messages after the owner comes back from Xero.
 const XERO_NOTES: Record<string, string> = { // The messages:
@@ -142,6 +168,10 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
 
   // Numbers on the menu: families on hold, invoices and staff hours to approve.
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
+
+  // Late cancels and no-shows that could be waived (Owner and Operations only).
+  const canWaive = FULL_ADMIN.includes(viewer.level); // Whether this admin can waive late cancels.
+  const waiverRows = canWaive && section === "families" ? (((await supabase.rpc("billing_waiver_list")).data ?? []) as WaiverRow[]) : []; // The list, read only when shown.
 
   return ( // Shows:
     <>{/* (a group) */}
@@ -264,6 +294,34 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                 </Card> // End of the card.
               ); // End of what's shown for this family.
             })}{/* End of the loop. */}
+            {canWaive && ( // For Owner and Operations admins:
+              <Card // a fold-up card:
+                title="Late-cancel waivers" // its title,
+                description="Family cancels and no-shows from the last 60 days and next 14. Each learner gets one waiver a calendar year; after that, see proof first. Tutors never see this." // what it's for,
+                collapsible // can fold,
+                defaultOpen={false} // folded to start.
+              >{/* (end of the card's settings) */}
+                {waiverRows.length === 0 ? ( // If there are none:
+                  <Empty>No family cancels or no-shows to look at.</Empty> // an empty line.
+                ) : ( // Otherwise:
+                  <ul className="space-y-4">{/* a list: */}
+                    {waiverRows.map((w) => ( // for each session:
+                      <li key={w.session_id} className="rounded-xl border border-zinc-200 p-4">{/* a box: */}
+                        <p className="text-sm font-medium">{w.student_name}{w.family_name ? ` (${w.family_name})` : ""} · {whenText(w.starts_at)}</p>{/* the learner, family and time, */}
+                        <p className="text-sm text-zinc-600">{/* a grey line: */}
+                          {noticeText(w)} · {w.credit_percent === null ? "Credit waits for make-up times" : `${w.credit_percent}% credit`} · Waivers this year: {w.used_this_year}{/* the notice, credit and waivers used. */}
+                        </p>{/* End of the line. */}
+                        {w.waived ? ( // If already waived:
+                          <p className="mt-2 text-sm text-emerald-800">Waived: full credit.</p> // says so.
+                        ) : w.credit_percent === 100 ? null : ( // Full credit already: nothing to do. Otherwise:
+                          <div className="mt-2"><WaiverForm sessionId={w.session_id} needsProof={w.used_this_year >= 1} /></div> // the waiver form (proof needed after the first).
+                        )}{/* (end of this part) */}
+                      </li> // End of the box.
+                    ))}{/* End of the loop. */}
+                  </ul> // End of the list.
+                )}{/* (end of the list part) */}
+              </Card> // End of the card.
+            )}{/* End of the waivers card. */}
           </> // End of the group.
         )}{/* End of the family section. */}
 

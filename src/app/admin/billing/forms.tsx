@@ -14,7 +14,8 @@ import { // The server actions for these forms:
   saveKeptRate, // save a kept rate,
   savePrice, // save a price,
   saveSplit, // save a split,
-  voidInvoice, // cancel an invoice.
+  voidInvoice, // cancel an invoice,
+  waiveLateCancel, // waive a late cancellation.
 } from "@/app/actions/billing"; // (end of the list)
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field, Select, TextArea } from "@/components/ui"; // The input box, drop-down list and larger text box.
@@ -132,6 +133,21 @@ export function OverrideForm({ familyId }: { familyId: string }) {
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of OverrideForm.
+
+// The form for waiving the late-cancellation rule on one session.
+export function WaiverForm({ sessionId, needsProof }: { sessionId: string; needsProof: boolean }) {
+  return ( // Shows:
+    <ActionForm action={waiveLateCancel} submitLabel="Waive">{/* a form that waives it: */}
+      <input type="hidden" name="session_id" value={sessionId} />{/* the session (hidden), */}
+      <Field label="Why (no health details)" name="reason" required minLength={5} maxLength={500} />{/* the reason, */}
+      {needsProof && ( // if this learner has already had this year's waiver:
+        <label className="flex items-center gap-2 text-sm">{/* a tick box line: */}
+          <input type="checkbox" name="proof_seen" required /> Proof seen and explained to me (don&apos;t keep a copy){/* proof must be seen; no copy kept. */}
+        </label> // End of the line.
+      )}{/* (end of the proof tick box) */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of WaiverForm.
 
 // The form for building an invoice by hand.
 export function BuildInvoiceForm({ families }: { families: Option[] }) {
