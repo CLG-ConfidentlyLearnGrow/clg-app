@@ -67,10 +67,14 @@ body {
   color: var(--color-charcoal);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
-}
+/* The keyboard focus ring: shows which item the keyboard is on.
+   It uses the deeper bronze (#76573a), not the light brand bronze, because
+   the light bronze is too faint against the cream page (under 3:1). The
+   deeper bronze is about 6:1 on cream and 7:1 on white (Carla, 16 Nov 2026). */
+:focus-visible { /* Any item reached with the keyboard: */
+  outline: 2px solid var(--color-teal-700); /* gets a solid deep bronze ring, */
+  outline-offset: 2px; /* with a small gap so the ring sits just outside it. */
+} /* End of the focus ring. */
 
 /* Show a pointing hand over anything that can be clicked (Tailwind 4
    leaves buttons with a plain arrow by default). */
@@ -81,3 +85,81 @@ body {
     cursor: pointer;
   }
 }
+
+/* Pressed look (Carla, 16 Nov 2026): every button, link, tab and "Show /
+   Hide" title shows it has been pressed the moment it is clicked or tapped.
+   It goes in slightly (shrinks a touch), darkens, and gets a soft bronze
+   glow around its edge. The darkening is a see-through layer drawn over the
+   item, so it works on any colour of button, on plain text links, on phones
+   and on computers. The glow makes the press easy to see even on the dark
+   bronze buttons, where darkening alone is hard to notice.
+   "data-pressed" is added for a short moment by press-feedback.tsx, so even
+   a very quick tap on a phone is visible. ":active" is the browser's own
+   "being pressed" state (used while a key or mouse button is held down).
+   This sits outside the style layers so it wins over each item's own look. */
+:is( /* Any of these pressable items: */
+  button, /* buttons, */
+  a[href], /* links, */
+  [role="button"], /* other items that act as buttons, */
+  [role="tab"], /* tabs, */
+  summary, /* "Show / Hide" card titles, */
+  input[type="submit"], /* old-style send buttons, */
+  input[type="button"], /* old-style plain buttons, */
+  input[type="reset"] /* and old-style clear buttons, */
+):is(:active, [data-pressed]):not(:disabled, [aria-disabled="true"]) { /* while being pressed, unless switched off: */
+  scale: 0.96; /* shrinks a touch, so it looks pushed in, */
+  box-shadow: /* draws two things: */
+    inset 0 0 0 100vmax rgb(0 0 0 / 0.18), /* a see-through dark layer over the whole item (darkens it), */
+    0 0 0 3px rgb(168 129 91 / 0.5); /* and a soft bronze glow just outside its edge (brand #a8815b, half see-through), */
+  transition-duration: 50ms; /* and changes almost instantly, so it never feels slow. */
+} /* End of the pressed look. */
+
+/* Phones normally flash their own grey box on a tap. The pressed look above
+   replaces it, so the phone's own flash is switched off to avoid two looks. */
+:is(button, a[href], [role="button"], [role="tab"], summary, input[type="submit"], input[type="button"], input[type="reset"]) { /* On every pressable item: */
+  -webkit-tap-highlight-color: transparent; /* no extra grey tap box from the phone. */
+} /* End of the tap box rule. */
+
+/* Anything marked busy (a saving button or a loading link) shows the
+   "working" mouse pointer on computers. */
+[aria-busy="true"] { /* Any busy item: */
+  cursor: progress; /* shows the pointer with a small spinning circle. */
+} /* End of the busy pointer. */
+
+/* The thin loading bar along the top of the screen, shown by
+   press-feedback.tsx while a new page opens after a link or search is
+   pressed. It is brand bronze (3.5:1 on white, above the 3:1 needed for a
+   shape that is not words). */
+.nav-progress { /* The bar's space: */
+  position: fixed; /* stays put at the top even when the page scrolls, */
+  inset: 0 0 auto 0; /* stretched across the very top edge of the screen, */
+  height: 3px; /* three dots tall, */
+  z-index: 100; /* drawn above everything else, */
+  overflow: hidden; /* hiding the moving stripe when it slides past the edges, */
+  pointer-events: none; /* and never blocking clicks on what is underneath. */
+} /* End of the bar's space. */
+.nav-progress[data-active]::before { /* While loading, a stripe inside it: */
+  content: ""; /* (an empty box, there only to be seen) */
+  position: absolute; /* placed inside the bar's space, */
+  inset: 0 auto 0 0; /* starting at the left edge, full height, */
+  width: 40%; /* two fifths of the screen wide, */
+  background: var(--color-brand); /* in brand bronze, */
+  animation: nav-progress 1.1s ease-in-out infinite; /* sliding across the screen over and over. */
+} /* End of the stripe. */
+@keyframes nav-progress { /* The slide: */
+  from { translate: -100% 0; } /* starts just off the left edge, */
+  to { translate: 250% 0; } /* and ends just off the right edge. */
+} /* End of the slide. */
+
+/* Some people set their phone or computer to reduce movement (for example
+   because movement makes them feel unwell). For them, pressed items darken
+   but do not shrink, and the loading bar is a still, full-width bar. */
+@media (prefers-reduced-motion: reduce) { /* When less movement is asked for: */
+  :is(button, a[href], [role="button"], [role="tab"], summary, input[type="submit"], input[type="button"], input[type="reset"]):is(:active, [data-pressed]) { /* pressed items: */
+    scale: none; /* do not shrink (they still darken). */
+  } /* End of the pressed items rule. */
+  .nav-progress[data-active]::before { /* The loading stripe: */
+    width: 100%; /* fills the whole width, */
+    animation: none; /* and does not move. */
+  } /* End of the stripe rule. */
+} /* End of the less-movement rules. */

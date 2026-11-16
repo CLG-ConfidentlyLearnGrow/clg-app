@@ -15,6 +15,7 @@ import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (
 import { CountBadge } from "@/components/count-badge"; // The small number badge.
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
 import { ReportProblemLink } from "@/components/report-problem-link"; // The "Report app issue" link (remembers the page you were on).
+import { PressFeedback } from "@/components/press-feedback"; // Shows every press of a button or link straight away, and a loading bar while a page opens.
 import { Suspense } from "react"; // Lets part of the page wait for the address details without holding up the rest.
 import "./globals.css"; // The app-wide styles.
 
@@ -43,6 +44,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
         <EmailLinkCatcher />{/* the email sign-in link catcher, */}
+        <Suspense fallback={null}><PressFeedback /></Suspense>{/* the pressed look for every button and link, and the loading bar (waits for the page address, showing nothing meanwhile), */}
         <header className="border-b border-zinc-200 bg-white/90 backdrop-blur">{/* the top bar: */}
           <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">{/* its inner row, centred, */}
             <Link href="/dashboard" className="flex items-center gap-3" aria-label="CLG Tutoring home">{/* the logo, linking home: */}

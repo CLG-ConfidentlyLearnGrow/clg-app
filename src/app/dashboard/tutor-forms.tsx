@@ -139,7 +139,7 @@ export function MyCheckForm() { // The "send in a check" form.
         accept="application/pdf,image/jpeg,image/png,image/webp" // PDF or picture types only,
         hint="A PDF, or a clear photo of the whole card or certificate. Only you and CLG admins can open it." // a help hint.
       />{/* End of the box. */}
-      <Button type="submit" disabled={busy}>{/* the send button (greyed while busy): */}
+      <Button type="submit" busy={busy}>{/* the send button (greyed and showing a spinner while busy): */}
         {busy ? "Sending…" : "Send to CLG"}{/* says "Sending…" while busy. */}
       </Button>{/* End of the button. */}
     </form> // End of the form.

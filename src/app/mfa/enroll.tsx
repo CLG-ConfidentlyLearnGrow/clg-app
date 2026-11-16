@@ -19,7 +19,7 @@ export function EnrollTwoStep() {
         <p className="text-sm">{/* a line: */}
           You&apos;ll need an authenticator app on your phone, such as Microsoft Authenticator or Google Authenticator.{/* saying they need an authenticator app. */}
         </p>{/* End of the line. */}
-        <Button disabled={pending} onClick={() => startTransition(async () => setEnrollment(await startEnrollment()))}>{/* A button that starts set-up (greyed out while starting): */}
+        <Button busy={pending} onClick={() => startTransition(async () => setEnrollment(await startEnrollment()))}>{/* A button that starts set-up (greyed out while starting): */}
           {pending ? "Starting…" : "Set up two-step login"}{/* its words change while starting. */}
         </Button>{/* End of the button. */}
       </div> // End of the block.
