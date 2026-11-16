@@ -311,7 +311,7 @@ If someone is locked out after too many wrong tries, enter their email under **U
 3. **Who opened what** shows recent use.
 
 ### Training setup
-1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module, and the **Next** and **Previous** links at the top and bottom take you through the modules in order. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
+1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module. **Back to all modules** (top and bottom of the page) returns to the list. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. **Progress** shows everyone's compulsory modules. **Handbook** is where you write the tutor handbook pages.
 `;
 

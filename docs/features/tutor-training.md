@@ -32,7 +32,6 @@ Tutors (and CLG admin staff) need to learn how CLG works before they tutor, and 
 - **Certificates.** Each module gives a downloadable certificate with a certificate number. A "CLG certified" certificate is available while the person is certified.
 - **CLG certified.** A person is certified once all their compulsory modules are done. To stay certified, they finish 3 hours of training that counts in each calendar quarter after that. If a full quarter ends short, their status shows "lapsed" until they catch up. CLG can put sessions on hold if needed. The app never does this by itself.
 - **Reminders.** Reminders go out 6 weeks and 2 weeks before a module needs redoing, 1 week before a safety module's 4 weeks run out, and 2 weeks before a quarter ends if they're short of 3 hours. Admins hear about holds and expiries. The usual quiet hours apply.
-- **Reviewing modules in order.** In Training setup, saving a module (including publishing it) keeps the admin on that module. **Previous** and **Next** links at the top and bottom of each module page follow the list's order, so a run of modules can be checked and published one after another (Carla, 16 Nov 2026).
 - **Built for outside tutors later.** Training is its own module, with its own tables. Certification rules don't depend on sessions or pay. That way, outside tutors can be added later as a new kind of learner without a rebuild.
 
 ## 4. How we'll know it works
