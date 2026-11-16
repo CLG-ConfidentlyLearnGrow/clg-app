@@ -51,3 +51,22 @@ There is no database change.
   and screen reader labels (the button says whether the menu is open).
 - **Privacy.** No change to what anyone can see. The signed-in name is
   shown only to the person signed in, as before.
+
+## Follow-up: no sideways scrolling on phones (16 Nov 2026)
+
+Carla found the whole page slid slightly sideways on her phone. Changes:
+
+- **The page never scrolls sideways.** `html` and `body` clip anything that
+  pokes past the screen edge (`overflow-x: clip`, which keeps the side menu's
+  stay-in-view behaviour). Wide tables already scroll inside their own box.
+- **Long words and web addresses wrap** onto the next line instead of
+  widening the page.
+- **Drop-down lists, text boxes, pictures and videos** are never wider than
+  the space they sit in (a drop-down with a long choice used to stretch).
+- **Dashboard tabs (Admin, Tutor, Parent, Student)** are each as wide as
+  their words, with tighter spacing on phones, so all four fit from 360
+  pixels wide. On narrower phones only the tab row scrolls sideways.
+
+Research: WCAG 2.2 success criterion 1.4.10 (Reflow) asks that content fits
+a 320 pixel wide screen without scrolling in two directions, apart from
+content such as data tables that needs two dimensions.

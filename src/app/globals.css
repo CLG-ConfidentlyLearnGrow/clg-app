@@ -65,6 +65,30 @@
 body {
   background: var(--color-cream);
   color: var(--color-charcoal);
+  /* Breaks a very long word or web address onto the next line instead of
+     letting it push the page wider than a phone screen (Carla, 16 Nov 2026). */
+  overflow-wrap: break-word;
+}
+
+/* The page itself never scrolls sideways on a phone (Carla, 16 Nov 2026).
+   Anything that genuinely needs more room, such as a wide table, scrolls
+   inside its own box instead. "clip" (not "hidden") keeps the side menu's
+   stay-in-view behaviour working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* A drop-down list, text box or picture is never wider than the space it
+   sits in. A drop-down with a long choice, for example, would otherwise
+   stretch to fit that choice and push past the edge of a phone screen. */
+select,
+input,
+textarea,
+img,
+video,
+iframe {
+  max-width: 100%;
 }
 
 :focus-visible {

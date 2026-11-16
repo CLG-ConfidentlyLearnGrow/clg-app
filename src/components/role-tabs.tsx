@@ -17,16 +17,22 @@ export async function RoleTabs({ roles, active }: { roles: Role[]; active: Role 
   const todo = await getToDoCounts(roles); // The to-do numbers for this person.
   return ( // Shows:
     <div className="border-b border-zinc-200 bg-white/60">{/* a band with a line underneath, */}
-      <nav aria-label="Your dashboards" className="mx-auto grid w-full max-w-6xl auto-cols-fr grid-flow-col px-2 sm:flex sm:gap-1 sm:px-4">{/* the row of tabs (read aloud as "Your dashboards"): */}
+      {/* Carla, 16 Nov 2026: on a phone the four tabs used to be forced to the
+          same width, which crammed them together and could push the row past
+          the edge of the screen. Now each tab is only as wide as its words
+          need, with tighter spacing on phones, so the row fits. If it ever
+          still does not fit (for example on a very narrow phone or with very
+          large text), only this row scrolls sideways, never the whole page. */}
+      <nav aria-label="Your dashboards" className="mx-auto flex w-full max-w-6xl overflow-x-auto px-1 sm:gap-1 sm:px-4">{/* the row of tabs (read aloud as "Your dashboards"), scrolling on its own only if it cannot fit: */}
         {mine.map((r) => { // for each of the person's roles:
-          const isActive = r === active; // true if it's the open dashboard,
+          const isActive = r === active; // true if it is the open dashboard,
           const theme = ROLE_THEME[r]; // its colours,
           return ( // shows:
             <Link // a link:
               key={r} // (one per role)
               href={ROLE_TABS[r].href} // to that dashboard,
               aria-current={isActive ? "page" : undefined} // marked as the current page if open,
-              className={`-mb-px flex items-center justify-center gap-2 border-b-4 px-2 py-3 text-sm font-medium transition sm:rounded-t-lg sm:px-4 ${ // styled as a tab, with:
+              className={`flex flex-auto shrink-0 items-center justify-center gap-1.5 border-b-4 px-1.5 py-3 text-sm font-medium whitespace-nowrap transition sm:flex-none sm:gap-2 sm:rounded-t-lg sm:px-4 ${ // styled as a tab: on phones it shares out spare room but never squeezes its words; on bigger screens it is just as wide as its words; with:
                 isActive // if it's open,
                   ? `${theme.accentBorder} ${theme.tintBg} ${theme.strongText}` // its colour underline, shading and text,
                   : "border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-800" // otherwise a plain tab that darkens on hover.
