@@ -262,3 +262,14 @@ export function FormMessage({ state }: { state: FormState }) {
 export function TextLink(props: ComponentProps<typeof Link>) {
   return <Link className="font-medium text-teal-700 underline decoration-teal-300 underline-offset-4 transition hover:decoration-teal-700" {...props} />; // Shows the link with the style, passing every setting through.
 } // End of TextLink.
+
+// A clear "back" button in CLG's style: a rounded, outlined teal button that
+// goes to the page above this one, e.g. from a module back to the module list
+// (Carla, 16 Nov 2026). Shared so any page can use the same back button.
+export function BackButton({ href, children }: { href: string; children: ReactNode }) { // Takes where to go and the words to show.
+  return ( // Shows:
+    <Link href={href} className="inline-block rounded-full border border-teal-700 px-5 py-2.5 text-sm font-medium text-teal-800 transition hover:bg-teal-50 hover:font-bold">{/* an outlined teal button linking back, */}
+      ← {children}{/* with an arrow and its words. */}
+    </Link> // End of the button.
+  ); // End of what's shown.
+} // End of BackButton.
