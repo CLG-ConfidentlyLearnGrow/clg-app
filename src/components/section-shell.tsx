@@ -44,6 +44,10 @@ export function SectionShell({
   const activeCount = `bg-white ${theme ? theme.strongText : "text-teal-800"}`; // Look of the open item's count: white with deep-coloured text.
   const idleCount = `${theme ? theme.strongBg : "bg-teal-500"} text-white`; // Look of other items' counts: filled in the deep colour, white text.
   const menuBox = `rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm ${theme ? `border-t-4 ${theme.accentTopBorder}` : ""}`; // Look of the menu box: rounded, bordered, white, with a coloured top edge for a role.
+  // Lets the menu box scroll by itself when its links don't all fit, and
+  // stops that scrolling from carrying on into the page once it reaches
+  // the top or bottom of the menu (Carla, 16 Nov 2026).
+  const menuScroll = "overflow-y-auto overscroll-contain"; // Scroll inside the box when needed; don't pass the scroll on to the page.
   const [open, setOpen] = useState(true); // Whether the side menu is showing (starts showing).
   const [phoneOpen, setPhoneOpen] = useState(false); // Whether the phone menu is open (starts closed).
   // Clicking an open heading that has smaller sections under it (e.g.
@@ -127,7 +131,8 @@ export function SectionShell({
     <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:py-8">{/* a centred row holding the menu and the page, */}
       {/* Computers and tablets: side menu that can be hidden */}
       <aside className={`hidden shrink-0 md:block ${open ? "w-60" : "w-10"}`}>{/* the side menu, hidden on phones, wide when showing and narrow when hidden, */}
-        <div className="sticky top-4">{/* staying in view while scrolling, */}
+        {/* Carla, 16 Nov 2026: the menu scrolls on its own, without moving the page. */}
+        <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col">{/* staying in view while scrolling, never taller than the screen (less a small gap), stacking the button above the menu, */}
           <button // a button:
             type="button" // that doesn't send any form,
             onClick={toggle} // that shows or hides the menu,
@@ -139,7 +144,7 @@ export function SectionShell({
             {open && <span>Hide menu</span>}{/* "Hide menu" in words when showing. */}
             {!open && <span className="sr-only">Show menu</span>}{/* "Show menu" for screen readers only when hidden. */}
           </button>{/* End of the button. */}
-          {open && <div className={menuBox}>{links}</div>}{/* The menu links in their box, when showing. */}
+          {open && <div className={`${menuBox} ${menuScroll} min-h-0`}>{links}</div>}{/* The menu links in their box, when showing, scrolling inside the box when there are more than fit on screen. */}
         </div>{/* End of the in-view block. */}
       </aside>{/* End of the side menu. */}
 
@@ -157,7 +162,7 @@ export function SectionShell({
             </span>{/* End of the words. */}
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>{/* An up or down arrow (hidden from screen readers). */}
           </button>{/* End of the button. */}
-          {phoneOpen && <div className={`mt-2 ${menuBox}`}>{links}</div>}{/* The menu links in their box, when open. */}
+          {phoneOpen && <div className={`mt-2 ${menuBox} ${menuScroll} max-h-[60dvh]`}>{links}</div>}{/* The menu links in their box, when open, no taller than about two-thirds of the screen and scrolling inside the box. */}
         </div>{/* End of the phone block. */}
 
         <PageTitle title={heading} role={role} />{/* The heading: the open section's name (or the dashboard's), in the role's colour. */}
