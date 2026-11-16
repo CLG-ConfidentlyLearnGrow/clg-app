@@ -63,6 +63,7 @@ import { // The scheduling forms:
   SignOnForm, // sign on,
   BookingLengthForm, // how long to book,
   StudentPlacesForm, // a student's session places,
+  StudentTravelForm, // a student's address and travel distance,
   type StudentTerm, // the term dates type,
   TermForm, // add a term,
   WaitlistForm, // join the waitlist.
@@ -856,8 +857,10 @@ async function BookSection({ // Takes:
                 ))}{/* End of the loop. */}
               </div>{/* End of the columns. */}
               <p className="text-xs text-zinc-600">{/* a help line: */}
-                In-person sessions are at public libraries. Ticking more places and times means more tutors can be
-                offered, but no match is guaranteed.{/* (end of the text) */}
+                In-person sessions are at public libraries. Libraries within the family&apos;s travel distance (set under
+                Session places) are included without ticking them, and so are learners&apos; homes within a tutor&apos;s
+                travel distance. Ticking more places and times means more tutors can be offered, but no match is
+                guaranteed.{/* (end of the text) */}
               </p>{/* End of the help line. */}
             </fieldset>{/* End of the group. */}
 
@@ -1015,7 +1018,10 @@ async function PlacesSection({ viewerId }: { viewerId: string }) { // The "where
       />{/* End of the form. */}
       <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{/* an amber note: */}
         In-person sessions are only at public libraries CLG has confirmed, and only inside the library&apos;s opening
-        hours. Sessions at a student&apos;s home or school are arranged by CLG only.{/* (end of the text) */}
+        hours. The easiest way to choose libraries is to set a travel distance on each time you add in your{" "}{/* (the words, then a space) */}
+        <TextLink href="/dashboard/tutor?section=hours">tutor dashboard</TextLink>: libraries within that distance are
+        offered automatically, and the boxes below are then not needed. Sessions at a student&apos;s home are arranged by
+        CLG only.{/* (end of the text) */}
       </p>{/* End of the note. */}
       <SubHeading>Teach at a library that is not listed?</SubHeading>{/* a small heading, */}
       <p className="text-sm text-zinc-600">Add it here. CLG checks it and adds its opening hours before families can book it.</p>{/* what happens when they suggest one, */}
@@ -1307,7 +1313,7 @@ async function ChildPlacesSection({ // Takes:
     supabase.from("students").select("id, full_name, account_id, year_level").order("full_name"), // the students, by name,
     supabase.from("parent_student_links").select("student_id").eq("parent_id", viewerId), // their own children,
     supabase.from("libraries").select("id, name, suburb").eq("active", true).not("confirmed_at", "is", null).order("name"), // confirmed libraries in use, by name,
-    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences"), // and each student's places and preferred times.
+    supabase.from("student_places").select("student_id, online, library_ids, preferred_days, preferred_parts, preferred_school_hours, tutor_preferences, travel_address, travel_km"), // and each student's places, preferred times and travel distance.
   ]); // End of the reads.
   const mine = new Set((linksRes.data ?? []).map((l) => l.student_id as string)); // Their own children.
   const wanted = one(params.student); // The student asked for in the address (if any).
@@ -1326,7 +1332,9 @@ async function ChildPlacesSection({ // Takes:
         preferred_days: number[] | null; // preferred days (if any),
         preferred_parts: string[] | null; // preferred parts of the day (if any),
         preferred_school_hours: boolean; // school hours or not,
-        tutor_preferences: string | null; // tutor preferences (if any).
+        tutor_preferences: string | null; // tutor preferences (if any),
+        travel_address: string | null; // the address they travel from (if any),
+        travel_km: number | null; // and how far they will travel (if set).
       }[] // (end of the type)
     ).map((p) => [p.student_id, p]), // each by student.
   ); // End of places.
@@ -1335,8 +1343,8 @@ async function ChildPlacesSection({ // Takes:
       title={isAdmin ? "Session places" : "Preferred times"} // its title (session places for admins, preferred times for families),
       description={ // its help text:
         isAdmin // for admins,
-          ? "Where and when this student can have sessions, and the study dates that sessions follow. Tutors are matched only where both can go. Preferred times are a preference, not a guarantee." // their wording,
-          : "Days and times that suit each child, and the study dates sessions follow. CLG chooses where sessions happen." // otherwise the family's.
+          ? "Where and when this student can have sessions, how far the family will travel, and the study dates that sessions follow. Tutors are matched only where both can go. Preferred times are a preference, not a guarantee." // their wording,
+          : "Days and times that suit each child, how far you will travel to a library, and the study dates sessions follow." // otherwise the family's.
       } // (end of the help text)
     >{/* (end of the card's settings) */}
       {students.length === 0 ? ( // if no students:
@@ -1363,6 +1371,11 @@ async function ChildPlacesSection({ // Takes:
                 schoolHours={places.get(s.id)?.preferred_school_hours ?? false} // school hours,
                 showPlaces={isAdmin} // showing places only to admins,
                 tutorPreferences={places.get(s.id)?.tutor_preferences ?? ""} // tutor preferences.
+              />{/* End of the form. */}
+              <StudentTravelForm // the travel distance form:
+                studentId={s.id} // the student,
+                address={places.get(s.id)?.travel_address ?? ""} // the saved address (if any),
+                km={places.get(s.id)?.travel_km ?? null} // and distance (if any).
               />{/* End of the form. */}
               <StudyPeriodBlock studentId={s.id} yearLevel={(s.year_level as string | null) ?? null} />{/* their study period box. */}
             </div> // End of the block.

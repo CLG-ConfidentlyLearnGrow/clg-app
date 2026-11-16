@@ -96,10 +96,11 @@ Sessions are booked by CLG for now. CLG finds a time with a tutor who suits, and
 2. For each child, tick the days and parts of the day that suit (morning, middle of the day, afternoon, evening).
 3. Add any tutor preferences, for example experience with dyslexia or exam preparation.
 4. Choose **Save preferences**.
-5. Under the study period, choose your child's school terms (SA government or SA private), or add your own study dates for university or TAFE.
-6. Add your child's last day of school in Term 4 (this changes by school and year level), then save.
+5. Under **How far you will travel**, enter your street address (or another place you travel from) and the most km you will travel to a library, in a straight line. Choose **Save travel distance**. Only your family and CLG admins can see the address; tutors do not.
+6. Under the study period, choose your child's school terms (SA government or SA private), or add your own study dates for university or TAFE.
+7. Add your child's last day of school in Term 4 (this changes by school and year level), then save.
 
-Tip: These are preferences, not guarantees. CLG chooses where sessions happen.
+Tip: These are preferences, not guarantees. CLG offers libraries within your travel distance and within the tutor's.
 
 ### Say how long to book sessions for
 1. In **Sessions**, choose **How long to book**.

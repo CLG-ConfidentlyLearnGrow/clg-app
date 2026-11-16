@@ -108,8 +108,9 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 
 ### Tell CLG which times suit, and for how long
 1. In **Sessions**, choose **Preferred times**. Tick the days and parts of the day that suit, then **Save preferences**.
-2. Set your study period: SA school terms, or your own dates for university or TAFE (add each semester or term with its first and last day).
-3. In **How long to book**, choose the last date for sessions and whether you want them in the holidays.
+2. Under **How far you will travel**, enter the address you travel from and the most km you will travel to a library (in a straight line), then **Save travel distance**. Tutors cannot see the address.
+3. Set your study period: SA school terms, or your own dates for university or TAFE (add each semester or term with its first and last day).
+4. In **How long to book**, choose the last date for sessions and whether you want them in the holidays.
 
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.

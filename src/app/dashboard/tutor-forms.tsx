@@ -3,7 +3,7 @@
 //
 "use client"; // Marks this file as code that runs in the browser.
 
-import { addAvailability, addTeaching, saveMaxHours, submitMyCheck } from "@/app/actions/tutor"; // The tutor actions these forms send to.
+import { addAvailability, addTeaching, addTravelPlace, saveMaxHours, submitMyCheck } from "@/app/actions/tutor"; // The tutor actions these forms send to.
 import { startTransition, useActionState, useState, type FormEvent } from "react"; // React tools: run a send in the background, track a form's result, remember a value, and the form-send type.
 import { ActionForm } from "@/components/action-form"; // A shared form that shows a save button and messages.
 import { Button, Field, FormMessage, Select } from "@/components/ui"; // Shared page parts: a button, a field, a message line and a drop-down.
@@ -28,7 +28,7 @@ export function MaxHoursForm({ current }: { current: number | null }) { // The "
   ); // End of what's shown.
 } // End of MaxHoursForm.
 
-export function AvailabilityForm({ libraries }: { libraries: { id: string; name: string; suburb: string | null }[] }) { // The "add a time I'm available" form (given the list of libraries).
+export function AvailabilityForm({ travelPlaces }: { travelPlaces: { id: string; label: string }[] }) { // The "add a time I am available" form (given the tutor's starting addresses).
   return ( // Shows:
     <ActionForm action={addAvailability} submitLabel="Add time">{/* the form, saving with addAvailability: */}
       <Select label="Day" name="weekday" defaultValue="1">{/* a day drop-down, Monday first: */}
@@ -45,22 +45,48 @@ export function AvailabilityForm({ libraries }: { libraries: { id: string; name:
         <label className="flex items-start gap-2 text-sm">{/* a tick box line: */}
           <input type="checkbox" name="online" defaultChecked className="mt-1" /> Online{/* online (ticked to start). */}
         </label>{/* End of the line. */}
-        <Select label="Library (one per time)" name="library_id" defaultValue="">{/* a library drop-down: */}
-          <option value="">No library</option>{/* the "no library" choice, */}
-          {libraries.map((l) => ( // for each library:
-            <option key={l.id} value={l.id}>{/* an option: */}
-              {l.name}{/* the library's name, */}
-              {l.suburb ? ` (${l.suburb})` : ""}{/* with its suburb, if known. */}
-            </option> // End of the option.
-          ))}{/* End of the loop. */}
-        </Select>{/* End of the drop-down. */}
+        <label className="flex items-start gap-2 text-sm">{/* a tick box line: */}
+          <input type="checkbox" name="libraries" className="mt-1" /> At public libraries within my travel distance{/* libraries. */}
+        </label>{/* End of the line. */}
+        <label className="flex items-start gap-2 text-sm">{/* a tick box line: */}
+          <input type="checkbox" name="home_visits" className="mt-1" /> At learners&apos; homes within my travel distance (CLG arranges these){/* learners' homes. */}
+        </label>{/* End of the line. */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* two columns: */}
+          <Select label="Travelling from" name="travel_place_id" defaultValue={travelPlaces[0]?.id ?? ""}>{/* the starting address drop-down: */}
+            <option value="">Choose…</option>{/* a prompt, */}
+            {travelPlaces.map((p) => ( // for each address:
+              <option key={p.id} value={p.id}>{/* an option: */}
+                {p.label}{/* its name. */}
+              </option> // End of the option.
+            ))}{/* End of the loop. */}
+          </Select>{/* End of the drop-down. */}
+          <Field label="Most km I will travel (straight line)" name="travel_km" type="number" min={1} max={100} step={1} />{/* the distance. */}
+        </div>{/* End of the columns. */}
         <p className="text-xs text-zinc-600">{/* a help line: */}
-          Choose online, one library, or both. For a different library on another day, add another time.{/* explaining the choices. */}
+          {travelPlaces.length === 0 // if they have no address yet:
+            ? "For in-person sessions, first add where you travel from (above)." // asks for one first,
+            : "The distance and starting address can be different for each time you add."}{/* otherwise explains each time can differ. */}
         </p>{/* End of the help line. */}
       </fieldset>{/* End of the group. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of AvailabilityForm.
+
+export function TravelPlaceForm() { // The "add an address I travel from" form.
+  return ( // Shows:
+    <ActionForm action={addTravelPlace} submitLabel="Add address">{/* the form, saving with addTravelPlace: */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{/* three columns: */}
+        <Field label="Name" name="label" placeholder="Home" required maxLength={60} />{/* a short name, */}
+        <div className="sm:col-span-2">{/* (a wider column) */}
+          <Field label="Street address" name="address" placeholder="12 Example St, Unley SA 5061" required maxLength={300} />{/* the street address. */}
+        </div>{/* End of the column. */}
+      </div>{/* End of the columns. */}
+      <p className="text-xs text-zinc-600">{/* a help line: */}
+        The address is looked up once with OpenStreetMap to find its map point. Only the address is sent.{/* says how it is used. */}
+      </p>{/* End of the help line. */}
+    </ActionForm> // End of the form.
+  ); // End of what is shown.
+} // End of TravelPlaceForm.
 
 // Phone photos can be large. Shrink big images before sending so the upload
 // is quick and stays under the size limit. PDFs are sent as they are.

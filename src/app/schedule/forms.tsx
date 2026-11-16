@@ -26,6 +26,8 @@ import { // The server actions these forms send to:
   requestBooking, // ask for a booking,
   saveBookingLength, // save how long to book,
   saveStudentPlaces, // save a student's places,
+  saveStudentTravel, // saves a learner's address and travel distance,
+  clearStudentTravel, // removes a learner's address and travel distance,
   saveTutorPlaces, // save a tutor's places,
   signOn, // sign on to a session,
   stopBooking, // stop a whole booking.
@@ -1109,3 +1111,35 @@ export function StudentPlacesForm({ // Its settings:
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of StudentPlacesForm.
+
+// A learner's address and the most km the family will travel to a library
+// (Carla, 16 Nov 2026). Families and CLG admins see this.
+export function StudentTravelForm({ studentId, address, km }: { studentId: string; address: string; km: number | null }) { // Takes the student, and the saved address and distance.
+  return ( // Shows:
+    <div className="space-y-2 rounded-lg border border-zinc-200 p-3">{/* a bordered box: */}
+      <p className="text-sm font-medium text-zinc-800">How far you will travel</p>{/* its heading, */}
+      <p className="text-xs text-zinc-600">{/* a help line: */}
+        In-person sessions are offered at libraries within this many km of the address, in a straight line. The address
+        can be your home or another place. Only your family and CLG admins can see it; tutors do not.{/* (end of the text) */}
+      </p>{/* End of the help line. */}
+      <ActionForm action={saveStudentTravel} submitLabel="Save travel distance">{/* the form, saving with saveStudentTravel: */}
+        <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{/* three columns: */}
+          <div className="sm:col-span-2">{/* (a wider column) */}
+            <Field label="Street address" name="address" defaultValue={address} placeholder="12 Example St, Unley SA 5061" required maxLength={300} />{/* the street address, */}
+          </div>{/* End of the column. */}
+          <Field label="Most km (straight line)" name="travel_km" type="number" min={1} max={100} step={1} defaultValue={km ?? ""} required />{/* and the distance. */}
+        </div>{/* End of the columns. */}
+        <p className="text-xs text-zinc-600">The address is looked up once with OpenStreetMap to find its map point. Only the address is sent.</p>{/* says how it is used. */}
+      </ActionForm>{/* End of the form. */}
+      {km !== null && ( // If a distance is saved:
+        <form action={clearStudentTravel}>{/* a remove form: */}
+          <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
+          <BusyButton type="submit" className="text-xs text-red-700 underline">{/* the remove button: */}
+            Remove travel distance{/* its words. */}
+          </BusyButton>{/* End of the button. */}
+        </form> // End of the form.
+      )}{/* End of this part. */}
+    </div> // End of the box.
+  ); // End of what is shown.
+} // End of StudentTravelForm.
