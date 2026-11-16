@@ -61,12 +61,14 @@ Tip: **Where you stand** shows what is confirmed and when each check runs out. Y
 ### Set your hours and availability
 1. In the side menu, choose **Hours and availability**.
 2. Enter the most hours you can work each week, then choose **Save hours**.
-3. Add each time you are available: the day, from and to, and a library if it is an in-person time. Choose **Add time**.
-4. Remove a time you no longer have with its remove link.
+3. Under **Where you travel from**, add your home or another address you travel from (for example "Home" or "Uni"), then choose **Add address**. Only you and CLG admins can see it.
+4. Add each time you are available: the day, from and to, and where you can teach. Tick **Online**, **At public libraries within my travel distance**, **At learners' homes within my travel distance**, or a mix. For in-person times, choose the address you are **Travelling from** and the **Most km I will travel** (in a straight line). Choose **Add time**.
+5. The address and distance can be different for each time. Libraries within your distance (and within the family's) are offered for you, so you do not need to pick libraries.
+6. Remove a time you no longer have with its remove link. An address cannot be removed while a time still uses it.
 
 ### Say where you teach
 1. In **Sessions**, choose **Where you teach**.
-2. Tick how you teach (online, in person, or both) and the libraries you can work at, then save.
+2. Tick how you teach (online, in person, or both), then save. If you set travel distances on your times, you do not need to tick libraries here.
 3. Library not in the list? Add its name and suburb, and choose **Suggest library**. CLG checks it before families can book it.
 
 ### Confirm your availability for next term

@@ -10,6 +10,7 @@ import { requireViewer } from "@/lib/auth"; // Gets the signed-in person (or sen
 import { checkDates } from "@/lib/check-dates"; // Works out a check's expiry date.
 import { CHECK_KINDS } from "@/lib/checks"; // The list of check types.
 import { MAX_DOCUMENT_BYTES, documentType } from "@/lib/documents"; // The biggest file allowed, and a reader for the file's real type.
+import { ADDRESS_NOT_FOUND, findMapPoint } from "@/lib/geocode"; // Finds an address's map point, and the message when it cannot.
 import { YEAR_LEVELS, mathsProblem } from "@/lib/students"; // Year levels, and the maths subject-name rule.
 import type { FormState } from "@/lib/forms"; // The type for a form's result.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -53,28 +54,40 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
   const viewer = await requireTutor(); // Makes sure they're a tutor.
   const parsed = slotSchema.safeParse(Object.fromEntries(formData)); // Checks the form values.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Not right: says why.
-  // Where the tutor can teach in this time: online, one library, or both.
+  // Where the tutor can teach in this time: online, and in person within a
+  // distance of one of their starting addresses (libraries, learners' homes, or both).
   const online = formData.get("online") === "on"; // Whether they ticked online.
-  const lib = z.union([z.uuid(), z.literal("")]).safeParse(String(formData.get("library_id") ?? "")); // Checks the library choice is an id or blank.
-  if (!lib.success) return { error: "Couldn't read the library you chose." }; // Not right: says so.
-  const library_id = lib.data || null; // The library (or none).
-  const in_person = library_id !== null; // In person if a library is chosen.
-  if (!in_person && !online) return { error: "Choose online, a library, or both." }; // Needs at least one place.
+  const atLibraries = formData.get("libraries") === "on"; // Whether they ticked libraries.
+  const home_visits = formData.get("home_visits") === "on"; // Whether they ticked learners' homes.
+  const travel = z // Checks the travel part:
+    .object({ // has:
+      travel_place_id: z.union([z.uuid(), z.literal("")]), // a starting address (or blank),
+      travel_km: z.union([z.coerce.number().int("Enter whole kilometres.").min(1, "Enter at least 1 km.").max(100, "100 km is the most allowed."), z.literal("")]), // and a distance from 1 to 100 km (or blank).
+    }) // (end of the fields)
+    .safeParse({ travel_place_id: String(formData.get("travel_place_id") ?? ""), travel_km: String(formData.get("travel_km") ?? "") }); // from the form.
+  if (!travel.success) return { error: travel.error.issues[0].message }; // Not right: says why.
+  const inPerson = atLibraries || home_visits; // In person if libraries or homes are ticked.
+  if (!inPerson && !online) return { error: "Choose online, libraries, learners' homes, or a mix." }; // Needs at least one place.
+  const travel_place_id = inPerson ? travel.data.travel_place_id || null : null; // The starting address (only for in person).
+  const travel_km = inPerson && travel.data.travel_km !== "" ? travel.data.travel_km : null; // The distance (only for in person).
+  if (inPerson && (!travel_place_id || travel_km === null)) { // In person without an address or distance:
+    return { error: "For in-person sessions, choose where you travel from and how many km you will travel." }; // asks for both.
+  } // End of that check.
 
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase // Saves:
     .from("tutor_availability") // into tutor_availability,
-    .insert({ tutor_id: viewer.id, ...parsed.data, in_person, online, library_id }); // the time, places and library, for this tutor.
+    .insert({ tutor_id: viewer.id, ...parsed.data, online, in_person: atLibraries, home_visits, travel_place_id, travel_km, library_id: null }); // the time, places and distance, for this tutor.
   if (error) { // If it didn't work:
     // Say what went wrong in plain words, so it can be fixed quickly.
     if (error.code === "PGRST204" || error.code === "42703") { // A database update hasn't been run:
       return { // gives back:
         error: // the message:
-          "The app's database is missing an update, so times can't be saved yet. The owner needs to run the migration 20261111600400_availability_one_library.sql (and any earlier scheduling updates) in Supabase.", // naming the update to run.
+          "The app's database is missing an update, so times cannot be saved yet. The owner needs to run the migration 20261119700100_travel_distance.sql (and any earlier scheduling updates) in Supabase.", // naming the update to run.
       }; // (end of the message)
     } // End of this case.
-    if (error.code === "22023") { // The library can't be chosen yet:
-      return { error: "That library can't be chosen yet. Pick one from the list, or suggest it under Where you teach." }; // says so.
+    if (error.code === "22023") { // The starting address is not theirs:
+      return { error: "Choose one of your own starting addresses." }; // says so.
     } // End of this case.
     if (error.code === "23503") { // No tutor profile yet:
       return { error: "Your tutor profile isn't set up yet. Ask a CLG admin to finish setting up your tutor account." }; // says so.
@@ -95,6 +108,41 @@ export async function removeAvailability(formData: FormData) { // Removes one of
   await supabase.from("tutor_availability").delete().eq("id", id.data).eq("tutor_id", viewer.id); // Removes the time, only if it's this tutor's.
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.
 } // End of removeAvailability.
+
+// The addresses a tutor travels from (for example Home or Uni). Each one is
+// looked up once to find its map point, so distances can be worked out.
+const travelPlaceSchema = z.object({ // The shape of the address form:
+  label: z.string().trim().min(1, "Give the address a short name, such as Home.").max(60, "Keep the name to 60 characters."), // a short name,
+  address: z.string().trim().min(5, "Enter the full street address.").max(300, "Keep the address to 300 characters."), // and the street address.
+}); // End of the shape.
+
+export async function addTravelPlace(_prev: FormState, formData: FormData): Promise<FormState> { // Adds a starting address for a tutor.
+  const viewer = await requireTutor(); // Makes sure they are a tutor.
+  const parsed = travelPlaceSchema.safeParse({ label: formData.get("label"), address: formData.get("address") }); // Checks the form values.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Not right: says why.
+  const point = await findMapPoint(parsed.data.address); // Looks up the address's map point.
+  if (!point) return { error: ADDRESS_NOT_FOUND }; // Not found: asks them to check it.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.from("tutor_travel_places").insert({ // Saves:
+    tutor_id: viewer.id, // for this tutor,
+    label: parsed.data.label, // the name,
+    address: parsed.data.address, // the address as typed,
+    latitude: point.latitude, // and its map point.
+    longitude: point.longitude, // (west to east)
+  }); // End of the save.
+  if (error) return { error: "Could not save the address. Please try again, or tell a CLG admin if it keeps happening." }; // Did not work: says so.
+  revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.
+  return { message: `Saved. Found: ${point.label}` }; // Says it is saved and shows the address found, so they can check it.
+} // End of addTravelPlace.
+
+export async function removeTravelPlace(formData: FormData) { // Removes one of the tutor's starting addresses.
+  const viewer = await requireTutor(); // Makes sure they are a tutor.
+  const id = z.uuid().safeParse(formData.get("id")); // Checks the address's id.
+  if (!id.success) return; // Not right: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  await supabase.from("tutor_travel_places").delete().eq("id", id.data).eq("tutor_id", viewer.id); // Removes it, only if it is theirs (the database keeps addresses a time still uses).
+  revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.
+} // End of removeTravelPlace.
 
 const myCheckSchema = z.object({ // The shape of the check form:
   kind: z.enum(CHECK_KINDS, "Choose the check."), // which check,

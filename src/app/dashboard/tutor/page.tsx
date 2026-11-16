@@ -2,7 +2,7 @@
 // what they teach, child safety checks, and hours and availability.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
-import { removeAvailability, removeTeaching } from "@/app/actions/tutor"; // The tutor actions: remove an available time, remove a subject.
+import { removeAvailability, removeTeaching, removeTravelPlace } from "@/app/actions/tutor"; // The tutor actions: remove an available time, a subject, or a starting address.
 import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty line, small heading, table and text link.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
@@ -14,7 +14,7 @@ import { STATE_NAMES, WEEKDAYS, checkName, type AuState } from "@/lib/checks"; /
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { NOTE_DUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo } from "@/lib/progress"; // When notes are due, when progress counts as stalled, and "x hr ago" wording.
 import { addDays, currentTime, sessionWhen, shortDate } from "@/lib/scheduling"; // Date helpers: add days, the time now, session time wording, short dates.
-import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm } from "../tutor-forms"; // The tutor forms.
+import { AvailabilityForm, MaxHoursForm, MyCheckForm, TeachingForm, TravelPlaceForm } from "../tutor-forms"; // The tutor forms.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
 
 const SECTIONS = TUTOR_SECTIONS; // The tutor dashboard's own sections (shared with the side menu).
@@ -70,7 +70,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0; // Whether they haven't added any subjects yet.
   const section = firstTime ? "teaching" : requested; // The open section (what they teach, for new tutors).
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes, libsRes] = await Promise.all([ // Reads everything else at once:
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes, travelRes] = await Promise.all([ // Reads everything else at once:
     supabase // their students:
       .from("tutor_assignments") // from tutor_assignments,
       .select("id, subject, student:students(id, full_name, year_level)") // the subject and the student's details,
@@ -85,7 +85,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
     supabase.from("tutor_work_settings").select("max_weekly_hours").eq("tutor_id", viewer.id).maybeSingle(), // their most hours per week,
     supabase // their available times:
       .from("tutor_availability") // from tutor_availability,
-      .select("id, weekday, starts_at, ends_at, in_person, online, library_id, library:libraries(name)") // these details and the library's name,
+      .select("id, weekday, starts_at, ends_at, in_person, online, library_id, library:libraries(name), travel_km, home_visits, travel:tutor_travel_places(label)") // these details, the library's name, and the distance and starting address,
       .eq("tutor_id", viewer.id) // for this tutor,
       .order("weekday") // by day,
       .order("starts_at"), // then start time.
@@ -115,14 +115,14 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .gte("created_at", new Date(currentTime() - 14 * 24 * 3600 * 1000).toISOString()) // from the last 14 days,
       .order("created_at", { ascending: false }) // newest first,
       .limit(20), // up to 20.
-    // Libraries a tutor can pick for a time: confirmed ones, and any they suggested.
-    supabase // libraries:
-      .from("libraries") // from libraries,
-      .select("id, name, suburb") // these details,
-      .eq("active", true) // still in use,
-      .or(`confirmed_at.not.is.null,suggested_by.eq.${viewer.id}`) // confirmed, or suggested by this tutor,
-      .order("name"), // by name.
+    // The addresses the tutor travels from (for in-person distances).
+    supabase // starting addresses:
+      .from("tutor_travel_places") // from tutor_travel_places,
+      .select("id, label, address") // their name and address,
+      .eq("tutor_id", viewer.id) // for this tutor,
+      .order("created_at"), // oldest first.
   ]); // End of the reads.
+  const travelPlaces = (travelRes.data ?? []) as { id: string; label: string; address: string }[]; // The addresses the tutor travels from.
   const pauses = (pausesRes.data ?? []) as unknown as { // The on hold notices:
     id: string; // each has an id,
     kind: "on_hold" | "back_on"; // on hold or back on,
@@ -418,10 +418,31 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                 </li> // End of the row.
               ))}{/* End of the loop. */}
             </ul>{/* End of the list. */}
-            <AvailabilityForm libraries={(libsRes.data ?? []) as { id: string; name: string; suburb: string | null }[]} />{/* the add-a-time form, with the libraries. */}
-            <p className="mt-3 text-sm text-zinc-600">{/* a line: */}
-              Library not in the list? Suggest it under <TextLink href="/schedule?as=tutor&section=places">Where you teach</TextLink>.{/* where to suggest a library. */}
-            </p>{/* End of the line. */}
+            <SubHeading>Where you travel from</SubHeading>{/* a small heading, */}
+            <p className="mb-2 text-sm text-zinc-600">{/* a help line: */}
+              Add your home, or another address you travel from. Only you and CLG admins can see these. Distances are in
+              a straight line from the address.{/* (end of the text) */}
+            </p>{/* End of the help line. */}
+            <ul className="mb-3 space-y-1 text-sm">{/* a list: */}
+              {travelPlaces.length === 0 && <li className="text-zinc-500">None added yet.</li>}{/* none yet, if there are none, */}
+              {travelPlaces.map((p) => ( // for each address:
+                <li key={p.id} className="flex flex-wrap items-center gap-3">{/* a row: */}
+                  <span>{/* (a group) */}
+                    <span className="font-medium">{p.label}</span>{/* its name, */}
+                    <span className="text-zinc-600"> · {p.address}</span>{/* and the address in grey. */}
+                  </span>{/* End of the group. */}
+                  <form action={removeTravelPlace}>{/* a remove form: */}
+                    <input type="hidden" name="id" value={p.id} />{/* the address (hidden), */}
+                    <BusyButton type="submit" className="text-xs text-red-700 underline">{/* the remove button: */}
+                      Remove{/* its words, */}
+                    </BusyButton>{/* end of the button. */}
+                  </form>{/* End of the form. */}
+                </li> // End of the row.
+              ))}{/* End of the loop. */}
+            </ul>{/* End of the list. */}
+            <TravelPlaceForm />{/* the add-an-address form. */}
+            <SubHeading>Add a time</SubHeading>{/* a small heading, */}
+            <AvailabilityForm travelPlaces={travelPlaces} />{/* the add-a-time form, with the starting addresses. */}
           </Card> // End of the card.
         )}{/* End of the hours section. */}
         {!viewer.roles.includes("student") && ( // If they aren't a student too:
@@ -451,9 +472,17 @@ function CaseloadLine({ info }: { info: Caseload | undefined }) { // The line un
 } // End of CaseloadLine.
 
 // Where a weekly time can be taught, in words.
-function slotPlace(slot: { in_person: boolean; online: boolean; library: unknown }) { // Takes the time's places.
+function slotPlace(slot: { in_person: boolean; online: boolean; library: unknown; travel_km: number | null; home_visits: boolean; travel: unknown }) { // Takes the time's places.
   const lib = (Array.isArray(slot.library) ? slot.library[0] : slot.library) as { name: string } | null; // The library (the database can give one or a list).
-  if (!slot.in_person) return "Online only"; // Not in person: online only.
-  const where = lib?.name ?? "any of your libraries (please re-add this time with one library)"; // The library's name, or a note to re-add the time.
-  return slot.online ? `Online or at ${where}` : `At ${where}`; // Online and a library, or just the library.
+  const from = (Array.isArray(slot.travel) ? slot.travel[0] : slot.travel) as { label: string } | null; // The starting address (the database can give one or a list).
+  const parts: string[] = []; // The places, in words.
+  if (slot.online) parts.push("online"); // Online, if ticked.
+  if (slot.travel_km !== null) { // Set up with a distance:
+    const where = [slot.in_person ? "libraries" : "", slot.home_visits ? "learners' homes" : ""].filter(Boolean).join(" and "); // libraries, homes, or both,
+    if (where) parts.push(`${where} within ${slot.travel_km} km of ${from?.label ?? "your address"}`); // within that distance of the address.
+  } else if (slot.in_person) { // Set up the old way, with a library:
+    parts.push(`at ${lib?.name ?? "any of your libraries"} (please re-add this time with a travel distance)`); // the library, with a note to re-add it.
+  } // End of the in-person part.
+  const words = parts.join(", or "); // Joins the places with "or".
+  return words.charAt(0).toUpperCase() + words.slice(1); // Gives it back with a capital first letter.
 } // End of slotPlace.
