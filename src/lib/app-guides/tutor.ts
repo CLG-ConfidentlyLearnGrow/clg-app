@@ -208,6 +208,14 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 2. Choose **Child safety** (in red, top of every page). Report to the child protection line for the child's state, then tell CLG with the form.
 3. Concerns are confidential. If your concern is about someone at CLG, they never see it.
 
+### Ask CLG a question (Help chat)
+1. Choose **Help chat** at the top of any page (on a phone, tap **Menu** first), then **Ask CLG a question**.
+2. Choose what it is about (for example **My pay (CLG staff)** or **Sessions and bookings**). If it is about one of your students, choose them under **Who is it about?**.
+3. Give it a short title, write your message and choose **Send to CLG**. CLG replies in the chat, and you get an email saying there is a reply.
+4. CLG may also start a chat with you. A number next to **Help chat** shows chats with a new reply.
+
+Tip: Families talk to CLG in their own chats, which tutors do not see, so you do not need to chase families for missing details.
+
 ### Give feedback or report an app issue
 - **Feedback**: praise, ideas or worries about the app, CLG's service or people at CLG.
 - **Report app issue**: something in the app is not working. Add a screenshot if you can.

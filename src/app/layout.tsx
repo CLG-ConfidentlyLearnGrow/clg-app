@@ -37,12 +37,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
   const counts = viewer ? await getToDoCounts(viewer.roles) : undefined; // The to-do numbers (for the Child safety button in the top bar).
   const newConcerns = counts?.get("safety", "concerns"); // New child safety concerns sent to this person (only the officer and deputy ever have any).
   const newFlags = counts?.get("safety", "word_flags"); // Flagged words not yet reviewed (only the officer and deputy ever have any).
+  const helpUnread = counts?.get("help", "unread"); // The person's help chats with a reply they have not read yet.
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
         <EmailLinkCatcher />{/* the email sign-in link catcher, */}
         <Suspense fallback={null}><PressFeedback /></Suspense>{/* the pressed look for every button and link, and the loading bar (waits for the page address, showing nothing meanwhile), */}
-        <SiteHeader viewer={viewer} newConcerns={newConcerns} newFlags={newFlags} />{/* the top bar (logo, links, Child safety, who is signed in; a Menu button on phones), */}
+        <SiteHeader viewer={viewer} newConcerns={newConcerns} newFlags={newFlags} helpUnread={helpUnread} />{/* the top bar (logo, links, Child safety, who is signed in; a Menu button on phones), */}
         <div className="flex-1">{children}</div>{/* The page's own content, filling the space. */}
         <footer className="mt-12 border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">{/* The footer: */}
           <p>CLG Tutoring · Confidently Learn &amp; Grow</p>{/* the company name, */}
