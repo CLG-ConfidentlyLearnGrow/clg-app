@@ -1,4 +1,4 @@
--- School terms and renewing each term. Runs after the other scheduling tests
+-- School terms and renewing bookings (now by book-till date). Runs after the other scheduling tests
 -- and reuses their people: tutors T3 (...13) and T4 (...14), parents P3
 -- (...03, Sam Three's parent) and P4 (...04).
 
@@ -54,7 +54,10 @@ select tests.eq((select count(*) from public.sessions where booking_id = :'skipp
 delete from public.sessions where booking_id = :'skipper'; -- Removes its sessions.
 delete from public.bookings where id = :'skipper'; -- Removes the booking.
 
--- A booking that ends this term.
+-- A booking that ends this term. Sam has no book-till date here, so the
+-- question follows the booking's own last date (renewals now follow the
+-- book-till date: 20261119700200_renewals_book_till.sql).
+update public.student_places set book_until = null where student_id = :'sam'; -- Clears any book-till date left by earlier tests.
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery, -- Adds a confirmed booking ending in 8 days:
                              first_date, last_date, status, confirmed_at) -- (with its dates and status)
 select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General Maths', -- (for Sam with tutor T3, General Maths)
@@ -63,13 +66,14 @@ select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General M
 -- and keeps its id as ending.
 returning id as ending \gset
 
-select private.queue_renewals(); -- Queues "same again next term?" questions.
-select tests.eq((select count(*) from public.term_renewals where booking_id = :'ending'), 1, 'family asked about next term'); -- Checks: family asked about next term.
+select private.queue_renewals(); -- Queues the "book again?" questions.
+select tests.eq((select count(*) from public.term_renewals where booking_id = :'ending' and book_until = current_date + 8 -- Checks the family is asked about the booking's last date:
+  and term_id is null and own_term_id is null), 1, 'family asked about the last date (no book-till date)'); -- (not about a term).
 -- Keeps the question's id as renewal.
 select id as renewal from public.term_renewals where booking_id = :'ending' \gset
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' -- Checks the parent gets a notice:
   and booking_id = :'ending' and kind = 'renewal_due'), 1, 'parent gets a notice'); -- (one renewal notice).
-select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor isn't asked:
+select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor is not asked:
   and booking_id = :'ending' and kind = 'renewal_due'), 0, 'tutor is not asked'); -- (none for tutor T3).
 select private.queue_renewals(); -- Queues them again (should not repeat).
 select tests.eq((select count(*) from public.term_renewals where booking_id = :'ending'), 1, 'asked only once'); -- Checks: asked only once.
@@ -77,34 +81,45 @@ select tests.eq((select count(*) from public.term_renewals where booking_id = :'
 -- Who can see and answer.
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.term_renewals), 0, 'tutor cannot see renewal answers'); -- Checks: tutor can't see renewal answers.
-select tests.fails(format($$select public.answer_renewal(%L, true, false)$$, :'renewal'), 'tutor answers'); -- Checks this is refused: tutor answers.
+select tests.eq((select count(*) from public.term_renewals), 0, 'tutor cannot see renewal answers'); -- Checks: tutor cannot see renewal answers.
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 60, false, false)$$, :'renewal'), 'tutor answers'); -- Checks this is refused: tutor answers.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as test account ...04.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.list_renewals()), 0, 'other parent sees none'); -- Checks: other parent sees none.
-select tests.fails(format($$select public.answer_renewal(%L, true, false)$$, :'renewal'), 'other parent answers'); -- Checks this is refused: other parent answers.
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 60, false, false)$$, :'renewal'), 'other parent answers'); -- Checks this is refused: other parent answers.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
 set role anon; -- Acts as someone who is not signed in.
 select tests.fails($$select * from public.term_renewals$$, 'anon'); -- Checks this is refused: anon.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
--- The family answers: same again, no holiday sessions, with feedback.
+-- The family answers: same again until next term ends, no school holiday
+-- sessions, public holiday sessions yes, with feedback.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.list_renewals() where booking_id = :'ending'), 1, 'family sees the question'); -- Checks: family sees the question.
-select tests.fails(format($$select public.answer_renewal(%L, false, false)$$, :'renewal'), 'a change without saying what'); -- Checks this is refused: a change without saying what.
+select tests.eq((select count(*) from public.list_renewals() where booking_id = :'ending' and book_until = current_date + 8), 1, 'family sees the question and its date'); -- Checks: family sees the question and its date.
+select tests.fails(format($$select public.answer_book_again(%L, false, current_date + 60, false, false)$$, :'renewal'), 'a change without saying what'); -- Checks this is refused: a change without saying what.
+select tests.fails(format($$select public.answer_book_again(%L, true, null, false, false)$$, :'renewal'), 'no new book-till date'); -- Checks this is refused: no new book-till date.
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 60, null, false)$$, :'renewal'), 'school holidays not ticked'); -- Checks this is refused: the school holidays question not answered.
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 60, false, null)$$, :'renewal'), 'public holidays not ticked'); -- Checks this is refused: the public holidays question not answered.
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 5, false, false)$$, :'renewal'), 'new date before the last session'); -- Checks this is refused: a new date on or before the last session.
+select tests.fails(format($$select public.answer_renewal(%L, true, false)$$, :'renewal'), 'the old next-term answer is turned off'); -- Checks this is refused: the old next-term answer.
 select tests.fails(format($$update public.term_renewals set same_again = true where id = %L$$, :'renewal'), 'family edits the table directly'); -- Checks this is refused: family edits the table directly.
--- The family says same again, no holidays, with feedback and a testimonial OK; keeps the new booking's id.
-select public.answer_renewal(:'renewal', true, false, null, null, 'Sam loves it', true) as next_booking \gset
-select tests.fails(format($$select public.answer_renewal(%L, true, true)$$, :'renewal'), 'answered twice'); -- Checks this is refused: answered twice.
+-- The family says same again until next term ends, with feedback and a testimonial OK; keeps the new booking's id.
+select public.answer_book_again(:'renewal', true, current_date + 80, false, true, null, null, 'Sam loves it', true) as next_booking \gset
+select tests.fails(format($$select public.answer_book_again(%L, true, current_date + 60, true, true)$$, :'renewal'), 'answered twice'); -- Checks this is refused: answered twice.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims(null); -- Signs out, so no one is signed in.
-select tests.eq((select count(*) from public.bookings where id = :'next_booking' and status = 'requested' -- Checks the tutor gets a request for next term, skipping holidays:
-  and renews_booking = :'ending' and skip_holidays and first_date >= current_date + 24 and last_date = current_date + 80), 1, -- (asked for, renewing the old booking, running through next term),
-  'tutor gets a request for next term, skipping the holidays'); -- (the label).
+select tests.eq((select count(*) from public.bookings where id = :'next_booking' and status = 'requested' -- Checks the tutor gets a request up to the new book-till date:
+  and renews_booking = :'ending' and skip_holidays and not skip_public_holidays -- (renewing the old booking, skipping school holidays only),
+  and first_date = current_date + 15 and last_date = current_date + 80), 1, -- (from the next session day after the last one, to the new date),
+  'tutor gets a request up to the new book-till date, with the holiday ticks'); -- (the label).
+select tests.eq((select count(*) from public.student_places where student_id = :'sam' and book_until = current_date + 80 -- Checks the answers are saved as the student's "How long to book":
+  and include_school_holidays = false and include_public_holidays = true), 1, 'new book-till date and holiday ticks saved for the student'); -- (new date and both ticks).
+select tests.eq((select count(*) from public.term_renewals where id = :'renewal' and new_book_until = current_date + 80 -- Checks the answer is recorded on the question:
+  and holidays = false and public_holidays = true), 1, 'answer recorded with the new date'); -- (the new date and both ticks).
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000013' -- Checks the tutor is told about the request:
   and booking_id = :'next_booking' and kind = 'booking_requested'), 1, 'tutor told about the request'); -- (one notice).
 select tests.eq((select testimonial_ok::int from public.term_renewals where id = :'renewal'), 1, 'testimonial permission kept'); -- Checks: testimonial permission kept.
@@ -114,8 +129,9 @@ set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select public.respond_to_booking(:'next_booking', true); -- The tutor accepts.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
-select tests.eq((select (count(*) > 0)::int from public.sessions where booking_id = :'next_booking'), 1, 'next term''s sessions made'); -- Checks: next term's sessions made.
-select tests.eq((select count(*) from public.sessions where booking_id = :'next_booking' and starts_at < (current_date + 24)::timestamptz), 0, 'none in the holidays'); -- Checks: none in the holidays.
+select tests.eq((select (count(*) > 0)::int from public.sessions where booking_id = :'next_booking'), 1, 'the new sessions are made'); -- Checks: the new sessions are made.
+select tests.eq((select count(*) from public.sessions where booking_id = :'next_booking' -- Checks no sessions fall in the school holidays:
+  and starts_at >= (current_date + 11)::timestamptz and starts_at < (current_date + 24)::timestamptz), 0, 'none in the holidays'); -- (between this term and next).
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
@@ -136,11 +152,13 @@ select private.queue_renewals(); -- Queues the questions.
 select id as renewal2 from public.term_renewals where booking_id = :'other' \gset
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((public.answer_renewal(:'renewal2', false, true, 'time', 'Netball on that day', null, true) is null)::int, 1, 'a change sends no request'); -- Checks: a change sends no request.
+select tests.eq((public.answer_book_again(:'renewal2', false, current_date + 90, true, false, 'time', 'Netball on that day', null, true) is null)::int, 1, 'a change sends no request'); -- Checks: a change sends no request.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims(null); -- Signs out, so no one is signed in.
 select tests.eq((select count(*) from public.term_renewals where id = :'renewal2' and change_what = 'time' -- Checks the change is recorded, and no testimonial without feedback:
   and change_reason = 'Netball on that day' and not testimonial_ok), 1, 'change recorded; no testimonial without feedback'); -- (wants a different time, because of netball).
+select tests.eq((select count(*) from public.student_places where student_id = :'sam' and book_until = current_date + 90 -- Checks a change still saves the new date and ticks for CLG's next offer:
+  and include_school_holidays = true and include_public_holidays = false), 1, 'a change still saves the new book-till date'); -- (the new date and both ticks).
 
 -- Leave the extra sessions and bookings out of the later tests.
 delete from public.sessions where booking_id in (:'ending', :'next_booking', :'other'); -- Removes the test sessions.

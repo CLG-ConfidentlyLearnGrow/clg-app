@@ -77,7 +77,7 @@ Tip: Your parent or carer and your tutor can also see your progress page and roa
 
 ## Sessions
 
-Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Next term**. Times are Adelaide time.
+Open **Sessions** in the side menu. Its sections are **Overview**, **Bookings**, **Preferred times**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices** and **Book again**. Times are Adelaide time.
 
 ### See upcoming sessions and join online
 1. In **Sessions**, choose **Overview**.
@@ -108,8 +108,9 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 
 ### Tell CLG which times suit, and for how long
 1. In **Sessions**, choose **Preferred times**. Tick the days and parts of the day that suit, then **Save preferences**.
-2. Set your study period: SA school terms, or your own dates for university or TAFE (add each semester or term with its first and last day).
-3. In **How long to book**, choose the last date for sessions and whether you want them in the holidays.
+2. Under **How far you will travel**, enter the address you travel from and the most km you will travel to a library (in a straight line), then **Save travel distance**. Tutors cannot see the address.
+3. Set your study period: SA school terms, or your own dates for university or TAFE (add each semester or term with its first and last day).
+4. In **How long to book**, choose the last date for sessions and whether you want them in the holidays.
 
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.
@@ -124,8 +125,8 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 ### Answer a check-in about your tutor
 When you start with a new tutor, a card on your dashboard asks how it is going 1 week, 2 weeks and 6 weeks after your first session. Choose how it is going (1 to 5), whether you would like to keep working with them, and add a comment if you like. Tick **Please contact me about this** if you would like CLG to get in touch, then choose **Send** (or **Skip this check-in**). Only CLG's office team sees your answers, not your tutor.
 
-### Answer the next term question
-Before your study period ends, go to **Sessions**, then **Next term**. Say whether you want the same time and tutor, then choose **Send answer**.
+### Book again before your book-till date
+About 3 weeks before your book-till date, you get a notice called **Book again?**. Go to **Sessions**, then **Book again**. Say whether you want the same day, time and tutor, choose a new book-till date, say again whether you want sessions during school holidays and on public holidays, then choose **Send answer**.
 
 ### Notices and reminders
 In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder settings** to choose when your first reminder comes. Nothing is sent between 9pm and 5am your time.

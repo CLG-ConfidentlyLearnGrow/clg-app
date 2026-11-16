@@ -9,6 +9,7 @@ import { after } from "next/server"; // Runs a task after the reply is sent, so 
 import { z } from "zod"; // The form-checking library.
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in, and says who they are.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
+import { ADDRESS_NOT_FOUND, findMapPoint } from "@/lib/geocode"; // Finds an address's map point, and the message when it cannot.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { runTeamsSyncQuietly } from "@/lib/teams/sync"; // Updates Teams meeting links, without stopping on errors.
 
@@ -40,7 +41,7 @@ const bookingSchema = z
     weekday: z.coerce.number().int().min(1).max(7), // the weekday (1 Monday to 7 Sunday),
     start_time: z.iso.time(), // the start time,
     minutes: z.coerce.number().int().min(60).max(240), // how long, 60 to 240 minutes,
-    delivery: z.enum(["online", "library"]), // online or at a library,
+    delivery: z.enum(["online", "library", "home"]), // online, at a library, or at the learner's home (CLG admins only; the database checks),
     library_id: z.union([z.uuid(), z.literal("")]).optional(), // which library (optional),
     first_date: z.iso.date("Choose the first date."), // the first date,
     last_date: z.iso.date("Choose the last date."), // the last date,
@@ -627,19 +628,22 @@ export async function saveNoticeSettings(_prev: FormState, formData: FormData): 
 } // End of saveNoticeSettings.
 
 // ---------------------------------------------------------------------------
-// Next term: the family's answer, and school term dates (admins)
+// Book again: the family's answer, and school term dates (admins)
 // ---------------------------------------------------------------------------
-// The rules for the family's next-term answer:
+// The rules for the family's "book again?" answer:
 const renewalSchema = z.object({
-  id: z.uuid(), // which renewal,
+  id: z.uuid(), // which question,
   same_again: z.enum(["yes", "no"], "Please say whether you would like the same again."), // the same again, yes or no,
-  holidays: z.enum(["yes", "no"], "Please say whether you would like holiday sessions."), // holiday sessions, yes or no,
+  book_until: z.iso.date("Please choose a new book-till date."), // the new book-till date,
+  school_holidays: z.enum(["yes", "no"], "Please say whether you would like sessions during school holidays."), // school holiday sessions, yes or no,
+  public_holidays: z.enum(["yes", "no"], "Please say whether you would like sessions on public holidays."), // public holiday sessions, yes or no,
   change_what: z.enum(["time", "tutor", "both"]).optional(), // what to change (optional),
   change_reason: z.string().trim().max(1000).optional(), // why (optional),
   feedback: z.string().trim().max(2000).optional(), // feedback (optional).
 }); // End of the rules.
 
-// A family answers whether they'd like the same again next term.
+// A family answers "book again?": same again or not, a new book-till date,
+// and the two holiday questions.
 export async function answerRenewal(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = renewalSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
@@ -648,10 +652,12 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
   if (v.same_again === "no" && !v.change_what) return { error: "Please say what you would like to change." }; // "No" needs what to change.
 
   const supabase = await createClient(); // Connects to the database.
-  const { error } = await supabase.rpc("answer_renewal", { // Asks the database to save the answer:
-    p_renewal: v.id, // which renewal,
+  const { error } = await supabase.rpc("answer_book_again", { // Asks the database to save the answer:
+    p_renewal: v.id, // which question,
     p_same_again: v.same_again === "yes", // same again or not,
-    p_holidays: v.holidays === "yes", // holiday sessions or not,
+    p_book_until: v.book_until, // the new book-till date,
+    p_school_holidays: v.school_holidays === "yes", // school holiday sessions or not,
+    p_public_holidays: v.public_holidays === "yes", // public holiday sessions or not,
     p_change_what: v.same_again === "no" ? (v.change_what ?? null) : null, // what to change (only when "no"),
     p_change_reason: v.change_reason || null, // why (or none),
     p_feedback: v.feedback || null, // feedback (or none),
@@ -660,7 +666,7 @@ export async function answerRenewal(_prev: FormState, formData: FormData): Promi
   if (error) return { error: plainError(error, "Could not save your answer.") }; // Failed: plain message.
   return done( // Refreshes, updates Teams, and tells them:
     v.same_again === "yes" // if the same again,
-      ? "Thank you. Your tutor has been asked to confirm next term." // that the tutor will confirm,
+      ? "Thank you. Your tutor has been asked to confirm the new dates." // that the tutor will confirm,
       : "Thank you. CLG will be in touch to arrange the change.", // otherwise that CLG will be in touch.
   ); // (end of the message)
 } // End of answerRenewal.
@@ -761,8 +767,13 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
       .maybeSingle(); // (one at most).
     online = current?.online ?? true; // keeps online as it was (yes if not set),
     libraryIds = (current?.library_ids as string[] | undefined) ?? []; // and keeps the libraries as they were.
-  } else if (!online && libraryIds.length === 0) { // Otherwise, if nothing was chosen:
-    return { error: "Choose online, at least one library, or both." }; // asks for online, a library, or both.
+  } else if (!online && libraryIds.length === 0) { // Otherwise, if nothing was ticked:
+    const { data: travel } = await supabase // reads whether a travel distance is saved:
+      .from("student_places") // from the student places table,
+      .select("travel_km") // the distance,
+      .eq("student_id", student.data) // for this child,
+      .maybeSingle(); // (one at most).
+    if (!travel?.travel_km) return { error: "Choose online, at least one library, or save a travel distance." }; // none either: asks for one.
   } // End of that check.
   const days = formData.getAll("preferred_day").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7); // The preferred weekdays, only 1 to 7.
   const PARTS = ["morning", "midday", "afternoon", "evening"]; // The parts of the day allowed.
@@ -783,3 +794,55 @@ export async function saveStudentPlaces(_prev: FormState, formData: FormData): P
   if (error) return { error: "Could not save the places." }; // Failed: plain message.
   return done("Saved. Offers will start from these places and preferences."); // Refreshes, updates Teams, and confirms it.
 } // End of saveStudentPlaces.
+
+// A learner's travel distance: the family's address (or another place they
+// choose) and the most km they will travel to a library, in a straight line.
+// Families and CLG admins can set it (Carla, 16 Nov 2026).
+const studentTravelSchema = z.object({ // The shape of the travel form:
+  student_id: z.uuid("Could not read which child this is for."), // which child,
+  address: z.string().trim().min(5, "Enter the full street address.").max(300, "Keep the address to 300 characters."), // the street address,
+  travel_km: z.coerce.number("Enter a number of km.").int("Enter whole kilometres.").min(1, "Enter at least 1 km.").max(100, "100 km is the most allowed."), // and the most km, 1 to 100.
+}); // End of the shape.
+
+export async function saveStudentTravel(_prev: FormState, formData: FormData): Promise<FormState> { // Saves a learner's address and travel distance.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = studentTravelSchema.safeParse(Object.fromEntries(formData)); // Checks the form values.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Not right: says why.
+  const point = await findMapPoint(parsed.data.address); // Looks up the address's map point.
+  if (!point) return { error: ADDRESS_NOT_FOUND }; // Not found: asks them to check it.
+  const supabase = await createClient(); // Connects to the database.
+  const { data: current } = await supabase // Reads the current places (to keep them):
+    .from("student_places") // from the student places table,
+    .select("student_id") // just whether a row exists,
+    .eq("student_id", parsed.data.student_id) // for this child,
+    .maybeSingle(); // (one at most).
+  const travel = { // The travel details to save:
+    travel_address: parsed.data.address, // the address as typed,
+    travel_latitude: point.latitude, // its map point,
+    travel_longitude: point.longitude, // (west to east)
+    travel_km: parsed.data.travel_km, // and the distance.
+  }; // End of the details.
+  const { error } = current // Saves:
+    ? await supabase.from("student_places").update(travel).eq("student_id", parsed.data.student_id) // into the existing row,
+    : await supabase.from("student_places").insert({ student_id: parsed.data.student_id, online: true, ...travel }); // or a new row (online stays on).
+  if (error) return { error: "Could not save the travel distance. Only the child's family and CLG admins can change it." }; // Did not work: says so.
+  return done(`Saved. Found: ${point.label}`); // Refreshes and shows the address found, so they can check it.
+} // End of saveStudentTravel.
+
+export async function clearStudentTravel(formData: FormData) { // Removes a learner's address and travel distance.
+  await requireViewer(); // Makes sure someone is signed in.
+  const student = z.uuid().safeParse(formData.get("student_id")); // Checks the child's id.
+  if (!student.success) return; // Not right: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  const { data: current } = await supabase // Reads the current places:
+    .from("student_places") // from the student places table,
+    .select("online, library_ids") // online and libraries,
+    .eq("student_id", student.data) // for this child,
+    .maybeSingle(); // (one at most).
+  const keepSomewhere = !current?.online && ((current?.library_ids as string[] | undefined) ?? []).length === 0; // Nothing else would be left:
+  await supabase // Clears the travel details:
+    .from("student_places") // in the student places table,
+    .update({ travel_address: null, travel_latitude: null, travel_longitude: null, travel_km: null, ...(keepSomewhere ? { online: true } : {}) }) // (turning online back on if nothing else is left),
+    .eq("student_id", student.data); // for this child.
+  revalidatePath("/schedule"); // Refreshes the sessions page.
+} // End of clearStudentTravel.
