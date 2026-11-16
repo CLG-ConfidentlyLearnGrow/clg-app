@@ -65,7 +65,7 @@ export default async function StaffDirectoryPage() {
         />{/* (end of the heading) */}
         {error ? ( // If the list couldn't load:
           <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{/* a red alert box: */}
-            Couldn&apos;t load the staff directory. Please refresh the page.{/* asking them to refresh. */}
+            Could not load the staff directory. Please refresh the page.{/* asking them to refresh. */}
           </p> // End of the alert.
         ) : ( // Otherwise:
           <StaffDirectory // the directory:

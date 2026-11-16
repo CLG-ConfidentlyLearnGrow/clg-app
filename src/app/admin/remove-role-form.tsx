@@ -32,7 +32,7 @@ export function RemoveRoleForm() {
       <Field label="Type the person's full name to confirm" name="confirm_name" required autoComplete="off" />{/* The full name typed to confirm. */}
       <p className="text-xs text-zinc-600">{/* A small grey note: */}
         {what === "delete" // when deleting,
-          ? "This deletes the login and everything linked to it straight away, and can't be undone. Accounts with billing or session records CLG must keep can't be deleted; remove their roles instead." // that it can't be undone and what can't be deleted,
+          ? "This deletes the login and everything linked to it straight away, and cannot be undone. Accounts with billing or session records CLG must keep cannot be deleted; remove their roles instead." // that it can't be undone and what can't be deleted,
           : "Removing a role keeps their records, which are deleted later under the usual keeping rules. An account with no roles left is deleted after 12 months unused."}{/* otherwise, that records are kept under the keeping rules. */}
       </p>{/* End of the note. */}
     </ActionForm> // End of the form.

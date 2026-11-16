@@ -518,9 +518,9 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                 ))}{/* End of the loop. */}
                 <li>{/* A last list item: */}
                   {chosenDue ? ( // if a session is chosen,
-                    <TextLink href={`/students/${id}/progress?session=none`}>A session that wasn&apos;t booked in the app</TextLink> // a link to write a note for a session not booked in the app,
+                    <TextLink href={`/students/${id}/progress?session=none`}>A session that was not booked in the app</TextLink> // a link to write a note for a session not booked in the app,
                   ) : ( // otherwise:
-                    <strong>A session that wasn&apos;t booked in the app (writing now)</strong> // says that's the one being written.
+                    <strong>A session that was not booked in the app (writing now)</strong> // says that's the one being written.
                   )}{/* End of this part. */}
                 </li>{/* End of the list item. */}
               </ul>{/* End of the list. */}

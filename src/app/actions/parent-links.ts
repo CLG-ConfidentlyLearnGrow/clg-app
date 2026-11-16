@@ -21,7 +21,7 @@ const linkSchema = z.object({
   student_id: z.uuid("Choose a student."), // which student,
   email: z.email("Enter the parent's email address.").trim().toLowerCase(), // the parent's email (tidied to lower case),
   contact_name: z.string().trim().max(200).optional(), // their name (needed only for a new account),
-  relationship: z.enum(RELATIONSHIPS, "Choose how they're related to the student."), // and how they're related.
+  relationship: z.enum(RELATIONSHIPS, "Choose how they are related to the student."), // and how they're related.
 }); // End of the rules.
 
 type Found = { account_id: string; full_name: string; is_parent: boolean; is_student: boolean }; // One account found by email: id, name, and whether they're a parent or student.
@@ -41,7 +41,7 @@ export async function linkParent(_prev: FormState, formData: FormData): Promise<
 
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const lookup = await supabase.rpc("admin_find_account", { p_email: v.email }); // Looks up the email.
-  if (lookup.error) return { error: "We couldn't check that email. Please try again." }; // Lookup failed: plain message.
+  if (lookup.error) return { error: "We could not check that email. Please try again." }; // Lookup failed: plain message.
   const found = ((lookup.data ?? []) as Found[])[0]; // The first match (if any).
 
   let parentId: string; // The parent's account id.
@@ -53,7 +53,7 @@ export async function linkParent(_prev: FormState, formData: FormData): Promise<
     parentName = found.full_name; // and name.
   } else { // No account yet:
     if (!v.contact_name) { // no name given:
-      return { error: `No one uses ${v.email} for CLG yet. Enter the parent's full name too, and we'll make their account.` }; // asks for the name too.
+      return { error: `No one uses ${v.email} for CLG yet. Enter the parent's full name too, and we will make their account.` }; // asks for the name too.
     } // End of that case.
     const made = await makeAccount(v.email, { signup_as: "parent", full_name: v.contact_name }); // Makes the account and sends the invitation.
     if ("error" in made) return made; // Failed: passes on the message.
@@ -72,14 +72,14 @@ export async function linkParent(_prev: FormState, formData: FormData): Promise<
   if (res.error) { // Linking failed:
     console.error("Linking a parent failed:", res.error.code, res.error.message); // notes why in the server log,
     const start = isNew ? `The account for ${v.email} was made, but` : ""; // mentions the account was made, if it was,
-    return { error: `${start} we couldn't link them. ${plain(res.error, "Please try again.")}`.trim() }; // and explains plainly.
+    return { error: `${start} we could not link them. ${plain(res.error, "Please try again.")}`.trim() }; // and explains plainly.
   } // End of the failure case.
 
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { // Tells the admin:
     message: isNew // if new,
       ? `Account made for ${parentName} and linked to the student.${sentText(v.email, link)}` // the account was made and linked, plus how the invite was sent,
-      : `${parentName} is now linked to the student. They'll see them next time they sign in.`, // otherwise that the parent is linked.
+      : `${parentName} is now linked to the student. They will see them next time they sign in.`, // otherwise that the parent is linked.
   }; // End of the message.
 } // End of linkParent.
 
@@ -95,7 +95,7 @@ export async function unlinkParent(_prev: FormState, formData: FormData): Promis
     p_parent: parsed.data.parent_id, // this parent,
     p_student: parsed.data.student_id, // from this student.
   }); // End of the request.
-  if (res.error) return { error: plain(res.error, "We couldn't remove the link. Please try again.") }; // Failed: plain message.
+  if (res.error) return { error: plain(res.error, "We could not remove the link. Please try again.") }; // Failed: plain message.
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Link removed. They no longer see this student." }; // Confirms it.
 } // End of unlinkParent.
@@ -111,7 +111,7 @@ export async function mergeStudents(_prev: FormState, formData: FormData): Promi
   const res = await supabase.rpc("admin_merge_students", { p_keep: parsed.data.keep, p_remove: parsed.data.remove }); // Asks the database to merge them.
   if (res.error) { // Failed:
     console.error("Merging students failed:", res.error.code, res.error.message); // notes why in the server log,
-    return { error: plain(res.error, "We couldn't merge them. Please try again.") }; // and explains plainly.
+    return { error: plain(res.error, "We could not merge them. Please try again.") }; // and explains plainly.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
   return { message: "Merged. Every parent now sees the one profile." }; // Confirms it.
@@ -129,7 +129,7 @@ export async function dismissDuplicate(_prev: FormState, formData: FormData): Pr
     p_student: parsed.data.student_id, // this student,
     p_other: parsed.data.other_id, // and the other one.
   }); // End of the request.
-  if (res.error) return { error: "We couldn't save that. Please try again." }; // Failed: plain message.
+  if (res.error) return { error: "We could not save that. Please try again." }; // Failed: plain message.
   revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
-  return { message: "Noted as different children. They won't be flagged again." }; // Confirms they won't be flagged again.
+  return { message: "Noted as different children. They will not be flagged again." }; // Confirms they won't be flagged again.
 } // End of dismissDuplicate.

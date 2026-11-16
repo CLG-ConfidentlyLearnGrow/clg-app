@@ -47,13 +47,13 @@ export async function addGoal(_prev: FormState, formData: FormData): Promise<For
     .select("id") // and gets back its id,
     .single(); // (just the one row).
   if (goal.error) { // It failed:
-    return { error: goal.error.code === "23514" ? goal.error.message : "Couldn't save the goal." }; // shows the database's plain rule message, or a general one.
+    return { error: goal.error.code === "23514" ? goal.error.message : "Could not save the goal." }; // shows the database's plain rule message, or a general one.
   } // End of the failure case.
 
   const linked = await supabase // Links the skills to the goal:
     .from("goal_skills") // in the goal skills table,
     .insert(skills.map((skill_id) => ({ goal_id: goal.data.id, skill_id }))); // one row per skill.
-  if (linked.error) return { error: "The goal was saved, but its skills couldn't be. Please add them again." }; // Failed: says the goal saved but the skills need adding again.
+  if (linked.error) return { error: "The goal was saved, but its skills could not be. Please add them again." }; // Failed: says the goal saved but the skills need adding again.
 
   revalidatePath(progressPath(parsed.data.student_id)); // Refreshes the student's progress page.
   return { message: "Goal added." }; // Confirms it.
@@ -133,7 +133,7 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
   if (error) { // It failed:
     // The database explains rule breaks in plain words.
     const plain = ["23514", "22023", "42501"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? error.message : "Couldn't save the note. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? error.message : "Could not save the note. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
 
   // Which booklets or materials were used (kept by the materials module).
@@ -149,7 +149,7 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
   return { // Tells the tutor:
     message: // (the message)
       "Session note saved. The family can see what went well, the next step and the tip for home." + // that the note is saved and what the family sees,
-      (materialsProblem ? " The booklet used couldn't be recorded, but the note is saved." : ""), // plus a note if the materials couldn't be recorded.
+      (materialsProblem ? " The booklet used could not be recorded, but the note is saved." : ""), // plus a note if the materials couldn't be recorded.
   }; // End of the message.
 } // End of saveSessionNote.
 
@@ -177,7 +177,7 @@ export async function saveReflection(_prev: FormState, formData: FormData): Prom
     what_was_hard: v.what_was_hard || null, // what was hard (or none),
     what_i_will_try: v.what_i_will_try || null, // what they'll try (or none).
   }); // End of the save.
-  if (error) return { error: "Couldn't save the reflection." }; // Failed: plain message.
+  if (error) return { error: "Could not save the reflection." }; // Failed: plain message.
 
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page.
   return { message: "Thanks! Your tutor will see this before your next session." }; // Thanks them.
@@ -198,7 +198,7 @@ export async function saveFamilyNote(_prev: FormState, formData: FormData): Prom
 
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.from("family_notes").insert(parsed.data); // Saves the note.
-  if (error) return { error: "Couldn't send it. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not send it. Please try again." }; // Failed: plain message.
 
   revalidatePath(progressPath(parsed.data.student_id)); // Refreshes the student's progress page.
   return { message: "Thanks! The tutor and CLG will see this." }; // Thanks them.
@@ -242,7 +242,7 @@ export async function addRoadmapTarget(_prev: FormState, formData: FormData): Pr
     }) // (end of the values)
     .select("id") // and gets back its id,
     .single(); // (just the one row).
-  if (error) return { error: error.code === "23514" ? error.message : "Couldn't save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? error.message : "Could not save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
 
   // Assessments get a study plan straight away; it can be edited after.
   const planned = v.kind === "assessment" && formData.get("plan") === "on"; // True if it's an assessment and "plan" was ticked.
@@ -260,7 +260,7 @@ export async function addRoadmapTarget(_prev: FormState, formData: FormData): Pr
     if (!(file instanceof File) || file.size === 0) continue; // Skips it if not given.
     const stored = await storeEvidenceFile(supabase, v.student_id, file); // Stores the file.
     if ("error" in stored) { // Storing failed:
-      problems.push(`The ${label} didn't upload: ${stored.error}`); // notes the problem,
+      problems.push(`The ${label} did not upload: ${stored.error}`); // notes the problem,
       continue; // and moves on.
     } // End of the failure case.
     const saved = await supabase.from("learning_evidence").insert({ // Records the file as evidence:
@@ -275,7 +275,7 @@ export async function addRoadmapTarget(_prev: FormState, formData: FormData): Pr
     }); // End of the record.
     if (saved.error) { // Recording failed:
       await supabase.storage.from("learning-evidence").remove([stored.path]); // removes the stored file so nothing is left behind,
-      problems.push(`The ${label} couldn't be saved. Please try again.`); // and notes the problem.
+      problems.push(`The ${label} could not be saved. Please try again.`); // and notes the problem.
     } // End of the failure case.
   } // End of the files loop.
 
@@ -305,7 +305,7 @@ export async function addRoadmapStep(_prev: FormState, formData: FormData): Prom
     title: v.title, // the step's words,
     due_on: v.due_on || null, // the due date (or none).
   }); // End of the save.
-  if (error) return { error: error.code === "23514" ? error.message : "Couldn't add the step. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? error.message : "Could not add the step. Please try again." }; // Failed: the database's plain rule message, or a general one.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page,
   revalidatePath("/dashboard/student"); // and the student's dashboard.
   return { message: "Step added." }; // Confirms it.
@@ -388,11 +388,11 @@ export async function saveTermReview(_prev: FormState, formData: FormData): Prom
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["23514", "22023"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? error.message : "Couldn't save the review. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? error.message : "Could not save the review. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page,
   revalidatePath("/dashboard/tutor"); // and the tutor's dashboard.
-  return { message: submit ? "Sent to CLG to check. The family sees it once it's checked." : "Draft saved." }; // Confirms it was sent, or saved as a draft.
+  return { message: submit ? "Sent to CLG to check. The family sees it once it is checked." : "Draft saved." }; // Confirms it was sent, or saved as a draft.
 } // End of saveTermReview.
 
 // An admin approves a term review, or sends it back.
@@ -411,7 +411,7 @@ export async function checkTermReview(_prev: FormState, formData: FormData): Pro
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["23514", "22023", "42501"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? error.message : "Couldn't save that. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? error.message : "Could not save that. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath("/admin"); // Refreshes the admin pages.
   return { message: v.decision === "approve" ? "Approved. The family can see it now." : "Sent back to the tutor." }; // Confirms what happened.
@@ -431,7 +431,7 @@ export async function replyTermReview(_prev: FormState, formData: FormData): Pro
     p_reply: v.reply ?? "", // the reply (or blank),
     p_wants_call: formData.get("wants_call") === "on", // and whether they'd like a call.
   }); // End of the request.
-  if (error) return { error: error.code === "23514" ? error.message : "Couldn't send it. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? error.message : "Could not send it. Please try again." }; // Failed: the database's plain rule message, or a general one.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page.
   return { message: "Thanks! CLG and the tutor will see this." }; // Thanks them.
 } // End of replyTermReview.
@@ -454,7 +454,7 @@ export async function answerTermReviewOffer(_prev: FormState, formData: FormData
   }); // End of the request.
   if (error) { // It failed:
     const plain = ["22023", "42501"].includes(error.code ?? ""); // true for the database's own plain refusals,
-    return { error: plain ? error.message : "Couldn't save your answer. Please try again." }; // shows that message, or a general one.
+    return { error: plain ? error.message : "Could not save your answer. Please try again." }; // shows that message, or a general one.
   } // End of the failure case.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page,
   revalidatePath("/admin"); // and the admin pages.
@@ -462,7 +462,7 @@ export async function answerTermReviewOffer(_prev: FormState, formData: FormData
   if (v.answer === "free") return { message: "Booked at no charge. The tutor has been asked to write it." }; // Confirms a free review.
   return { // Confirms a "yes":
     message: data // with the invoice number if one was made,
-      ? `Booked. The tutor has been asked to write it, and it's on invoice ${data}.` // (naming the invoice),
+      ? `Booked. The tutor has been asked to write it, and it is on invoice ${data}.` // (naming the invoice),
       : "Booked. The tutor has been asked to write it, and CLG will send the invoice.", // or saying CLG will bill it.
   }; // End of the reply.
 } // End of answerTermReviewOffer.
@@ -501,7 +501,7 @@ async function storeEvidenceFile(
   const upload = await supabase.storage // Uploads it:
     .from("learning-evidence") // to the evidence storage,
     .upload(path, bytes, { contentType: kind.type, upsert: false }); // at that path, with its type, never replacing another file.
-  if (upload.error) return { error: "Couldn't upload the file. Please try again." }; // Failed: plain message.
+  if (upload.error) return { error: "Could not upload the file. Please try again." }; // Failed: plain message.
   return { path, type: kind.type }; // Gives back the path and type.
 } // End of storeEvidenceFile.
 
@@ -535,7 +535,7 @@ export async function addEvidence(_prev: FormState, formData: FormData): Promise
   if (error) { // It failed:
     // Don't leave an unattached copy behind.
     await supabase.storage.from("learning-evidence").remove([path]); // removes the stored file,
-    return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." }; // and shows the database's plain rule message, or a general one.
+    return { error: error.code === "23514" ? `${error.message}.` : "Could not save it. Please try again." }; // and shows the database's plain rule message, or a general one.
   } // End of the failure case.
 
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page.
@@ -569,7 +569,7 @@ export async function reviewEvidence(_prev: FormState, formData: FormData): Prom
     p_comment: parsed.data.comment ?? "", // the comment (or blank),
     p_skills: skills, // the skills.
   }); // End of the request.
-  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Could not save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
   revalidatePath(progressPath(parsed.data.student_id)); // Refreshes the student's progress page.
   return { message: "Saved." }; // Confirms it.
 } // End of reviewEvidence.
@@ -610,7 +610,7 @@ export async function addSeniorSubject(_prev: FormState, formData: FormData): Pr
     status: v.status, // the status,
     grade: v.status === "finished" ? v.grade : null, // the grade, only when finished.
   }); // End of the save.
-  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Could not save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page.
   return { message: "Subject added." }; // Confirms it.
 } // End of addSeniorSubject.
@@ -635,7 +635,7 @@ export async function updateSeniorSubject(_prev: FormState, formData: FormData):
     .from("senior_subjects") // in the senior subjects table,
     .update({ status: v.status, grade: v.status === "finished" ? v.grade : null }) // the status, and the grade only when finished,
     .eq("id", v.id); // for this subject.
-  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
+  if (error) return { error: error.code === "23514" ? `${error.message}.` : "Could not save it. Please try again." }; // Failed: the database's plain rule message, or a general one.
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page.
   return { message: "Saved." }; // Confirms it.
 } // End of updateSeniorSubject.

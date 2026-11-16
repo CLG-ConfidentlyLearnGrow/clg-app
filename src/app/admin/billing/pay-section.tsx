@@ -136,7 +136,7 @@ export async function PaySection({
       xeroEmployees = emps.map((e) => ({ id: e.EmployeeID, name: `${e.FirstName} ${e.LastName}`, email: (e.Email ?? "").toLowerCase() })); // keeps each employee's id, name and email,
       xeroRates = rates.map((r) => ({ id: r.EarningsRateID, name: r.Name })); // and each rate's id and name.
     } catch (e) { // If it failed:
-      xeroNote = `Couldn't read Xero Payroll: ${(e as Error).message} You may need to connect Xero again to allow payroll.`; // notes why, and that Xero may need connecting again.
+      xeroNote = `Could not read Xero Payroll: ${(e as Error).message} You may need to connect Xero again to allow payroll.`; // notes why, and that Xero may need connecting again.
     } // End of the try.
   } // End of the Xero part.
 
@@ -281,7 +281,7 @@ export async function PaySection({
         {xeroNote && <p className="mb-4 text-sm text-red-800">{xeroNote}</p>}{/* the Xero note, if any, */}
         {!xeroNote && !xeroEmployees && ( // If Xero isn't connected:
           <p className="mb-4 text-sm text-amber-900">{/* an amber note: */}
-            Xero isn&apos;t connected, so staff can&apos;t be matched to their Xero employee records yet. The owner connects it under Stripe and Xero, above.{/* why matching isn't shown, and how to fix it. */}
+            Xero is not connected, so staff cannot be matched to their Xero employee records yet. The owner connects it under Stripe and Xero, above.{/* why matching isn't shown, and how to fix it. */}
           </p> // End of the note.
         )}{/* End of that note. */}
         {canEdit && xeroEmployees && <div className="mb-4"><LinkXeroByEmailForm /></div>}{/* When Xero is connected: the "link by email" button. */}

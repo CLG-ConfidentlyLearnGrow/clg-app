@@ -101,8 +101,8 @@ export function localClock(iso: string): string {
 // Why a session's times need an admin to check them, in plain words.
 export const TIME_CHECK_REASONS: Record<string, string> = {
   different_end: "Tutor recorded a different end time", // The tutor changed the finish time.
-  not_signed_on: "Tutor didn't sign on", // No sign-on was recorded.
-  not_at_library: "Sign-on check didn't place the tutor at the library", // The location didn't match.
+  not_signed_on: "Tutor did not sign on", // No sign-on was recorded.
+  not_at_library: "Sign-on check did not place the tutor at the library", // The location didn't match.
   no_location: "Signed on without a location check", // No location was shared.
 }; // End of the time check reasons.
 

@@ -26,7 +26,7 @@ export async function startEnrollment(): Promise<Enrollment> {
     factorType: "totp", // a time-based code app,
     friendlyName: `Authenticator ${new Date().toISOString().slice(0, 10)}`, // named with today's date so it's easy to recognise.
   }); // End of the request.
-  if (error || !data) return { error: "We couldn't start two-step login setup. Please try again." }; // Failed: plain message.
+  if (error || !data) return { error: "We could not start two-step login setup. Please try again." }; // Failed: plain message.
   return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret }; // Hands back what the page needs to show.
 } // End of startEnrollment.
 
@@ -47,7 +47,7 @@ export async function verifyTwoStep(_prev: FormState, formData: FormData): Promi
     factorId: parsed.data.factorId, // for this setup,
     code: parsed.data.code, // with this code.
   }); // End of the check.
-  if (error) return { error: "That code didn't work. Codes change every 30 seconds, so try the newest one." }; // Wrong code: explains codes change every 30 seconds.
+  if (error) return { error: "That code did not work. Codes change every 30 seconds, so try the newest one." }; // Wrong code: explains codes change every 30 seconds.
 
   redirect("/dashboard"); // Worked: goes to the dashboard.
 } // End of verifyTwoStep.

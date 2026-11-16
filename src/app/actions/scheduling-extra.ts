@@ -39,7 +39,7 @@ export async function setStudyPeriod(_prev: FormState, formData: FormData): Prom
   if (!v.success) return { error: "Choose the study period." }; // Not right: asks to choose.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("set_study_period", { p_student: v.data.student_id, p_calendar: v.data.calendar }); // Saves it (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't save the study period.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the study period.") }; // Didn't work: says why.
   return done(v.data.calendar === "own" ? "Saved. Now add the study dates below." : "Saved."); // Saved (and for own dates, asks for them next).
 } // End of setStudyPeriod.
 
@@ -61,7 +61,7 @@ export async function addOwnTerm(_prev: FormState, formData: FormData): Promise<
     p_ends: v.data.ends_on, // the last day,
     p_label: v.data.label || null, // and the name (or none).
   }); // End of the save.
-  if (error) return { error: plainError(error, "Couldn't save those dates.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save those dates.") }; // Didn't work: says why.
   return done("Study dates saved."); // Says it's saved.
 } // End of addOwnTerm.
 
@@ -82,7 +82,7 @@ export async function setTerm4LastDay(_prev: FormState, formData: FormData): Pro
   if (!v.success) return { error: v.error.issues[0].message }; // Not right: says why.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("set_term4_last_day", { p_student: v.data.student_id, p_last_day: v.data.last_day }); // Saves it (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't save the date.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the date.") }; // Didn't work: says why.
   return done("Last day of Term 4 saved."); // Says it's saved.
 } // End of setTerm4LastDay.
 
@@ -113,7 +113,7 @@ export async function makeSessionRequest(_prev: FormState, formData: FormData): 
     p_wants: v.data.kind === "away_cover" ? (v.data.wants ?? "either") : null, // what they'd like (only for cover; either if not chosen),
     p_note: v.data.note || null, // and the note (or none).
   }); // End of the save.
-  if (error) return { error: plainError(error, "Couldn't send the request.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not send the request.") }; // Didn't work: says why.
   return done("Request sent. Your tutor or CLG will offer a time if one is available."); // Says it's sent and what happens next.
 } // End of makeSessionRequest.
 
@@ -143,7 +143,7 @@ export async function offerOneOff(_prev: FormState, formData: FormData): Promise
     p_library: v.data.delivery === "library" ? v.data.library_id || null : null, // the library (only for a library session),
     p_note: v.data.note || null, // and the note (or none).
   }); // End of the save.
-  if (error) return { error: plainError(error, "Couldn't offer that time.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not offer that time.") }; // Didn't work: says why.
   return done("Offered. The family has been asked to approve it."); // Says it's offered and the family must approve.
 } // End of offerOneOff.
 
@@ -155,7 +155,7 @@ export async function closeSessionRequest(_prev: FormState, formData: FormData):
   if (!v.success) return { error: "Something went wrong. Please refresh the page." }; // Not right: asks to refresh.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("close_session_request", { p_id: v.data.id, p_status: v.data.status, p_note: v.data.note || null }); // Saves it (the database checks who may, and that declining has a reason).
-  if (error) return { error: plainError(error, "Couldn't update the request.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not update the request.") }; // Didn't work: says why.
   return done("Request updated."); // Says it's updated.
 } // End of closeSessionRequest.
 
@@ -165,7 +165,7 @@ export async function setSkipPublicHolidays(_prev: FormState, formData: FormData
   if (!v.success) return { error: "Something went wrong. Please refresh the page." }; // Not right: asks to refresh.
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("set_skip_public_holidays", { p_booking: v.data.booking_id, p_skip: v.data.skip === "yes" }); // Saves it; gives back how many sessions were cancelled.
-  if (error) return { error: plainError(error, "Couldn't save that.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save that.") }; // Didn't work: says why.
   const n = Number(data ?? 0); // The number cancelled.
   return done( // Says it's done:
     v.data.skip === "yes" // if skipping,
@@ -189,8 +189,8 @@ export async function blockMatch(_prev: FormState, formData: FormData): Promise<
   const [tutor, student] = v.data.pair.split(":"); // Splits the pair into tutor and student.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("block_match", { p_tutor: tutor, p_student: student, p_reason: v.data.reason }); // Saves the block (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't save the block.") }; // Didn't work: says why.
-  return done("Done. You won't be matched again, and CLG will be in touch to follow up. The other person isn't told."); // Says it's done and what happens next.
+  if (error) return { error: plainError(error, "Could not save the block.") }; // Didn't work: says why.
+  return done("Done. You will not be matched again, and CLG will be in touch to follow up. The other person is not told."); // Says it's done and what happens next.
 } // End of blockMatch.
 
 export async function recordBlockFollowUp(_prev: FormState, formData: FormData): Promise<FormState> { // An admin records how a block was followed up.
@@ -199,7 +199,7 @@ export async function recordBlockFollowUp(_prev: FormState, formData: FormData):
   if (!v.success) return { error: v.error.issues[0].message }; // Not right: says why.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("record_block_follow_up", { p_id: v.data.id, p_note: v.data.note }); // Saves it (the database checks only admins may).
-  if (error) return { error: plainError(error, "Couldn't save the follow-up.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the follow-up.") }; // Didn't work: says why.
   return done("Follow-up saved."); // Says it's saved.
 } // End of recordBlockFollowUp.
 
@@ -231,7 +231,7 @@ export async function suggestLibrary(_prev: FormState, formData: FormData): Prom
     p_suburb: v.data.suburb || null, // the suburb (or none),
     p_address: v.data.address, // and the address.
   }); // End of the save.
-  if (error) return { error: plainError(error, "Couldn't add the library.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not add the library.") }; // Didn't work: says why.
   return done("Added. CLG will confirm the library and its opening hours before sessions can be booked there."); // Says it's added and CLG will confirm it.
 } // End of suggestLibrary.
 
@@ -267,7 +267,7 @@ export async function loadSaLibraries(_prev: FormState): Promise<FormState> { //
     if (!res.ok) throw new Error(String(res.status)); // An error reply: counts as failed.
     elements = ((await res.json()) as { elements?: OsmElement[] }).elements ?? []; // Reads the results (or none).
   } catch { // If it failed:
-    return { error: "Couldn't reach OpenStreetMap just now. Please try again in a few minutes." }; // says so.
+    return { error: "Could not reach OpenStreetMap just now. Please try again in a few minutes." }; // says so.
   } // End of the fallback.
   const rows = elements // Turns results into library rows:
     .filter((e) => e.tags?.name && !NOT_PUBLIC.test(`${e.tags.name} ${e.tags.operator ?? ""}`)) // keeps named ones that aren't university, school and so on,
@@ -283,12 +283,12 @@ export async function loadSaLibraries(_prev: FormState): Promise<FormState> { //
         osm_ref: `${e.type}/${e.id}`, // and its OpenStreetMap reference.
       }; // End of the row.
     }); // End of the list.
-  if (rows.length === 0) return { error: "OpenStreetMap didn't return any libraries. Please try again later." }; // Nothing found: says so.
+  if (rows.length === 0) return { error: "OpenStreetMap did not return any libraries. Please try again later." }; // Nothing found: says so.
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("import_libraries", { p_rows: rows, p_state: "SA" }); // Adds the new ones (the database skips libraries already listed).
-  if (error) return { error: plainError(error, "Couldn't save the libraries.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the libraries.") }; // Didn't work: says why.
   return done( // Says it's done:
-    `Done: ${data ?? 0} new libraries added (${rows.length} found). Hide any that aren't public libraries. Opening hours are asked for once a tutor or family chooses a library.`, // how many were added and found, and what to do next.
+    `Done: ${data ?? 0} new libraries added (${rows.length} found). Hide any that are not public libraries. Opening hours are asked for once a tutor or family chooses a library.`, // how many were added and found, and what to do next.
   ); // End of the message.
 } // End of loadSaLibraries.
 
@@ -305,7 +305,7 @@ export async function addLibraryHours(_prev: FormState, formData: FormData): Pro
   const { error } = await supabase // Saves:
     .from("library_hours") // into library_hours,
     .insert(days.map((d) => ({ library_id: v.data.library_id, weekday: d, opens: v.data.opens, closes: v.data.closes }))); // one row per ticked day.
-  if (error) return { error: "Couldn't save the hours. Only CLG admins can change them." }; // Didn't work (only admins may): says so.
+  if (error) return { error: "Could not save the hours. Only CLG admins can change them." }; // Didn't work (only admins may): says so.
   return done("Opening hours saved."); // Says it's saved.
 } // End of addLibraryHours.
 
@@ -332,7 +332,7 @@ export async function fillHoursFromOsm(_prev: FormState, formData: FormData): Pr
   if ((count ?? 0) > 0) return { error: "This library already has hours. Clear them first to fill them again." }; // Already has hours: says to clear them first.
   const ref = (lib?.osm_ref as string | null | undefined) ?? ""; // The reference (or blank).
   const m = ref.match(/^(node|way|relation)\/(\d+)$/); // Splits it into kind and number.
-  if (!m) return { error: "This library wasn't loaded from OpenStreetMap. Please add its hours by hand." }; // Not from OpenStreetMap: says to add by hand.
+  if (!m) return { error: "This library was not loaded from OpenStreetMap. Please add its hours by hand." }; // Not from OpenStreetMap: says to add by hand.
   let hoursText: string | undefined; // The hours text from OpenStreetMap.
   try { // Tries to read it:
     const res = await fetch(`https://api.openstreetmap.org/api/0.6/${m[1]}/${m[2]}.json`, { // asks OpenStreetMap for this one library:
@@ -344,18 +344,18 @@ export async function fillHoursFromOsm(_prev: FormState, formData: FormData): Pr
     const body = (await res.json()) as { elements?: { tags?: Record<string, string> }[] }; // Reads the reply.
     hoursText = body.elements?.[0]?.tags?.opening_hours; // Picks out its opening hours text.
   } catch { // If it failed:
-    return { error: "Couldn't reach OpenStreetMap just now. Please try again, or add the hours by hand." }; // says so.
+    return { error: "Could not reach OpenStreetMap just now. Please try again, or add the hours by hand." }; // says so.
   } // End of the fallback.
   const rows = parseOsmHours(hoursText); // Turns the text into rows (or nothing if too complicated).
   if (!rows) { // If it couldn't:
     return { // gives back:
       error: hoursText // a message:
         ? `OpenStreetMap lists the hours as "${hoursText}", which is too complicated to fill in. Please add them by hand.` // showing the hours text that was too complicated,
-        : "OpenStreetMap doesn't list hours for this library. Please add them by hand.", // or that there are no hours listed.
+        : "OpenStreetMap does not list hours for this library. Please add them by hand.", // or that there are no hours listed.
     }; // (end of the message)
   } // End of this part.
   const { error } = await supabase.from("library_hours").insert(rows.map((r) => ({ library_id: v.data, ...r }))); // Saves the rows for this library.
-  if (error) return { error: "Couldn't save the hours." }; // Didn't work: says so.
+  if (error) return { error: "Could not save the hours." }; // Didn't work: says so.
   return done("Hours filled in from OpenStreetMap. Please check them against the library's website."); // Says it's filled in, to be checked.
 } // End of fillHoursFromOsm.
 
@@ -375,7 +375,7 @@ export async function confirmLibrary(_prev: FormState, formData: FormData): Prom
   if (!v.success) return { error: "Something went wrong. Please refresh the page." }; // Not right: asks to refresh.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("confirm_library", { p_library: v.data }); // Confirms it (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't confirm the library.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not confirm the library.") }; // Didn't work: says why.
   return done("Library confirmed. Sessions can now be booked there, inside its opening hours."); // Says it's confirmed.
 } // End of confirmLibrary.
 
@@ -388,7 +388,7 @@ export async function setSummaryMinutes(_prev: FormState, formData: FormData): P
   if (!v.success) return { error: "Please enter a number of minutes from 0 to 30." }; // Not right: says what's needed.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("set_summary_minutes", { p_minutes: v.data }); // Saves it (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't save the summary time.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the summary time.") }; // Didn't work: says why.
   revalidatePath("/schedule"); // Refreshes the sessions page.
   return done(`Saved. New times will leave ${v.data} min after each tutor session.`); // Says it's saved.
 } // End of setSummaryMinutes.
@@ -406,6 +406,6 @@ export async function setQuietHours(_prev: FormState, formData: FormData): Promi
   if (starts.data === ends.data) return { error: "Quiet hours must start and end at different times." }; // The same time: says why.
   const supabase = await createClient(); // Connects to the database.
   const { error } = await supabase.rpc("set_quiet_hours", { p_starts: starts.data, p_ends: ends.data }); // Saves it (the database checks who may).
-  if (error) return { error: plainError(error, "Couldn't save the quiet hours.") }; // Didn't work: says why.
+  if (error) return { error: plainError(error, "Could not save the quiet hours.") }; // Didn't work: says why.
   return done("Saved. New notices will wait until quiet hours end."); // Refreshes the page and says it's saved.
 } // End of setQuietHours.

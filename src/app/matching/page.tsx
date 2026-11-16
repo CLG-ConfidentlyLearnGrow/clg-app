@@ -346,7 +346,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
   const fullShortlist = (shortlistRes.data ?? []) as Shortlist[]; // The tutor shortlist from the database.
   const shortlist = fullShortlist.filter((t) => !held.has(t.tutor_id)); // The shortlist without held tutors.
   const notOffered = [ // Tutors who don't fit:
-    ...fullShortlist.filter((t) => held.has(t.tutor_id)).map((t) => ({ tutor_id: t.tutor_id, tutor_name: t.tutor_name, reason: `Compulsory safety training overdue (${held.get(t.tutor_id)}), so no new students until it's done` })), // held tutors, with the reason,
+    ...fullShortlist.filter((t) => held.has(t.tutor_id)).map((t) => ({ tutor_id: t.tutor_id, tutor_name: t.tutor_name, reason: `Compulsory safety training overdue (${held.get(t.tutor_id)}), so no new students until it is done` })), // held tutors, with the reason,
     ...((notOfferedRes.data ?? []) as { tutor_id: string; tutor_name: string; reason: string }[]), // then the rest, from the database.
   ]; // End of the list.
   const thisSubject = subjects.find((s) => s.subject.toLowerCase() === subject.toLowerCase()); // This subject's details.
@@ -439,7 +439,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
                   `, ${places.include_public_holidays ? "including" : "not on"} public holidays`}{/* whether public holidays are included. */}
               </> // End of the group.
             ) : ( // otherwise:
-              <span className="text-amber-800">Family hasn&apos;t said yet</span> // not said yet, in amber.
+              <span className="text-amber-800">Family has not said yet</span> // not said yet, in amber.
             )}{" "}{/* End of this part, then a space. */}
             <TextLink href={`/schedule?as=admin&section=booking-length&student=${student.id}`}>Change</TextLink>{/* a link to change it. */}
           </Detail>{/* End of this detail. */}
@@ -507,8 +507,8 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
                 </ul>{/* End of the reasons. */}
                 {t.at_max && ( // If at their limit:
                   <p className="mt-1 text-amber-900">{/* an amber line: */}
-                    At their weekly maximum{t.max_weekly_hours != null ? ` (${t.max_weekly_hours} hr)` : ""}. They can&apos;t be
-                    booked past it; if they&apos;re the only option, ask them first.{/* (end of the text) */}
+                    At their weekly maximum{t.max_weekly_hours != null ? ` (${t.max_weekly_hours} hr)` : ""}. They cannot be
+                    booked past it; if they are the only option, ask them first.{/* (end of the text) */}
                   </p> // End of the line.
                 )}{/* End of this part. */}
                 {!t.at_max && t.times === 0 && ( // Not at their limit but no time suits:
@@ -547,7 +547,7 @@ async function StudentPanel({ studentId, subject, nextHref }: { studentId: strin
       </Card>{/* End of the card. */}
 
       {notOffered.length > 0 && ( // If some tutors don't fit:
-        <Card collapsible defaultOpen={false} title={`Tutors who don't fit (${notOffered.length})`}>{/* a fold-up card with the count: */}
+        <Card collapsible defaultOpen={false} title={`Tutors who do not fit (${notOffered.length})`}>{/* a fold-up card with the count: */}
           <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
             {notOffered.map((t) => ( // for each:
               <li key={t.tutor_id} className="py-2">{/* a row: */}

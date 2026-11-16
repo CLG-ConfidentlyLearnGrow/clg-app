@@ -71,7 +71,7 @@ export async function addMaterials(_prev: FormState, formData: FormData): Promis
     const cleanUp = () => store.remove([f.viewPath, ...(f.sourcePath ? [f.sourcePath] : [])]); // helper to delete this file's uploads if it fails.
     const { data: blob, error: readError } = await store.download(f.viewPath); // Downloads the viewing copy to check it.
     if (readError || !blob) { // Didn't arrive:
-      problems.push(`${f.fileName}: the upload didn't arrive. Please try again.`); // notes it,
+      problems.push(`${f.fileName}: the upload did not arrive. Please try again.`); // notes it,
       continue; // and moves on.
     } // End of that check.
     if (blob.size > MAX_VIEW_BYTES) { // Too big:
@@ -117,7 +117,7 @@ export async function addMaterials(_prev: FormState, formData: FormData): Promis
       .single(); // (one row).
     if (error || !row) { // Save failed:
       await cleanUp(); // deletes the uploads,
-      problems.push(`${f.fileName}: couldn't be saved. Please try again.`); // notes it,
+      problems.push(`${f.fileName}: could not be saved. Please try again.`); // notes it,
       continue; // and moves on.
     } // End of that check.
     saved.push(row.id); // Remembers the saved id.
@@ -152,7 +152,7 @@ export async function updateMaterialDetails(_prev: FormState, formData: FormData
     .from("materials") // in the materials table,
     .update({ ...details.data, description: details.data.description || null, title: title.data }) // the details, note (or none) and title,
     .eq("id", id.data); // for this material.
-  if (error) return { error: "Couldn't save the changes. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not save the changes. Please try again." }; // Failed: plain message.
   revalidatePath(`/admin/materials/${id.data}`); // Refreshes this material's page.
   revalidatePath("/admin/materials"); // Refreshes the materials page.
   return { message: "Saved." }; // Tells the person it worked.
@@ -173,7 +173,7 @@ export async function addMaterialSkills(_prev: FormState, formData: FormData): P
       skills.data.map((skill_id) => ({ material_id: id.data, skill_id })), // one row per ticked skill,
       { onConflict: "material_id,skill_id", ignoreDuplicates: true }, // skipping any already there.
     ); // End of the rows.
-  if (error) return { error: "Couldn't add those skills. Only skills from a confirmed curriculum can be used." }; // Failed: only confirmed curriculum skills can be used.
+  if (error) return { error: "Could not add those skills. Only skills from a confirmed curriculum can be used." }; // Failed: only confirmed curriculum skills can be used.
   revalidatePath(`/admin/materials/${id.data}`); // Refreshes this material's page.
   revalidatePath("/admin/materials"); // Refreshes the materials page.
   return { message: `Tagged with ${skills.data.length} skill${skills.data.length === 1 ? "" : "s"}.` }; // Confirms how many.
@@ -193,7 +193,7 @@ export async function removeMaterialSkill(_prev: FormState, formData: FormData):
       error: // (the message)
         error.code === "23514" // if it was the last skill on a published material,
           ? "A published material needs at least one skill. Add another first, or retire the material." // that one is needed,
-          : "Couldn't remove it. Please try again.", // otherwise a general message.
+          : "Could not remove it. Please try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
   revalidatePath(`/admin/materials/${id.data}`); // Refreshes this material's page.
@@ -223,7 +223,7 @@ export async function setMaterialStatus(_prev: FormState, formData: FormData): P
       error: // (the message)
         error.code === "23514" // if no skills are tagged,
           ? "Tag at least one curriculum skill first, or if no curriculum fits, say why in the box." // what to do,
-          : "Couldn't change it. Please try again.", // otherwise a general message.
+          : "Could not change it. Please try again.", // otherwise a general message.
     }; // End of the message.
   } // End of the failure case.
   revalidatePath(`/admin/materials/${parsed.data.id}`); // Refreshes this material's page.
@@ -252,7 +252,7 @@ export async function deleteDraftMaterial(_prev: FormState, formData: FormData):
   if (!m) return { error: "That material is already gone." }; // Not found: already gone.
   if (m.status !== "draft") return { error: "Only drafts can be deleted. Retire a published material instead." }; // Not a draft: explains to retire instead.
   const { error } = await supabase.from("materials").delete().eq("id", id.data); // Deletes the row.
-  if (error) return { error: "Couldn't delete it. Please try again." }; // Failed: plain message.
+  if (error) return { error: "Could not delete it. Please try again." }; // Failed: plain message.
   await supabase.storage.from("materials").remove([m.file_path, ...(m.source_path ? [m.source_path] : [])]); // Deletes its files from the store.
   revalidatePath("/admin/materials"); // Refreshes the materials page.
   redirect("/admin/materials?section=library"); // Goes back to the library.

@@ -85,7 +85,7 @@ export function UploadMaterialsForm() {
         const viewPath = `view/${crypto.randomUUID()}.${ext}`; // a random storage name,
         const up = await store.upload(viewPath, r.file, { contentType: r.file.type || undefined, upsert: false }); // uploads it (never replacing another file).
         if (up.error) { // Failed:
-          setLocal({ error: `Couldn't upload ${r.file.name}. Check your connection and try again.` }); // says which file,
+          setLocal({ error: `Could not upload ${r.file.name}. Check your connection and try again.` }); // says which file,
           await store.remove(sent.flatMap((s) => [s.viewPath, ...(s.sourcePath ? [s.sourcePath] : [])])); // removes the files already uploaded,
           return; // and stops.
         } // End of the failure case.
@@ -147,7 +147,7 @@ export function UploadMaterialsForm() {
                   onChange={(e) => { // when a file is chosen:
                     const f = e.target.files?.[0] ?? null; // the file,
                     if (f && f.size > MAX_SOURCE_BYTES) { // if it's over 50 MB:
-                      setLocal({ error: `${f.name} is over 50 MB, so it wasn't added.` }); // says so,
+                      setLocal({ error: `${f.name} is over 50 MB, so it was not added.` }); // says so,
                       return; // and stops.
                     } // End of the check.
                     setRows((prev) => prev.map((x, j) => (j === i ? { ...x, source: f } : x))); // Adds it to that file's row.

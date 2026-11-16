@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         )}{/* End of that note. */}
         {link === "other-device" && ( // if a link was opened on another device:
           <p className="mb-4 text-sm text-red-700">{/* a red line: */}
-            That link didn&apos;t work. Please request a new one with &quot;Forgot your password?&quot; below. Links
+            That link did not work. Please request a new one with &quot;Forgot your password?&quot; below. Links
             work once, for one hour.{/* saying it didn't work and to ask for a new one. */}
           </p> // End of the line.
         )}{/* End of that note. */}

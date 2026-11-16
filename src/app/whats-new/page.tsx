@@ -25,7 +25,7 @@ export default async function WhatsNewPage() { // The page itself.
   ); // End of the reads.
 
   return ( // Shows:
-    <Page title="What's new" intro="Changes to the app for your dashboards, newest first.">{/* a page with a short explanation: */}
+    <Page title="What is new" intro="Changes to the app for your dashboards, newest first.">{/* a page with a short explanation: */}
       {roles.length === 0 && <Empty>Your account has no dashboard yet.</Empty>}{/* No roles yet. */}
       {lists.map(([role, updates]) => ( // For each dashboard:
         <section key={role} id={role} className="scroll-mt-6 space-y-3">{/* a part (the pop-up's link jumps here): */}

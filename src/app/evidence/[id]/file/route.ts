@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 export async function GET(request: NextRequest, ctx: RouteContext<"/evidence/[id]/file">) {
   const { id } = await ctx.params; // The id from the address.
   const notFound = () => // A "not available" reply:
-    new NextResponse("This file isn't available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // the same plain message for missing or not allowed, never saved by the browser.
+    new NextResponse("This file is not available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // the same plain message for missing or not allowed, never saved by the browser.
   if (!z.uuid().safeParse(id).success) return notFound(); // Odd id: not available.
 
   const supabase = await createClient(); // Connects to the database.

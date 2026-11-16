@@ -114,7 +114,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
     if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
-    if (isFull) items.push({ id: "whats-new", label: "What's new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
+    if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),

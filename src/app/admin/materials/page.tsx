@@ -105,7 +105,7 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps<"/a
         {section === "add" && ( // The add section:
           <Card // a card:
             title="Add materials" // titled "Add materials",
-            description="Upload one file or many. They're saved as drafts; then tag each with its curriculum skills and publish it. Tutors see a material only once it's published, and only for subjects and year levels they teach." // with what happens next.
+            description="Upload one file or many. They are saved as drafts; then tag each with its curriculum skills and publish it. Tutors see a material only once it is published, and only for subjects and year levels they teach." // with what happens next.
           >{/* (end of the card's settings) */}
             <UploadMaterialsForm />{/* The upload form. */}
           </Card> // End of the card.
@@ -170,7 +170,7 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps<"/a
           <>{/* (a group:) */}
             <Card // a card:
               title="Last 7 days, by person" // titled "Last 7 days, by person",
-              description={`Tutors can open up to 30 different materials a day. Anyone opening ${BUSY_WEEK} or more different materials in a week is marked, in case it's worth a chat.`} // with the daily limit and the busy mark.
+              description={`Tutors can open up to 30 different materials a day. Anyone opening ${BUSY_WEEK} or more different materials in a week is marked, in case it is worth a chat.`} // with the daily limit and the busy mark.
             >{/* (end of the card's settings) */}
               {busy.length === 0 ? ( // If nobody opened anything:
                 <Empty>No one has opened a material this week.</Empty> // says so.

@@ -43,7 +43,7 @@ export function ApplyForm({ started }: { started: string }) {
     return ( // shows a thank-you note instead of the form:
       <div role="status" className="space-y-3 rounded-xl border border-teal-200 bg-teal-50 px-5 py-4 text-sm text-teal-900">{/* a green box read out by screen readers: */}
         <p className="font-semibold">{state.message}</p>{/* the thanks, */}
-        <p>We read every application and will be in touch, usually within two weeks. If you&apos;re shortlisted, we&apos;ll invite you to an interview and contact your referees.</p>{/* what happens next, */}
+        <p>We read every application and will be in touch, usually within two weeks. If you are shortlisted, we will invite you to an interview and contact your referees.</p>{/* what happens next, */}
         <p><TextLink href="/">Back to the CLG home page</TextLink></p>{/* and a way back. */}
       </div> // End of the box.
     ); // End of what's shown.
@@ -98,7 +98,7 @@ export function ApplyForm({ started }: { started: string }) {
         maxLength={1000} // up to 1,000 characters,
         hint="Days and times, for example: Monday and Wednesday after 3:30pm, Saturday mornings." // an example.
       />{/* End of availability. */}
-      <Field label="Hours a week you'd like (optional)" name="weekly_hours" type="number" min={1} max={40} step={1} inputMode="numeric" />{/* hours a week. */}
+      <Field label="Hours a week you would like (optional)" name="weekly_hours" type="number" min={1} max={40} step={1} inputMode="numeric" />{/* hours a week. */}
 
       <SubHeading>Qualifications and experience</SubHeading>{/* The background part: */}
       <TextArea // qualifications:
@@ -109,7 +109,7 @@ export function ApplyForm({ started }: { started: string }) {
         maxLength={3000} // up to 3,000 characters,
         hint="Degrees, current study (with your year), teaching qualifications, and anything else relevant." // what to include.
       />{/* End of qualifications. */}
-      <Field label="Teacher registration number (optional)" name="teacher_registration" maxLength={100} hint="If you're a registered teacher, for example with the Teachers Registration Board of SA." />{/* teacher registration, */}
+      <Field label="Teacher registration number (optional)" name="teacher_registration" maxLength={100} hint="If you are a registered teacher, for example with the Teachers Registration Board of SA." />{/* teacher registration, */}
       <TextArea // experience:
         label="Teaching or tutoring experience" // its words,
         name="experience" // its name,
@@ -122,7 +122,7 @@ export function ApplyForm({ started }: { started: string }) {
 
       <SubHeading>Child safety checks</SubHeading>{/* The checks part: */}
       <p className="text-sm text-zinc-600">{/* a note: */}
-        Everyone who tutors with CLG needs a current Working with Children Check and RRHAN-EC training before working with students. First aid is encouraged. If you don&apos;t have these yet, you can still apply: we&apos;ll help you get them.{/* what's needed, and that they can still apply. */}
+        Everyone who tutors with CLG needs a current Working with Children Check and RRHAN-EC training before working with students. First aid is encouraged. If you do not have these yet, you can still apply: we will help you get them.{/* what's needed, and that they can still apply. */}
       </p>{/* End of the note. */}
       <Select label="Working with Children Check" name="wwcc_status" required value={wwcc} onChange={(e) => setWwcc(e.target.value)}>{/* The check answer: */}
         {WWCC_STATUSES.map((s) => <option key={s} value={s}>{WWCC_STATUS_NAMES[s]}</option>)}{/* each choice. */}
@@ -149,7 +149,7 @@ export function ApplyForm({ started }: { started: string }) {
 
       <SubHeading>Two referees</SubHeading>{/* The referees part: */}
       <p className="text-sm text-zinc-600">{/* a note: */}
-        At least one should be a recent supervisor or manager. Ideally, one has seen you work with children or young people. Please don&apos;t use family members.{/* who makes a good referee. */}
+        At least one should be a recent supervisor or manager. Ideally, one has seen you work with children or young people. Please do not use family members.{/* who makes a good referee. */}
       </p>{/* End of the note. */}
       {[1, 2].map((n) => ( // For each of the two referees:
         <fieldset key={n} className="space-y-3 rounded-xl border border-zinc-200 p-4">{/* a bordered group: */}
@@ -164,7 +164,7 @@ export function ApplyForm({ started }: { started: string }) {
       ))}{/* End of the referees. */}
       <label className="flex items-start gap-2 text-sm">{/* Referee permission: */}
         <input type="checkbox" name="referee_consent" required className="mt-1" />{/* a tick box that must be ticked, */}
-        <span>My referees know I&apos;ve named them and are happy for CLG to contact them.</span>{/* and its words. */}
+        <span>My referees know I have named them and are happy for CLG to contact them.</span>{/* and its words. */}
       </label>{/* End of the line. */}
 
       <SubHeading>In your own words</SubHeading>{/* The statement part: */}

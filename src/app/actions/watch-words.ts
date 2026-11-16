@@ -41,7 +41,7 @@ export async function reviewWordFlag(_prev: FormState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_word_flag_review", { p_id: parsed.data.id, p_status: parsed.data.status, p_note: parsed.data.note }); // Saves the decision.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/flags"); // Refreshes the flags page.
   revalidatePath("/", "layout"); // Refreshes the top bar's number.
   return { message: "Saved." }; // Confirms.
@@ -71,7 +71,7 @@ export async function addWatchWord(_prev: FormState, formData: FormData): Promis
     staff_only: d.staff_only === "on", // whether only staff writing it counts,
     note: d.note || null, // and the note (if any).
   }); // End of the add.
-  if (error) return { error: plainError(error, "We couldn't add that. Please check you used two-step sign-in and try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not add that. Please check you used two-step sign-in and try again.") }; // Failed: plain message.
   revalidatePath("/safety/flags"); // Refreshes the page with the list.
   return { message: `Added "${d.phrase}". New writing is checked for it from now on.` }; // Confirms.
 } // End of addWatchWord.

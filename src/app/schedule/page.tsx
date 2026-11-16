@@ -363,7 +363,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           {myCheck && ( // If the tutor has an availability check:
             <Card // a card:
               title="Is your availability right for next term?" // its title,
-              description="Families will soon be booking for next term. Please check your weekly availability, then let us know. Booked sessions aren't changed." // its help text.
+              description="Families will soon be booking for next term. Please check your weekly availability, then let us know. Booked sessions are not changed." // its help text.
             >{/* (end of the card's settings) */}
               <p className="mb-3 text-sm">{/* a line: */}
                 <TextLink href="/dashboard/tutor?section=hours">Check or update your availability</TextLink>{/* a link to their availability. */}
@@ -408,7 +408,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           {makeupsToConfirm.length > 0 && ( // If there are picked make-up times to confirm:
             <Card // a card:
               title="Confirm a make-up time" // its title,
-              description="CLG offered times after a cancel, and the other side picked one. It's booked once you confirm." // its help text.
+              description="CLG offered times after a cancel, and the other side picked one. It is booked once you confirm." // its help text.
             >{/* (end of the card's settings) */}
               <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
                 {makeupsToConfirm.map((o) => ( // for each offer:
@@ -482,7 +482,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               collapsible // can fold,
               defaultOpen={false} // folded to start,
               title="Your recent sessions" // its title,
-              description="You're signed off at the booked end time. If you finished at a different time, tell CLG here within a week." // its help text.
+              description="You are signed off at the booked end time. If you finished at a different time, tell CLG here within a week." // its help text.
             >{/* (end of the card's settings) */}
               <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
                 {recentMine.map((s) => { // for each session:
@@ -768,7 +768,7 @@ async function BookSection({ // Takes:
       p_earliest: earliest || null, // no earlier than (if set),
       p_latest: latest || null, // finished by (if set).
     }); // End of the read.
-    if (error) searchError = /violates|syntax|relation|column|function/i.test(error.message) ? "Couldn't search. Please try again." : error.message; // If it failed: a plain message (the database's words unless technical).
+    if (error) searchError = /violates|syntax|relation|column|function/i.test(error.message) ? "Could not search. Please try again." : error.message; // If it failed: a plain message (the database's words unless technical).
     options = (data ?? []) as TimeOption[]; // The times found.
   } // End of the search.
 
@@ -777,7 +777,7 @@ async function BookSection({ // Takes:
     <>{/* (a group) */}
       <Card // the booking card:
         title="Book a session" // its title,
-        description="Choose what's needed and where. You'll see only tutors who suit and are available, then pick a time." // its help text.
+        description="Choose what is needed and where. You will see only tutors who suit and are available, then pick a time." // its help text.
       >{/* (end of the card's settings) */}
         {student && subject && ( // If a student and subject are chosen:
           <p className="mb-4 rounded-lg bg-zinc-50 px-3 py-2 text-sm">{/* a summary line: */}
@@ -819,7 +819,7 @@ async function BookSection({ // Takes:
                   No subjects asked for yet. Add them under &quot;See or change details&quot; on your dashboard.{/* says where to add them. */}
                 </p> // End of the line.
               ) : ( // if no student chosen:
-                <p className="self-end text-sm text-zinc-600">Choose who it&apos;s for, then press Find times.</p> // says to choose one.
+                <p className="self-end text-sm text-zinc-600">Choose who it is for, then press Find times.</p> // says to choose one.
               )}{/* End of this part. */}
             </div>{/* End of the columns. */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{/* three columns: */}
@@ -1017,7 +1017,7 @@ async function PlacesSection({ viewerId }: { viewerId: string }) { // The "where
         In-person sessions are only at public libraries CLG has confirmed, and only inside the library&apos;s opening
         hours. Sessions at a student&apos;s home or school are arranged by CLG only.{/* (end of the text) */}
       </p>{/* End of the note. */}
-      <SubHeading>Teach at a library that isn&apos;t listed?</SubHeading>{/* a small heading, */}
+      <SubHeading>Teach at a library that is not listed?</SubHeading>{/* a small heading, */}
       <p className="text-sm text-zinc-600">Add it here. CLG checks it and adds its opening hours before families can book it.</p>{/* what happens when they suggest one, */}
       <SuggestLibraryForm />{/* the suggest form. */}
     </Card> // End of the card.
@@ -1438,7 +1438,7 @@ async function NextTermSection({ isAdmin }: { isAdmin: boolean }) { // The next 
         description={ // its help text:
           isAdmin // for admins,
             ? "Families are asked 3 weeks before each student's study period ends, and tutors 4 weeks before. Unanswered questions are listed first." // their wording,
-            : "Before each term ends, tell us whether you'd like the same again next term, and whether you'd like sessions in the holidays." // otherwise the family's.
+            : "Before each term ends, tell us whether you would like the same again next term, and whether you would like sessions in the holidays." // otherwise the family's.
         } // (end of the help text)
       >{/* (end of the card's settings) */}
         {open.length === 0 ? ( // if nothing to answer:
@@ -1545,7 +1545,7 @@ async function TutorAvailabilitySection() { // The tutor availability section (a
   return ( // Shows:
     <Card // a card:
       title="Tutor availability" // its title,
-      description="Each tutor is asked 4 weeks before term ends to check their availability for next term. Tutors who haven't answered are listed first; they can still be booked." // its help text.
+      description="Each tutor is asked 4 weeks before term ends to check their availability for next term. Tutors who have not answered are listed first; they can still be booked." // its help text.
     >{/* (end of the card's settings) */}
       {rows.length === 0 ? ( // if none:
         <Empty>No tutors have been asked yet.</Empty> // says so.
@@ -1613,7 +1613,7 @@ async function TimesSection() { // The times to check section (admins).
   return ( // Shows:
     <Card // a card:
       title="Times to check" // its title,
-      description="Sessions whose times need a look before pay: a different end time, no sign-on, or a location check that didn't pass." // its help text.
+      description="Sessions whose times need a look before pay: a different end time, no sign-on, or a location check that did not pass." // its help text.
     >{/* (end of the card's settings) */}
       {rows.length === 0 ? ( // if none:
         <Empty>Nothing to check.</Empty> // says so.

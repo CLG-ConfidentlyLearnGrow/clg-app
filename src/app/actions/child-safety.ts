@@ -54,7 +54,7 @@ export async function raiseConcern(_prev: FormState, formData: FormData): Promis
   if (about.some((v) => !z.uuid().safeParse(v).success)) return { error: "Please choose people from the list." }; // A bad value.
   const isOther = d.child === "other"; // True when the child isn't a CLG student listed.
   if (!isOther && !z.uuid().safeParse(d.child).success) return { error: "Please choose which child this is about." }; // A bad choice.
-  if (isOther && !d.child_name) return { error: "Please give the child's name, or a description if you don't know it." }; // No name for an unlisted child.
+  if (isOther && !d.child_name) return { error: "Please give the child's name, or a description if you do not know it." }; // No name for an unlisted child.
   if (isOther && !d.child_state) return { error: "Please choose the state the child lives in." }; // No state for an unlisted child.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("raise_safety_concern", { // Asks the database to save the concern:
@@ -70,7 +70,7 @@ export async function raiseConcern(_prev: FormState, formData: FormData): Promis
     p_what_happened: d.what_happened, // what happened,
     p_about: about.length > 0 ? about : null, // and who it's about (if anyone).
   }); // End of the request.
-  if (error) return { error: plainError(error, "We couldn't send that. Please phone CLG directly, and if a child is in danger call 000.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not send that. Please phone CLG directly, and if a child is in danger call 000.") }; // Failed: plain message.
   revalidatePath("/safety"); // Refreshes the concern page (for "Concerns you've raised").
   redirect(`/safety?sent=${encodeURIComponent(String(data))}`); // Shows the "sent" page.
 } // End of raiseConcern.
@@ -86,7 +86,7 @@ export async function addConcernNote(_prev: FormState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_concern_add_note", { p_id: parsed.data.id, p_note: parsed.data.note }); // Saves the note.
-  if (error) return { error: plainError(error, "We couldn't save that note. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that note. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Note saved." }; // Confirms.
 } // End of addConcernNote.
@@ -98,7 +98,7 @@ export async function setConcernStatus(_prev: FormState, formData: FormData): Pr
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_concern_set_status", { p_id: parsed.data.id, p_status: parsed.data.status }); // Saves the stage.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Saved." }; // Confirms.
 } // End of setConcernStatus.
@@ -110,7 +110,7 @@ export async function passOnConcern(_prev: FormState, formData: FormData): Promi
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_concern_pass_on", { p_id: parsed.data.id, p_reason: parsed.data.reason }); // Passes it on.
-  if (error) return { error: plainError(error, "We couldn't pass that on. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not pass that on. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Passed on. You can no longer open this concern." }; // Confirms, and says they've lost access.
 } // End of passOnConcern.
@@ -123,7 +123,7 @@ export async function shareConcern(_prev: FormState, formData: FormData): Promis
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_concern_share", { p_id: parsed.data.id, p_reason: parsed.data.reason }); // Shares it.
-  if (error) return { error: plainError(error, "We couldn't share that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not share that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Shared. They can now read this concern and its notes, and you still can too." }; // Confirms what happened.
 } // End of shareConcern.
@@ -146,9 +146,9 @@ export async function stopNewStudents(_prev: FormState, formData: FormData): Pro
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_stop_new_students", { p_concern: parsed.data.id, p_tutor: parsed.data.tutor, p_reason: parsed.data.reason }); // Takes the step.
-  if (error) return { error: plainError(error, "We couldn't do that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not do that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
-  return { message: "Done. They won't be matched with any new students. Their current students are unchanged, and they haven't been told." }; // Confirms what happened.
+  return { message: "Done. They will not be matched with any new students. Their current students are unchanged, and they have not been told." }; // Confirms what happened.
 } // End of stopNewStudents.
 
 // Ends a tutor's match with the concern's student.
@@ -158,7 +158,7 @@ export async function endMatch(_prev: FormState, formData: FormData): Promise<Fo
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("safety_end_match", { p_concern: parsed.data.id, p_tutor: parsed.data.tutor, p_reason: parsed.data.reason }); // Takes the step.
-  if (error) return { error: plainError(error, "We couldn't do that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not do that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   const left = Number(data ?? 0); // How many bookings the pair still has.
   return { message: left > 0 ? `Match ended. They have ${left} upcoming booking(s) with this student, so the student is now at the top of the Matching page as "Urgent: needs a new tutor" (no reason shown).` : "Match ended. The tutor can no longer open this student's records." }; // Confirms, and says where the urgent re-match shows.
@@ -171,7 +171,7 @@ export async function liftHold(_prev: FormState, formData: FormData): Promise<Fo
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("safety_lift_hold", { p_hold: parsed.data.hold, p_reason: parsed.data.reason }); // Lifts it.
-  if (error) return { error: plainError(error, "We couldn't do that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not do that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety/concerns"); // Refreshes the concerns page.
   return { message: "Lifted." }; // Confirms.
 } // End of liftHold.
@@ -183,7 +183,7 @@ export async function markRematchSorted(_prev: FormState, formData: FormData): P
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("urgent_rematch_sorted", { p_id: parsed.data.id, p_note: parsed.data.note }); // Marks it sorted.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/matching"); // Refreshes the Matching page.
   return { message: "Marked sorted." }; // Confirms.
 } // End of markRematchSorted.
@@ -199,7 +199,7 @@ export async function setSafetyContacts(_prev: FormState, formData: FormData): P
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("set_child_safety_contacts", { p_officer: parsed.data.officer, p_deputy: parsed.data.deputy || null }); // Saves them.
-  if (error) return { error: plainError(error, "We couldn't save that. Please try again.") }; // Failed: plain message.
+  if (error) return { error: plainError(error, "We could not save that. Please try again.") }; // Failed: plain message.
   revalidatePath("/safety"); // Refreshes the concern page (it names them).
   return { message: "Saved. New concerns go to these people. Concerns already raised stay with the person they were sent to." }; // Confirms, and explains old concerns.
 } // End of setSafetyContacts.

@@ -56,7 +56,7 @@ export default async function TrainingPage({ searchParams }: PageProps<"/trainin
             ) : ( // otherwise:
               <>{/* (a group:) */}
                 <p className="text-zinc-700">{/* this quarter's hours: */}
-                  This quarter: {hrs(c.quarter_minutes)} of {hrs(c.target_minutes)} done, by {plainDate(c.quarter_ends)}. Safety modules don&apos;t count towards these hours.{/* done, needed and by when, */}
+                  This quarter: {hrs(c.quarter_minutes)} of {hrs(c.target_minutes)} done, by {plainDate(c.quarter_ends)}. Safety modules do not count towards these hours.{/* done, needed and by when, */}
                 </p>{/* End of the hours line. */}
                 <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100" aria-hidden>{/* a progress bar: */}
                   <div className="h-2 rounded-full bg-brand" style={{ width: `${quarterPct}%` }} />{/* filled to the percentage done. */}
@@ -67,7 +67,7 @@ export default async function TrainingPage({ searchParams }: PageProps<"/trainin
             )}{/* End of the choice. */}
           </div> // End of the block.
         ) : ( // not read:
-          <Empty>Your certification couldn&apos;t be read just now.</Empty> // says so.
+          <Empty>Your certification could not be read just now.</Empty> // says so.
         )}{/* End of the choice. */}
       </Card>{/* End of the certification card. */}
 
@@ -86,7 +86,7 @@ export default async function TrainingPage({ searchParams }: PageProps<"/trainin
           </Card> // End of the card.
         ); // End of what's shown.
       })}{/* End of the stages. */}
-      {modules.length === 0 && <Empty>There&apos;s no training for you yet. CLG will let you know when modules are ready.</Empty>}{/* Nothing at all: says so. */}
+      {modules.length === 0 && <Empty>There is no training for you yet. CLG will let you know when modules are ready.</Empty>}{/* Nothing at all: says so. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of TrainingPage.

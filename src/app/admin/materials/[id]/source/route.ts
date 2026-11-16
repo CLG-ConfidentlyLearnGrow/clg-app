@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 export async function GET(_request: NextRequest, ctx: RouteContext<"/admin/materials/[id]/source">) {
   const { id } = await ctx.params; // The id from the address.
   const notFound = () => // A "not available" reply:
-    new NextResponse("This file isn't available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // a plain message, never saved by the browser.
+    new NextResponse("This file is not available to you.", { status: 404, headers: { "Cache-Control": "no-store" } }); // a plain message, never saved by the browser.
   const viewer = await getViewer(); // Who is signed in.
   if (!viewer?.roles.includes("admin") || !z.uuid().safeParse(id).success) return notFound(); // Not an admin, or an odd id: not available.
 

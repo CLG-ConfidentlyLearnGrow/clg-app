@@ -18,22 +18,22 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/materials/[
       status, // and status,
       headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" }, // never saved by the browser.
     }); // (end of the reply)
-  if (!z.uuid().safeParse(id).success) return message("This material isn't available to you.", 404); // Odd id: not available.
+  if (!z.uuid().safeParse(id).success) return message("This material is not available to you.", 404); // Odd id: not available.
 
   const supabase = await createClient(); // Connects to the database as the viewer.
   const { data, error } = await supabase.rpc("open_material", { p_material: id }); // Asks the database to open it (it checks, logs and counts).
   if (error) { // Refused:
     if (error.code === "54000") return message(`${error.message}.`, 429); // over today's limit: says so,
     return message( // otherwise explains who can open materials.
-      "This material isn't available to you. You need to be signed in with two-step login, and teach this subject at these year levels.", // (the words)
+      "This material is not available to you. You need to be signed in with two-step login, and teach this subject at these year levels.", // (the words)
       403, // (not allowed)
     ); // (end of the reply)
   } // End of the refusal.
   const row = (data as { file_path: string; file_type: string; title: string; viewer_name: string; viewer_email: string | null }[])?.[0]; // The file's details and the viewer's name and email.
-  if (!row) return message("This material isn't available to you.", 404); // Nothing: not available.
+  if (!row) return message("This material is not available to you.", 404); // Nothing: not available.
 
   const { data: blob, error: readError } = await createAdminClient().storage.from("materials").download(row.file_path); // Reads the file with full access.
-  if (readError || !blob) return message("Couldn't open this material just now. Please try again.", 502); // Couldn't read it: asks them to try again.
+  if (readError || !blob) return message("Could not open this material just now. Please try again.", 502); // Couldn't read it: asks them to try again.
 
   let stamped: Uint8Array; // The stamped copy.
   try { // Tries:
@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/materials/[
       openedAt: new Date(), // and the time now.
     }); // (end of the stamp details)
   } catch { // If it couldn't be stamped:
-    return message("This material couldn't be prepared. Please let CLG know so it can be fixed.", 500); // asks them to tell CLG.
+    return message("This material could not be prepared. Please let CLG know so it can be fixed.", 500); // asks them to tell CLG.
   } // End of the try.
 
   const safeName = row.title.replace(/[^A-Za-z0-9 ._-]/g, "").trim().slice(0, 80) || "CLG material"; // A safe file name from the title (or "CLG material").

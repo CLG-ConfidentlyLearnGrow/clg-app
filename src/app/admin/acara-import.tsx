@@ -40,7 +40,7 @@ export function AcaraImportForm({ loadedCodes }: { loadedCodes: string[] }) {
       } // End of the choice.
     } catch { // If the file couldn't be read:
       setReadError( // shows:
-        'Couldn\'t read that file. Use the "Download entire curriculum" Excel file from australiancurriculum.edu.au/downloads.', // which file to use.
+        'Could not read that file. Use the "Download entire curriculum" Excel file from australiancurriculum.edu.au/downloads.', // which file to use.
       ); // (end of the message)
     } finally { // Either way:
       setReading(false); // stops showing "Reading".

@@ -30,7 +30,7 @@ export default async function MyNamePage({ searchParams }: PageProps<"/my-name">
       <Card>{/* with a card: */}
         {missing && isStaff ? ( // Staff who haven't given a name yet see:
           <p className="mb-4 text-sm text-zinc-700">{/* a line: */}
-            Please enter your first and last name. This is how you&apos;ll appear to the CLG team and to families
+            Please enter your first and last name. This is how you will appear to the CLG team and to families
             across the app.{/* asking for it, and why. */}
           </p> // End of the line.
         ) : ( // Everyone else sees:

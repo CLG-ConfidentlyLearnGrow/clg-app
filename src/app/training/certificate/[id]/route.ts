@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/training/cer
   if (id === "certified") { // The CLG certified certificate:
     const { data, error } = await supabase.rpc("training_certification").maybeSingle<Certification>(); // reads their certification (two-step login needed),
     if (error || !data) return message("Please sign in with two-step login to download your certificate.", 403); // refused: explains.
-    if (data.state !== "certified") return message("You'll be able to download this once you're CLG certified.", 403); // not certified: explains.
+    if (data.state !== "certified") return message("You will be able to download this once you are CLG certified.", 403); // not certified: explains.
     details = { // what to print:
       heading: "CLG certified tutor", // the heading,
       achievement: "CLG's tutor training and ongoing professional learning", // what they completed,
@@ -60,13 +60,13 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/training/cer
       personId: auth.user.id, // and who it's for.
     }; // End of the details.
   } else { // One module's certificate:
-    if (!z.uuid().safeParse(id).success) return message("That certificate wasn't found.", 404); // odd id: not found.
+    if (!z.uuid().safeParse(id).success) return message("That certificate was not found.", 404); // odd id: not found.
     const { data: c } = await supabase // reads the completion (only the person or a full admin can):
       .from("training_completions") // from completions,
       .select("account_id, module_title, minutes, completed_on, expires_on, certificate_no") // its details,
       .eq("id", id) // this one,
       .maybeSingle(); // (one at most).
-    if (!c) return message("That certificate wasn't found, or you need to sign in with two-step login.", 404); // not found (or not theirs): says so.
+    if (!c) return message("That certificate was not found, or you need to sign in with two-step login.", 404); // not found (or not theirs): says so.
     details = { // what to print:
       heading: "Certificate of completion", // the heading,
       achievement: c.module_title, // the module's name,

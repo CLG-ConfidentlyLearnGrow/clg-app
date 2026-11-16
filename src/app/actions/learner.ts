@@ -46,7 +46,7 @@ export async function addMeAsLearner(_prev: FormState, formData: FormData): Prom
   }); // End of the request.
   if (error) { // It failed:
     console.error("Add me as learner failed:", error.code, error.message); // notes why in the server log,
-    return { error: error.code === "22023" ? `${error.message}.` : "We couldn't add your student profile. Please try again." }; // shows the database's plain message if it gave one, otherwise a general one.
+    return { error: error.code === "22023" ? `${error.message}.` : "We could not add your student profile. Please try again." }; // shows the database's plain message if it gave one, otherwise a general one.
   } // End of the failure case.
   if (typeof studentId === "string") await saveStudyDetails(supabase, studentId, parsed.data.program, picked); // Saves degree and unit details once the profile exists.
   redirect("/dashboard/student"); // Goes to the new student dashboard.

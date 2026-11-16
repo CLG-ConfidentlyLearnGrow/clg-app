@@ -56,9 +56,9 @@ export async function proposeTutorChange(_prev: FormState, formData: FormData): 
     p_weekday: typeof d.weekday === "number" ? d.weekday : null, // the new weekday (or none),
     p_start: d.start ? d.start : null, // and the new start time (or none).
   }); // End of the request.
-  if (error) return { error: plainError(error, "Sorry, the change couldn't be sent. Please try again, or contact Carla.") }; // The database said no.
+  if (error) return { error: plainError(error, "Sorry, the change could not be sent. Please try again, or contact Carla.") }; // The database said no.
   refresh(); // Refreshes the pages.
-  return { message: "Sent. The new tutor and the family have been asked to confirm. Nothing moves until both say yes, and you'll see their answers under \"Waiting for confirmation\"." }; // Says it worked and what happens next.
+  return { message: "Sent. The new tutor and the family have been asked to confirm. Nothing moves until both say yes, and you will see their answers under \"Waiting for confirmation\"." }; // Says it worked and what happens next.
 } // End of proposeTutorChange.
 
 // The admin withdraws a waiting change.
@@ -68,7 +68,7 @@ export async function withdrawTutorChange(_prev: FormState, formData: FormData):
   if (!parsed.success) return { error: "Please try again." }; // Something's wrong with the form.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("withdraw_tutor_change", { p_offer: parsed.data.id, p_note: parsed.data.note || null }); // Asks the database to withdraw it.
-  if (error) return { error: plainError(error, "Sorry, the change couldn't be withdrawn. Please try again.") }; // The database said no.
+  if (error) return { error: plainError(error, "Sorry, the change could not be withdrawn. Please try again.") }; // The database said no.
   refresh(); // Refreshes the pages.
   return { message: "Withdrawn. The new tutor and the family have been told nothing is changing." }; // Says it worked.
 } // End of withdrawTutorChange.
@@ -84,10 +84,10 @@ export async function answerTutorChange(_prev: FormState, formData: FormData): P
   if (answer === "no" && !note) return { error: "Please say briefly why, so CLG can find something that suits." }; // A no needs a reason.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase.rpc("answer_tutor_change", { p_offer: id, p_accept: answer === "yes", p_note: note || null }); // Sends the answer.
-  if (error) return { error: plainError(error, "Sorry, your answer couldn't be saved. Please try again.") }; // The database said no.
+  if (error) return { error: plainError(error, "Sorry, your answer could not be saved. Please try again.") }; // The database said no.
   refresh(); // Refreshes the pages.
   if (answer === "no") return { message: "Thanks. CLG has been told and will be in touch." }; // A no: says so.
   if (data === "confirmed") return { message: "Thanks, everyone has confirmed. The sessions have been changed." }; // The last yes: it's done.
-  if (data === "failed") return { message: "Thanks. The change couldn't be finished automatically, so CLG has been told and will be in touch." }; // It couldn't be made: CLG will sort it.
-  return { message: "Thanks, confirmed. We're waiting for the others before anything changes." }; // Still waiting for the others.
+  if (data === "failed") return { message: "Thanks. The change could not be finished automatically, so CLG has been told and will be in touch." }; // It couldn't be made: CLG will sort it.
+  return { message: "Thanks, confirmed. We are waiting for the others before anything changes." }; // Still waiting for the others.
 } // End of answerTutorChange.

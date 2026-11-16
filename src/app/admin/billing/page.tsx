@@ -97,7 +97,7 @@ function noticeText(row: WaiverRow): string { // Takes the row.
 // Xero connection messages after the owner comes back from Xero.
 const XERO_NOTES: Record<string, string> = { // The messages:
   connected: "Xero is connected.", // connected,
-  failed: "Xero didn't connect. Please try again, and check the Xero app settings.", // failed,
+  failed: "Xero did not connect. Please try again, and check the Xero app settings.", // failed,
   "owner-only": "Only the owner can connect Xero.", // someone other than the owner tried.
 }; // End of the messages.
 
@@ -155,7 +155,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   try { // Tries to read the Xero connection:
     xeroName = xeroConfig() ? ((await xeroConnection())?.tenant_name ?? null) : null; // its name, if Xero is set up and connected.
   } catch { // If it failed:
-    xeroProblem = "The Xero connection couldn't be read. Check the billing secret settings."; // notes the problem.
+    xeroProblem = "The Xero connection could not be read. Check the billing secret settings."; // notes the problem.
   } // End of the fallback.
   let stripeReady = false; // Whether Stripe is set up.
   let stripeProblem: string | null = null; // A Stripe problem message (if any).
@@ -442,7 +442,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
               ) : ( // otherwise:
                 <p className="text-sm text-zinc-600">{/* a line: */}
                   Not connected yet. Add STRIPE_SECRET_KEY (a test key, sk_test_...) and STRIPE_WEBHOOK_SECRET in
-                  Vercel&apos;s settings. Until then families can&apos;t save a card or pay in the app.{/* what to add, and what's not possible until then. */}
+                  Vercel&apos;s settings. Until then families cannot save a card or pay in the app.{/* what to add, and what's not possible until then. */}
                 </p> // End of the line.
               )}{/* End of this part. */}
             </Card>{/* End of the card. */}

@@ -274,7 +274,7 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
 
       <Card // A card:
         title="Students to check" // titled "Students to check",
-        description={`Students with no goals yet, or whose skills haven't moved in ${STALLED_AFTER_SESSIONS} or more sessions. They may need a change of goals, approach or tutor.`} // with what puts a student here.
+        description={`Students with no goals yet, or whose skills have not moved in ${STALLED_AFTER_SESSIONS} or more sessions. They may need a change of goals, approach or tutor.`} // with what puts a student here.
       >{/* (end of the card's settings) */}
         {toCheck.length === 0 ? ( // If none:
           <Empty>Nobody right now.</Empty> // says so.

@@ -40,8 +40,8 @@ export function OneProfilePerChild() {
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-zinc-800">{/* an amber box: */}
       <p className="font-medium">Has another parent or guardian already added this child?</p>{/* the question in bold, */}
       <p className="mt-1">{/* a line: */}
-        Please don&apos;t add them again. Each child has one profile that all their parents and guardians share. Instead,
-        contact CLG and we&apos;ll link you to your child&apos;s existing profile.{/* asking them to contact CLG instead. */}
+        Please do not add them again. Each child has one profile that all their parents and guardians share. Instead,
+        contact CLG and we will link you to your child&apos;s existing profile.{/* asking them to contact CLG instead. */}
       </p>{/* End of the line. */}
     </div> // End of the box.
   ); // End of what's shown.
@@ -71,12 +71,12 @@ export function GoalFields({
         hint="For example: feel confident in maths before high school, or reach a B in Year 12 Chemistry." // and a hint with examples.
       />{/* (end of the box) */}
       <TextArea // The extra information box:
-        label="Anything else you'd like us to know? (optional)" // its label,
+        label="Anything else you would like us to know? (optional)" // its label,
         name="extra_info" // its field name,
         rows={3} // three lines tall,
         maxLength={2000} // up to 2,000 characters,
         defaultValue={extraInfo} // starting with what's already written,
-        hint="For example, interests, how your child learns best, or times that suit. Please don't include medical details here; CLG will ask privately if needed." // and a hint (no medical details).
+        hint="For example, interests, how your child learns best, or times that suit. Please do not include medical details here; CLG will ask privately if needed." // and a hint (no medical details).
       />{/* (end of the box) */}
       <TextArea // The learning needs box:
         label="Learning needs (optional)" // its label,

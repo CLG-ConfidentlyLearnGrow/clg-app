@@ -43,7 +43,7 @@ export async function saveTeamsSettings(_prev: FormState, formData: FormData): P
     p_organiser_id: parsed.data.organiser_id || null, // the organiser's Object ID (or none),
     p_days_ahead: parsed.data.days_ahead, // and the days ahead.
   }); // End of the save.
-  if (error) return plain(error, "Couldn't save the Teams settings."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the Teams settings."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the Teams page.
   return { message: "Saved." }; // Tells the person it worked.
 } // End of saveTeamsSettings.
@@ -52,7 +52,7 @@ export async function saveTeamsSettings(_prev: FormState, formData: FormData): P
 export async function runTeamsNow(): Promise<FormState> {
   await requireAdmin(); // Makes sure the person is a full admin (sends anyone else away).
   if (!graphConfig()) { // Microsoft settings missing:
-    return { error: "The Microsoft app details aren't set in Vercel yet (MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET)." }; // explains which settings are needed.
+    return { error: "The Microsoft app details are not set in Vercel yet (MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET)." }; // explains which settings are needed.
   } // End of that case.
   const s = await runTeamsSync({ force: true }); // Runs the job, skipping the usual wait.
   revalidatePath(PAGE); // Refreshes the Teams page.
@@ -78,7 +78,7 @@ export async function setMeetingLink(_prev: FormState, formData: FormData): Prom
     p_session: parsed.data.session_id, // for this session,
     p_url: parsed.data.url || null, // this link (blank clears it).
   }); // End of the save.
-  if (error) return plain(error, "Couldn't save the link."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the link."); // Failed: plain message.
   revalidatePath(PAGE); // Refreshes the Teams page.
   revalidatePath("/schedule"); // Refreshes the schedule page.
   return { message: parsed.data.url ? "Link saved." : "Link cleared." }; // Confirms saved or cleared.

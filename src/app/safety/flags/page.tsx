@@ -150,7 +150,7 @@ export default async function FlagsPage() { // The page itself.
 
       <Card // the word list:
         title={`Words and phrases to watch for (${wordRows.filter((w) => w.active).length} on)`} // titled with how many are switched on,
-        description="Only the Child Safety Officer, the deputy and the owner can see this list, so it can't be worked around. Whole words only: 'kill' won't match 'skill'. Put * at the end of a word for any ending: 'bully*' matches bullied and bullying." // who sees it, and how matching works,
+        description="Only the Child Safety Officer, the deputy and the owner can see this list, so it cannot be worked around. Whole words only: 'kill' will not match 'skill'. Put * at the end of a word for any ending: 'bully*' matches bullied and bullying." // who sees it, and how matching works,
         collapsible // opens and closes,
         defaultOpen={!isContact} // open for the owner, folded for the reviewers (who mostly want the flags).
       >{/* (end of the card's settings) */}
@@ -171,7 +171,7 @@ export default async function FlagsPage() { // The page itself.
             <input type="checkbox" name="staff_only" className={tick} />{/* the box, */}
             Only flag it when a tutor or admin writes it (e.g. &quot;text me&quot; is normal from a parent){/* and what it does. */}
           </label>{/* End of the tick. */}
-          <Field label="Note (optional)" name="note" maxLength={300} hint="Why it's on the list, or what to look for." />{/* the note box. */}
+          <Field label="Note (optional)" name="note" maxLength={300} hint="Why it is on the list, or what to look for." />{/* the note box. */}
         </ActionForm>{/* End of the form. */}
 
         {wordRows.length === 0 ? ( // If the list is empty:

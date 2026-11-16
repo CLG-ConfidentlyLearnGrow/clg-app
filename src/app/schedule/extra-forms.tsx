@@ -118,7 +118,7 @@ export function SessionRequestForm({ students, today }: { students: Child[]; tod
       {kind === "away_cover" && ( // For cover while away:
         <>{/* (a group) */}
           <Field label="Date of the cancelled session" name="event_on" type="date" min={today} />{/* the cancelled session's date, */}
-          <Select label="We'd like" name="wants" defaultValue="either">{/* what they'd like: */}
+          <Select label="We would like" name="wants" defaultValue="either">{/* what they'd like: */}
             <option value="time">Another time with our tutor</option>{/* another time with their tutor, */}
             <option value="tutor">A different tutor at our usual time</option>{/* a different tutor at the usual time, */}
             <option value="either">Either is fine</option>{/* either. */}
@@ -236,7 +236,7 @@ export function BlockForm({ choices, asTutor }: { choices: { value: string; labe
         hint="Only CLG sees this. CLG will follow up with you to understand what happened and help it not happen again." // a help hint.
       />{/* End of the box. */}
       <p className="text-xs text-zinc-600">{/* a help line explaining what blocking does: */}
-        The app stops suggesting you together. The other person isn&apos;t told. Existing sessions aren&apos;t changed
+        The app stops suggesting you together. The other person is not told. Existing sessions are not changed
         until CLG has talked with you.{/* (end of the text) */}
       </p>{/* End of the help line. */}
     </ActionForm> // End of the form.
@@ -281,7 +281,7 @@ export function LoadLibrariesForm() { // The "load SA libraries" button.
   return ( // Shows:
     <ActionForm action={loadSaLibraries} submitLabel="Load SA libraries">{/* the form, saving with loadSaLibraries: */}
       <p className="text-sm text-zinc-600">{/* a help line explaining what it does: */}
-        Adds every South Australian library from OpenStreetMap that isn&apos;t listed yet, with its address and map
+        Adds every South Australian library from OpenStreetMap that is not listed yet, with its address and map
         location. Libraries already listed keep their details. Takes up to a minute.{/* (end of the text) */}
       </p>{/* End of the help line. */}
     </ActionForm> // End of the form.

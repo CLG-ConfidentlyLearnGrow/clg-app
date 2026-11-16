@@ -92,12 +92,12 @@ function ReportView({ report }: { report: SavedReport }) {
           <Stat label="New students" value={num(f.enquiries.new_students)} />{/* new students, */}
           <Stat label="Booked" value={num(f.enquiries.booked)} note={f.enquiries.booked_percent === null ? undefined : `${f.enquiries.booked_percent}% of new students`} />{/* booked, with the share, */}
           <Stat label="Still waiting" value={num(f.enquiries.still_waiting)} />{/* still waiting, */}
-          <Stat label="Didn't go ahead" value={num(f.enquiries.did_not_go_ahead)} />{/* didn't go ahead. */}
+          <Stat label="Did not go ahead" value={num(f.enquiries.did_not_go_ahead)} />{/* didn't go ahead. */}
         </Stats>{/* End of the numbers. */}
         <p className="mt-3 text-sm text-zinc-600">Average time from being added to booking: {num(f.enquiries.average_days_to_book, " days")}.</p>{/* Average days to book. */}
       </Card>{/* End of the enquiries card. */}
 
-      <Card title="How full each tutor's week is" description="Compared with the most hours each tutor wants a week (or the hours they're available, if no limit is set). Fullest first.">{/* The tutor weeks card: */}
+      <Card title="How full each tutor's week is" description="Compared with the most hours each tutor wants a week (or the hours they are available, if no limit is set). Fullest first.">{/* The tutor weeks card: */}
         {f.tutors.length === 0 ? ( // No tutors:
           <Empty>No tutors yet.</Empty> // says so.
         ) : ( // Otherwise:
@@ -170,8 +170,8 @@ function ReportView({ report }: { report: SavedReport }) {
         {(m.sessions_without_pay > 0 || m.sessions_not_billed > 0 || !m.other_costs_set) && ( // If anything could make these figures off:
           <ul className="mt-4 list-disc space-y-1 rounded-xl bg-amber-50 py-3 pr-4 pl-8 text-sm text-amber-900">{/* a pale amber note listing: */}
             {m.sessions_without_pay > 0 && <li>{m.sessions_without_pay} sessions have no pay worked out yet, so wages are missing and profit looks higher than it is.</li>}{/* sessions with no pay, */}
-            {m.sessions_not_billed > 0 && <li>{m.sessions_not_billed} sessions aren&apos;t on an invoice yet, so income is missing and profit looks lower than it is.</li>}{/* sessions not billed, */}
-            {!m.other_costs_set && <li>Other running costs aren&apos;t set (Reports, Settings), so &ldquo;after all costs&rdquo; only takes off wages.</li>}{/* other costs not set. */}
+            {m.sessions_not_billed > 0 && <li>{m.sessions_not_billed} sessions are not on an invoice yet, so income is missing and profit looks lower than it is.</li>}{/* sessions not billed, */}
+            {!m.other_costs_set && <li>Other running costs are not set (Reports, Settings), so &ldquo;after all costs&rdquo; only takes off wages.</li>}{/* other costs not set. */}
           </ul> // End of the note.
         )}{/* End of the note. */}
       </Card>{/* End of the money card. */}
@@ -223,7 +223,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
       ) : section === "reports" ? ( // The list:
         <Card // a card:
           title="All reports" // titled "All reports",
-          description="The app makes a monthly report on the 1st, a quarterly report after each quarter, and a financial year report each July. You'll see a number on Reports when a new one is ready." // explaining when reports are made.
+          description="The app makes a monthly report on the 1st, a quarterly report after each quarter, and a financial year report each July. You will see a number on Reports when a new one is ready." // explaining when reports are made.
         >{/* (end of the card's settings) */}
           {list.length === 0 ? ( // No reports yet:
             <Empty>No reports yet. The first monthly report (November 2026) arrives on 1 December. You can make one for any dates now under &ldquo;Report for your dates&rdquo;.</Empty> // says when the first arrives.

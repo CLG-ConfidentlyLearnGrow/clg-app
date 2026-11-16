@@ -26,7 +26,7 @@ export async function UrgentRematchBox() { // The box itself.
       <h2 id="urgent-rematch" className="text-lg font-bold">Urgent: needs a new tutor ({rows.length})</h2>{/* its heading and count, */}
       <p className="mt-1 text-sm">{/* what to do: */}
         These students can no longer have sessions with their tutor, but still have sessions booked, often already paid for.
-        Please find a new tutor first, use &quot;Move sessions to a new tutor&quot; below, then mark it sorted. Don&apos;t contact the tutor about why.{/* the steps, and not to ask the tutor. */}
+        Please find a new tutor first, use &quot;Move sessions to a new tutor&quot; below, then mark it sorted. Do not contact the tutor about why.{/* the steps, and not to ask the tutor. */}
       </p>{/* End of the explanation. */}
       <ul className="mt-4 space-y-4">{/* the list: */}
         {rows.map((r) => ( // for each flag:

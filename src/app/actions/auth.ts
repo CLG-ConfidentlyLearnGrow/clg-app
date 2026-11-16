@@ -100,7 +100,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     } // End of that case.
     return { // Otherwise:
       error: // (the message)
-        "We couldn't create that account. If CLG invited you to join as staff, please use the link in your invitation email.", // suggests invited staff use their invitation link.
+        "We could not create that account. If CLG invited you to join as staff, please use the link in your invitation email.", // suggests invited staff use their invitation link.
     }; // End of the message.
   } // End of the failure case.
 
@@ -123,7 +123,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
 // database gives the invited role straight away. No approval step.
 // The rules for the join form:
 const joinSchema = z.object({
-  t: z.string().regex(/^[0-9a-f]{64}$/, "This invitation link isn't complete. Please open it again from your email."), // the invitation's secret code (64 letters and numbers),
+  t: z.string().regex(/^[0-9a-f]{64}$/, "This invitation link is not complete. Please open it again from your email."), // the invitation's secret code (64 letters and numbers),
   first_name: z.string().trim().min(1, "Enter your first name.").max(100, "Keep your first name to 100 characters or fewer."), // first name (required),
   last_name: z.string().trim().min(1, "Enter your last name.").max(100, "Keep your last name to 100 characters or fewer."), // last name (required),
   password: newPassword, // password (the new password rules).
@@ -144,7 +144,7 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const details = await supabase.rpc("staff_invite_link_details", { p_token: v.t }); // Looks up the invitation.
   const invite = ((details.data ?? []) as InviteDetails[])[0]; // Its details (if found).
-  if (details.error) return { error: "We couldn't check your invitation. Please try again." }; // Lookup failed: plain message.
+  if (details.error) return { error: "We could not check your invitation. Please try again." }; // Lookup failed: plain message.
   if (!invite) return { error: "This invitation link no longer works. A newer one may have been sent. Please ask CLG for a new link." }; // Not found: may have been replaced.
   if (invite.status === "used") return { error: "This invitation has already been used. Please sign in instead." }; // Already used: sign in instead.
   if (invite.status === "expired") return { error: "This invitation has expired. Please ask CLG to send a new link." }; // Expired: ask for a new link.
@@ -179,7 +179,7 @@ export async function joinAsStaff(_prev: FormState, formData: FormData): Promise
           "This email already has a CLG account. Please sign in. If you never finished setting that account up, use \"Forgot your password?\" on the sign-in page, and your invitation is added when you do.", // sign in, or reset the password to finish setting up.
       }; // End of the message.
     } // End of that case.
-    return { error: "We couldn't set up your account. Please try again, or ask CLG for a new link." }; // Anything else: plain message.
+    return { error: "We could not set up your account. Please try again, or ask CLG for a new link." }; // Anything else: plain message.
   } // End of the failure case.
 
   await saveNameParts(made.data.user.id, v.first_name, v.last_name); // Saves their first and last name.
@@ -243,7 +243,7 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
     if (error.code === "email_not_confirmed") { // Email not confirmed yet:
       return { error: "Please confirm your email address first, using the link we sent you." }; // asks them to confirm it first.
     } // End of that case.
-    return { error: "That email and password don't match. Please try again." }; // Otherwise: plain message.
+    return { error: "That email and password do not match. Please try again." }; // Otherwise: plain message.
   } // End of the failure case.
 
   await admin.rpc("record_login_attempt", { p_email: address, p_succeeded: true }); // Records the successful sign-in (clears failed tries).
@@ -283,7 +283,7 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
 // The rules for setting a new password:
 const setPasswordSchema = z
   .object({ password: newPassword, confirm: z.string() }) // the password (new password rules) and the repeat,
-  .refine((v) => v.password === v.confirm, { message: "The two passwords don't match.", path: ["confirm"] }); // which must match.
+  .refine((v) => v.password === v.confirm, { message: "The two passwords do not match.", path: ["confirm"] }); // which must match.
 
 // Saves a new password (after a reset link, or when signed in).
 export async function setNewPassword(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -300,7 +300,7 @@ export async function setNewPassword(_prev: FormState, formData: FormData): Prom
     if (!/^\d{6}$/.test(code)) return { error: "Enter the 6-digit code from your authenticator app." }; // must be 6 digits.
     const verified = await supabase.auth.mfa.challengeAndVerify({ factorId, code }); // Checks the code.
     if (verified.error) { // Wrong code:
-      return { error: "That code didn't work. Codes change every 30 seconds, so try the newest one." }; // explains codes change every 30 seconds.
+      return { error: "That code did not work. Codes change every 30 seconds, so try the newest one." }; // explains codes change every 30 seconds.
     } // End of that case.
   } // End of the two-step check.
 
@@ -318,9 +318,9 @@ export async function setNewPassword(_prev: FormState, formData: FormData): Prom
       return { error: "That password is too easy to guess or has appeared in a data breach. Please choose another." }; // asks for another.
     } // End of that case.
     if (error.code === "same_password") { // Same as before:
-      return { error: "Please choose a password you haven't used here before." }; // asks for a different one.
+      return { error: "Please choose a password you have not used here before." }; // asks for a different one.
     } // End of that case.
-    return { error: "We couldn't update your password. Please request a new link and try again." }; // Anything else: plain message.
+    return { error: "We could not update your password. Please request a new link and try again." }; // Anything else: plain message.
   } // End of the failure case.
 
   await createAdminClient().rpc("clear_login_lock", { p_email: viewer.email }); // Unlocks the account in case it was locked.

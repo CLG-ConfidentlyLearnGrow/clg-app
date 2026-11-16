@@ -80,7 +80,7 @@ export default async function FeedbackOverviewPage() { // The page itself.
                 <option key={value} value={value}>{label}</option> // an option.
               ))}{/* End of the loop. */}
             </Select>{/* End of the drop-down. */}
-            <TextArea label="Private note (the person who gave it can't see this)" name="note" defaultValue={f.admin_note ?? ""} maxLength={4000} rows={2} />{/* the note box. */}
+            <TextArea label="Private note (the person who gave it cannot see this)" name="note" defaultValue={f.admin_note ?? ""} maxLength={4000} rows={2} />{/* the note box. */}
           </ActionForm>{/* End of the form. */}
         </div>{/* End of the form area. */}
       </details>{/* End of the update box. */}

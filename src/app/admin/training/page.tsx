@@ -88,7 +88,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
 
       {section === "progress" && ( // The progress section:
         <>{/* (a group:) */}
-          <Card title="Certification and holds" description={`CLG certified means all compulsory modules are done, plus ${hrs(s.quarter_minutes)} of training each quarter after that. "New matches held" means a safety module is overdue, so the tutor can't take new students (their current students stay).`}>{/* the people card: */}
+          <Card title="Certification and holds" description={`CLG certified means all compulsory modules are done, plus ${hrs(s.quarter_minutes)} of training each quarter after that. "New matches held" means a safety module is overdue, so the tutor cannot take new students (their current students stay).`}>{/* the people card: */}
             {persons.length === 0 ? <Empty>No tutors or admin staff yet.</Empty> : ( // none: says so; otherwise:
               <Table headings={["Name", "Certification", "This quarter", "Last quarter", "New matches"]}>{/* a table: */}
                 {persons.map((p) => ( // each person:
@@ -103,7 +103,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
               </Table> // End of the table.
             )}{/* End of the choice. */}
           </Card>{/* End of the people card. */}
-          <Card title="Compulsory modules" description="Everyone's progress. Reminders go out automatically before things are due, and you're told about anything overdue.">{/* the progress card: */}
+          <Card title="Compulsory modules" description="Everyone's progress. Reminders go out automatically before things are due, and you are told about anything overdue.">{/* the progress card: */}
             {rows.length === 0 ? <Empty>No compulsory modules are published yet.</Empty> : ( // none: says so; otherwise:
               <Table headings={["Name", "Module", "Status", "Date"]}>{/* a table: */}
                 {rows.map((r) => ( // each person and module:
@@ -122,7 +122,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
 
       {section === "handbook" && ( // The handbook section:
         <>{/* (a group:) */}
-          <Card title="Handbook pages" description="The go-to guide for tutors and staff. Pin the 'Something's happened' page so it shows at the top in red.">{/* the list card: */}
+          <Card title="Handbook pages" description="The go-to guide for tutors and staff. Pin the 'Something has happened' page so it shows at the top in red.">{/* the list card: */}
             {(pages.data ?? []).length === 0 ? <Empty>No pages yet.</Empty> : ( // none: says so; otherwise:
               <Table headings={["Page", "For", "Status", "Updated"]}>{/* a table: */}
                 {(pages.data ?? []).map((p) => ( // each page:

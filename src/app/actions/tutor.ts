@@ -35,7 +35,7 @@ export async function saveMaxHours(_prev: FormState, formData: FormData): Promis
     .from("tutor_work_settings") // into tutor_work_settings,
     .update({ max_weekly_hours: parsed.data.max_weekly_hours }) // the new hours,
     .eq("tutor_id", viewer.id); // for this tutor.
-  if (error) return { error: "Couldn't save your hours." }; // Didn't work: says so.
+  if (error) return { error: "Could not save your hours." }; // Didn't work: says so.
 
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.
   return { message: "Saved." }; // Says it's saved.
@@ -56,7 +56,7 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
   // Where the tutor can teach in this time: online, one library, or both.
   const online = formData.get("online") === "on"; // Whether they ticked online.
   const lib = z.union([z.uuid(), z.literal("")]).safeParse(String(formData.get("library_id") ?? "")); // Checks the library choice is an id or blank.
-  if (!lib.success) return { error: "Couldn't read the library you chose." }; // Not right: says so.
+  if (!lib.success) return { error: "Could not read the library you chose." }; // Not right: says so.
   const library_id = lib.data || null; // The library (or none).
   const in_person = library_id !== null; // In person if a library is chosen.
   if (!in_person && !online) return { error: "Choose online, a library, or both." }; // Needs at least one place.
@@ -70,16 +70,16 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
     if (error.code === "PGRST204" || error.code === "42703") { // A database update hasn't been run:
       return { // gives back:
         error: // the message:
-          "The app's database is missing an update, so times can't be saved yet. The owner needs to run the migration 20261111600400_availability_one_library.sql (and any earlier scheduling updates) in Supabase.", // naming the update to run.
+          "The app's database is missing an update, so times cannot be saved yet. The owner needs to run the migration 20261111600400_availability_one_library.sql (and any earlier scheduling updates) in Supabase.", // naming the update to run.
       }; // (end of the message)
     } // End of this case.
     if (error.code === "22023") { // The library can't be chosen yet:
-      return { error: "That library can't be chosen yet. Pick one from the list, or suggest it under Where you teach." }; // says so.
+      return { error: "That library cannot be chosen yet. Pick one from the list, or suggest it under Where you teach." }; // says so.
     } // End of this case.
     if (error.code === "23503") { // No tutor profile yet:
-      return { error: "Your tutor profile isn't set up yet. Ask a CLG admin to finish setting up your tutor account." }; // says so.
+      return { error: "Your tutor profile is not set up yet. Ask a CLG admin to finish setting up your tutor account." }; // says so.
     } // End of this case.
-    return { error: "Couldn't add that time. Please try again, or tell a CLG admin if it keeps happening." }; // Anything else: a general message.
+    return { error: "Could not add that time. Please try again, or tell a CLG admin if it keeps happening." }; // Anything else: a general message.
   } // End of the error part.
 
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.
@@ -130,7 +130,7 @@ export async function submitMyCheck(_prev: FormState, formData: FormData): Promi
   const upload = await supabase.storage // Uploads:
     .from("check-documents") // into the check-documents store,
     .upload(path, bytes, { contentType: kind.type, upsert: false }); // the file, without replacing any other.
-  if (upload.error) return { error: "Couldn't upload your file. Please try again." }; // Didn't work: says so.
+  if (upload.error) return { error: "Could not upload your file. Please try again." }; // Didn't work: says so.
 
   const { error } = await supabase.from("tutor_checks").insert({ // Saves the check into tutor_checks:
     tutor_id: viewer.id, // the tutor,
@@ -143,7 +143,7 @@ export async function submitMyCheck(_prev: FormState, formData: FormData): Promi
   if (error) { // If it didn't work:
     // Don't leave an unattached copy behind.
     await supabase.storage.from("check-documents").remove([path]); // removes the uploaded copy,
-    return { error: error.code === "23514" ? `${error.message}.` : "Couldn't save your check. Please try again." }; // and says why (the database's own words for a date rule).
+    return { error: error.code === "23514" ? `${error.message}.` : "Could not save your check. Please try again." }; // and says why (the database's own words for a date rule).
   } // End of the error part.
 
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboards,
@@ -177,8 +177,8 @@ export async function addTeaching(_prev: FormState, formData: FormData): Promise
     return { // gives back:
       error: // a message:
         error.code === "23505" // if it's already added,
-          ? "You've already added that subject. Remove it first to change its year levels." // says so,
-          : "Couldn't save. Please try again.", // otherwise a general message.
+          ? "You have already added that subject. Remove it first to change its year levels." // says so,
+          : "Could not save. Please try again.", // otherwise a general message.
     }; // (end of the message)
   } // End of the error part.
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboards.

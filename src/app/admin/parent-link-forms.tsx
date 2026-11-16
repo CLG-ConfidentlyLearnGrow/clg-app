@@ -58,10 +58,10 @@ export function LinkParentForm({ students }: { students: StudentOption[] }) {
         name="email" // its field name,
         type="email" // an email address,
         required // that must be filled in,
-        hint="If they already have a CLG account (for example they're also a tutor), we use it. If not, we make one and send them a link." // and a hint about new and existing accounts.
+        hint="If they already have a CLG account (for example they are also a tutor), we use it. If not, we make one and send them a link." // and a hint about new and existing accounts.
       />{/* (end of the box) */}
       <Field // The name box:
-        label="Their full name (only needed if they're new to CLG)" // its label,
+        label="Their full name (only needed if they are new to CLG)" // its label,
         name="contact_name" // its field name,
         maxLength={200} // up to 200 characters,
         autoComplete="off" // no browser autofill.
@@ -150,7 +150,7 @@ export function DuplicateList({ rows }: { rows: DuplicateRow[] }) {
             <p className="mt-2 text-zinc-700">{/* A line: */}
               If this is the same child, merge them: the older profile is kept, every parent is linked to it, and the
               newer one is deleted. If the older one has no history yet but the newer one does (for example a tutor or
-              bookings), keep the newer one instead. Check with the family first if you&apos;re not sure the second adult should see this
+              bookings), keep the newer one instead. Check with the family first if you are not sure the second adult should see this
               child.{/* what merging does, and when to keep the newer one. */}
             </p>{/* End of the line. */}
             <div className="mt-3 flex flex-wrap gap-4">{/* A row of buttons: */}

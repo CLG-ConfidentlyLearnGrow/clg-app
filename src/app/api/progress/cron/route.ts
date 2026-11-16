@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const queued = await supabase.rpc("evidence_files_to_remove"); // Gets the list of files waiting to be removed.
   if (queued.error) { // Couldn't get it:
     console.error("Evidence file removal:", queued.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't read the removal list" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not read the removal list" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   const paths = (queued.data ?? []) as string[]; // The file paths.
   if (paths.length === 0) return Response.json({ removed: 0 }); // None: reports nothing removed.
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const removed = await supabase.storage.from("learning-evidence").remove(paths); // Removes the files.
   if (removed.error) { // Couldn't remove them:
     console.error("Evidence file removal:", removed.error.message); // notes why in the server log,
-    return Response.json({ removed: 0, problem: "Couldn't remove the files" }, { status: 500 }); // and reports the problem.
+    return Response.json({ removed: 0, problem: "Could not remove the files" }, { status: 500 }); // and reports the problem.
   } // End of the failure case.
   await supabase.rpc("evidence_files_removed", { p_paths: paths }); // Tells the database these files are gone.
   return Response.json({ removed: paths.length }); // Reports how many were removed.

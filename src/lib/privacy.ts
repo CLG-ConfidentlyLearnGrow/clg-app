@@ -5,7 +5,7 @@
 // The kinds of privacy request, each with its label and a hint shown under it.
 export const PRIVACY_REQUEST_KINDS = [
   { id: "access", label: "See the information CLG holds", hint: "Most of it is in the download above. Ask here for anything else." }, // Asking to see their data.
-  { id: "correction", label: "Fix something that's wrong", hint: "Say what is wrong and what it should be." }, // Asking to correct data.
+  { id: "correction", label: "Fix something that is wrong", hint: "Say what is wrong and what it should be." }, // Asking to correct data.
   { id: "deletion", label: "Delete information", hint: "Say whose information. Some records must be kept by law, such as invoices (kept 7 years)." }, // Asking to delete data.
   { id: "restriction", label: "Stop or limit a use of information", hint: "Say which use you object to." }, // Objecting to a use.
   { id: "consent", label: "Withdraw a consent", hint: "Withdrawing consent for a child means CLG can no longer support them." }, // Taking back consent.

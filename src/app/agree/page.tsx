@@ -68,7 +68,7 @@ export default async function AgreePage() {
           ))}{/* End of the children loop. */}
         </ActionForm>{/* End of the form. */}
         <p className="mt-4 text-xs text-zinc-500">{/* A small grey note: */}
-          If you don&apos;t want to agree, please <TextLink href="/my-privacy">send CLG a request</TextLink> and we&apos;ll
+          If you do not want to agree, please <TextLink href="/my-privacy">send CLG a request</TextLink> and we will
           talk about what happens next.{/* what to do if they don't want to agree. */}
         </p>{/* End of the note. */}
       </Card>{/* End of the card. */}

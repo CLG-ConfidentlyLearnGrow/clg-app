@@ -41,7 +41,7 @@ export function UpdateProblemForm({ report }: { report: ProblemReport }) {
         rows={4} // four lines tall,
         maxLength={4000} // up to 4,000 characters,
         defaultValue={report.fix_summary ?? ""} // starts with the saved summary,
-        hint="First line is the title. Say what's wrong and what should happen instead. No names, emails, children's details or anything copied from a screenshot: this is what goes to GitHub." // help under the box.
+        hint="First line is the title. Say what is wrong and what should happen instead. No names, emails, children's details or anything copied from a screenshot: this is what goes to GitHub." // help under the box.
       />{/* End of the fix summary box. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

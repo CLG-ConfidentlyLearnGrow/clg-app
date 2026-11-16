@@ -511,7 +511,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                       </div>{/* End of the top part. */}
                       <details className="rounded-xl bg-zinc-50 px-4 py-2">{/* a fold-out: */}
                         <summary className="cursor-pointer text-zinc-700">{/* its heading: */}
-                          Doesn&apos;t match? Send it back{/* its words, */}
+                          Does not match? Send it back{/* its words, */}
                         </summary>{/* end of the heading. */}
                         <div className="pt-3">{/* a box: */}
                           <DeclineCheckForm checkId={c.id} />{/* the send-back form. */}
@@ -704,7 +704,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               collapsible // can fold,
               defaultOpen={false} // folded to start,
               title="Link skills to a student" // its title,
-              description="Open a student's progress page and use Add a goal to choose the skills they're working on. Set their curriculum first." // its help text.
+              description="Open a student's progress page and use Add a goal to choose the skills they are working on. Set their curriculum first." // its help text.
             >{/* (end of the card's settings) */}
               {studentRows.length === 0 ? ( // if no students:
                 <Empty>No students yet.</Empty> // says so.
@@ -772,7 +772,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             {savedLevel === "operations" && ( // For operations admins:
               <Card // a card:
                 title="Emergency owner access" // its title,
-                description="If the owner can't be reached and something only the owner can do is urgent, ask for owner access here." // its help text.
+                description="If the owner cannot be reached and something only the owner can do is urgent, ask for owner access here." // its help text.
               >{/* (end of the card's settings) */}
                 {emergency ? ( // if a request exists:
                   <>{/* (a group) */}
@@ -819,7 +819,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
             <Card // the unlock card:
               title="Unlock an account" // its title,
-              description="Lets someone sign in straight away after too many wrong tries, instead of waiting 30 minutes. This doesn't send them an email." // its help text, saying no email is sent.
+              description="Lets someone sign in straight away after too many wrong tries, instead of waiting 30 minutes. This does not send them an email." // its help text, saying no email is sent.
             >{/* (end of the card's settings) */}
               <UnlockForm />{/* the form. */}
             </Card>{/* End of the card. */}

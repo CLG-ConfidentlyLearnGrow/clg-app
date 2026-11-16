@@ -60,10 +60,10 @@ const applySchema = z.object({
   phone: needed("Phone", 30, 6), // phone,
   state: z.enum(STATES, "Please choose the state you live in."), // state,
   suburb: needed("Suburb or town", 100), // suburb or town,
-  teach_mode: z.enum(TEACH_MODES, "Please choose how you'd like to teach."), // in person, online or both,
+  teach_mode: z.enum(TEACH_MODES, "Please choose how you would like to teach."), // in person, online or both,
   right_to_work: z.enum(["yes", "no"], "Please say whether you have the right to work in Australia."), // right to work (yes or no),
   subjects: needed("Subjects and year levels", 2000, 3), // subjects and year levels,
-  availability: needed("When you're free", 1000, 3), // availability,
+  availability: needed("When you are free", 1000, 3), // availability,
   weekly_hours: z.union([z.literal(""), z.coerce.number().int("Please give hours a week as a whole number.").min(1, "Hours a week should be between 1 and 40.").max(40, "Hours a week should be between 1 and 40.")]).default(""), // hours a week (optional),
   qualifications: needed("Qualifications", 3000, 3), // qualifications,
   teacher_registration: optional("Teacher registration", 100), // teacher registration (optional),
@@ -74,7 +74,7 @@ const applySchema = z.object({
   wwcc_expiry: z.union([z.literal(""), z.iso.date("Please check the expiry date.")]).default(""), // its expiry (optional),
   rrhan_ec_status: z.enum(RRHAN_STATUSES, "Please answer the RRHAN-EC question."), // RRHAN-EC,
   first_aid_status: z.enum(FIRST_AID_STATUSES, "Please answer the first aid question."), // first aid,
-  statement: needed("Why you'd like to tutor with CLG", 3000, 30), // why CLG,
+  statement: needed("Why you would like to tutor with CLG", 3000, 30), // why CLG,
   helped_example: needed("A time you helped a young person", 3000, 30), // a time they helped,
   heard_from: optional("How you heard about CLG", 200), // how they heard (optional),
 }); // End of the rules.
@@ -130,7 +130,7 @@ export async function submitTutorApplication(_prev: FormState, formData: FormDat
     const stored = await supabase.storage.from(BUCKET).upload(cvPath, cvBytes, { contentType: "application/pdf", upsert: false }); // stores it privately, never replacing another file.
     if (stored.error) { // Couldn't store it:
       console.error("Tutor application CV upload:", stored.error.message); // notes why in the server log,
-      return { error: "Your CV didn't upload. Please try again, or send your application without it and email it to us." }; // and offers a way round it.
+      return { error: "Your CV did not upload. Please try again, or send your application without it and email it to us." }; // and offers a way round it.
     } // End of the failure case.
   } // End of storing the CV.
 
@@ -150,7 +150,7 @@ export async function submitTutorApplication(_prev: FormState, formData: FormDat
   if (error) { // Saving failed:
     if (cvPath) await supabase.storage.from(BUCKET).remove([cvPath]); // removes the CV so nothing is left behind,
     if (!PLAIN.test(error.message)) console.error("Tutor application save:", error.code, error.message); // notes unexpected problems in the server log,
-    return { error: PLAIN.test(error.message) ? error.message : "Couldn't send your application. Please try again." }; // and shows the database's plain message, or a general one.
+    return { error: PLAIN.test(error.message) ? error.message : "Could not send your application. Please try again." }; // and shows the database's plain message, or a general one.
   } // End of the failure case.
 
   // A short "we've got it" email. If it can't be sent, the application is still saved.
@@ -160,7 +160,7 @@ export async function submitTutorApplication(_prev: FormState, formData: FormDat
       email: v.email, // to the applicant,
       first_name: v.first_name, // greeting them by first name,
       subject: "Thanks for applying to tutor with CLG", // the subject line,
-      body: "We've received your application to tutor with CLG Tutoring. We read every application and will be in touch, usually within two weeks. If you're shortlisted, we'll invite you to an interview and contact your two referees. If you need to change anything, just reply to this email.", // what happens next,
+      body: "We have received your application to tutor with CLG Tutoring. We read every application and will be in touch, usually within two weeks. If you are shortlisted, we will invite you to an interview and contact your two referees. If you need to change anything, just reply to this email.", // what happens next,
       link: "/privacy", // the button opens the privacy policy,
       button: "How we look after your information", // the button's words,
       footer: "You get this email because you applied to tutor with CLG Tutoring.", // and why they got it.
@@ -169,7 +169,7 @@ export async function submitTutorApplication(_prev: FormState, formData: FormDat
   } // End of the email.
 
   revalidatePath("/admin/applications"); // Refreshes the admin queue.
-  return { message: "Thanks, your application has been sent. We'll email you to confirm, and be in touch soon." }; // Thanks them.
+  return { message: "Thanks, your application has been sent. We will email you to confirm, and be in touch soon." }; // Thanks them.
 } // End of submitTutorApplication.
 
 // The rules for the screening record.
@@ -193,7 +193,7 @@ export async function saveTutorApplication(_prev: FormState, formData: FormData)
   const { id, ...record } = parsed.data; // The application and its record.
   const supabase = await createClient(); // Connects as the signed-in admin.
   const { error } = await supabase.rpc("tutor_application_save", { p_id: id, p: record }); // Saves it.
-  if (error) return { error: PLAIN.test(error.message) ? error.message : "Couldn't save. Please try again." }; // Failed: the plain message, or a general one.
+  if (error) return { error: PLAIN.test(error.message) ? error.message : "Could not save. Please try again." }; // Failed: the plain message, or a general one.
   revalidatePath("/admin/applications"); // Refreshes the queue.
   return { message: "Saved." }; // Confirms it.
 } // End of saveTutorApplication.
@@ -213,7 +213,7 @@ export async function declineTutorApplication(_prev: FormState, formData: FormDa
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects as the signed-in admin.
   const { data: email, error } = await supabase.rpc("tutor_application_decline", { p_id: parsed.data.id, p_reason: parsed.data.reason, p_note: parsed.data.note }); // Records the decline and gets their email.
-  if (error) return { error: PLAIN.test(error.message) ? error.message : "Couldn't decline it. Please try again." }; // Failed: the plain message, or a general one.
+  if (error) return { error: PLAIN.test(error.message) ? error.message : "Could not decline it. Please try again." }; // Failed: the plain message, or a general one.
   revalidatePath("/admin/applications"); // Refreshes the queue.
   if (formData.get("send_email") !== "on") return { message: "Declined. No email was sent." }; // No email asked for: confirms.
   const { data: who } = await supabase.from("tutor_applications").select("first_name").eq("id", parsed.data.id).maybeSingle(); // Reads their first name for the greeting.
@@ -223,15 +223,15 @@ export async function declineTutorApplication(_prev: FormState, formData: FormDa
         email: String(email), // to the applicant,
         first_name: (who?.first_name as string | undefined) ?? null, // greeting them by first name,
         subject: "Your application to tutor with CLG", // the subject line,
-        body: "Thank you for applying to tutor with CLG Tutoring and for the time you put into your application. We're not able to offer you a tutoring role at the moment. We'll keep your application for 12 months and then delete it. You're welcome to apply again in future if things change.", // a polite, plain "not this time",
+        body: "Thank you for applying to tutor with CLG Tutoring and for the time you put into your application. We are not able to offer you a tutoring role at the moment. We will keep your application for 12 months and then delete it. You are welcome to apply again in future if things change.", // a polite, plain "not this time",
         link: "/", // the button opens the CLG app's front page,
         button: "Visit CLG", // the button's words,
         footer: "You get this email because you applied to tutor with CLG Tutoring.", // and why they got it.
       }]) // End of the email.
-    : "Email isn't set up yet."; // Email not set up: notes that.
+    : "Email is not set up yet."; // Email not set up: notes that.
   if (problem) { // The email didn't go:
     console.error("Tutor application decline email:", problem); // notes why in the server log,
-    return { message: `Declined, but the email couldn't be sent. Please let them know yourself at ${String(email)}.` }; // and asks the admin to tell them.
+    return { message: `Declined, but the email could not be sent. Please let them know yourself at ${String(email)}.` }; // and asks the admin to tell them.
   } // End of that case.
   return { message: "Declined, and a polite email has been sent." }; // Confirms both.
 } // End of declineTutorApplication.
@@ -242,13 +242,13 @@ export async function declineTutorApplication(_prev: FormState, formData: FormDa
 export async function approveTutorApplication(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(); // Makes sure the person is a full admin (the database checks again).
   const id = z.uuid().safeParse(formData.get("id")); // Checks the application id looks right.
-  if (!id.success) return { error: "That application wasn't found." }; // Odd id: plain message.
+  if (!id.success) return { error: "That application was not found." }; // Odd id: plain message.
   const supabase = await createClient(); // Connects as the signed-in admin.
   const { data: email, error } = await supabase.rpc("tutor_application_approve", { p_id: id.data }); // Approves it (or refuses, saying what's missing) and gets their email.
-  if (error || typeof email !== "string") return { error: error && PLAIN.test(error.message) ? error.message : "Couldn't approve it. Please try again." }; // Failed: the plain message, or a general one.
+  if (error || typeof email !== "string") return { error: error && PLAIN.test(error.message) ? error.message : "Could not approve it. Please try again." }; // Failed: the plain message, or a general one.
   revalidatePath("/admin/applications"); // Refreshes the queue.
   const invite = await sendStaffInvite(email, "tutor", null); // Sends the tutor invite link (or adds the tutor role if they already have an account).
-  if (invite.error) return { error: `Approved, but the invite couldn't be made: ${invite.error} Press Send invite again to retry.` }; // The invite failed: says so (the approval stays).
+  if (invite.error) return { error: `Approved, but the invite could not be made: ${invite.error} Press Send invite again to retry.` }; // The invite failed: says so (the approval stays).
   await supabase.rpc("tutor_application_invited", { p_id: id.data }); // Notes that the invite went (or was handed to the admin).
   revalidatePath("/admin/applications"); // Refreshes the queue again to show it.
   return { message: `Approved. ${invite.message ?? ""}`.trim() }; // Confirms, with what happened to the invite.

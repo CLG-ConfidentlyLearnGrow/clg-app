@@ -110,9 +110,9 @@ export default async function AdminWhatsNewPage() { // The page itself.
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="whats-new">{/* the dashboard frame: */}
-      <PageTitle title="What's new" intro="Write the pop-up people see after an app update. Each person only sees the changes ticked for their own dashboards, once." role="admin" />{/* the heading, */}
+      <PageTitle title="What is new" intro="Write the pop-up people see after an app update. Each person only sees the changes ticked for their own dashboards, once." role="admin" />{/* the heading, */}
       <div className="space-y-6">{/* the parts, spaced: */}
-        <Card title="Start a new update" description="Give it a short title, like “Booking is quicker”. You'll add the changes next.">{/* starting a draft: */}
+        <Card title="Start a new update" description="Give it a short title, like “Booking is quicker”. You will add the changes next.">{/* starting a draft: */}
           <ActionForm action={saveWhatsNewNote} submitLabel="Start draft">{/* the form: */}
             <Field label="Title" name="title" required maxLength={120} />{/* the title box. */}
           </ActionForm>{/* End of the form. */}
@@ -150,7 +150,7 @@ export default async function AdminWhatsNewPage() { // The page itself.
                   <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">{/* a shaded box for publishing: */}
                     <ActionForm action={publishWhatsNewNote} submitLabel="Publish">{/* the publish form: */}
                       <input type="hidden" name="id" value={n.id} />{/* (which update) */}
-                      <Field label="Start showing on (optional)" name="showOn" type="date" hint="Leave empty to show it now. A later day starts at midnight, Adelaide time. Once published, it can't be edited unless you take it back to a draft." />{/* the start day. */}
+                      <Field label="Start showing on (optional)" name="showOn" type="date" hint="Leave empty to show it now. A later day starts at midnight, Adelaide time. Once published, it cannot be edited unless you take it back to a draft." />{/* the start day. */}
                     </ActionForm>{/* End of the form. */}
                   </div> // End of the box.
                 )}{/* End of publishing. */}

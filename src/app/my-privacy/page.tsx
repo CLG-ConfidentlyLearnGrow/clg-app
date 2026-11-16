@@ -137,7 +137,7 @@ export default async function MyPrivacyPage() {
                 {r.outcome && <p className="mt-1">CLG&apos;s answer: {r.outcome}</p>}{/* CLG's answer, if given. */}
                 {r.status === "refused" && ( // If refused:
                   <p className="mt-1 text-xs text-zinc-500">{/* a small grey note: */}
-                    If you&apos;re not happy with this, you can complain to the privacy regulator. In Australia that is
+                    If you are not happy with this, you can complain to the privacy regulator. In Australia that is
                     the <TextLink href="https://www.oaic.gov.au/privacy/privacy-complaints">OAIC</TextLink>.{/* how to complain to the OAIC. */}
                   </p> // End of the note.
                 )}{/* End of that part. */}

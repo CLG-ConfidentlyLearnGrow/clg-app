@@ -123,7 +123,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
               {report.device && <p className="mt-1 text-xs break-all text-zinc-500">{report.device}</p>}{/* and their browser, small. */}
               <SubHeading>Screenshots</SubHeading>{/* a heading, */}
               {shots.length === 0 ? ( // No screenshots:
-                <Empty>No screenshots{report.status === "fixed" || report.status === "closed" ? " (they're removed 90 days after a report is closed)" : ""}.</Empty> // says so (and why, if closed).
+                <Empty>No screenshots{report.status === "fixed" || report.status === "closed" ? " (they are removed 90 days after a report is closed)" : ""}.</Empty> // says so (and why, if closed).
               ) : ( // Otherwise:
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{/* a grid of screenshots: */}
                   {shots.map((s, i) => ( // for each one:
@@ -147,12 +147,12 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
                 ) : githubReady ? ( // Ready to send:
                   <SendToGitHubForm id={report.id} /> // the send button.
                 ) : ( // Not set up:
-                  <p className="text-sm text-zinc-600">GitHub isn&apos;t set up yet. Add GITHUB_ISSUES_TOKEN and GITHUB_ISSUES_REPO in Vercel to turn this on (see the admin guide).</p> // says what's needed.
+                  <p className="text-sm text-zinc-600">GitHub is not set up yet. Add GITHUB_ISSUES_TOKEN and GITHUB_ISSUES_REPO in Vercel to turn this on (see the admin guide).</p> // says what's needed.
                 )}{/* End of the choice. */}
                 <form action={deleteProblemReport} className="mt-6 border-t border-zinc-100 pt-4">{/* the delete form: */}
                   <input type="hidden" name="id" value={report.id} />{/* the report's id, hidden, */}
                   <button type="submit" className="text-sm text-red-700 hover:underline">Delete this report and its screenshots</button>{/* the delete button, */}
-                  <p className="mt-1 text-xs text-zinc-500">For example, if it holds details that shouldn&apos;t have been shared. This can&apos;t be undone.</p>{/* and when to use it. */}
+                  <p className="mt-1 text-xs text-zinc-500">For example, if it holds details that should not have been shared. This cannot be undone.</p>{/* and when to use it. */}
                 </form>{/* End of the delete form. */}
               </Card> // End of the GitHub card.
             )}{/* End of the owner-only part. */}
@@ -175,7 +175,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="problems" sub="queue" items={items}>{/* the dashboard frame, */}
-      <Card title="App issues" description="App problems anyone using the app has reported. Check each one, reply, and mark where it's up to.">{/* the queue card: */}
+      <Card title="App issues" description="App problems anyone using the app has reported. Check each one, reply, and mark where it is up to.">{/* the queue card: */}
         <div className="mb-4 flex flex-wrap gap-2">{/* the filter buttons (wrap on small screens): */}
           {FILTERS.map((f) => ( // for each filter:
             <TextLink // a link:

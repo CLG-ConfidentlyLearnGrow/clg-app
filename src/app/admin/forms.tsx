@@ -241,7 +241,7 @@ export function DeclineCheckForm({ checkId }: { checkId: string }) {
         required // that must be filled in,
         minLength={3} // at least 3 characters,
         maxLength={300} // up to 300,
-        hint="For example: the number doesn't match the official record." // and an example.
+        hint="For example: the number does not match the official record." // and an example.
       />{/* (end of the box) */}
     </ActionForm> // End of the form.
   ); // End of what's shown.

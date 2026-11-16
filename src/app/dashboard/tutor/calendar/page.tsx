@@ -100,7 +100,7 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/da
         />{/* End of the seven days. */}
         {sessions.length === 0 && ( // No sessions all week:
           <div className="mt-4">{/* a little space, then: */}
-            <Empty>No sessions this week. New bookings appear here once they&apos;re confirmed.</Empty>{/* a friendly note. */}
+            <Empty>No sessions this week. New bookings appear here once they are confirmed.</Empty>{/* a friendly note. */}
           </div> // End of the note.
         )}{/* End of the empty part. */}
         <p className="mt-4 text-sm">{/* a link to the rest: */}

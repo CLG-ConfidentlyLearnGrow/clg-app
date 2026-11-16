@@ -101,7 +101,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
             </Link>{/* end of the link. */}
             {viewer && ( // only for people signed in:
               <Link href="/whats-new" className="underline underline-offset-4">{/* the "What's new" link (every update for their dashboards, Carla 15 Nov 2026): */}
-                What&apos;s new{/* its words, */}
+                What is new{/* its words, */}
               </Link> // end of the link.
             )}{/* End of the signed-in link. */}
             <Link href="/privacy" className="underline underline-offset-4">{/* the privacy link: */}
