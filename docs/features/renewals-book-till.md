@@ -6,7 +6,7 @@ book-till date gets close, the parent sets a new book-till date and ticks
 the school holiday and public holiday questions again.
 
 Scheduling module. Migration
-`supabase/migrations/20261119700100_renewals_book_till.sql`; tests in
+`supabase/migrations/20261119700200_renewals_book_till.sql`; tests in
 `supabase/tests/scheduling_terms_book_till.test.sql` (with the older
 `scheduling_terms.test.sql` and `scheduling_terms_study_periods.test.sql`
 updated to the new rule).

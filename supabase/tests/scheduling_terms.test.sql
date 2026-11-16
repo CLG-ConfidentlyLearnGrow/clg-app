@@ -56,7 +56,7 @@ delete from public.bookings where id = :'skipper'; -- Removes the booking.
 
 -- A booking that ends this term. Sam has no book-till date here, so the
 -- question follows the booking's own last date (renewals now follow the
--- book-till date: 20261119700100_renewals_book_till.sql).
+-- book-till date: 20261119700200_renewals_book_till.sql).
 update public.student_places set book_until = null where student_id = :'sam'; -- Clears any book-till date left by earlier tests.
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery, -- Adds a confirmed booking ending in 8 days:
                              first_date, last_date, status, confirmed_at) -- (with its dates and status)

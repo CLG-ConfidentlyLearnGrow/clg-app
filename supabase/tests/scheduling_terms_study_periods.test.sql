@@ -87,7 +87,7 @@ select tests.eq(private.student_in_holidays(:'sam', current_date + 50)::int, 0, 
 
 -- The "book again?" question no longer follows the study period: it
 -- follows the book-till date, or the booking's last date if that comes
--- first (20261119700100_renewals_book_till.sql).
+-- first (20261119700200_renewals_book_till.sql).
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery, -- Adds a confirmed booking for Sam with tutor T3:
                              first_date, last_date, status, confirmed_at) -- (with its dates and status)
 select :'sam', '00000000-0000-0000-0000-000000000013', :'sam_family', 'General Maths', -- (for Sam, General Maths)

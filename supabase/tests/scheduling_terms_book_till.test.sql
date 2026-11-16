@@ -1,5 +1,5 @@
 -- Summary: tests that the "book again?" question follows each student's own
--- book-till date (20261119700100_renewals_book_till.sql), not the end of the
+-- book-till date (20261119700200_renewals_book_till.sql), not the end of the
 -- school term. Runs after scheduling_terms.test.sql, which leaves made-up SA
 -- terms in place (this term ends in 10 days, next term runs from day 24 to
 -- day 80). Reuses tutor T3 (...13), parents P3 (...03, Sam Three's parent)
