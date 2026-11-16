@@ -131,7 +131,7 @@ In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder 
 3. Choose **Set up automatic payment** and enter your card or bank details on Stripe's secure page. CLG never sees them.
 4. Pay any invoice with **Pay (amount) now**.
 
-Tip: If your parent pays, you won't see Billing. If your sessions are on hold, check with your parent or carer.
+Tip: If your parent pays, you won't see Billing. If your brothers or sisters also learn with CLG, a parent looks after the family's billing, unless CLG has made you the family's bill payer. If your sessions are on hold, check with your parent or carer.
 
 ## Help, privacy and safety
 
@@ -146,5 +146,7 @@ Tip: If your parent pays, you won't see Billing. If your sessions are on hold, c
 
 ### Your privacy
 Choose **Your privacy** to download your information, ask CLG to fix or delete something, or choose whether you get CLG news by email.
+
+Tip: Your profile is private. If your brothers or sisters have their own login, they can't see your sessions, progress or anything else on your profile, and you can't see theirs. Your parent can see all their children.
 `, // End of the guide's text.
 }; // End of the student guide.

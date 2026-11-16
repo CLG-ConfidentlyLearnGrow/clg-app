@@ -11,6 +11,9 @@
 -- Re-running an older billing file resets its rules, so apply admin levels again.
 -- Runs the database change 20261029900200_admin_levels.sql first, as this test needs it.
 \ir ../migrations/20261029900200_admin_levels.sql
+-- Re-running it also undoes the sibling privacy rule for family billing, so apply that again too.
+-- Runs the database change 20261118900100_sibling_privacy.sql again, so adult siblings stay out of family billing.
+\ir ../migrations/20261118900100_sibling_privacy.sql
 
 -- Keeps Cara's student id as cara and her family id as fam1.
 select id as cara, family_id as fam1 from public.students where full_name = 'Cara One' \gset
