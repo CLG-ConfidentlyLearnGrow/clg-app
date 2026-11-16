@@ -82,12 +82,20 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
   // Numbers where something needs doing: details to finish, billing to set up.
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
   const offers = await getOffersToAnswer(); // Session times waiting for this parent's approval.
+  // Whether the family's sessions are on hold for an overdue invoice. Every
+  // parent is told, even one who doesn't pay and so has no Billing tab.
+  const onHold = await supabase.rpc("my_support_on_hold"); // Asks the database (true when on hold).
 
   return ( // Shows:
     <>{/* (a group) */}
       <DashboardFrame role="parent" roles={viewer.roles} current={section}>{/* the dashboard tabs and parent menu, on the open section: */}
         {/* Session times to approve, and new notices, on every section so they aren't missed. */}
         <SessionAnswersCard waiting={offers.as_family} notices={todo.get("sessions", "notices") ?? 0} who="family" />
+        {onHold.data === true && ( // If the family's sessions are on hold:
+          <Card title="Sessions on hold">{/* a card: */}
+            <p className="text-sm">Your family's sessions are on hold because an invoice is overdue. They start again as soon as it's paid. The person who pays can do this in Billing, or contact CLG.</p>{/* saying why and what to do. */}
+          </Card> // End of the card.
+        )}{/* End of the on-hold card. */}
         {section === "children" && ( // The children section:
           <>{/* (a group) */}
             {unfinished.map(({ child, missing }) => ( // for each child with details to finish:

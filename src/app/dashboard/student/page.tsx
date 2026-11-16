@@ -45,8 +45,7 @@ export default async function StudentDashboard() { // The page itself.
         {onHold.data === true && ( // If sessions are on hold:
           <Card title="Sessions on hold">{/* a card: */}
             <p className="text-sm">{/* a line: */}
-              Your sessions are on hold for now. Please check with your parent or carer, or see{" "}{/* saying so, and where to check, */}
-              <TextLink href="/billing">Billing</TextLink>.{/* with a link to billing. */}
+              Your sessions are on hold because an invoice is overdue. Please check with whoever pays for your sessions. If that&apos;s you, pay it in Billing.{/* saying why, and who can fix it (only payers have a Billing tab, Carla 16 Nov 2026). */}
             </p>{/* End of the line. */}
           </Card> // End of the card.
         )}{/* End of this part. */}

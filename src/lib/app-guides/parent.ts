@@ -19,7 +19,7 @@ export const PARENT_GUIDE: GuideSource = { // The guide:
 The app has a few parts that are always there:
 
 - **Home** (top of every page) takes you back to your dashboard.
-- The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** and **App guide**. A number next to a menu item means something is waiting for you there.
+- The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
 - **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too.
 - If you have more than one role (for example you are a parent and also learn with CLG yourself), tabs at the top let you switch between your dashboards.
@@ -219,7 +219,9 @@ Before a term ends, you may be offered a written review of the term from your tu
 
 ## Billing and payments
 
-Open **Billing** in the side menu.
+Only the person or people paying see billing. If you pay, open **Billing** in the side menu. If another parent or carer pays, you won't see Billing, but you'll still see **Sessions on hold** on your dashboard if an invoice is overdue.
+
+Tip: Until your family has a bill payer, any parent can set it up. The first parent to choose how often to pay (or agree to the payment terms) becomes the bill payer. To change who pays, or to share invoices between two people, contact CLG.
 
 ### Choose how often to pay
 1. In **Billing**, find **How often would you like to pay?**
@@ -242,7 +244,7 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 
 ### Credit and sessions on hold
 - Your credit is shown on your Billing card. Credit comes off your next invoice.
-- If you see **Sessions on hold**, an invoice is overdue. Pay it and sessions start again straight away. Your tutor is told sessions are on hold, but not why.
+- If you see **Sessions on hold**, an invoice is overdue. Once the person who pays has paid it, sessions start again straight away. Your tutor is told sessions are on hold, but not why.
 
 ## Help, privacy and safety
 
