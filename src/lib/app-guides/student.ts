@@ -123,7 +123,7 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 3. Choose **Send request**.
 
 ### Answer a check-in about your tutor
-When you start with a new tutor, a card on your dashboard asks how it is going 1 week, 2 weeks and 6 weeks after your first session. Choose how it is going (1 to 5), whether you would like to keep working with them, and add a comment if you like. Tick **Please contact me about this** if you would like CLG to get in touch, then choose **Send** (or **Skip this check-in**). Only CLG's office team sees your answers, not your tutor.
+When you start with a new tutor, a card on your dashboard asks how it is going 1 week, 2 weeks and 6 weeks after your first session. Choose how it is going (1 to 5), whether you would like to keep working with them, and add a comment if you like. Tick **Please contact me about this** if you would like CLG to get in touch, then choose **Send** (or **Skip this check-in**). Only CLG's office team sees your answers, not your tutor. When you finish with a tutor, a card also asks how the sessions went and how well the ending was handled.
 
 ### Book again before your book-till date
 About 3 weeks before your book-till date, you get a notice called **Book again?**. Go to **Sessions**, then **Book again**. Say whether you want the same day, time and tutor, choose a new book-till date, say again whether you want sessions during school holidays and on public holidays, then choose **Send answer**.

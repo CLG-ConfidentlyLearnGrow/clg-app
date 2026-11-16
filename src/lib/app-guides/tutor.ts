@@ -133,6 +133,8 @@ When you start with a new student, a card on your dashboard asks how it is going
 2. Add a comment if you like, and tick **Please contact me about this** if you would like CLG to get in touch.
 3. Choose **Send**, or **Skip this check-in**.
 
+When you stop working with a student (for example after a change of tutor), a card asks how the sessions went and how well the ending was handled. Answer it the same way.
+
 Tip: Only CLG's office team sees your answers. The family does not, and you do not see theirs.
 
 ### If a match is not working

@@ -1,6 +1,7 @@
 // Summary: the check-in cards at the top of the tutor, parent and student
 // dashboards (Carla, 16 Nov 2026). After a new match, each person is asked
-// how it is going 1 week, 2 weeks and 6 weeks after the first session. A
+// how it is going 1 week, 2 weeks and 6 weeks after the first session, and
+// how it went (and how the ending was handled) once the match ends. A
 // card shows only while a check-in is waiting for them (never during quiet
 // hours, 9pm to 5am their time), and disappears once they answer or skip it.
 // The answers are private: only the owner and operations admins read them.
@@ -10,14 +11,14 @@ import { answerCheckIn } from "@/app/actions/check-ins"; // The server action th
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Card, Select, TextArea } from "@/components/ui"; // The card, drop-down and multi-line box.
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
-import { CHECK_IN_FIT, CHECK_IN_RATINGS, CHECK_IN_STAGES, checkInQuestions, type CheckInKind } from "@/lib/check-ins"; // The check-in words.
+import { CHECK_IN_FIT, CHECK_IN_RATINGS, CHECK_IN_STAGES, ENDING_RATINGS, checkInQuestions, type CheckInKind } from "@/lib/check-ins"; // The check-in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
 // One waiting check-in, as the database gives it.
 type Waiting = { // Its fields:
   tutor_id: string; // the tutor in the match,
   student_id: string; // the learner in the match,
-  stage: number; // which check-in (1, 2 or 6),
+  stage: number; // which check-in (0 for the end of a match, or 1, 2 or 6),
   respondent_kind: CheckInKind; // the role the person answers in,
   tutor_first_name: string; // the tutor's first name,
   student_first_name: string; // the learner's first name.
@@ -34,7 +35,7 @@ export async function CheckInPrompts({ role }: { role: Role }) { // Takes the da
   return ( // Shows:
     <div className="mb-6 space-y-4">{/* a column of cards above the page, with space under it: */}
       {waiting.map((w) => { // for each waiting check-in:
-        const q = checkInQuestions(w.respondent_kind, w.tutor_first_name, w.student_first_name); // the questions in the right words,
+        const q = checkInQuestions(w.respondent_kind, w.tutor_first_name, w.student_first_name, w.stage); // the questions in the right words,
         const key = `${w.tutor_id}-${w.student_id}-${w.stage}`; // a key that is the same each time for this check-in,
         return ( // shows:
           <Card key={key} title={q.heading} description={`${CHECK_IN_STAGES[w.stage] ?? "Check-in"}. It takes less than a minute. Only CLG's office team sees your answers.`}>{/* a card with the heading and a short explanation: */}
@@ -48,12 +49,21 @@ export async function CheckInPrompts({ role }: { role: Role }) { // Takes the da
                   <option key={r.value} value={r.value}>{r.label}</option> // as an option.
                 ))}{/* End of the ratings. */}
               </Select>{/* End of the drop-down. */}
-              <Select label={q.fit} name="fit" defaultValue="" required>{/* the fit drop-down: */}
-                <option value="" disabled>Choose one</option>{/* a starting prompt, */}
-                {Object.entries(CHECK_IN_FIT).map(([value, label]) => ( // then each answer:
-                  <option key={value} value={value}>{label}</option> // as an option.
-                ))}{/* End of the answers. */}
-              </Select>{/* End of the drop-down. */}
+              {w.stage === 0 ? ( // At the end of a match:
+                <Select label={q.ending} name="ending" defaultValue="" required>{/* the ending drop-down: */}
+                  <option value="" disabled>Choose one</option>{/* a starting prompt, */}
+                  {ENDING_RATINGS.map((r) => ( // then each rating:
+                    <option key={r.value} value={r.value}>{r.label}</option> // as an option.
+                  ))}{/* End of the ratings. */}
+                </Select> // End of the drop-down.
+              ) : ( // Otherwise (1, 2 or 6 weeks):
+                <Select label={q.fit} name="fit" defaultValue="" required>{/* the fit drop-down: */}
+                  <option value="" disabled>Choose one</option>{/* a starting prompt, */}
+                  {Object.entries(CHECK_IN_FIT).map(([value, label]) => ( // then each answer:
+                    <option key={value} value={value}>{label}</option> // as an option.
+                  ))}{/* End of the answers. */}
+                </Select> // End of the drop-down.
+              )}{/* End of the choice. */}
               <TextArea label="Anything else you would like to tell us? (optional)" name="comment" maxLength={2000} rows={2} />{/* the comment box, */}
               <label className="flex items-start gap-2 text-sm">{/* a tick box with its words: */}
                 <input type="checkbox" name="contact" value="yes" className="mt-1" />{/* the tick box, */}

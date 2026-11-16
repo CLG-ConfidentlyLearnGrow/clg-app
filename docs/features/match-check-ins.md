@@ -141,7 +141,38 @@ had no way to ask.
   dashboard frame on tutor, parent and student pages) and
   `src/app/admin/check-ins/page.tsx` (the admin page).
 
-## 7. Later
+## 7. Feedback when a match ends (added 16 Nov 2026)
+
+Carla, 16 Nov 2026: "whenever a tutor and client are unmatched, they are
+asked for feedback too, and ... how it has been handled".
+
+- **When:** the day after a match ends (9am Adelaide time, held out of quiet
+  hours), open for 3 weeks. A match has ended when the tutor and learner had
+  at least one session, and no assignment for them is current or still to
+  come. This covers a change of tutor, bookings that finish, and an admin
+  ending the match. Matches that ended before 15 Nov 2026 are not asked.
+- **Who:** the same people as the check-ins: the tutor, each parent or carer,
+  and the learner if they have their own login.
+- **Questions:** overall, how did the sessions go (1 to 5); how well was the
+  ending handled, for example how you were told and what happened next (1 to
+  5); an optional comment; and "Please contact me about this".
+- **Flags:** either rating of 1 or 2, or a contact request, is flagged on the
+  Check-ins page.
+- **The 1, 2 and 6-week check-ins stop** once a match ends, so nobody is asked
+  "how is it going" about a tutor they no longer have.
+- **Evidence:** the EEF's *Putting Evidence to Work* guide and AERO's work on
+  engaging families both treat transitions as a risk point where clear
+  communication matters; asking how the ending was handled shows CLG whether
+  changes are being explained well. Exit feedback from tutors also helps
+  spot patterns (for example a subject or year level where matches often end).
+- **Privacy and safety:** stored in the same table, under the same rules: only
+  full admins read answers, and comments go through the concerning-words
+  check, so any safety words reach the Child Safety Officer and deputy. The
+  card's red note points to the Child safety page for safety worries.
+- Migration `20261119800200_match_end_feedback.sql` (stage 0 means end of
+  match). Tests: `supabase/tests/match_end_feedback.test.sql`.
+
+## 8. Later
 
 - Check-in emails, if Carla turns emails back on for notices.
 - Showing check-in results in the term review and the reports page.
