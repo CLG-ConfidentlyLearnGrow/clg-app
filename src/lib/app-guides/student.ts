@@ -121,6 +121,9 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 2. Choose the subject and what you would like (for example an extra session before a test), the date, and times that suit.
 3. Choose **Send request**.
 
+### Answer a check-in about your tutor
+When you start with a new tutor, a card on your dashboard asks how it is going 1 week, 2 weeks and 6 weeks after your first session. Choose how it is going (1 to 5), whether you would like to keep working with them, and add a comment if you like. Tick **Please contact me about this** if you would like CLG to get in touch, then choose **Send** (or **Skip this check-in**). Only CLG's office team sees your answers, not your tutor.
+
 ### Answer the next term question
 Before your study period ends, go to **Sessions**, then **Next term**. Say whether you want the same time and tutor, then choose **Send answer**.
 

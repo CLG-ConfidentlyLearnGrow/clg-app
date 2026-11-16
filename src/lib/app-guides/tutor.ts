@@ -125,6 +125,14 @@ If CLG wants to move a student's sessions to you (or change the day and time), a
 2. Find the request from your student's family (for example an extra session before a test).
 3. If you can, choose a date, time, length and place, add a note for the family, and choose **Offer this time**. The family then approves it.
 
+### Answer a check-in about a new student
+When you start with a new student, a card on your dashboard asks how it is going 1 week, 2 weeks and 6 weeks after your first session together.
+1. Choose how the sessions are going (1 to 5) and whether you think you are a good fit for the student.
+2. Add a comment if you like, and tick **Please contact me about this** if you would like CLG to get in touch.
+3. Choose **Send**, or **Skip this check-in**.
+
+Tip: Only CLG's office team sees your answers. The family does not, and you do not see theirs.
+
 ### If a match is not working
 1. In **Sessions**, choose **Blocks**, then **Block a student**.
 2. Write why. Only CLG sees the reason, and the family is not told.
