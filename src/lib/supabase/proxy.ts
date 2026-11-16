@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/", // The home page.
   "/login", // The login page.
   "/signup", // The sign-up page.
+  "/apply", // The "Apply to tutor" page (Carla, 16 Nov 2026).
   // Staff invite links (each checks its own secret).
   "/join", // The staff invite page.
   "/forgot-password", // The password reset request page.
@@ -38,6 +39,8 @@ const PUBLIC_PATHS = [
   "/api/reports/cron", // The monthly, quarterly and yearly reports job.
   // The daily problem reports tidy-up (checks the same secret).
   "/api/problems/cron", // Removes old problem report screenshots and reports.
+  // The daily tutor applications tidy-up (checks the same secret).
+  "/api/applications/cron", // Removes tutor applications past their keeping period, and their CVs.
 ]; // End of the public pages list.
 
 // Keeps the Supabase session fresh on every request and sends signed-out
