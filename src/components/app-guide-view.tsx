@@ -94,9 +94,9 @@ export function AppGuideView({ guide, query }: { guide: Guide; query: string }) 
       {!words.length && ( // When not searching:
         <nav aria-label="Contents" className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">{/* the contents: */}
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Contents</h2>{/* a small heading, */}
-          <ol className="mt-2 grid gap-1 text-sm sm:grid-cols-2">{/* the parts, in two columns on wider screens: */}
+          <ol className="mt-2 text-sm sm:columns-2 sm:gap-x-8">{/* the parts, in two columns on wider screens, numbered down the first column then the second (Carla, 16 Nov 2026): */}
             {guide.parts.map((p, i) => ( // each part:
-              <li key={p.id}><a href={`#${p.id}`} className="text-teal-800 underline underline-offset-4">{i + 1}. {p.heading}</a></li> // a link that jumps to it.
+              <li key={p.id} className="mb-1 break-inside-avoid"><a href={`#${p.id}`} className="text-teal-800 underline underline-offset-4">{i + 1}. {p.heading}</a></li> // a link that jumps to it (kept whole, never split across the two columns).
             ))}{/* End of the parts. */}
           </ol>{/* End of the list. */}
         </nav> // End of the contents.
