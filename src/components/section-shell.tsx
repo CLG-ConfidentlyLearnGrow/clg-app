@@ -102,6 +102,7 @@ export function SectionShell({
     return ( // Shows:
       <Link // a link:
         href={s.href ?? `${basePath}?section=${s.id}`} // to its own address, or to this section of the page,
+        data-no-loading={fold ? "" : undefined} // marked as staying on this page when it only folds or unfolds (so no loading bar shows),
         onClick={(e) => { // when clicked:
           if (fold) { // on an open heading with smaller sections:
             e.preventDefault(); // stays on this page,

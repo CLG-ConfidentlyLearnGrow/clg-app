@@ -13,6 +13,8 @@ import { getViewer } from "@/lib/auth"; // Reads who is signed in.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (for new child safety concerns).
 import { SiteHeader } from "@/components/site-header"; // The top bar (with the phone Menu button).
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
+import { PressFeedback } from "@/components/press-feedback"; // Shows every press of a button or link straight away, and a loading bar while a page opens.
+import { Suspense } from "react"; // Lets the press feedback wait for the page address without holding up the rest of the page.
 import "./globals.css"; // The app-wide styles.
 
 const poppins = Poppins({ // Sets up the Poppins font:
@@ -39,6 +41,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
         <EmailLinkCatcher />{/* the email sign-in link catcher, */}
+        <Suspense fallback={null}><PressFeedback /></Suspense>{/* the pressed look for every button and link, and the loading bar (waits for the page address, showing nothing meanwhile), */}
         <SiteHeader viewer={viewer} newConcerns={newConcerns} newFlags={newFlags} />{/* the top bar (logo, links, Child safety, who is signed in; a Menu button on phones), */}
         <div className="flex-1">{children}</div>{/* The page's own content, filling the space. */}
         <footer className="mt-12 border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">{/* The footer: */}

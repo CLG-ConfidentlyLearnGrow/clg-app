@@ -24,7 +24,7 @@ export function ActionForm({
     <form action={formAction} className="space-y-4">{/* the form, sending to the action, with space between parts, */}
       <FormMessage state={state} />{/* the error or success message, */}
       {children}{/* the fields, */}
-      <Button type="submit" disabled={pending}>{/* the submit button, switched off while busy, */}
+      <Button type="submit" busy={pending}>{/* the submit button, switched off and showing a spinner while busy, */}
         {pending ? "Please wait…" : submitLabel}{/* showing "Please wait…" while busy, otherwise its words. */}
       </Button>{/* End of the Button. */}
     </form> // End of the form.
