@@ -127,6 +127,31 @@ number, street, suburb and postcode.
 - offers turned down because of the place, before and after
 - share of in-person sessions that run without travel-related cancels
 
+## Travel map (admins)
+
+Carla, 16 Nov 2026: "Maybe CLG has an internal map with all the approved
+libraries and the tutor and client travel areas...?"
+
+- **Admin > Travel map** (Owner and Operations only) shows approved
+  libraries with a map point, each tutor's travel areas (one circle per
+  starting address and distance, listing the weekly times that use it) and
+  each family's travel area. Admins can show or hide each kind and pick one
+  tutor to zoom to.
+- **Why it helps**: seeing where tutors and families overlap shows which
+  areas are short of tutors (who to recruit next) and which libraries sit
+  where most families and tutors meet. This supports the same aim as the
+  matching itself: regular sessions with travel that suits both sides.
+- **Privacy**: only Owner and Operations admins can open it, and the
+  database access rules decide what is read (they already let these admins
+  see tutors' and families' travel details). Street addresses are not shown
+  on the map, only names, distances and circles. Pop-up text is made safe
+  before showing.
+- **Map pictures**: the background map comes from OpenStreetMap's map
+  picture service (tile.openstreetmap.org), added to the app's content
+  security rules for images only. The admin's browser asks only for the map
+  area on screen; no names or addresses are sent. OpenStreetMap is credited
+  on the map, as its rules ask.
+
 ## Not done (could come later)
 
 - A tutor seeing the family's address once a home session is booked (for

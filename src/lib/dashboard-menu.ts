@@ -126,6 +126,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
+    if (isFull) items.push({ id: "travel-map", label: "Travel map", href: "/admin/travel-map" }); // the map of libraries and tutor and family travel areas (full admins, Carla 16 Nov 2026),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),

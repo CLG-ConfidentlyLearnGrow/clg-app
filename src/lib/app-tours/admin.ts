@@ -93,7 +93,7 @@ Where: **Staff and accounts**, **Leaving** and **Privacy and records** in the si
 
 ## Other admin tools
 
-**What is new** writes the pop-ups people see after an update. **Teams links**, **Materials library**, **Training setup** and **Feedback** are here too.
+**What is new** writes the pop-ups people see after an update. **Teams links**, **Travel map**, **Materials library**, **Training setup** and **Feedback** are here too.
 
 Why: These keep families and tutors informed, resourced and trained, and show what people are saying about CLG.
 `;

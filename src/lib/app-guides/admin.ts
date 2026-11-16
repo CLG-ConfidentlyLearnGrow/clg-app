@@ -147,6 +147,12 @@ Open **Matching** in the side menu.
 5. Choose **Next student** to keep going.
 
 Tip: Check **Gaps** to see subjects and levels students are waiting for where no tutor with current checks teaches them. It shows who to recruit next.
+
+### See the travel map
+1. In the side menu, choose **Travel map** (Owner and Operations admins).
+2. The map shows CLG's approved libraries (charcoal dots), each tutor's travel areas (solid bronze circles) and each family's travel area (dashed green circles). Circles are straight-line distances.
+3. Click a circle to see who it is, the distance, and (for tutors) the weekly times that use it. Street addresses are not shown on the map.
+4. Use the tick boxes to show or hide libraries, tutor areas or family areas. Choose one tutor in the **Tutor** list to zoom to their areas.
 `;
 
 // What every admin has for themselves: training, handbook, staff directory, pay.
