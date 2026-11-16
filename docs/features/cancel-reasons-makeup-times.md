@@ -85,14 +85,24 @@ Stopping a whole booking is unchanged (reason optional, no make-up times).
 
 ## Money and pay
 
-Nothing changes in billing. The cancelled session gets its credit by the
-usual rules (family: more than 24 hr full credit, 24 to 2 hr 50%, under 2 hr
-none; tutor or CLG cancels: full credit). The make-up is a new session that
-is invoiced and paid like any other. So a family that cancels late pays for
-the make-up as well; if Carla wants make-ups after a family's late cancel to
-use the lost credit instead, that is a billing change for later. The
-tutor's pay for the make-up follows the award as for any session
-(including the 2-hr minimum engagement per attendance).
+Decided by Carla, 16 Nov 2026 (migration
+`20261118100300_makeup_cancel_pay_rules.sql`, tests in
+`supabase/tests/scheduling_makeup_pay.test.sql`). Notice counts from when the
+cancel (with its make-up times) is saved in the app, which is when the tutor
+is notified, not when they open the notice.
+
+- **Family cancels and a make-up is booked**: 2 hr or more notice, full
+  credit for the cancelled session (they pay only for the make-up); under
+  2 hr notice, 50% credit (they pay half the cancelled session as well).
+- **Family cancels with no make-up**: the usual rules (more than 24 hr full
+  credit, 24 to 2 hr 50%, under 2 hr none).
+- **Tutor or CLG cancels**: full credit, as before.
+- While make-up times wait for an answer, the credit waits too.
+- **Tutor pay**: 50% of the session (up to 1 hr) for a family or CLG cancel
+  or a no-show before they signed on, only with **less than 2 hr notice**
+  (it was 24 hr or less). The make-up is paid in full with its own 2-hr
+  casual minimum. Carla removed the wider 50% pay from CLG's tutor contract;
+  current tutors need to agree to the new wording in writing.
 
 ## Privacy, child safety and the law
 
