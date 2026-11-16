@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation"; // Shows the "not found" page.
 import { z } from "zod"; // The form-checking library (used to check the id).
 import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard.
-import { Card, Empty, Page, SubHeading, TextLink } from "@/components/ui"; // The card, "nothing yet" note, page frame, small heading and link style.
+import { BackButton, Card, Empty, Page, SubHeading, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note, page frame, small heading and link style.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is an admin.
 import { MATERIAL_STATUS_NAMES, yearRange } from "@/lib/materials"; // Material status names, and year ranges in words.
 import { SUBJECT_SUGGESTIONS, YEAR_LEVELS } from "@/lib/students"; // Suggested subjects, and the list of year levels.
@@ -68,9 +68,8 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
     <>{/* (a group:) */}
       <RoleTabs roles={viewer.roles} active="admin" />{/* the dashboard tabs, */}
       <Page role="admin" title={m.title} intro={`${m.subject}, ${yearRange(m.from_level, m.to_level)}. ${MATERIAL_STATUS_NAMES[m.status] ?? m.status}.`}>{/* a page titled with the material, its subject, years and status: */}
+        <p><BackButton href="/admin/materials?section=library">Back to the library</BackButton></p>{/* a button back to the library list, */}
         <p className="text-sm">{/* a line of links: */}
-          <TextLink href="/admin/materials?section=library">Back to the library</TextLink>{/* back to the library, */}
-          {" · "}{/* (a dot) */}
           <a href={`/materials/${m.id}/file`} target="_blank" rel="noopener" className="font-medium text-teal-700 underline">{/* a link that opens the stamped copy in a new tab: */}
             Open it as tutors see it{/* "Open it as tutors see it". */}
           </a>{/* End of the link. */}
@@ -166,6 +165,7 @@ export default async function AdminMaterialPage({ params, searchParams }: PagePr
             this one.{/* how to change the file. */}
           </p>{/* End of the line. */}
         </Card>{/* End of the card. */}
+        <p><BackButton href="/admin/materials?section=library">Back to the library</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
       </Page>{/* End of the page. */}
     </> // (end of the group)
   ); // End of what's shown.

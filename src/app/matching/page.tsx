@@ -5,7 +5,7 @@
 import type { ReactNode } from "react"; // The type for anything React can show.
 import Link from "next/link"; // Next.js link tag (moves between pages without reloading).
 import { redirect } from "next/navigation"; // Sends the person to another page.
-import { Card, Empty, Field, Select, TextLink } from "@/components/ui"; // Shared page parts: card, empty line, field, drop-down and text link.
+import { BackButton, Card, Empty, Field, Select, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty line, field, drop-down and text link.
 import { FRONT_DESK, FULL_ADMIN, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Admin levels, the admin level reader, two-step sign-in check, and the signed-in person.
 import { CHECK_NAMES, STATES, type CheckKind } from "@/lib/checks"; // Check names, Australian states, and the check type.
 import { WEEKDAY_NAMES, addDays, clockTime, localToday, placeLabel, shortDate } from "@/lib/scheduling"; // Weekday names and date, time and place helpers.
@@ -258,11 +258,14 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
 
               <div className={studentId ? "order-1 lg:order-2" : ""}>{/* the student column (on top on small screens if one is chosen): */}
                 {studentId && subject ? ( // if a student is chosen:
+                  <>{/* (a group:) */}
+                  <p className="mb-4 lg:hidden"><BackButton href={link({ page: String(page) })}>Back to the list</BackButton></p>{/* on phones (where the list is below), a button back up to the list, */}
                   <StudentPanel // their panel:
                     studentId={studentId} // the student,
                     subject={subject} // the subject,
                     nextHref={next ? link({ page: String(page), student: next.student_id, subject: next.subject }) : null} // and a link to the next student (if any).
-                  /> // (end of the panel)
+                  />{/* (end of the panel) */}
+                  </> // End of the group.
                 ) : ( // otherwise:
                   <Card title="Choose a student">{/* a card: */}
                     <Empty>Pick a student from the list to see the tutors who suit them.</Empty>{/* says to pick a student. */}

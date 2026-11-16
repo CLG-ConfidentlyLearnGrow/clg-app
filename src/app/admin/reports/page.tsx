@@ -5,7 +5,7 @@
 import type { ReactNode } from "react"; // The type for anything React can show.
 import { deleteReport } from "@/app/actions/reports"; // The action that deletes a report made for chosen dates.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty line, small heading, table and text link.
+import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, card, empty line, small heading, table and text link.
 import { requireAdminLevel } from "@/lib/auth"; // Makes sure the person is an admin at the right level.
 import { addDays, localToday, shortDate } from "@/lib/scheduling"; // Date helpers.
 import { REPORT_KIND_LABELS, money, num, periodLabel, reasonLabel, type SavedReport } from "@/lib/reports"; // Report names, number and money display, and the report type.
@@ -60,6 +60,7 @@ function ReportView({ report }: { report: SavedReport }) {
   const m = f.money; // The money figures.
   return ( // Shows:
     <>{/* (a group:) */}
+      <p><BackButton href="/admin/reports">Back to all reports</BackButton></p>{/* a button back to the list, */}
       <Card // a card for the report's heading:
         title={`${REPORT_KIND_LABELS[report.kind]} report: ${periodLabel(report)}`} // the kind and dates,
         description={`Made ${shortDate(report.made_at)}. Figures are saved as they were on that day.`} // when it was made.
@@ -68,7 +69,6 @@ function ReportView({ report }: { report: SavedReport }) {
           <a href={`/admin/reports/csv?id=${report.id}`} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">{/* download as a spreadsheet, */}
             Download spreadsheet (CSV){/* (its words) */}
           </a>{/* (end of the link) */}
-          <TextLink href="/admin/reports">Back to all reports</TextLink>{/* and back to the list. */}
         </div>{/* End of the row. */}
       </Card>{/* End of the heading card. */}
 
@@ -175,6 +175,7 @@ function ReportView({ report }: { report: SavedReport }) {
           </ul> // End of the note.
         )}{/* End of the note. */}
       </Card>{/* End of the money card. */}
+      <p><BackButton href="/admin/reports">Back to all reports</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
     </> // (end of the group)
   ); // End of what's shown.
 } // End of ReportView.

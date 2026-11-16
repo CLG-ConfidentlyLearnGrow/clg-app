@@ -12,7 +12,7 @@ import { redirect } from "next/navigation"; // Sends the person to another page.
 import { proposeTutorChange, withdrawTutorChange } from "@/app/actions/change-tutor"; // The server actions that send and withdraw a change.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
-import { Button, Card, Empty, Field, Select, Table, TextLink } from "@/components/ui"; // Shared page parts.
+import { BackButton, Button, Card, Empty, Field, Select, Table, TextLink } from "@/components/ui"; // Shared page parts.
 import { FRONT_DESK, requireAdminLevel } from "@/lib/auth"; // The matching admin levels, and the guard for them.
 import { sessionsHref } from "@/lib/dashboard-menu"; // The address of the admin Sessions tab.
 import { WEEKDAY_NAMES, localToday, sessionWhen, shortDate } from "@/lib/scheduling"; // Weekday names and date helpers (today, session times and short dates).
@@ -96,7 +96,7 @@ export default async function ChangeTutorPage({ searchParams }: PageProps<"/sche
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="sessions">{/* the admin dashboard, on Sessions: */}
       <div className="space-y-6">{/* the page's cards, spaced out: */}
-        <p className="text-sm"><TextLink href={sessionsHref("admin", "bookings")}>Back to bookings</TextLink></p>{/* a link back, */}
+        <p><BackButton href={sessionsHref("admin", "bookings")}>Back to bookings</BackButton></p>{/* a button back to bookings, */}
 
         {waiting.length > 0 && ( // Changes waiting for confirmation:
           <Card title={`Waiting for confirmation (${waiting.length})`} description="Sent to the new tutor and the family. Nothing moves until both have confirmed.">{/* a card: */}
@@ -225,6 +225,7 @@ export default async function ChangeTutorPage({ searchParams }: PageProps<"/sche
             </ul> // End of the list.
           )}{/* End of the record. */}
         </Card>{/* End of the record card. */}
+        <p><BackButton href={sessionsHref("admin", "bookings")}>Back to bookings</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
       </div>{/* End of the page's cards. */}
     </DashboardFrame> // End of the dashboard frame.
   ); // End of what's shown.

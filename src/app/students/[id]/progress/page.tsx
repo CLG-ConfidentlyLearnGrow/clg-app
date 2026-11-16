@@ -6,7 +6,7 @@
 //
 import { notFound, redirect } from "next/navigation"; // Tools to show "page not found" or send the person to another page.
 import { closeGoal } from "@/app/actions/progress"; // The server action that marks a goal achieved or stopped.
-import { Button, Card, Page, TextLink } from "@/components/ui"; // Shared page parts: a button, a card, the page frame and a text link.
+import { BackButton, Button, Card, Page, TextLink } from "@/components/ui"; // Shared page parts: a back button, a button, a card, the page frame and a text link.
 import { FRONT_DESK, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Sign-in helpers: front-desk admin levels, the admin level, the two-step check, and the signed-in person.
 import { CourseDetails } from "@/components/course-details"; // Shows a university or TAFE student's course and units.
 import { CourseOverviewForm } from "@/app/admin/course-overview-form"; // The admin's form for writing a unit overview.
@@ -288,11 +288,18 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
     } // End of the skills loop.
   } // End of the goals loop.
 
+  // Where the back button goes: families back to their home page, the
+  // student's tutor back to Your students, and other admins back to the
+  // admin Progress list they opened it from.
+  const back = familyView // Family view:
+    ? { href: "/dashboard", label: "Back to home" } // back to their home page,
+    : (myAssignment.data ?? []).length > 0 // the student's tutor:
+      ? { href: "/dashboard/tutor?section=students", label: "Back to your students" } // back to Your students,
+      : { href: "/admin?section=progress", label: "Back to Progress" }; // otherwise (an admin) back to admin Progress.
+
   return ( // Shows:
     <Page title={`${student.data.full_name}: progress`}>{/* the page, titled with the student's name, */}
-      <p className="text-sm">{/* a small line: */}
-        <TextLink href="/dashboard">Back to Home</TextLink>{/* a link back home. */}
-      </p>{/* End of the paragraph. */}
+      <p><BackButton href={back.href}>{back.label}</BackButton></p>{/* the back button, */}
 
       <Card title="Next step">{/* The "Next step" card: */}
         {latest ? ( // if there's a latest session:
