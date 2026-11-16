@@ -88,7 +88,7 @@ Tip: When CLG offers a time to both you and the family, you see **Approve** and 
 Choose **Join** next to the session on the Overview, or on your **Weekly calendar**. It opens Microsoft Teams.
 
 ### Mark whether a session happened
-After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one.
+After a session, **Did these sessions happen?** shows on the Overview. Choose **Done** or **No-show** for each one. If the student hasn't arrived, wait 15 minutes after the start, then log off or leave and choose **No-show**. The app won't take a no-show before then.
 
 ### Record a different finish time
 1. On the Overview, open **Your recent sessions**.

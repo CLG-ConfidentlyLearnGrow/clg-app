@@ -7,7 +7,7 @@
 import { revalidatePath } from "next/cache"; // Lets the code refresh pages after a change, so they show the new data.
 import { redirect } from "next/navigation"; // Lets the code send someone to another page.
 import { z } from "zod"; // The form-checking library.
-import { FINANCE, requireAdminLevel, requireViewer } from "@/lib/auth"; // The finance admin group, and the sign-in and admin-level checks.
+import { FINANCE, FULL_ADMIN, requireAdminLevel, requireViewer } from "@/lib/auth"; // The finance and full admin groups, and the sign-in and admin-level checks.
 import { siteUrl } from "@/lib/env"; // The app's web address, for links back from Stripe.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { stripeKey } from "@/lib/billing/config"; // Checks whether Stripe is set up.
@@ -197,6 +197,23 @@ export async function addCredit(_prev: FormState, formData: FormData): Promise<F
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   return { message: "Credit added. It comes off the family's next invoice." }; // Confirms it comes off the next invoice.
 } // End of addCredit.
+
+// Waives the late-cancellation rule for one session (Owner and Operations only):
+// once a year per learner, then only with proof seen (Carla, 16 Nov 2026).
+export async function waiveLateCancel(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(FULL_ADMIN); // Owner and operations admins only (today Carla and Lauren).
+  const parsed = z.object({ session_id: uuid, reason: z.string() }).safeParse(Object.fromEntries(formData)); // Checks the form has a session and a reason.
+  if (!parsed.success) return { error: "Please say briefly why." }; // Problem: asks for the reason.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("billing_waive_late_cancel", { // Asks the database to waive it:
+    p_session: parsed.data.session_id, // for this session,
+    p_reason: parsed.data.reason, // with this reason,
+    p_proof_seen: formData.get("proof_seen") === "on", // and whether proof was seen (the tick box).
+  }); // (end of the request)
+  if (error) return plain(error, "Couldn't waive it."); // Failed: plain message (such as "already had their waiver").
+  revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
+  return { message: "Waived. The family gets a full credit for this session." }; // Confirms the full credit.
+} // End of waiveLateCancel.
 
 // Lifts an overdue family's pause until a date (or with a payment plan).
 export async function overridePause(_prev: FormState, formData: FormData): Promise<FormState> {
