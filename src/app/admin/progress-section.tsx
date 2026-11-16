@@ -2,7 +2,7 @@
 // overdue notes, students to check, and recent notes to spot-check.
 //
 import { Button, Card, Empty, Field, SubHeading, Table, TextLink } from "@/components/ui"; // The button, card, "nothing yet" note, input box, small heading, table and link style.
-import { NOTE_OVERDUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo, minutesAndSeconds } from "@/lib/progress"; // Progress settings and helpers: overdue hours, stalled sessions, "hours ago" and minutes in words.
+import { NOTE_DUE_HOURS, NOTE_OVERDUE_HOURS, STALLED_AFTER_SESSIONS, hoursAgo, minutesAndSeconds } from "@/lib/progress"; // Progress settings and helpers: due and overdue hours, stalled sessions, "hours ago" and minutes in words.
 import { addDays, localToday, sessionWhen, shortDate } from "@/lib/scheduling"; // Date helpers.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { CheckTermReviewForm, TermReviewOfferForm } from "@/app/students/[id]/progress/forms"; // The forms for checking a term review and answering an offer.
@@ -30,7 +30,7 @@ type Measure = {
   tutor_name: string | null; // their name (if still with CLG),
   sessions_held: number; // sessions held,
   sessions_noted: number; // sessions with a note,
-  noted_within_24_hr: number; // notes written within 24 hr,
+  noted_within_24_hr: number; // notes written on time (within 6 hr since 16 Nov 2026; the name is kept from before),
   notes: number; // notes in all,
   notes_with_reflection: number; // notes with a student reflection,
   median_writing_seconds: number | null; // the middle writing time (if timed),
@@ -131,7 +131,7 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
     <>{/* (a group:) */}
       <Card // a card:
         title="How progress tracking is going" // titled "How progress tracking is going",
-        description="The measures from the research brief. The pilot aims for every session to have a note within 24 hr, written in under 3 minutes." // with the pilot's aims.
+        description={`The measures from the research brief. The pilot aims for every session to have a note within ${NOTE_DUE_HOURS} hr, written in under 3 minutes.`} // with the pilot's aims.
       >{/* (end of the card's settings) */}
         <form method="get" className="mb-5 flex flex-wrap items-end gap-3">{/* A date form (sends the dates in the address): */}
           <input type="hidden" name="section" value="progress" />{/* stays on the progress section, */}
@@ -149,17 +149,17 @@ export async function ProgressSection({ from: fromParam, to: toParam }: { from: 
           <>{/* (a group:) */}
             <ul className="mb-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">{/* a grid of figures: */}
               <Stat label="Sessions with a note" value={share(total.noted, total.held)} />{/* sessions with a note, */}
-              <Stat label="Noted within 24 hr" value={share(total.onTime, total.held)} />{/* noted within 24 hr, */}
+              <Stat label={`Noted within ${NOTE_DUE_HOURS} hr`} value={share(total.onTime, total.held)} />{/* noted on time, */}
               <Stat label="Notes with a reflection" value={share(total.reflected, total.notes)} />{/* notes with a reflection, */}
               <Stat label="Skills moved up" value={String(total.movedUp)} />{/* skills moved up. */}
             </ul>{/* End of the grid. */}
-            <Table headings={["Tutor", "Sessions", "With note", "Within 24 hr", "Reflections", "Time to write", "Skills up"]}>{/* A table with these headings: */}
+            <Table headings={["Tutor", "Sessions", "With note", `Within ${NOTE_DUE_HOURS} hr`, "Reflections", "Time to write", "Skills up"]}>{/* A table with these headings: */}
               {measures.map((m) => ( // for each tutor:
                 <tr key={m.tutor_id}>{/* a row: */}
                   <td className="font-medium">{m.tutor_name ?? "Former tutor"}</td>{/* their name, */}
                   <td>{m.sessions_held}</td>{/* sessions, */}
                   <td>{share(m.sessions_noted, m.sessions_held)}</td>{/* with a note, */}
-                  <td>{share(m.noted_within_24_hr, m.sessions_held)}</td>{/* within 24 hr, */}
+                  <td>{share(m.noted_within_24_hr, m.sessions_held)}</td>{/* on time, */}
                   <td>{share(m.notes_with_reflection, m.notes)}</td>{/* reflections, */}
                   <td>{minutesAndSeconds(m.median_writing_seconds)}</td>{/* time to write, */}
                   <td>{m.skills_moved_up}</td>{/* skills up. */}

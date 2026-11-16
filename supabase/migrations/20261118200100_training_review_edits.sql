@@ -12,13 +12,17 @@
 --   * Lauren is tutors' first point of contact. Carla can see those
 --     contacts and help, and Lauren can see Carla's contacts with tutors.
 --   * Tutors never write any of the student's work (academic integrity).
+--   * Summaries are due within 6 hours of the session ending (families are
+--     promised 48 hours), and only a finish more than 15 minutes early is
+--     recorded (Carla's later message, 16 Nov 2026).
 -- Plus the additions from the review doc: telling CLG even when unsure,
 -- what to write down, no private tutoring, blocking a match, not keeping
 -- copies, medical details in notes, Requests and Blocks in the app tour,
--- summaries within 48 hours, honest session times, the first three
+-- summaries within 6 hours, honest session times, the first three
 -- sessions and building independence.
 --
--- Only DRAFT modules and pages are changed. If Carla has already published
+-- Only DRAFT modules and pages are changed, and module changes only run
+-- before the 15-minute split (20261118200200), which moves these lessons. If Carla has already published
 -- one, it is left exactly as it is. Each change swaps one exact piece of
 -- text, or adds text only if it isn't there yet, so edits made in Admin >
 -- Training elsewhere in a lesson are kept, and running this file again
@@ -35,7 +39,7 @@ update public.training_lessons l -- changes a lesson:
 set body = l.body || E'\n\n' || $t$Not sure it's serious enough? Tell CLG anyway with the red Child safety button. Small worries can add up, and the Child Safety Officer can see the whole picture.$t$ -- adds the new paragraph at the end
 where l.module_id = '7a000000-0000-4000-8000-000000000001' and l.position = 2 -- module 1, lesson 2
   and position('Not sure it''s serious enough?' in l.body) = 0 -- only if it isn't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- New quiz question: what to write down.
 insert into public.training_questions (module_id, position, prompt, options, correct_option) -- adds a question:
@@ -44,7 +48,7 @@ select '7a000000-0000-4000-8000-000000000001'::uuid, -- to module 1,
   'After a child tells you something worrying, what do you write down?', -- the question,
   array['Your opinion of what is happening', 'The facts: what you saw or heard, in the child''s own words, with the date and time', 'Nothing, in case it is wrong', 'A summary for the family'], -- the choices,
   2 -- the facts, in the child's words
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000001' and m.status = 'draft') -- only while the module is a draft
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000001' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_questions q where q.module_id = '7a000000-0000-4000-8000-000000000001' and q.prompt like 'After a child tells you something worrying%'); -- only once
 
 -- ---------------------------------------------------------------------------
@@ -60,7 +64,7 @@ set body = replace(replace(l.body, -- swaps two exact lines:
   $t$- If a student contacts you outside CLG's channels, don't reply privately. Tell CLG.$t$, -- and the old "outside CLG's channels" line
   $t$- If a student or parent contacts you outside the app, don't reply. Tell CLG.$t$) -- becomes "outside the app"
 where l.module_id = '7a000000-0000-4000-8000-000000000002' and l.position = 2 -- module 2, lesson 2
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- Lesson 2: add "no private tutoring" and "Block a student".
 update public.training_lessons l -- changes a lesson:
@@ -68,7 +72,7 @@ set body = l.body || E'\n' || $t$- Never arrange tutoring privately with a CLG f
 - If a match doesn't feel right, use Block a student and give a reason. Only CLG sees it, and CLG will talk it through with you.$t$ -- adds two bullet points at the end
 where l.module_id = '7a000000-0000-4000-8000-000000000002' and l.position = 2 -- module 2, lesson 2
   and position('Never arrange tutoring privately' in l.body) = 0 -- only if they aren't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- New lesson 4: honest work (Carla: "You never write the work").
 insert into public.training_lessons (module_id, position, title, body) -- adds a lesson:
@@ -79,19 +83,18 @@ Schools have rules about how much help students can have, and the student may ha
 - In assessment drafting, you suggest, check and correct. You never write any part of the work.
 - In sessions, help the student do the thinking. Don't do homework or assessments for them.
 - Record session times honestly. Families are always charged the booked time.$t$ -- the lesson's heading and text
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000002' and m.status = 'draft') -- only while the module is a draft
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000002' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_lessons l where l.module_id = '7a000000-0000-4000-8000-000000000002' and l.position = 4); -- only if there's no lesson 4 yet
 
--- New quiz questions: contact through the app, and never writing the work.
+-- New quiz question: contact through the app.
 insert into public.training_questions (module_id, position, prompt, options, correct_option) -- adds questions:
 select '7a000000-0000-4000-8000-000000000002'::uuid, -- to module 2,
   (select coalesce(max(q.position), 0) from public.training_questions q where q.module_id = '7a000000-0000-4000-8000-000000000002') + v.n, -- after its last question,
   v.prompt, v.options, v.correct -- the question, choices and right answer
 from (values -- the new questions:
-  (1, 'A parent asks for your mobile number so they can text you about sessions. What do you do?', array['Give it to them, it''s quicker', 'Explain that all contact goes through the CLG App, and let Lauren know', 'Give them your personal email instead', 'Ask the student to pass messages on'], 2), -- through the app
-  (2, 'A student asks you to write the conclusion of their assessment because it''s due tomorrow. What do you do?', array['Write it, just this once', 'Write one sentence to get them started', 'Help them plan it with questions and feedback, but they write every word', 'Find one online for them'], 3) -- they write every word
+  (1, 'A parent asks for your mobile number so they can text you about sessions. What do you do?', array['Give it to them, it''s quicker', 'Explain that all contact goes through the CLG App, and let Lauren know', 'Give them your personal email instead', 'Ask the student to pass messages on'], 2) -- through the app
 ) as v(n, prompt, options, correct) -- (each question's order, words, choices and right answer)
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000002' and m.status = 'draft') -- only while the module is a draft
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000002' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_questions q where q.module_id = '7a000000-0000-4000-8000-000000000002' and q.prompt like 'A parent asks for your mobile number%'); -- only once
 
 -- ---------------------------------------------------------------------------
@@ -104,7 +107,7 @@ set body = l.body || E'\n' || $t$- Don't keep your own lists, spreadsheets or co
 - If a family writes medical details or a safety concern in an app note, don't reply in the note. Tell CLG, who will move it somewhere protected.$t$ -- adds two bullet points at the end
 where l.module_id = '7a000000-0000-4000-8000-000000000003' and l.position = 2 -- module 3, lesson 2
   and position('Don''t keep your own lists' in l.body) = 0 -- only if they aren't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- ---------------------------------------------------------------------------
 -- Module 4: How the CLG app works and where to go.
@@ -121,37 +124,39 @@ set body = replace(l.body, -- swaps one exact line:
 - Notices from CLG: Sessions, then Notices.$t$) -- gets three new lines in front of it
 where l.module_id = '7a000000-0000-4000-8000-000000000004' and l.position = 3 -- module 4, lesson 3
   and position('Sessions, then Requests' in l.body) = 0 -- only if they aren't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- Lesson 3: make sure the quiet hours read 9pm to 5am (Carla, 16 Nov 2026).
 update public.training_lessons l -- changes a lesson:
 set body = replace(l.body, 'between 9pm and 6am', 'between 9pm and 5am') -- the old hours become the new ones
 where l.module_id = '7a000000-0000-4000-8000-000000000004' -- any lesson in module 4
   and position('between 9pm and 6am' in l.body) > 0 -- only where the old hours appear
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- ---------------------------------------------------------------------------
 -- Module 5: Running a session and writing the summary.
 -- ---------------------------------------------------------------------------
 
--- Lesson 2 (signing on and off): families pay the booked time; record the real end.
+-- Lesson 2 (signing on and off): families pay the booked time; only a
+-- finish more than 15 minutes early (or running over) is recorded.
 update public.training_lessons l -- changes a lesson:
-set body = l.body || E'\n' || $t$- Families are always charged the booked time. If a session finishes early or late, record the real end time anyway. CLG checks these under Times to check.
+set body = l.body || E'\n' || $t$- Families are always charged the booked time. If a session finishes more than 15 minutes early, or runs over, record the real end time. CLG checks these under Times to check. Finishing up to 15 minutes early counts as on time.
 - If a student doesn't turn up, wait 15 minutes (online or at the library), then record it as a no-show. CLG follows up with the family.$t$ -- adds two bullet points at the end
 where l.module_id = '7a000000-0000-4000-8000-000000000005' and l.position = 2 -- module 5, lesson 2
   and position('always charged the booked time' in l.body) = 0 -- only if they aren't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
--- Lesson 3 (the summary): within 48 hours, with one clear next step.
+-- Lesson 3 (the summary): within 6 hours of the session ending, with one
+-- clear next step. Families are promised it within 48 hours.
 update public.training_lessons l -- changes a lesson:
 set body = replace(l.body, -- swaps one exact line:
   $t$Write it yourself, in plain words a parent can follow.$t$, -- the "write it yourself" line
-  $t$Write it straight after the session if you can, and always within 48 hours. CLG promises families this. End every summary with one clear next step, written so the student knows exactly what to do.
+  $t$Write it straight after the session, and always within 6 hours of the session ending. Families are promised it within 48 hours, and the 6 hours gives CLG time to follow up if one is missing. End every summary with one clear next step, written so the student knows exactly what to do.
 
 Write it yourself, in plain words a parent can follow.$t$) -- gets the timing paragraph in front of it
 where l.module_id = '7a000000-0000-4000-8000-000000000005' and l.position = 3 -- module 5, lesson 3
-  and position('always within 48 hours' in l.body) = 0 -- only if it isn't there yet
-  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft'); -- only while the module is a draft
+  and position('within 6 hours of the session ending' in l.body) = 0 -- only if it isn't there yet
+  and exists (select 1 from public.training_modules m where m.id = l.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- New lesson 4: the first three sessions with a new student.
 insert into public.training_lessons (module_id, position, title, body) -- adds a lesson:
@@ -161,17 +166,17 @@ select '7a000000-0000-4000-8000-000000000005'::uuid, 4, 'Your first three sessio
 - Session 1 or 2: find their level. Use a few short questions or a task to see what they can already do. Start a little below where you think they are, so they feel some success.
 - By session 3: agree two or three goals with the student, linked to what they're learning at school, and add them to the Progress page.
 - After sessions 1 and 2, the app asks you and the family how it went. Answer honestly. It helps CLG fix small problems early.$t$ -- the lesson's heading and text
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000005' and m.status = 'draft') -- only while the module is a draft
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000005' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_lessons l where l.module_id = '7a000000-0000-4000-8000-000000000005' and l.position = 4); -- only if there's no lesson 4 yet
 
--- New quiz question: when the summary is due.
+-- New quiz question: when the summary is due (6 hours).
 insert into public.training_questions (module_id, position, prompt, options, correct_option) -- adds a question:
 select '7a000000-0000-4000-8000-000000000005'::uuid, -- to module 5,
   (select coalesce(max(q.position), 0) + 1 from public.training_questions q where q.module_id = '7a000000-0000-4000-8000-000000000005'), -- after its last question,
   'When must the session summary be written?', -- the question,
-  array['By the end of the week', 'Straight after the session if possible, and always within 48 hours', 'Only when the family asks', 'Before the next session'], -- the choices,
-  2 -- within 48 hours
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000005' and m.status = 'draft') -- only while the module is a draft
+  array['By the end of the week', 'Within 6 hours of the session ending', 'Only when the family asks', 'Before the next session'], -- the choices,
+  2 -- within 6 hours
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000005' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_questions q where q.module_id = '7a000000-0000-4000-8000-000000000005' and q.prompt = 'When must the session summary be written?'); -- only once
 
 -- ---------------------------------------------------------------------------
@@ -189,7 +194,7 @@ select '7a000000-0000-4000-8000-000000000006'::uuid, 4, 'Building confidence and
 - Hand over a little more each week: hints instead of answers, then just a nudge.
 
 The EEF finds that teaching students to plan, monitor and evaluate their own learning (metacognition) adds about seven months' progress: https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/metacognition-and-self-regulation$t$ -- the lesson's heading and text
-where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000006' and m.status = 'draft') -- only while the module is a draft
+where exists (select 1 from public.training_modules m where m.id = '7a000000-0000-4000-8000-000000000006' and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025') -- only while the module is a draft, and before the 15-minute split
   and not exists (select 1 from public.training_lessons l where l.module_id = '7a000000-0000-4000-8000-000000000006' and l.position = 4); -- only if there's no lesson 4 yet
 
 -- ---------------------------------------------------------------------------
@@ -201,7 +206,7 @@ set options = array_replace(q.options, -- swaps one exact choice:
   'Message the family through CLG''s channels and tell CLG as soon as you know', -- the old wording
   'Let the family know through the app and tell CLG as soon as you know') -- the new wording
 where q.module_id = '7a000000-0000-4000-8000-000000000007' and q.position = 1 -- module 7, question 1
-  and exists (select 1 from public.training_modules m where m.id = q.module_id and m.status = 'draft'); -- only while the module is a draft
+  and exists (select 1 from public.training_modules m where m.id = q.module_id and m.status = 'draft') and not exists (select 1 from public.training_modules s where s.id = '7a000000-0000-4000-8000-000000000025'); -- only while the module is a draft, and before the 15-minute split
 
 -- ---------------------------------------------------------------------------
 -- Handbook pages (drafts only).

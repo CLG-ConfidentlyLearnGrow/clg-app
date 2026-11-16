@@ -573,3 +573,12 @@ apply (APP 11, security of personal information).
 Research: clear, ordered lists with simple filters cut the effort of
 finding what needs action, which matters for staff and families checking
 on their phones (Nielsen Norman Group usability guidance on filtering).
+
+## Early finishes, 16 Nov 2026
+
+Carla: "Only if a session finishes more than 15 minutes early does it become a reportably early finish." Families are always charged the booked time.
+
+- A tutor can't record a finish that's up to 15 minutes early. The app says it counts as finishing on time.
+- **Times to check** only lists a recorded finish that's more than 15 minutes early, or after the booked end.
+- Running over, or finishing more than 15 minutes early, works as before: the tutor records the real end time and why, and CLG confirms it before pay.
+- Legal note: pay still follows the confirmed times (Fair Work Act 2009 record-keeping, reg 3.33). Short early finishes are paid as booked, which can only favour the tutor.

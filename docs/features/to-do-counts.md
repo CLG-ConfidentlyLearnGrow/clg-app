@@ -33,7 +33,7 @@ No number is shown when there's nothing to do.
 | Admin > Families | parent and child links to confirm, possible double-ups |
 | Admin > Matching | student subjects waiting for a tutor |
 | Admin > Tutors and checks | tutor checks waiting to be confirmed |
-| Admin > Progress | term reviews to check, session notes 48 hr or more late |
+| Admin > Progress | term reviews to check, session notes 6 hr or more late (48 hr before 16 Nov 2026) |
 | Admin > Curriculum | curriculum files waiting to be confirmed |
 | Admin > Staff and accounts | staff invitations that ran out unused (resend or remove) |
 | Admin > Privacy and records | records due for deletion in 30 days, open privacy requests, open data breaches |
@@ -95,7 +95,7 @@ From usability research:
 
 ## 4. How we'll know it works
 
-- Session notes written within 24 hr (already measured on Admin >
+- Session notes written within 6 hr (24 hr before 16 Nov 2026) (already measured on Admin >
   Progress) should go up for tutors.
 - Fewer invoices and tutor checks left waiting more than a few days.
 - In the pilot, ask Carla, Lauren and Amy whether the numbers match what
