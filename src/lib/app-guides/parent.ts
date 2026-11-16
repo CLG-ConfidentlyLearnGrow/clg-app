@@ -184,6 +184,14 @@ About 3 weeks before your child's book-till date (the date you chose in **How lo
 5. If you want a change, say what (day and time, tutor, or both) and why.
 6. Choose **Send answer**. If you chose the same again, the tutor is asked to confirm the new dates.
 
+### Answer a check-in about a new tutor
+After your child starts with a new tutor, a card asks how it is going 1 week, 2 weeks and 6 weeks after the first session. It appears at the top of your dashboard.
+1. Choose how the sessions are going (1 to 5) and whether you would like your child to keep working with the tutor.
+2. Add anything else you would like CLG to know, and tick **Please contact me about this** if you would like a call or message.
+3. Choose **Send**, or **Skip this check-in** if you would rather not answer.
+
+Tip: Only CLG's office team sees your answers. The tutor does not.
+
 ### If a tutor is not the right fit
 1. In **Sessions**, choose **Blocks**, then **Block a tutor**.
 2. Choose the tutor and write why. Only CLG sees the reason, and the tutor is not told.

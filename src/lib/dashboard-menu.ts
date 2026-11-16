@@ -81,6 +81,15 @@ async function newApplications(): Promise<number | undefined> {
   return error || !count ? undefined : count; // No number if none, or if it couldn't be counted.
 } // End of newApplications.
 
+// How many check-in answers need follow-up (a low rating, "not a good fit",
+// or a request for contact), for the menu number. The database only lets the
+// owner and operations admins count them; anyone else (or a problem) gets no
+// number.
+async function checkInsToFollowUp(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
+  const { count, error } = await (await createClient()).from("match_check_ins").select("id", { count: "exact", head: true }).eq("follow_up", "open"); // Counts the flagged ones without reading them.
+  return error || !count ? undefined : count; // No number if none, or if it could not be counted.
+} // End of checkInsToFollowUp.
+
 // Builds one dashboard's side menu, with to-do numbers. Each item knows its
 // own address, so the menu works the same on every page that shows it.
 export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
@@ -113,6 +122,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
     if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
     if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
+    if (isFull) items.push({ id: "check-ins", label: "Check-ins", href: "/admin/check-ins", count: await checkInsToFollowUp() }); // answers to the check-ins after a new match (full admins, Carla 16 Nov 2026), with ones needing follow-up counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),

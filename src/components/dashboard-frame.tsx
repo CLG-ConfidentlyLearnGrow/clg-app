@@ -5,7 +5,8 @@
 // hasn't seen yet (Carla, 15 Nov 2026), and the first-time app tour the
 // first time someone opens that dashboard (Carla, 16 Nov 2026). The tour
 // comes first: while it's showing, "What's new" waits for the next visit, so
-// two pop-ups never open at once.
+// two pop-ups never open at once. Check-ins after a new match show as cards
+// above the page's contents while one is waiting (Carla, 16 Nov 2026).
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -15,6 +16,7 @@ import { getDashboardMenu } from "@/lib/dashboard-menu"; // Builds a dashboard's
 import { ROLE_TABS } from "@/lib/roles"; // Each dashboard's name and address.
 import { WhatsNew } from "@/components/whats-new"; // The "What's new" pop-up for this dashboard.
 import { firstTimeTour } from "@/components/first-time-tour"; // The first-time app tour for this dashboard, if it should open.
+import { CheckInPrompts } from "@/components/check-in-prompts"; // The check-in cards after a new match (Carla, 16 Nov 2026).
 
 // Shows the dashboard tabs and side menu around a page. "current" is the
 // menu item that's open; "items" are smaller sections to show under it
@@ -49,7 +51,8 @@ export async function DashboardFrame({
         subSection={sub} // and the open smaller section,
         sections={sections} // with the dashboard's menu.
       >{/* (end of the frame's settings) */}
-        {children}{/* The page's own contents. */}
+        <CheckInPrompts role={role} />{/* Any check-ins waiting for them after a new match (tutor, parent and student dashboards only), */}
+        {children}{/* then the page's own contents. */}
       </SectionShell>{/* End of the page frame. */}
     </> // End of the group.
   ); // End of what's shown.
