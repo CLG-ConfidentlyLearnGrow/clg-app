@@ -75,6 +75,12 @@ export default function PrivacyPage() {
             <strong>Tutors and staff:</strong> contact details, child safety checks and their expiry dates, subjects,
             availability, pay rates and hours. To meet child safety law and pay staff.{/* tutors and staff. */}
           </li>{/* (end of point) */}
+          <li>{/* Point (Carla, 16 Nov 2026): */}
+            <strong>People applying to tutor:</strong> contact details, state and suburb, subjects, availability,
+            qualifications, experience, child safety check details, two referees&apos; contact details, a short statement
+            and an optional CV. To decide whether to offer a tutoring role, including contacting referees and verifying
+            checks. Only CLG&apos;s owner and operations staff can see applications.{/* people applying to tutor. */}
+          </li>{/* (end of point) */}
           <li>{/* Point: */}
             <strong>Security records:</strong> sign-in times, failed sign-ins and an activity log of who changed what (not
             the content). To keep accounts safe and investigate problems.{/* security records. */}
@@ -146,6 +152,7 @@ export default function PrivacyPage() {
           <li>Accounts never used: 12 months after the last sign-in.</li>{/* unused accounts, */}
           <li>Invoices and payment records: 7 years (tax law).</li>{/* invoices, */}
           <li>Tutor records and child safety checks: 7 years after the tutor leaves.</li>{/* tutor records, */}
+          <li>Tutor applications not offered a role (or withdrawn): 12 months after the decision. Successful applications: 7 years.</li>{/* tutor applications, */}
           <li>The activity log, privacy requests and breach records: 7 years.</li>{/* activity log and privacy records, */}
           <li>Failed sign-in records: 90 days.</li>{/* failed sign-ins. */}
         </ul>{/* End of the list. */}

@@ -64,6 +64,14 @@ export async function hasSessions(role: Role): Promise<boolean> { // Takes the d
   return level !== null && FRONT_DESK.includes(level); // Front-desk admins: yes; others: no.
 } // End of hasSessions.
 
+// How many tutor applications are new (not yet looked at), for the menu
+// number. The database only lets the owner and Operations admins count them;
+// anyone else (or a problem) gets no number.
+async function newApplications(): Promise<number | undefined> {
+  const { count, error } = await (await createClient()).from("tutor_applications").select("id", { count: "exact", head: true }).eq("status", "new"); // Counts the new ones without reading them.
+  return error || !count ? undefined : count; // No number if none, or if it couldn't be counted.
+} // End of newApplications.
+
 // Builds one dashboard's side menu, with to-do numbers. Each item knows its
 // own address, so the menu works the same on every page that shows it.
 export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
@@ -95,6 +103,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
     if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
+    if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What's new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
