@@ -64,9 +64,40 @@ export async function finishModule(_prev: FormState, formData: FormData): Promis
   if (!result.passed) { // Not all right:
     return { error: `You got ${result.score} of ${result.total}. Have another look at question${result.wrong.length > 1 ? "s" : ""} ${numberList(result.wrong)}, then try again. You can try as many times as you like.` }; // says which to look at again.
   } // End of the not-passed case.
+  await supabase.rpc("training_save_progress", { p_module: id.data, p_answers: [] }); // Passed: clears any answers saved for later (they are no longer needed).
   if (result.already) return { message: "All right. You had already finished this module, so nothing new was recorded." }; // Already done: says so.
   return { message: "Well done, all right! This module is finished. Your certificate is ready on the Training page." }; // Passed: well done.
 } // End of finishModule.
+
+// Marks one lesson as done, so the person can stop and come back to the
+// module another time and see where they were up to (Carla, 18 Nov 2026).
+export async function markLessonDone(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireViewer(); // Must be signed in.
+  const moduleId = uuid.safeParse(formData.get("module_id")); // Reads and checks the module's id.
+  const lessonId = uuid.safeParse(formData.get("lesson_id")); // Reads and checks the lesson's id.
+  if (!moduleId.success || !lessonId.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_save_progress", { p_module: moduleId.data, p_done_lesson: lessonId.data }); // Asks the database to save it.
+  if (error) return plain(error, "Could not save your place. Please try again."); // Failed: plain message.
+  revalidatePath("/training", "layout"); // Refreshes the training pages, so the lesson shows as done.
+  return { message: "Saved. You can stop here and carry on another time." }; // Says it is saved.
+} // End of markLessonDone.
+
+// Saves the quiz answers chosen so far without checking them, so the person
+// can finish the quiz another time (Carla, 18 Nov 2026).
+export async function saveQuizAnswers(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireViewer(); // Must be signed in.
+  const id = uuid.safeParse(formData.get("module_id")); // Reads and checks the module's id.
+  if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const count = whole(formData.get("question_count")) ?? 0; // How many questions the quiz has.
+  const answers: number[] = []; // The answers so far, in question order.
+  for (let i = 1; i <= count; i++) answers.push(whole(formData.get(`q${i}`)) ?? 0); // Each chosen answer, or 0 when not answered yet.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_save_progress", { p_module: id.data, p_answers: answers }); // Asks the database to keep them.
+  if (error) return plain(error, "Could not save your answers. Please try again."); // Failed: plain message.
+  revalidatePath("/training", "layout"); // Refreshes the training pages.
+  return { message: "Your answers are saved. Come back any time to finish the quiz." }; // Says they are saved.
+} // End of saveQuizAnswers.
 
 // ---------------------------------------------------------------------------
 // Admin: modules

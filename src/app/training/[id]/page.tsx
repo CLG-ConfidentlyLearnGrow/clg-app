@@ -1,5 +1,6 @@
 // Summary: one training module for tutors and admin staff: its lessons
-// (text, videos, PDFs and links) in order, then the quiz.
+// (text, videos, PDFs and links) in order, then the quiz. People can mark
+// lessons done and save quiz answers, then carry on another time.
 //
 import { notFound, redirect } from "next/navigation"; // Shows "not found", or sends the person elsewhere.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
@@ -9,6 +10,7 @@ import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step log
 import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { STATE_NAMES, STATE_STYLES, isVideo, staffRole, timeText, type MyModule } from "@/lib/training"; // Training words, colours and helpers.
+import { LessonDone } from "./lesson-done"; // The "Done, save my place" button under each lesson.
 import { QuizForm, type QuizQuestion } from "./quiz-form"; // The quiz.
 
 // Shows one module.
@@ -21,16 +23,21 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
   const role = staffRole(as, viewer.roles); // The dashboard to show it in.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, mine] = await Promise.all([ // Reads four things at once:
+  const [mod, lessons, questions, mine, place] = await Promise.all([ // Reads five things at once:
     supabase.from("training_modules").select("id, title, summary, minutes, required, status").eq("id", id).maybeSingle(), // the module (only if they can see it),
     supabase.from("training_lessons").select("id, title, body, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons, in order,
     supabase.from("training_questions").select("id, prompt, options").eq("module_id", id).order("position").order("id"), // its questions, in order (no answers),
-    supabase.rpc("training_my_modules"), // and where they're up to.
+    supabase.rpc("training_my_modules"), // where they're up to,
+    supabase.from("training_progress").select("done_lessons, saved_answers").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // and the place they saved (lessons done, answers kept).
   ]); // End of the reads.
   if (!mod.data) notFound(); // Can't see it: not found.
   const m = mod.data; // The module.
   const me = ((mine.data ?? []) as MyModule[]).find((x) => x.module_id === id); // Where they're up to with it (if it's for them).
   const lessonRows = (lessons.data ?? []) as { id: string; title: string; body: string; file_path: string | null; file_name: string | null; link_url: string | null; link_label: string | null }[]; // The lessons.
+  const doneLessons = new Set((place.data?.done_lessons ?? []) as string[]); // The lessons they have marked as done.
+  const savedAnswers = (place.data?.saved_answers ?? []) as number[]; // The quiz answers they saved for later.
+  const doneCount = lessonRows.filter((l) => doneLessons.has(l.id)).length; // How many of this module's lessons are done.
+  const nextIndex = lessonRows.findIndex((l) => !doneLessons.has(l.id)); // The first lesson not done yet (-1 when all are done).
   const files = await Promise.all( // Makes a link for each lesson file, that works for one hour:
     lessonRows.map(async (l) => (l.file_path ? (await supabase.storage.from("training").createSignedUrl(l.file_path, 3600)).data?.signedUrl ?? null : null)), // (none if no file)
   ); // End of the links.
@@ -46,12 +53,20 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
           {me?.due_on && (me.state === "to_do" || me.state === "overdue") && <span className="ml-2">Due {plainDate(me.due_on)}</span>}{/* and the due date. */}
         </p>{/* End of the details. */}
         {m.summary && <p className="text-sm text-zinc-700">{m.summary}</p>}{/* the summary, if any. */}
+        {me && m.required && <p className="text-sm text-zinc-600">You are paid for this module&apos;s set time ({timeText(m.minutes)}) once, when you finish it. Any time beyond that, or doing it again, is in your own time.</p>}{/* the pay rule for compulsory modules, */}
+        {me && doneCount > 0 && ( // Started before:
+          <p className="text-sm text-teal-900">{/* where they were up to: */}
+            You have done {doneCount} of {lessonRows.length} lessons.{" "}{/* how many are done, */}
+            {nextIndex >= 0 ? <TextLink href={`#lesson-${nextIndex + 1}`}>Carry on from lesson {nextIndex + 1}</TextLink> : <TextLink href="#quiz">Go to the quiz</TextLink>}{/* and a link to carry on. */}
+          </p> // End of the note.
+        )}{/* End of the saved place. */}
         {m.status !== "published" && <p className="text-sm text-amber-800">Admin preview: this module is not published yet.</p>}{/* a note when an admin previews a draft. */}
       </div>{/* End of the heading block. */}
 
       {lessonRows.length === 0 && <Empty>This module has no lessons yet.</Empty>}{/* No lessons: says so. */}
       {lessonRows.map((l, i) => ( // each lesson:
-        <Card key={l.id} title={`${i + 1}. ${l.title}`}>{/* a card with its number and heading: */}
+        <div key={l.id} id={`lesson-${i + 1}`} className="scroll-mt-4">{/* a place the "carry on" link can jump to: */}
+        <Card title={`${i + 1}. ${l.title}${doneLessons.has(l.id) ? " ✓" : ""}`}>{/* a card with its number and heading (ticked when done): */}
           <div className="space-y-4">{/* a block: */}
             {files[i] && isVideo(l.file_path) && ( // a video:
               <video controls preload="metadata" className="w-full rounded-xl bg-black" src={files[i]!}>{/* a video player, */}
@@ -65,14 +80,18 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
             {l.link_url && ( // an outside link:
               <p><TextLink href={l.link_url} target="_blank" rel="noopener noreferrer">{l.link_label || l.link_url}</TextLink></p> // opens in a new tab.
             )}{/* End of the link. */}
+            {me && <LessonDone moduleId={m.id} lessonId={l.id} done={doneLessons.has(l.id)} />}{/* the "Done, save my place" button (only for people the module is for). */}
           </div>{/* End of the block. */}
-        </Card> // End of the card.
+        </Card>{/* End of the card. */}
+        </div> // End of the jump place.
       ))}{/* End of the lessons. */}
 
       {me ? ( // If the module is for them:
+        <div id="quiz" className="scroll-mt-4">{/* a place the "go to the quiz" link can jump to: */}
         <Card title={(questions.data ?? []).length ? "Quiz" : "Finish this module"} description={(questions.data ?? []).length ? "Answer every question. You need them all right, and you can try as many times as you like. Use the handbook and the lessons above." : "Mark it as finished once you have worked through the lessons."}>{/* the quiz card: */}
-          <QuizForm moduleId={m.id} questions={(questions.data ?? []) as QuizQuestion[]} done={me.state === "done"} />{/* the quiz. */}
-        </Card> // End of the card.
+          <QuizForm moduleId={m.id} questions={(questions.data ?? []) as QuizQuestion[]} done={me.state === "done"} saved={savedAnswers} />{/* the quiz (with any answers saved earlier). */}
+        </Card>{/* End of the card. */}
+        </div> // End of the jump place.
       ) : ( // Otherwise (an admin previewing):
         <Empty>This module is not one of yours, so there is no quiz to do here.</Empty> // says so.
       )}{/* End of the quiz. */}

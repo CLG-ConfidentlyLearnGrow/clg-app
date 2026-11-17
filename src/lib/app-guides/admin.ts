@@ -171,7 +171,7 @@ const YOUR_OWN = `
 
 ### Do your training
 1. In the side menu, choose **Training**. **To do now** lists your compulsory and due modules.
-2. Open a module, read the lessons, then do the quiz (100% needed, unlimited tries).
+2. Open a module, read the lessons, then do the quiz (100% needed, unlimited tries). To stop part way, choose **Done, save my place** under a lesson or **Save my answers and finish later** in the quiz. Only a compulsory module's set time is paid, however long it takes.
 3. Download your certificate when you finish.
 
 ### Use the handbook
@@ -179,6 +179,9 @@ Choose **Handbooks** in the side menu, and search for a word. **Something has ha
 
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
+
+### Sign your own contract
+When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it.
 
 ### Log your office hours
 1. In the side menu, choose **My pay**.
@@ -283,6 +286,26 @@ Tip: Set the status to **Withdrawn** if they pull out or stop replying. It is de
 2. Leave **Email them a polite "not this time"** ticked to let them know, then choose **Decline**.
 
 Declined applications are deleted 12 months after the decision.
+
+## Employment contracts
+
+Open **Contracts** in the side menu. Staff read and sign their contract in the app, then acknowledge the Fair Work Information Statement, the Casual Employment Information Statement (casual staff only), the Child Safe Policy and the Staff Code of Conduct.
+
+### Send a contract
+1. Under **Send a contract**, choose the **Contract**, the **Staff member** and the **Employment type**.
+2. Fill in each box under **Details to fill in** (for example the start date, award levels and rates). Their name, email, employment type and the date fill in by themselves. Leave an optional box empty to show "Not applicable".
+3. Choose **Send contract**. They are emailed a link, and a card on their dashboard asks them to sign.
+4. If a mistake is spotted before they sign, open the contract and use **Withdraw this contract**, then send a corrected one. Sending a new contract to the same person also replaces one still waiting.
+
+### Follow a contract
+1. **Waiting on staff** lists contracts not yet signed or not yet finished. Choose **Open** to see where it is up to.
+2. The contract page shows the exact wording sent, when and how they signed, each document they acknowledged, and any pay sent to Xero since (accepting pay is also acceptance of the contract).
+
+### Send the Xero self-setup invite
+Once a contract is signed, the **Xero** column says **To do**, and the number next to **Contracts** counts these.
+1. Open the contract and follow the steps under **Xero self-setup**: in Xero, choose Payroll, then Employees, then New employee, then **Invite to self-onboard**, using the name and email shown.
+2. Choose **I have sent the Xero invite**.
+3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
 
 ## Progress
 
@@ -422,6 +445,9 @@ Open **Billing**, then **Staff pay**.
 ### Record admin hours for someone
 Under **Record admin hours**, choose the person, day, hours and what it was for, then **Record hours**.
 
+### Xero self-setup for new staff
+Open **Contracts**. Once a contract is signed, open it and follow **Xero self-setup** to send Xero's **Invite to self-onboard**, then choose **I have sent the Xero invite**.
+
 ### Pay rates and the Xero to-do list
 - **Pay rates**: each person's employment type, agreed hours, and an hourly rate for each role. Choose **Save pay details**.
 - **Xero to-do**: changes to make to employee records in Xero so Xero pays the same as the app. Choose **Done in Xero** once Xero matches.
@@ -457,6 +483,12 @@ In **Privacy and records**:
 - **How long records are kept**: change a keeping period.
 - **Remove a role or delete an account**: when someone's role changes, or to clear test accounts. Type their full name to confirm.
 - **Delete a student on request**: when a family asks. Type the student's full name to confirm. Billing and child safety records are kept as the law requires.
+
+### Contract templates
+1. Open **Contracts**, then **Contract templates and document links**.
+2. To update a contract, open the version **In use** and paste the new wording: in the contract's Claude Doc, choose Export, then Markdown, then paste everything into **Wording**. Put gaps in square brackets, for example [Start date]. **Gaps found** shows which fill in by themselves and which an admin types.
+3. Choose **Save as a new draft version**, check the **Preview**, then tick the box and choose **Publish this version**. Contracts already sent keep their own wording.
+4. Under **Documents staff acknowledge**, change a document's name or link (for example when the Child Safe Policy moves into the app).
 
 ### Staff leaving CLG
 In the **Staff directory**, open the person and use the "left CLG" panel. Their matches end and their records are kept for 7 years. Then follow the checklist shown (final pay, Microsoft 365, materials, Working with Children Check link).

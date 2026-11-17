@@ -98,6 +98,27 @@ async function latenessToReview(): Promise<number | undefined> { // No inputs: i
   return error || !count ? undefined : count; // No number if none, or if it could not be counted.
 } // End of latenessToReview.
 
+// The signed-in staff member's own contracts: whether they have any (so the
+// "My contract" tab only shows once CLG has sent one), and how many are
+// waiting for them to sign or finish (Carla, 17 Nov 2026). A problem reading
+// them shows no tab.
+async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // No inputs: it is about the signed-in person.
+  const supabase = await createClient(); // Connects to the database.
+  const { data: me } = await supabase.auth.getUser(); // Who is signed in.
+  if (!me.user) return { any: false }; // Nobody: no tab.
+  const { data, error } = await supabase.from("employment_contracts").select("status").eq("account_id", me.user.id); // The statuses of their own contracts.
+  if (error || !data?.length) return { any: false }; // None (or a problem): no tab.
+  const waiting = data.filter((c) => c.status === "sent" || c.status === "signed").length; // How many need them.
+  return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
+} // End of myContracts.
+
+// How many signed contracts still need the Xero self-setup invite, for the
+// Contracts tab number. Only admins who can see contracts get a number.
+async function contractsXeroToDo(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
+  const { count, error } = await (await createClient()).from("employment_contracts").select("id", { count: "exact", head: true }).in("status", ["signed", "complete"]).is("xero_invite_at", null); // Counts them without reading them.
+  return error || !count ? undefined : count; // No number if none, or if it could not be counted.
+} // End of contractsXeroToDo.
+
 // Builds one dashboard's side menu, with to-do numbers. Each item knows its
 // own address, so the menu works the same on every page that shows it.
 export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
@@ -125,6 +146,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     items.splice(Math.min(1, items.length), 0, ...sessions); // Sessions goes second, after Families (one of an admin's main jobs).
     const billingToDo = ["families", "invoices", "pay"].reduce((t, id) => t + (todo.get("billing", id) ?? 0), 0); // Billing's total: families, invoices and pay.
     if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined }); // Billing (owner, operations and finance),
+    if (isFinance) items.push({ id: "contracts", label: "Contracts", href: "/admin/contracts", count: await contractsXeroToDo() }); // staff employment contracts (owner, operations and finance; Carla, 17 Nov 2026), with Xero invites still to send counted,
     if (isDesk || isFinance) items.push({ id: "help", label: "Help chats", href: "/admin/help", count: todo.get("admin", "help") }); // the help desk: questions from families, students, tutors and staff (Carla, 16 Nov 2026), with chats waiting for CLG counted,
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: todo.get("admin", "reports") }); // Reports (owner only, because they include pay and profit), with new reports counted,
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
@@ -142,11 +164,14 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
+    const mine = await myContracts(); // Their own contracts, if any.
+    if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract, once one has been sent (Carla, 17 Nov 2026),
     items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
 
   if (role === "tutor") { // The tutor menu:
+    const mine = await myContracts(); // their own contracts, if any,
     const [first, ...rest] = TUTOR_SECTIONS.map((s) => ({ ...s, href: `/dashboard/tutor?section=${s.id}`, count: todo.get("tutor", s.id) })); // their sections, each with its address and number,
     return [ // hands back:
       first, // Your students,
@@ -157,6 +182,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
+      ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract, once one has been sent (Carla, 17 Nov 2026),
       { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.
