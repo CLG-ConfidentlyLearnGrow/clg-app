@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. A number next to an item means something is waiting for you there.
+Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
@@ -26,6 +26,16 @@ Tip: This guide is about using the app. For CLG's policies and what to do when s
 1. Open the invitation email from CLG. The link works once, for 7 days, and only for your email.
 2. Enter your first and last name and choose a password.
 3. Set up two-step login (below).
+
+### Sign your employment contract
+CLG sends your contract in the app. A card on your dashboard and **My contract** in the side menu take you to it.
+1. Read the whole contract. If anything is unclear or looks wrong, ask CLG in **Help chat** before signing.
+2. Under **Sign your contract**, tick that you have read it and agree, and that you agree to sign electronically.
+3. Type your full name exactly as shown, then choose **Sign and accept**. You need two-step login to sign.
+4. Under **Acknowledgements**, open each document (the Fair Work Information Statement, the Casual Employment Information Statement if you are casual, the Child Safe Policy and the Staff Code of Conduct), tick that you have read it, type your name and acknowledge it.
+5. CLG then sends you an email from Xero to enter your tax, bank and superannuation details.
+
+Tip: Your signed contract stays in **My contract**, so you can read it again at any time.
 
 ### Set up and use two-step login
 Tutors and admins need two-step login, because the app holds children's information.
