@@ -4,9 +4,13 @@
 
 import { addAdminTime, declineHours, linkXeroByEmail, logMyHours, markXeroTaskDone, savePayPeriod, saveStaffPay, sendTimesheetsNow, uploadAwardRates, workOutPay } from "@/app/actions/pay"; // The server actions for these forms.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { Field, Select } from "@/components/ui"; // The input box and drop-down list.
+import { Field, Select, TextArea } from "@/components/ui"; // The input box, drop-down list and multi-line box.
+import { WORK_CATEGORIES } from "@/lib/billing/work-categories"; // The kinds of work outside sessions.
 
 type Option = { id: string; name: string }; // An item in a drop-down: its id and name.
+
+// A tutor's no-show or late-cancel session, for the "Which session?" choice.
+export type NoShowSession = { id: string; label: string }; // its id, and its words (when, who and what).
 
 // A staff member's pay details as the form needs them.
 export type StaffPay = {
@@ -201,35 +205,39 @@ export function DeclineHoursForm({ id }: { id: string }) {
 } // End of DeclineHoursForm.
 
 // The form for staff to log their own hours.
-export function LogHoursForm({ today, canTutor, canAdmin }: { today: string; canTutor: boolean; canAdmin: boolean }) {
+export function LogHoursForm({ today, canTutor, canAdmin, noShowSessions }: { today: string; canTutor: boolean; canAdmin: boolean; noShowSessions: NoShowSession[] }) { // Takes today, which kinds they can log, and their no-show sessions.
+  const kinds = WORK_CATEGORIES.filter((c) => (c.type === "admin" ? canAdmin : canTutor)); // The kinds of work this person can log (office admin only for admin staff).
   return ( // Shows:
     <ActionForm action={logMyHours} submitLabel="Log hours">{/* a form that logs the hours: */}
-      {canTutor && canAdmin ? ( // if they can log both kinds:
-        <fieldset className="space-y-2 text-sm">{/* a group of choices: */}
-          <legend className="mb-1 font-medium">What kind of hours?</legend>{/* its heading, */}
-          <label className="flex items-start gap-2">{/* a line holding: */}
-            <input type="radio" name="type" value="tutoring" required className="mt-1" />{/* a round button for tutoring work, */}
-            <span>{/* the words: */}
-              <strong>Tutoring work (not sessions)</strong>{/* the name in bold, */}
-              <span className="block text-zinc-600">Lesson prep, making materials, marking, tutoring-related admin. Paid at your tutoring rate.</span>{/* and what it covers. */}
-            </span>{/* End of the words. */}
-          </label>{/* End of the line. */}
-          <label className="flex items-start gap-2">{/* A line holding: */}
-            <input type="radio" name="type" value="admin" required className="mt-1" />{/* a round button for office admin, */}
-            <span>{/* the words: */}
-              <strong>Office admin</strong>{/* the name in bold, */}
-              <span className="block text-zinc-600">General CLG office work, such as enquiries, rostering or invoicing. Paid at your admin rate.</span>{/* and what it covers. */}
-            </span>{/* End of the words. */}
-          </label>{/* End of the line. */}
-        </fieldset> // End of the group.
-      ) : ( // Otherwise:
-        <input type="hidden" name="type" value={canAdmin ? "admin" : "tutoring"} /> // the only kind they can log (hidden).
-      )}{/* End of the choice. */}
+      <Select label="What kind of work?" name="category" required defaultValue="">{/* the kind of work (Carla, 18 Nov 2026): */}
+        <option value="" disabled>Choose one</option>{/* a prompt to choose, */}
+        {kinds.map((c) => ( // each kind:
+          <option key={c.id} value={c.id}>{/* an option: */}
+            {c.label}{/* its words. */}
+          </option> // (end of the option)
+        ))}{/* End of the kinds. */}
+      </Select>{/* End of the drop-down. */}
+      <ul className="space-y-1 text-xs text-zinc-600">{/* a short help line for each kind: */}
+        {kinds.map((c) => ( // each kind:
+          <li key={c.id}><strong>{c.label}:</strong> {c.help}</li> // its name and what it covers.
+        ))}{/* End of the help lines. */}
+      </ul>{/* End of the help. */}
       <div className="grid gap-3 sm:grid-cols-2">{/* Two columns on wider screens: */}
         <Field label="Day" name="day" type="date" required max={today} defaultValue={today} />{/* the day (today or earlier), */}
         <Field label="Hours" name="hours" inputMode="decimal" required placeholder="1.5" />{/* the hours. */}
       </div>{/* End of the columns. */}
-      <Field label="What you did" name="note" required minLength={3} maxLength={300} placeholder="For example: made fraction worksheets for Year 7" />{/* What they did. */}
+      {canTutor && noShowSessions.length > 0 && ( // If they have no-show or late-cancel sessions to choose from:
+        <Select label="Which session? (only for work during a no-show or late cancel)" name="session_id" defaultValue="">{/* the session drop-down: */}
+          <option value="">Not a no-show or late cancel</option>{/* none, for every other kind of work, */}
+          {noShowSessions.map((s) => ( // each session:
+            <option key={s.id} value={s.id}>{/* an option: */}
+              {s.label}{/* when, who and what. */}
+            </option> // (end of the option)
+          ))}{/* End of the sessions. */}
+        </Select> // End of the drop-down.
+      )}{/* End of the session choice. */}
+      <Field label="What you did" name="note" required minLength={10} maxLength={300} placeholder="For example: made fraction worksheets for Year 7" />{/* What they did. */}
+      <TextArea label="What you finished or achieved" name="achieved" required minLength={10} maxLength={1000} rows={2} placeholder="For example: three Year 7 fraction worksheets with answers, saved in Materials" hint="CLG checks this before approving the hours." />{/* What they achieved (Carla, 18 Nov 2026). */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of LogHoursForm.

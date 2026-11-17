@@ -86,6 +86,9 @@ export async function addAvailability(_prev: FormState, formData: FormData): Pro
           "The app's database is missing an update, so times cannot be saved yet. The owner needs to run the migration 20261119700100_travel_distance.sql (and any earlier scheduling updates) in Supabase.", // naming the update to run.
       }; // (end of the message)
     } // End of this case.
+    if (error.message.includes("at least 2 hours")) { // A casual tutor's time is shorter than 2 hours (Carla, 18 Nov 2026):
+      return { error: "Casual tutors give available times in blocks of at least 2 hours, because casual work is paid in blocks of at least 2 hours. Please make this time at least 2 hours long." }; // explains the rule.
+    } // End of this case.
     if (error.code === "22023") { // The starting address is not theirs:
       return { error: "Choose one of your own starting addresses." }; // says so.
     } // End of this case.

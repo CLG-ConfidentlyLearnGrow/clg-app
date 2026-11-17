@@ -182,7 +182,7 @@ Choose **Staff directory** (from Admin or Billing) to search staff by name, emai
 
 ### Log your office hours
 1. In the side menu, choose **My pay**.
-2. Under **Log hours**, add your office admin hours with the day, hours and what you did. Log each pay week by the day after it ends.
+2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
 `;
 
@@ -347,6 +347,13 @@ After a new match, the tutor, the parents and the learner (if they have their ow
 
 When a match ends (for example a change of tutor, or the bookings finish), the same people are asked how the sessions went and how well the ending was handled. An ending rated 1 or 2 is flagged in **Needs follow-up** too.
 
+### Tutor lateness
+A late start is recorded when a tutor signs on more than 5 minutes after the booked start, or sends a **Running late?** notice from their Sessions page (the family gets a notice and an email, and you get an app notice with the reason).
+1. Open **Tutor lateness** in the side menu (Owner and Operations). A number shows how many are waiting for review.
+2. **Waiting for review** lists each late start, how late the tutor signed on, and whether they gave notice before the start.
+3. Talk with the tutor if needed, write a private note, then choose **Mark reviewed**. Tutors see their own late starts, but not your notes.
+4. **Late starts in the last 90 days, by tutor** shows who is often late, so you can follow up early.
+
 ### App feedback
 **Feedback** in the side menu shows what people are saying, grouped by area. Set where each item is up to and add private notes.
 
@@ -404,8 +411,9 @@ const PAY = `
 Open **Billing**, then **Staff pay**.
 
 ### Approve logged hours
-1. **Hours waiting for approval** lists tutoring work and office admin logged by staff, and guaranteed hours top-ups added by the app.
-2. Choose **Approve**, or **Decline** with a reason. Approved hours are paid in the next send to Xero.
+1. **Hours waiting for approval** lists work outside sessions logged by staff (with the kind of work, what they did and what they finished or achieved), training, and guaranteed hours top-ups added by the app.
+2. Choose **Approve**, or **Decline** with a reason. Approved hours are paid in the next send to Xero. **Work during a no-show or late cancel** is already paid with the session, so approving it only marks the work checked.
+3. **Work outside sessions (last 8 weeks)** lists everything each person logged and what they achieved. Open a person to check their entries.
 
 ### Send a pay period to Xero
 1. Open the pay period (use **Earlier** and **Later** to move between periods).
@@ -417,7 +425,7 @@ Under **Record admin hours**, choose the person, day, hours and what it was for,
 ### Pay rates and the Xero to-do list
 - **Pay rates**: each person's employment type, agreed hours, and an hourly rate for each role. Choose **Save pay details**.
 - **Xero to-do**: changes to make to employee records in Xero so Xero pays the same as the app. Choose **Done in Xero** once Xero matches.
-- **Award rates**: upload next year's award minimum rates before 1 July.
+- **Award rates**: upload next year's award minimum rates before 1 July. From 1 June each year, until they are uploaded, the owner and Finance admins get an app notice every 14 days, Billing shows a to-do number, and **New award pay rates are due** shows at the top of Staff pay. Once uploaded, the app raises any rate below the new minimum on the start date and adds a **Xero to-do** line for each change.
 `;
 
 // The guide for each admin level, built from the parts above.

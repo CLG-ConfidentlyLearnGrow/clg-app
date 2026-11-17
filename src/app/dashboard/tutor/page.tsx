@@ -70,7 +70,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
   const firstTime = teachingRows.length === 0; // Whether they haven't added any subjects yet.
   const section = firstTime ? "teaching" : requested; // The open section (what they teach, for new tutors).
 
-  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes, travelRes] = await Promise.all([ // Reads everything else at once:
+  const [assigned, checks, mine, states, settings, slots, dueRes, caseRes, reviewsRes, uploadsRes, pausesRes, travelRes, minRes] = await Promise.all([ // Reads everything else at once:
     supabase // their students:
       .from("tutor_assignments") // from tutor_assignments,
       .select("id, subject, student:students(id, full_name, year_level)") // the subject and the student's details,
@@ -121,7 +121,15 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
       .select("id, label, address") // their name and address,
       .eq("tutor_id", viewer.id) // for this tutor,
       .order("created_at"), // oldest first.
+    // The shortest available time allowed: 2 hours for casual tutors, none for
+    // part-time or full-time staff with agreed weekly hours (Carla, 18 Nov 2026).
+    supabase.rpc("my_availability_min_minutes"), // the minimum, in minutes.
   ]); // End of the reads.
+  const minMinutes = typeof minRes.data === "number" ? minRes.data : 120; // The minimum (2 hours if it could not be read, the safer choice).
+  const tooShort = (slot: { starts_at: string; ends_at: string }) => { // Whether a saved time is shorter than the minimum:
+    const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)); // turns "15:30" into minutes after midnight,
+    return minMinutes > 0 && mins(slot.ends_at) - mins(slot.starts_at) < minMinutes; // shorter than the minimum (when there is one).
+  }; // End of tooShort.
   const travelPlaces = (travelRes.data ?? []) as { id: string; label: string; address: string }[]; // The addresses the tutor travels from.
   const pauses = (pausesRes.data ?? []) as unknown as { // The on hold notices:
     id: string; // each has an id,
@@ -398,6 +406,12 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
           >{/* (end of the card's settings) */}
             <MaxHoursForm current={settings.data?.max_weekly_hours ?? null} />{/* the most hours form. */}
             <SubHeading>Times you are available</SubHeading>{/* a small heading, */}
+            {minMinutes > 0 && ( // For casual tutors, the 2-hour rule:
+              <p className="mb-2 text-sm text-zinc-600">{/* a help line: */}
+                Give each available time as a block of at least 2 hours. Casual work is paid in blocks of at least
+                2 hours, so shorter times cannot be booked.{/* (end of the text) */}
+              </p> // End of the help line.
+            )}{/* End of the rule. */}
             <ul className="mb-4 space-y-1 text-sm">{/* a list: */}
               {(slots.data ?? []).length === 0 && <li className="text-zinc-500">None added yet.</li>}{/* none yet, if there are none, */}
               {(slots.data ?? []).map((slot) => ( // for each time:
@@ -408,6 +422,9 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                       {" · "}{/* a dot, */}
                       {slotPlace(slot)}{/* where. */}
                     </span>{/* End of the grey part. */}
+                    {tooShort(slot) && ( // If it is shorter than 2 hours (saved before the rule):
+                      <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-900">Shorter than 2 hours: please replace it with a longer time</span> // a note asking them to replace it.
+                    )}{/* End of the note. */}
                   </span>{/* End of the group. */}
                   <form action={removeAvailability}>{/* a remove form: */}
                     <input type="hidden" name="id" value={slot.id} />{/* the time (hidden), */}

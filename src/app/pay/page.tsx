@@ -8,6 +8,8 @@ import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard 
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
 import { dollars, plainDate } from "@/lib/billing/money"; // Money as dollars, and dates in words.
 import { adelaideToday } from "@/lib/billing/run"; // Today's date in Adelaide.
+import { workCategoryLabel } from "@/lib/billing/work-categories"; // The words for each kind of work outside sessions.
+import { sessionWhen } from "@/lib/scheduling"; // Shows a session's day and time in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 
 const KIND_LABELS: Record<string, string> = { // Each kind of pay line's words:
@@ -36,7 +38,7 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
   const supabase = await createClient(); // Connects to the database.
   const today = adelaideToday(); // Today's date.
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - 56 * 86400000).toISOString().slice(0, 10); // The date 8 weeks ago.
-  const [pay, lines, settings, logs, due] = await Promise.all([ // Reads five things at once:
+  const [pay, lines, settings, logs, due, noShows] = await Promise.all([ // Reads six things at once:
     supabase.from("billing_staff_pay").select("employment, school_rate_cents, tertiary_rate_cents, admin_rate_cents, guaranteed_weekly_minutes").eq("account_id", viewer.id).maybeSingle(), // their pay settings and rates,
     supabase // their pay lines:
       .from("billing_pay_lines") // (from the pay lines table)
@@ -47,12 +49,17 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
     supabase.rpc("billing_casual_min_on"), // whether the casual 2 hr minimum applies;
     supabase // their logged hours:
       .from("billing_hour_logs") // (from the hour logs table)
-      .select("id, work_date, minutes, note, status, review_note, work_type, source") // with their details,
+      .select("id, work_date, minutes, note, status, review_note, work_type, source, work_category, achieved") // with their details, the kind of work and what was achieved,
       .eq("account_id", viewer.id) // for this person,
       .gte("work_date", since) // from the last 8 weeks,
       .order("work_date", { ascending: false }), // newest first;
-    supabase.rpc("billing_hours_due_by", { p_day: today }), // and when this week's hours are due.
+    supabase.rpc("billing_hours_due_by", { p_day: today }), // when this week's hours are due,
+    supabase.rpc("my_no_show_sessions"), // and their no-show and late-cancel sessions not yet logged (Carla, 18 Nov 2026).
   ]); // End of the reads.
+  const noShowSessions = ((noShows.data ?? []) as { id: string; starts_at: string; student_first_name: string; subject: string; status: string }[]).map((n) => ({ // The sessions to choose from:
+    id: n.id, // the session's id,
+    label: `${sessionWhen(n.starts_at)}, ${n.student_first_name}, ${n.subject} (${n.status === "no_show" ? "no-show" : "late cancel"})`, // and its words, e.g. "Mon 17 Nov, 4:00pm, Cara, Maths (no-show)".
+  })); // End of the sessions.
   const dueBy = (due.data as string | null) ?? null; // When this week's hours are due (if known).
   const logRows = logs.data ?? []; // The logged hours.
   const rows = lines.data ?? []; // The pay lines.
@@ -81,8 +88,8 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
       {(canTutor || canAdmin) && ( // If they can log hours:
-        <Card title="Log hours" description={`Work outside sessions, with a short description of what you did. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they are paid with your tutoring in the next pay run.`}>{/* a card titled "Log hours", with when they're due: */}
-          <LogHoursForm today={today} canTutor={canTutor} canAdmin={canAdmin} />{/* the form for logging hours, */}
+        <Card title="Log hours" description={`Work outside sessions, with what you did and what you finished or achieved. Please log each pay week's hours by the day after the pay week ends${dueBy ? ` (this week's are due by ${plainDate(dueBy)})` : ""}. CLG approves them, then they are paid with your tutoring in the next pay run.`}>{/* a card titled "Log hours", with when they're due: */}
+          <LogHoursForm today={today} canTutor={canTutor} canAdmin={canAdmin} noShowSessions={noShowSessions} />{/* the form for logging hours, with their no-show sessions to choose from, */}
           {logRows.length > 0 && ( // if they've logged any:
             <div className="mt-6">{/* a block: */}
               <Table headings={["Day", "What", "Hours", ""]}>{/* a table with these headings: */}
@@ -90,7 +97,8 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
                   <tr key={h.id}>{/* a row: */}
                     <td>{plainDate(h.work_date)}</td>{/* the day, */}
                     <td>{/* a cell: */}
-                      {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? "Training" : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"}: {h.note}{/* the kind of work and the description, */}
+                      {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? "Training" : (workCategoryLabel(h.work_category) ?? (h.work_type === "tutoring" ? "Tutoring work" : "Office admin"))}: {h.note}{/* the kind of work and the description, */}
+                      {h.achieved && <span className="block text-zinc-600">Achieved: {h.achieved}</span>}{/* what they achieved (if written), */}
                       {h.status === "declined" && h.review_note ? ` (declined: ${h.review_note})` : ""}{/* and the reason if declined. */}
                     </td>{/* End of the cell. */}
                     <td>{hours(h.minutes)}</td>{/* The hours, */}
@@ -104,7 +112,7 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
                           <Button type="submit">Take back</Button>{/* and a "Take back" button. */}
                         </form> // End of the form.
                       ) : h.status === "approved" ? ( // Approved:
-                        "Approved" // "Approved",
+                        h.work_category === "no_show_time" ? "Checked (paid with the session)" : "Approved" // "Checked" for no-show time (already paid), otherwise "Approved",
                       ) : ( // otherwise:
                         "Declined" // "Declined".
                       )}{/* End of the choice. */}

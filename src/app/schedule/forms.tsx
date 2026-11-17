@@ -23,6 +23,7 @@ import { // The server actions these forms send to:
   recordEndTime, // record a different end time,
   saveNoticeSettings, // save reminder settings,
   recordOutcome, // record how a session went,
+  tellRunningLate, // tell the family and CLG the tutor is running late,
   requestBooking, // ask for a booking,
   saveBookingLength, // save how long to book,
   saveStudentPlaces, // save a student's places,
@@ -685,6 +686,30 @@ export function OutcomeForm({ id }: { id: string }) { // (takes the session)
     </ButtonsForm> // End of the form.
   ); // End of what's shown.
 } // End of OutcomeForm.
+
+// The tutor tells the family and CLG they are running late (Carla, 18 Nov
+// 2026). Folded away until opened, so it is not pressed by mistake.
+export function RunningLateForm({ id }: { id: string }) { // (takes the session)
+  return ( // Shows:
+    <details className="text-sm">{/* an open-and-close box: */}
+      <summary className="cursor-pointer text-amber-800 underline">Running late?</summary>{/* its heading, */}
+      <div className="mt-2 max-w-sm">{/* the form area: */}
+        <ActionForm action={tellRunningLate} submitLabel="Tell the family and CLG">{/* the form: */}
+          <input type="hidden" name="id" value={id} />{/* the session (hidden), */}
+          <Select label="About how late will you be?" name="minutes" defaultValue="10">{/* the minutes: */}
+            {[5, 10, 15, 20, 30, 45, 60].map((m) => ( // each choice:
+              <option key={m} value={m}>{/* an option: */}
+                {m} minutes{/* e.g. "10 minutes". */}
+              </option> // (end of the option)
+            ))}{/* End of the choices. */}
+          </Select>{/* End of the drop-down. */}
+          <Field label="Why? (only CLG sees this)" name="reason" required minLength={3} maxLength={300} placeholder="For example: traffic on the freeway" />{/* the reason. */}
+          <p className="text-xs text-zinc-600">The family gets a notice and an email saying you are running late (without the reason). Late starts are recorded for CLG to review.</p>{/* what happens. */}
+        </ActionForm>{/* End of the form. */}
+      </div>{/* End of the form area. */}
+    </details> // End of the box.
+  ); // End of what's shown.
+} // End of RunningLateForm.
 
 // The tutor's places: how they teach and the libraries they can work at.
 export function PlacesForm({ // Its settings:
