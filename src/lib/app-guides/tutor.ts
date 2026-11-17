@@ -190,6 +190,8 @@ When a family uploads a school report or marked work, it shows under **New uploa
 ### Do your training
 1. In the side menu, choose **Training**. **To do now** lists your compulsory and due modules.
 2. Open a module, read each lesson, then do the quiz. You need 100%, and you can try as often as you like.
+   - Short of time? Choose **Done, save my place** under each lesson you finish, or **Save my answers and finish later** in the quiz. Next time, **Carry on from lesson** takes you back to where you were.
+   - Compulsory modules are paid for their set time (for example 15 minutes) once you finish, however long you take. You can do modules in your own time if you wish, but only the set time is paid.
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook
