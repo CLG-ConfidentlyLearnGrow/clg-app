@@ -171,7 +171,7 @@ const YOUR_OWN = `
 
 ### Do your training
 1. In the side menu, choose **Training**. **To do now** lists your compulsory and due modules.
-2. Open a module, read the lessons, then do the quiz (100% needed, unlimited tries).
+2. Open a module, read the lessons, then do the quiz (100% needed, unlimited tries). To stop part way, choose **Done, save my place** under a lesson or **Save my answers and finish later** in the quiz. Only a compulsory module's set time is paid, however long it takes.
 3. Download your certificate when you finish.
 
 ### Use the handbook
