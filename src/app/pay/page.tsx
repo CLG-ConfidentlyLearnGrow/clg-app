@@ -20,6 +20,7 @@ const KIND_LABELS: Record<string, string> = { // Each kind of pay line's words:
   tutoring_work: "Tutoring work", // tutoring work outside sessions,
   guaranteed: "Guaranteed hours top-up", // the guaranteed hours top-up.
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
+  penalty: "Penalty rate top-up (evenings, early mornings, weekends or public holidays)", // extra pay under the award (Carla, 18 Nov 2026).
   training: "Training", // compulsory training, for its set time.
 }; // End of the list.
 
@@ -136,7 +137,7 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
                   {KIND_LABELS[l.kind] ?? l.kind}{/* the kind of pay, */}
                   {l.note ? `: ${l.note}` : ""}{/* and the note, if any. */}
                 </td>{/* End of the cell. */}
-                <td>{hours(l.minutes)}</td>{/* The hours, */}
+                <td>{l.kind === "penalty" ? "(in session)" : hours(l.minutes)}</td>{/* The hours (a penalty top-up has none of its own: the session line counts them), */}
                 <td>{dollars(l.amount_cents)}</td>{/* the pay, */}
                 <td>{l.status === "sent" ? "Sent to payroll" : "Waiting"}</td>{/* and whether it's gone to payroll. */}
               </tr> // End of the row.

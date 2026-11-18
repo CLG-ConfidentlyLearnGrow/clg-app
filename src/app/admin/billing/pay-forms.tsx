@@ -20,6 +20,8 @@ export type StaffPay = {
   tertiary_rate_cents: number | null; // tertiary rate in cents (if set),
   admin_rate_cents: number | null; // admin rate in cents (if set),
   guaranteed_weekly_minutes: number | null; // agreed weekly minutes (if set),
+  started_on: string | null; // the day they started with CLG (if saved), for the 3-month move to Level 2,
+  school_level: number; // 1 = Level 1 or 2 worked out from the start date; 3 or 4 = chosen by an admin,
   xero_employee_id: string | null; // their Xero employee id (if linked),
   xero_school_rate_id: string | null; // Xero rate for school tutoring (if linked),
   xero_tertiary_rate_id: string | null; // Xero rate for tertiary tutoring (if linked),
@@ -92,6 +94,24 @@ export function StaffPayForm({
           <input type="hidden" name="tertiary_rate" value={money(pay?.tertiary_rate_cents ?? null)} />{/* the tertiary rate kept as it is (hidden). */}
         </> // (end of the group)
       )}{/* End of the choice. */}
+      <div className="grid gap-3 sm:grid-cols-2">{/* Start date and award level, two columns on wider screens (Carla, 18 Nov 2026): */}
+        <Field label="Start date with CLG" name="started_on" type="date" defaultValue={pay?.started_on ?? ""} />{/* the day they started (used for the 3-month move to Level 2), */}
+        {tutor ? ( // For tutors:
+          <Select label="School tutoring award level" name="school_level" defaultValue={String(pay?.school_level ?? 1)}>{/* the Miscellaneous Award level: */}
+            <option value="1">Level 1 or 2 (worked out from the start date)</option>{/* Level 1 for the first 3 months, then Level 2, */}
+            <option value="3">Level 3 (trade qualification or equivalent, used in the job)</option>{/* Level 3, */}
+            <option value="4">Level 4 (advanced trade qualification, or sub-professional)</option>{/* Level 4. */}
+          </Select> // End of the drop-down.
+        ) : ( // Otherwise:
+          <input type="hidden" name="school_level" value={String(pay?.school_level ?? 1)} /> // the level kept as it is (hidden).
+        )}{/* End of the choice. */}
+      </div>{/* End of the columns. */}
+      {tutor && ( // For tutors, a small grey note:
+        <p className="-mt-2 text-xs text-zinc-600">{/* the note: */}
+          Under the Miscellaneous Award, a tutor is Level 1 for their first 3 months and Level 2 after that. The app works
+          this out from the start date and raises their school rate if it is below the Level 2 minimum.{/* what the start date does. */}
+        </p> // End of the note.
+      )}{/* End of the note. */}
       {admin ? ( // For admins:
         <div className="grid gap-3 sm:grid-cols-2">{/* two columns on wider screens: */}
           <Field label="Admin ($/hr)" name="admin_rate" defaultValue={money(pay?.admin_rate_cents ?? null)} inputMode="decimal" />{/* the admin rate. */}
@@ -255,12 +275,12 @@ export function AwardRatesForm({ nextJuly, templateCsv }: { nextJuly: string; te
       </label>{/* end of the file picker */}
       <label className="block text-sm">{/* or paste the lines: */}
         <span className="mb-1 block font-medium">Or paste the lines</span>{/* its label */}
-        <textarea name="csv" rows={5} className="w-full rounded-lg border border-zinc-300 p-2 font-mono text-xs" placeholder="school,casual,33.50,Miscellaneous Award MA000104 Level 1 casual" />{/* the paste box */}
+        <textarea name="csv" rows={5} className="w-full rounded-lg border border-zinc-300 p-2 font-mono text-xs" placeholder="school,casual,2,33.85,Miscellaneous Award MA000104 Level 2 casual" />{/* the paste box */}
       </label>{/* end of the paste box */}
       <p className="text-xs text-zinc-600">{/* help text: */}
-        One line per rate: work (school, tertiary or admin), employment (casual, part_time or full_time), hourly rate, award name.{" "}
+        One line per rate: work (school, tertiary or admin), employment (casual, part_time or full_time), level (1 to 4), hourly rate, award name. A file without a level column is read as Level 1.{" "}
         <a className="underline" href={`data:text/csv;charset=utf-8,${encodeURIComponent(templateCsv)}`} download="clg-award-rates.csv">Download this year&apos;s rates</a>{/* a ready-made file to change */}
-        {" "}to change and upload. Anyone below the new minimum for their employment type is raised on the start date; rates already above it are not changed.
+        {" "}to change and upload. Anyone below the new minimum for their employment type and level is raised on the start date; rates already above it are not changed.
       </p>{/* end of the help text */}
     </ActionForm> // End of the form.
   ); // End of what it shows.
