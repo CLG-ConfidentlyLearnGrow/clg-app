@@ -3,10 +3,11 @@
 // Each task is a fold-out with numbered steps, so people open only what
 // they need. With search words, only the tasks containing every word are
 // shown, already opened. Text is never treated as HTML, so nothing in a
-// guide can run as code; **words in stars** are shown in bold.
+// guide can run as code; **words in stars** are shown in bold. GuideParts
+// shows just a few parts, for the "Show me how" refresher on each page.
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
-import type { Guide, GuideBlock, GuideTask } from "@/lib/app-guides"; // The guide shapes (for type checking only).
+import type { Guide, GuideBlock, GuidePart, GuideTask } from "@/lib/app-guides"; // The guide shapes (for type checking only).
 
 // Shows a line of text with **starred** words in bold (the names of buttons and menu items).
 export function Rich({ text }: { text: string }) { // Takes the line (also used by the app tour).
@@ -48,6 +49,39 @@ function Block({ block }: { block: GuideBlock }) { // Takes the block.
 function Blocks({ blocks }: { blocks: GuideBlock[] }) { // Takes the blocks.
   return <div className="space-y-3">{blocks.map((b, i) => <Block key={i} block={b} />)}</div>; // Each block, spaced out.
 } // End of Blocks.
+
+// Shows a few guide parts on their own, for the "Show me how" refresher on
+// each page (Carla, 18 Nov 2026). Each part has its heading, its intro (if
+// it is shown whole) and its tasks as fold-outs. When there is only one
+// task, it starts open, so the steps show straight away.
+export function GuideParts({ parts }: { parts: GuidePart[] }) { // Takes the parts to show.
+  const single = parts.reduce((n, p) => n + p.tasks.length, 0) === 1; // Whether there is only one task in all.
+  return ( // Shows:
+    <div className="space-y-5">{/* the parts, with space between: */}
+      {parts.map((p) => ( // each part:
+        <section key={p.id}>{/* a section: */}
+          <h3 className="text-base font-semibold text-zinc-900">{p.heading}</h3>{/* its heading, */}
+          {p.blocks.length > 0 && <div className="mt-2 text-sm leading-relaxed text-zinc-800"><Blocks blocks={p.blocks} /></div>}{/* its intro, if it has one here, */}
+          {p.tasks.length > 0 && ( // its tasks, if any:
+            <ul className="mt-2 divide-y divide-zinc-100">{/* a list with lines between: */}
+              {p.tasks.map((t, i) => ( // each task:
+                <li key={i}>{/* a row: */}
+                  <details className="group py-1.5" open={single}>{/* a fold-out (open if it is the only one): */}
+                    <summary className="cursor-pointer list-none py-1 text-sm font-medium text-teal-800 hover:underline">{/* its heading: */}
+                      <span aria-hidden className="mr-2 inline-block transition-transform group-open:rotate-90">›</span>{/* an arrow that turns when open, */}
+                      {t.title}{/* and the task's name. */}
+                    </summary>{/* End of the heading. */}
+                    <div className="mt-2 pb-2 pl-5 text-sm leading-relaxed text-zinc-800"><Blocks blocks={t.blocks} /></div>{/* the steps. */}
+                  </details>{/* End of the fold-out. */}
+                </li> // End of the row.
+              ))}{/* End of the tasks. */}
+            </ul> // End of the list.
+          )}{/* End of the tasks. */}
+        </section> // End of the part.
+      ))}{/* End of the parts. */}
+    </div> // End of the parts.
+  ); // End of what's shown.
+} // End of GuideParts.
 
 // All the words in a task (its heading and every line), for searching.
 function taskWords(task: GuideTask): string { // Takes the task.

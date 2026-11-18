@@ -22,7 +22,7 @@ const WELCOME = `
 
 This tour shows you the parts of the app your admin level uses, what each is for, and why it matters. It takes a few minutes.
 
-You can skip it now and take it again any time from **App guide** in the side menu.
+You can skip it now and take it again any time: choose **Show me how** next to any page heading, or open **App guide** in the side menu.
 
 ## Getting around
 
@@ -136,7 +136,7 @@ Why: Training keeps you up to date on child safety and privacy, and logging hour
 
 ## You are all set
 
-That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search. Admins who help families and tutors can open their guides there too, to talk them through the app.
+That is the tour. Whenever you need a refresher, choose **Show me how** next to the page heading to see the steps for that page. For anything else, open **App guide** in the side menu and search. Admins who help families and tutors can open their guides there too, to talk them through the app.
 `;
 
 // The tour for each admin level, built from the parts above.
