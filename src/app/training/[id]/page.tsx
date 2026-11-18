@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 import { STATE_NAMES, STATE_STYLES, isVideo, staffRole, timeText, type MyModule } from "@/lib/training"; // Training words, colours and helpers.
 import { LessonDone } from "./lesson-done"; // The "Done, save my place" button under each lesson.
 import { QuizForm, type QuizQuestion } from "./quiz-form"; // The quiz.
+import { TaskForm } from "./task-form"; // The practice task form.
 
 // Shows one module.
 export default async function TrainingModulePage({ params, searchParams }: PageProps<"/training/[id]">) { // Reads the address's id and settings.
@@ -23,14 +24,15 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
   const role = staffRole(as, viewer.roles); // The dashboard to show it in.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, mine, place, ordered, assignment] = await Promise.all([ // Reads seven things at once:
-    supabase.from("training_modules").select("id, title, summary, minutes, required, status").eq("id", id).maybeSingle(), // the module (only if they can see it),
+  const [mod, lessons, questions, mine, place, ordered, assignment, task] = await Promise.all([ // Reads eight things at once:
+    supabase.from("training_modules").select("id, title, summary, minutes, required, status, practice_task, version").eq("id", id).maybeSingle(), // the module (only if they can see it),
     supabase.from("training_lessons").select("id, title, body, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons, in order,
-    supabase.from("training_questions").select("id, prompt, options").eq("module_id", id).order("position").order("id"), // its questions, in order (no answers),
+    supabase.from("training_questions").select("id, prompt, options, image_path, image_alt").eq("module_id", id).order("position").order("id"), // its questions, in order (no answers),
     supabase.rpc("training_my_modules"), // where they're up to,
     supabase.from("training_progress").select("done_lessons, saved_answers").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // the place they saved (lessons done, answers kept),
     supabase.from("training_modules").select("id, title, position, in_order").eq("in_order", true).eq("status", "published").order("position"), // the modules done in order,
-    supabase.from("training_assignments").select("due_on, reason").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // and whether CLG assigned this module to them.
+    supabase.from("training_assignments").select("due_on, reason").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // whether CLG assigned this module to them,
+    supabase.from("training_task_submissions").select("answer, status, feedback, module_version").eq("module_id", id).eq("account_id", viewer.id).order("created_at", { ascending: false }).limit(1).maybeSingle(), // and their latest practice task for it.
   ]); // End of the reads.
   if (!mod.data) notFound(); // Can't see it: not found.
   const m = mod.data; // The module.
@@ -44,6 +46,10 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
   const savedAnswers = (place.data?.saved_answers ?? []) as number[]; // The quiz answers they saved for later.
   const doneCount = lessonRows.filter((l) => doneLessons.has(l.id)).length; // How many of this module's lessons are done.
   const nextIndex = lessonRows.findIndex((l) => !doneLessons.has(l.id)); // The first lesson not done yet (-1 when all are done).
+  const questionRows = (questions.data ?? []) as { id: string; prompt: string; options: string[]; image_path: string | null; image_alt: string | null }[]; // The quiz questions (with any picture).
+  const quiz: QuizQuestion[] = await Promise.all(questionRows.map(async (q) => ({ id: q.id, prompt: q.prompt, options: q.options, image_alt: q.image_alt, image_url: q.image_path ? (await supabase.storage.from("training").createSignedUrl(q.image_path, 3600)).data?.signedUrl ?? null : null }))); // Each question, with a link to its picture that works for one hour.
+  const myTask = task.data as { answer: string; status: string; feedback: string | null; module_version: number } | null; // Their latest practice task (if any).
+  const taskNow = myTask && myTask.module_version === m.version ? myTask : null; // Only if it is for this version of the module.
   const files = await Promise.all( // Makes a link for each lesson file, that works for one hour:
     lessonRows.map(async (l) => (l.file_path ? (await supabase.storage.from("training").createSignedUrl(l.file_path, 3600)).data?.signedUrl ?? null : null)), // (none if no file)
   ); // End of the links.
@@ -98,10 +104,27 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
         </div> // End of the jump place.
       ))}{/* End of the lessons. */}
 
+      {me && m.practice_task && ( // A module with a practice task, for them:
+        <Card title="Practice task (checked by CLG)" description="Write it here. Lauren or Carla checks it and approves it, or sends it back with what to change. The module is finished once the quiz is passed and this is approved. Use only the made-up details given: never write about a real student.">{/* the task card: */}
+          <div className="space-y-4">{/* a block: */}
+            <TrainingText text={m.practice_task} />{/* the task's instructions, */}
+            {taskNow?.status === "approved" ? ( // approved:
+              <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Approved.{taskNow.feedback ? ` CLG said: ${taskNow.feedback}` : ""}</p> // says so, with any comment,
+            ) : ( // not approved yet:
+              <>{/* (a group:) */}
+                {taskNow?.status === "submitted" && <p className="rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-900">Sent. CLG will check it and you will get a notice. You can change it and send it again until then.</p>}{/* waiting, */}
+                {taskNow?.status === "returned" && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Sent back. CLG said: {taskNow.feedback}</p>}{/* sent back, with what to change, */}
+                <TaskForm moduleId={m.id} answer={taskNow?.answer ?? ""} />{/* and the form. */}
+              </> // End of the group.
+            )}{/* End of the choice. */}
+          </div>{/* End of the block. */}
+        </Card> // End of the card.
+      )}{/* End of the practice task. */}
+
       {me ? ( // If the module is for them:
         <div id="quiz" className="scroll-mt-4">{/* a place the "go to the quiz" link can jump to: */}
-        <Card title={(questions.data ?? []).length ? "Quiz" : "Finish this module"} description={(questions.data ?? []).length ? "Answer every question. You need them all right, and you can try as many times as you like. Use the handbook and the lessons above." : "Mark it as finished once you have worked through the lessons."}>{/* the quiz card: */}
-          <QuizForm moduleId={m.id} questions={(questions.data ?? []) as QuizQuestion[]} done={me.state === "done"} saved={savedAnswers} />{/* the quiz (with any answers saved earlier). */}
+        <Card title={quiz.length ? "Quiz" : "Finish this module"} description={quiz.length ? "Answer every question. You need them all right, and you can try as many times as you like. Use the handbook and the lessons above." : "Mark it as finished once you have worked through the lessons."}>{/* the quiz card: */}
+          <QuizForm moduleId={m.id} questions={quiz} done={me.state === "done"} saved={savedAnswers} />{/* the quiz (with any answers saved earlier). */}
         </Card>{/* End of the card. */}
         </div> // End of the jump place.
       ) : ( // Otherwise (an admin previewing):

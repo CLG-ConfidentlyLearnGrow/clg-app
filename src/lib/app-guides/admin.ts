@@ -403,8 +403,9 @@ A late start is recorded when a tutor signs on more than 5 minutes after the boo
 ### Training setup
 1. Open **Training setup**. Under **Modules**, add a module, then its lessons and quiz questions, and publish it. Saving keeps you on the module. **Back to all modules** (top and bottom of the page) returns to the list. Safety modules (ticked **Needed before new students**) never count towards the training hours each quarter. The app sets this itself.
 2. To give someone a module, open it and use **Assign to someone** (who, a due date and why). It goes on their To do list, they are told, and it is paid for its set time when they finish. **Must be done in order** makes a module wait for the ones above it with the same tick (the safety modules 1 to 8). **Needed before a job** marks modules needed before drafting work or a term review.
-3. **Progress** shows everyone's compulsory modules. The **Ready for** column shows which tutors are ready for drafting and term reviews (check it before giving someone a drafting job). If a tutor is given a term review before they have done its modules, the modules are assigned to them and you are told.
-4. **Handbooks** is where you write the tutor handbook pages.
+3. To add a screenshot to a quiz question, open the question and use **Screenshot or picture** (PNG, JPEG or WebP), with a short description of what it shows. To add a practice task, write it in **Practice task checked by CLG** on the module. Tasks people send in appear under **Practice tasks** (with a count). Approve each one, or choose **Send back** with what to change. You cannot check your own.
+4. **Progress** shows everyone's compulsory modules. The **Ready for** column shows which tutors are ready for drafting and term reviews (check it before giving someone a drafting job). If a tutor is given a term review before they have done its modules, the modules are assigned to them and you are told.
+5. **Handbooks** is where you write the tutor handbook pages.
 `;
 
 // Billing for every level that can open it (Owner, Operations, Finance).

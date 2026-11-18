@@ -59,12 +59,13 @@ export async function finishModule(_prev: FormState, formData: FormData): Promis
   const supabase = await createClient(); // Connects to the database.
   const { data, error } = await supabase.rpc("training_finish", { p_module: id.data, p_answers: answers }); // Asks the database to mark it and record it.
   if (error) return plain(error, "Could not save your answers. Please try again."); // Failed: plain message.
-  const result = data as { passed: boolean; score: number; total: number; wrong: number[]; already?: boolean }; // What the database said.
+  const result = data as { passed: boolean; score: number; total: number; wrong: number[]; already?: boolean; waiting_task?: boolean }; // What the database said.
   revalidatePath("/training"); // Refreshes the training pages.
   if (!result.passed) { // Not all right:
     return { error: `You got ${result.score} of ${result.total}. Have another look at question${result.wrong.length > 1 ? "s" : ""} ${numberList(result.wrong)}, then try again. You can try as many times as you like.` }; // says which to look at again.
   } // End of the not-passed case.
   await supabase.rpc("training_save_progress", { p_module: id.data, p_answers: [] }); // Passed: clears any answers saved for later (they are no longer needed).
+  if (result.waiting_task) return { message: "All right! The quiz is passed. This module also has a practice task: once CLG approves it, the module is finished and you will get a notice." }; // Quiz passed, task still to approve: says so.
   if (result.already) return { message: "All right. You had already finished this module, so nothing new was recorded." }; // Already done: says so.
   return { message: "Well done, all right! This module is finished. Your certificate is ready on the Training page." }; // Passed: well done.
 } // End of finishModule.
@@ -99,6 +100,21 @@ export async function saveQuizAnswers(_prev: FormState, formData: FormData): Pro
   return { message: "Your answers are saved. Come back any time to finish the quiz." }; // Says they are saved.
 } // End of saveQuizAnswers.
 
+// Sends in a module's practice task for CLG to check (Carla, 18 Nov 2026).
+export async function submitTask(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireViewer(); // Must be signed in.
+  const id = uuid.safeParse(formData.get("module_id")); // Reads and checks the module's id.
+  if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const answer = String(formData.get("answer") ?? "").trim(); // What they wrote.
+  if (answer.length < 20) return { error: "Please write a bit more before sending it." }; // Too short: asks for more.
+  if (answer.length > 6000) return { error: "Please keep it under 6,000 characters." }; // Too long: asks to shorten.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_submit_task", { p_module: id.data, p_answer: answer }); // Asks the database to save it and tell CLG.
+  if (error) return plain(error, "Could not send it. Please try again."); // Failed: plain message.
+  revalidatePath("/training", "layout"); // Refreshes the training pages.
+  return { message: "Sent. CLG will check it and you will get a notice." }; // Says it is sent.
+} // End of submitTask.
+
 // ---------------------------------------------------------------------------
 // Admin: modules
 // ---------------------------------------------------------------------------
@@ -132,6 +148,7 @@ function moduleFields(formData: FormData) { // Takes the form.
       holds_matching: required && formData.get("holds_matching") === "on", // holds matches (only if compulsory),
       in_order: formData.get("in_order") === "on", // must be done in order with the other modules ticked the same way,
       needed_for: (["drafting", "term_review"] as const).find((j) => j === formData.get("needed_for")) ?? null, // a job it is needed before (or none),
+      practice_task: String(formData.get("practice_task") ?? "").trim().slice(0, 4000) || null, // a practice task CLG checks (or none),
       // (whether it counts towards the quarter's hours is set by the database: every module except safety ones)
     }, // (end of the columns)
   } as const; // End of the values.
@@ -197,6 +214,21 @@ export async function unassignModule(_prev: FormState, formData: FormData): Prom
   revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
   return { message: "Removed." }; // Says it is done.
 } // End of unassignModule.
+
+// Approves a practice task, or sends it back with what to change.
+export async function reviewTask(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireAdmin(); // Only owner and operations admins.
+  const id = uuid.safeParse(formData.get("submission_id")); // Reads and checks the submission's id.
+  if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const approve = formData.get("decision") === "approve"; // Approve, or send back.
+  const feedback = String(formData.get("feedback") ?? "").trim().slice(0, 2000); // What to say to them.
+  if (!approve && feedback.length < 5) return { error: "Please say what to change." }; // Sending back needs a reason.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_review_task", { p_submission: id.data, p_approve: approve, p_feedback: feedback || null }); // Asks the database to save the decision.
+  if (error) return plain(error, "Could not save that. Please try again."); // Failed: plain message.
+  revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
+  return { message: approve ? "Approved. They have been told." : "Sent back. They have been told what to change." }; // Says it is done.
+} // End of reviewTask.
 
 // Deletes a draft module (published ones are retired instead, to keep records).
 export async function deleteDraftModule(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
@@ -343,6 +375,42 @@ export async function saveQuestion(_prev: FormState, formData: FormData): Promis
   revalidatePath(`${ADMIN_PAGE}/${moduleId.data}`); // Refreshes the module's admin page.
   return { message: id.success ? "Question saved." : "Question added." }; // Says it's saved.
 } // End of saveQuestion.
+
+// Attaches a picture (for example a screenshot of the app) to a quiz
+// question. The browser has already uploaded it to the training store.
+export async function attachQuestionImage(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireAdmin(); // Only owner and operations admins.
+  const id = uuid.safeParse(formData.get("question_id")); // Reads and checks the question's id.
+  const path = z.string().regex(/^questions\/[0-9a-f-]{36}\.(png|jpg|jpeg|webp)$/).safeParse(formData.get("path")); // Checks the stored file name is one this app made.
+  const alt = String(formData.get("alt") ?? "").trim().slice(0, 300) || null; // A short description of the picture (for screen readers).
+  if (!id.success || !path.success) return { error: "That picture could not be attached. Please try again." }; // Problem: plain message.
+  const supabase = await createClient(); // Connects to the database.
+  const { data: q } = await supabase.from("training_questions").select("module_id, image_path").eq("id", id.data).maybeSingle(); // Reads the question first.
+  if (!q) return { error: "That question is gone. Please reload the page." }; // Not found: asks to reload.
+  const { error } = await supabase.from("training_questions").update({ image_path: path.data, image_alt: alt }).eq("id", id.data); // Saves the picture on the question.
+  if (error) { // Failed:
+    await supabase.storage.from("training").remove([path.data]); // removes the uploaded picture so nothing is left behind,
+    return plain(error, "Could not attach the picture. Please try again."); // and says so.
+  } // End of the failure case.
+  if (q.image_path && q.image_path !== path.data) await supabase.storage.from("training").remove([q.image_path]); // Removes the picture it replaced.
+  revalidatePath(`${ADMIN_PAGE}/${q.module_id}`); // Refreshes the module's admin page.
+  return { message: "Picture attached." }; // Says it is done.
+} // End of attachQuestionImage.
+
+// Removes a quiz question's picture.
+export async function removeQuestionImage(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireAdmin(); // Only owner and operations admins.
+  const id = uuid.safeParse(formData.get("id")); // Reads and checks the question's id.
+  if (!id.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const supabase = await createClient(); // Connects to the database.
+  const { data: q } = await supabase.from("training_questions").select("module_id, image_path").eq("id", id.data).maybeSingle(); // Reads the question first.
+  if (!q) return { error: "That question is gone. Please reload the page." }; // Not found: asks to reload.
+  const { error } = await supabase.from("training_questions").update({ image_path: null, image_alt: null }).eq("id", id.data); // Takes the picture off the question.
+  if (error) return plain(error, "Could not remove the picture. Please try again."); // Failed: plain message.
+  if (q.image_path) await supabase.storage.from("training").remove([q.image_path]); // Removes the file from the store.
+  revalidatePath(`${ADMIN_PAGE}/${q.module_id}`); // Refreshes the module's admin page.
+  return { message: "Picture removed." }; // Says it is done.
+} // End of removeQuestionImage.
 
 // Deletes a quiz question.
 export async function deleteQuestion(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.

@@ -104,8 +104,6 @@ Carla asked for a module on setting up weekly, termly and yearly student plans (
 - **Legal note.** No new personal information. Term reviews keep health and diagnosis details out, as before (Privacy Act 1988, APP 3 and 6).
 - Tests: `supabase/tests/training_plans_routine.test.sql`.
 
-Still to build (a separate pull request): screenshot quiz questions, and practice tasks checked by CLG.
-
 ## 11. Assigning modules, order, and readiness for jobs, 18 Nov 2026
 
 Carla: admins can assign modules with due dates; assigned modules are paid for their set time, and doing training outside designated training time is paid only with pre-approval. The safety modules are done in order. The app should flag when a tutor is booked for drafting or a term review without the modules. `20261121300200_training_assign_order_jobs.sql` adds:
@@ -116,3 +114,14 @@ Carla: admins can assign modules with due dates; assigned modules are paid for t
 - **Evidence.** Sequencing foundational safety content before practice, and short required learning tied to the task it prepares for, follows AITSL's guidance on induction and the EEF's *Effective Professional Development* guidance (2021): build knowledge, then rehearse it close to when it is used.
 - **Legal note.** Required training is work time under the Fair Work Act 2009 and the awards, so compulsory and assigned modules are paid automatically; optional training a person chooses is unpaid unless CLG approves it first. The handbook pay page says so. Assignments hold no personal information beyond who and when (Privacy Act 1988, APP 11).
 - Tests: `supabase/tests/training_assign_order_jobs.test.sql`.
+
+## 12. Screenshot questions and practice tasks, 18 Nov 2026
+
+Carla: for modules about the app, questions should show screenshots and ask what to press or write; tutors should also write things like mock session summaries that a CLG admin checks and approves before they pass. `20261121300300_training_screenshots_tasks.sql` adds:
+
+- **Screenshot questions.** `training_questions.image_path` and `image_alt` (a description for screen readers). Pictures (PNG, JPEG, WebP) go in the private training store; staff can open one only while they can see its module. Admins upload them on each question in Training setup. The screenshots themselves are taken from the running app with test data (the list of questions per module is in the new-modules doc), so Carla or Lauren adds them once the app is set up with a practice student.
+- **Practice tasks.** `training_modules.practice_task` holds the instructions. People write their answer on the module page (`training_submit_task`); full admins approve it or send it back with what to change (`training_review_task`, never their own) under Training setup, Practice tasks. Admins are told when one arrives; the person is told the outcome. `training_finish` waits for an approved task for the current version, and approving after the quiz is passed finishes the module (paid when compulsory or assigned, through the shared `private.training_record_completion`). Submissions (`training_task_submissions`) can be read by the person and full admins only.
+- **Tasks loaded** (made-up students only): module 12 (a session summary for Mia), 19 (comments on a sample history paragraph against a rubric), 25 (a term review for Sam), 27 (a year goal, term goal and assessment targets for Lily).
+- **Evidence.** Rehearsing the real task with feedback before doing it with students: EEF *Effective Professional Development* (2021) names modelling, rehearsal and feedback among the mechanisms that work. Checking against clear criteria: EEF *Feedback* (2021).
+- **Legal note.** Tasks use made-up students, and the page and task wording say never to write about a real student (Privacy Act 1988, APP 6 and 11; the Children's Online Privacy Code). Submissions are training records, kept with completions.
+- Tests: `supabase/tests/training_screenshots_tasks.test.sql`.
