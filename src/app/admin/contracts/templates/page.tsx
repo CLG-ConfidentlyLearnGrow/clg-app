@@ -9,7 +9,7 @@ import { ContractText } from "@/components/contract-text"; // Shows a contract's
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, Card, Empty, Table, TextLink } from "@/components/ui"; // Shared page parts.
 import { requireAdminLevel } from "@/lib/auth"; // The admin check.
-import { CONTRACT_TYPE_NAMES, CONTRACT_TYPES, TEMPLATE_STATUS_NAMES, type ContractType } from "@/lib/employment-contracts"; // Contract words.
+import { CONTRACT_TYPE_NAMES, CONTRACT_TYPES, TEMPLATE_STATUS_NAMES, documentLinks, type ContractDocument, type ContractType } from "@/lib/employment-contracts"; // Contract words, and the document link swap list.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { DiscardTemplateForm, DocumentForm, PublishTemplateForm, TemplateForm } from "../forms"; // The template and document forms.
@@ -28,6 +28,7 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
   // One template open (or a new one).
   if (id || newType) { // Editing:
     const { data } = id ? await supabase.from("employment_contract_templates").select("*").eq("id", id).maybeSingle() : { data: null }; // reads the template (none for a new one),
+    const { data: docs } = await supabase.from("employment_contract_documents").select("key, title, url, also_known_as"); // the document links, for the preview,
     const t = data as Template | null; // the template.
     const locked = t !== null && t.status !== "draft"; // A published or replaced version cannot change; saving starts a new draft.
     return ( // Shows:
@@ -56,7 +57,7 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
               {t && ( // A saved template: the preview.
                 <Card title="Preview (as saved)" description="How the wording looks to staff. Gaps still show in square brackets here; they are filled in when the contract is sent.">{/* the preview card: */}
                   <p className="mb-3 text-lg font-semibold">{t.title}</p>{/* the title, */}
-                  <ContractText text={t.body} />{/* and the wording. */}
+                  <ContractText text={t.body} links={documentLinks((docs ?? []) as ContractDocument[])} />{/* and the wording (old document addresses open the app pages). */}
                 </Card> // End of the preview card.
               )}{/* End of the preview. */}
             </> // End of the group.
@@ -69,7 +70,7 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
   // The list of templates and the document links.
   const [{ data: rows }, { data: docs }] = await Promise.all([ // Reads two things at once:
     supabase.from("employment_contract_templates").select("id, contract_type, version, title, status, updated_at, published_at").order("contract_type").order("version", { ascending: false }), // every template version,
-    supabase.from("employment_contract_documents").select("key, title, url, casual_only").order("sort"), // and the documents staff acknowledge.
+    supabase.from("employment_contract_documents").select("key, title, url, casual_only, body, approved_at, country_urls").order("sort"), // and the documents staff acknowledge (with any wording kept in the app).
   ]); // End of the reads.
   const templates = (rows ?? []) as Omit<Template, "body">[]; // The template versions.
   return ( // Shows:
@@ -98,9 +99,9 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
             </Card> // End of the card.
           ); // End of what's shown.
         })}{/* End of the kinds. */}
-        <Card title="Documents staff acknowledge" description="After signing, staff open each of these and acknowledge it with their typed name. Casual-only documents are skipped for part-time and full-time staff. Each acknowledgement keeps the name and link it was given at the time.">{/* the documents card: */}
+        <Card title="Documents staff acknowledge" description="After signing, staff open each of these and acknowledge it with their typed name. Casual-only documents are skipped for part-time and full-time staff. Each acknowledgement keeps the name and link it was given at the time. The main link is for Australia; links for other countries are kept ready for when CLG works there.">{/* the documents card: */}
           <div className="space-y-6">{/* each document's form, with space between: */}
-            {((docs ?? []) as { key: string; title: string; url: string; casual_only: boolean }[]).map((d) => <DocumentForm key={d.key} doc={d} />)}{/* one form per document. */}
+            {((docs ?? []) as { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null }[]).map((d) => <DocumentForm key={d.key} doc={d} />)}{/* one form per document. */}
           </div>{/* End of the forms. */}
         </Card>{/* End of the documents card. */}
       </div>{/* End of the cards. */}

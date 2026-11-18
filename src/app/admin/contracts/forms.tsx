@@ -8,7 +8,7 @@
 "use client"; // Runs in the browser, so the gap boxes can change as the contract is chosen.
 
 import { useState } from "react"; // Keeps track of the chosen contract and employment type.
-import { discardContractTemplate, publishContractTemplate, recordXeroInvite, saveContractDocument, saveContractTemplate, sendContract, withdrawContract } from "@/app/actions/employment-contracts"; // The server actions for contracts.
+import { discardContractTemplate, publishContractTemplate, recordXeroInvite, saveContractDocument, saveContractDocumentText, saveContractTemplate, sendContract, withdrawContract } from "@/app/actions/employment-contracts"; // The server actions for contracts.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field, Select, TextArea } from "@/components/ui"; // Form boxes and lists.
 import { AUTO_GAPS, CONTRACT_TYPES, CONTRACT_TYPE_NAMES, EMPLOYMENT_NAMES, employmentsFor, findGaps, roleFor, type ContractType } from "@/lib/employment-contracts"; // Contract words and the gap reader.
@@ -140,15 +140,41 @@ export function DiscardTemplateForm({ id }: { id: string }) {
   ); // End of what's shown.
 } // End of DiscardTemplateForm.
 
-// Changes one acknowledged document's name and link.
-export function DocumentForm({ doc }: { doc: { key: string; title: string; url: string; casual_only: boolean } }) {
+// Changes one acknowledged document's name and link, and (for a document
+// kept in the app, such as the Child Safe Policy) its wording and approval.
+export function DocumentForm({ doc }: { doc: { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null } }) {
+  const inApp = doc.url === `/policies/${doc.key}`; // Whether the document is kept in the app.
+  const others = Object.entries(doc.country_urls ?? {}); // Its links for other countries, if any.
   return ( // Shows:
-    <ActionForm action={saveContractDocument} submitLabel="Save">{/* a form that saves it: */}
+    <div className="space-y-4 rounded-xl border border-zinc-200 p-4">{/* a box for this document: */}
+    <div className="flex flex-wrap items-center gap-2">{/* a status line showing the link is set (Carla, 18 Nov 2026): */}
+      <p className="font-semibold">{doc.title}</p>{/* the document's name, */}
+      {doc.url ? <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-900">✓ Link set{inApp ? " (in the app)" : ""}</span> : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">No link set</span>}{/* a "Link set" badge (or a warning when there is none), */}
+      {inApp && <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${doc.approved_at ? "bg-teal-50 text-teal-900" : "bg-amber-50 text-amber-900"}`}>{doc.approved_at ? "Wording approved" : "Wording is a draft"}</span>}{/* whether its wording is final, for documents kept in the app, */}
+      {others.length > 0 && <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700">Also set for {others.map(([c]) => c).join(", ")}</span>}{/* which other countries have a link, */}
+      {doc.url && <a href={doc.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center rounded-lg border border-brand bg-brand px-3 py-1 text-sm font-medium text-white hover:opacity-90">Open link</a>}{/* and a button to check the link opens the right document. */}
+    </div>{/* End of the status line. */}
+    <ActionForm action={saveContractDocument} submitLabel="Save name and links">{/* a form that saves its name and links: */}
       <input type="hidden" name="key" value={doc.key} />{/* which document, hidden, */}
       <div className="grid gap-3 sm:grid-cols-2">{/* two columns on wider screens: */}
         <Field label={`Name${doc.casual_only ? " (casual staff only)" : ""}`} name="title" required maxLength={200} defaultValue={doc.title} />{/* its name, */}
-        <Field label="Link" name="url" required maxLength={500} defaultValue={doc.url} hint="A web address starting with https://, or an app page starting with /" />{/* and its link. */}
+        <Field label="Link (Australia)" name="url" required maxLength={500} defaultValue={doc.url} hint={`A web address starting with https://, or an app page starting with /. To keep it in the app, use /policies/${doc.key}`} />{/* its main link, used in Australia, */}
       </div>{/* End of the columns. */}
-    </ActionForm> // End of the form.
+      <TextArea label="Links for other countries (optional)" name="country_urls" rows={2} defaultValue={others.map(([c, u]) => `${c} ${u}`).join("\n")} hint="For when CLG works outside Australia. One per line: the two-letter country code, a space, then the link. For example: NZ https://www.employment.govt.nz/" />{/* and links for other countries. */}
+    </ActionForm>{/* End of the name and link form. */}
+    {inApp && ( // Kept in the app: its wording.
+      <ActionForm action={saveContractDocumentText} submitLabel="Save wording">{/* a form that saves its wording: */}
+        <input type="hidden" name="key" value={doc.key} />{/* which document, hidden, */}
+        <p className="text-sm">{/* where it is shown: */}
+          Shown at <a href={doc.url} target="_blank" rel="noreferrer" className="text-teal-800 underline">{doc.url}</a>. {doc.approved_at ? "Approved: staff see it as final." : "Not approved yet: staff see a draft label."}{/* its page, and whether it is final. */}
+        </p>{/* End of the note. */}
+        <TextArea label="Wording" name="body" rows={10} defaultValue={doc.body} hint="Paste from the document's Claude Doc: open it, choose Export, then Markdown, and paste everything here." />{/* the wording, */}
+        <label className="flex items-start gap-2 text-sm">{/* the approval tick: */}
+          <input type="checkbox" name="approved" defaultChecked={Boolean(doc.approved_at)} className="mt-1" />{/* a tick box (ticked if already approved), */}
+          <span>Approved: this wording is final (removes the draft label).</span>{/* and its words. */}
+        </label>{/* End of the line. */}
+      </ActionForm> // End of the wording form.
+    )}{/* End of the wording part. */}
+    </div> // End of the box.
   ); // End of what's shown.
 } // End of DocumentForm.

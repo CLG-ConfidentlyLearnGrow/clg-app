@@ -11,7 +11,7 @@ import { ContractText } from "@/components/contract-text"; // Shows a contract's
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts.
 import { FULL_ADMIN, requireAdminLevel } from "@/lib/auth"; // The owner-and-Operations group, and the admin check.
-import { CONTRACT_STATUS_NAMES, CONTRACT_TYPE_NAMES, EMPLOYMENT_NAMES, type ContractStatus, type ContractType, type Employment } from "@/lib/employment-contracts"; // Contract words.
+import { CONTRACT_STATUS_NAMES, CONTRACT_TYPE_NAMES, EMPLOYMENT_NAMES, documentLinks, type ContractDocument, type ContractStatus, type ContractType, type Employment } from "@/lib/employment-contracts"; // Contract words, and the document link swap list.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { SendContractForm, WithdrawContractForm, XeroInviteForm, type SendStaff, type SendTemplate } from "./forms"; // The admin forms.
@@ -76,10 +76,11 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
 
   // One contract in full.
   if (id) { // A contract is open:
-    const [{ data }, { data: acks }, { data: pay }] = await Promise.all([ // reads three things at once:
+    const [{ data }, { data: acks }, { data: pay }, { data: docs }] = await Promise.all([ // reads four things at once:
       supabase.from("employment_contracts").select("*").eq("id", id).maybeSingle(), // the contract,
       supabase.from("employment_contract_acknowledgements").select("statement, statement_title, statement_url, typed_name, acknowledged_at").eq("contract_id", id).order("acknowledged_at"), // its acknowledgements,
-      supabase.rpc("employment_contract_pay_evidence", { p_id: id }), // and pay sent since it was sent.
+      supabase.rpc("employment_contract_pay_evidence", { p_id: id }), // pay sent since it was sent,
+      supabase.from("employment_contract_documents").select("key, title, url, also_known_as"), // and the document links (with their older addresses).
     ]); // End of the reads.
     const c = data as Contract | null; // The contract (or nothing if not found).
     const evidence = ((pay ?? []) as { first_paid_work_date: string | null; paid_lines: number }[])[0]; // The pay evidence row.
@@ -142,7 +143,7 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
               )}{/* End of the withdraw part. */}
 
               <Card title="Contract as sent">{/* the wording card: */}
-                <ContractText text={c.body} />{/* the exact wording. */}
+                <ContractText text={c.body} links={documentLinks((docs ?? []) as ContractDocument[])} />{/* the exact wording (old document addresses open the app pages). */}
               </Card>{/* End of the wording card. */}
             </> // End of the group.
           )}{/* End of the choice. */}

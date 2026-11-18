@@ -32,7 +32,7 @@ CLG sends your contract in the app. A card on your dashboard and **My contract**
 1. Read the whole contract. If anything is unclear or looks wrong, ask CLG in **Help chat** before signing.
 2. Under **Sign your contract**, tick that you have read it and agree, and that you agree to sign electronically.
 3. Type your full name exactly as shown, then choose **Sign and accept**. You need two-step login to sign.
-4. Under **Acknowledgements**, open each document (the Fair Work Information Statement, the Casual Employment Information Statement if you are casual, the Child Safe Policy and the Staff Code of Conduct), tick that you have read it, type your name and acknowledge it.
+4. Under **Acknowledgements**, choose the **Open** button for each document (the Fair Work Information Statement, the Casual Employment Information Statement if you are casual, the Child Safe Policy and the Staff Code of Conduct), tick that you have read it, type your name and acknowledge it. CLG's own policies open as pages inside the app, and buttons in the contract open them too.
 5. CLG then sends you an email from Xero to enter your tax, bank and superannuation details.
 
 Tip: Your signed contract stays in **My contract**, so you can read it again at any time.

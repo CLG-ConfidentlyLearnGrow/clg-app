@@ -84,9 +84,19 @@ email in which is connected to the CLG app once the contract is accepted."
    with their typed name: the Fair Work Information Statement, the Casual
    Employment Information Statement (casual staff only), the CLG Child Safe
    Policy and the CLG Staff Code of Conduct. The contract is then complete.
-   The owner can change each document's name and link (for example when the
-   policies move into the app); each acknowledgement keeps the name and link
-   it was given.
+   The owner can change each document's name and link; each acknowledgement
+   keeps the name and link it was given. Each document shows a **Link set**
+   badge and an **Open link** button, and can hold one link per country
+   (the main link is Australia's; others are kept in `country_urls` for when
+   CLG works outside Australia).
+   **Policies in the app (18 Nov 2026).** The Child Safe Policy and Staff
+   Code of Conduct are pages in the app at `/policies/child_safe_policy` and
+   `/policies/code_of_conduct`, readable by anyone signed in. The owner
+   pastes the wording on the templates page and ticks **Approved** when it is
+   final; until then the page shows a draft label. Links to app pages show
+   as buttons in contracts, and links still pointing at the old Claude
+   addresses open the app pages instead (`also_known_as`), so sent and
+   signed contracts need no change.
 6. **Xero self-setup.** Xero Payroll Australia added "Invite to
    self-onboard" in March 2026, but it can only be started inside Xero (no
    public API). So once a contract is signed, the contract page shows the
@@ -138,7 +148,7 @@ email in which is connected to the CLG app once the contract is accepted."
 
 | Who | Templates | Send / withdraw | See contracts | Xero step | Sign / acknowledge |
 | --- | --- | --- | --- | --- | --- |
-| Owner | Write, publish, change document links | Yes | All | Yes | Their own |
+| Owner | Write, publish, change document links, wording and approval | Yes | All | Yes | Their own |
 | Operations | Read | Yes | All | Yes | Their own |
 | Finance | Read | No | All | Yes | Their own |
 | Support | No | No | No (only their own) | No | Their own |
@@ -146,8 +156,11 @@ email in which is connected to the CLG app once the contract is accepted."
 
 ## Files
 
-- Database: `supabase/migrations/20261121200100_employment_contracts.sql`
-- Tests: `supabase/tests/employment_contracts.test.sql`
+- Database: `supabase/migrations/20261121200100_employment_contracts.sql`,
+  `supabase/migrations/20261121200200_contract_documents_in_app.sql`
+- Tests: `supabase/tests/employment_contracts.test.sql`,
+  `supabase/tests/contract_documents_in_app.test.sql`
+- Policy pages: `src/app/policies/[key]/page.tsx`
 - Admin pages: `src/app/admin/contracts/` (list, send, contract record,
   templates)
 - Staff page: `src/app/contract/` (read, sign, acknowledge)
@@ -160,6 +173,6 @@ email in which is connected to the CLG app once the contract is accepted."
 - Remind admins to give the Casual Employment Information Statement again
   when the law requires (timing to be confirmed by the lawyer).
 - Admin-only staff contract templates (the kinds already exist).
-- Move the Child Safe Policy and Staff Code of Conduct links to app pages
-  once those pages exist (change the links on the templates page).
+- Show staff the link for their own country once CLG works outside
+  Australia (the links are already stored per country).
 - Optionally block tutor matching in 2027 until the new contract is signed.

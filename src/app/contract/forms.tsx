@@ -39,7 +39,7 @@ export function AcknowledgeForm({ id, statement, title, href, fullName }: { id: 
     <ActionForm action={acknowledgeContractDocument} submitLabel={`Acknowledge the ${title}`}>{/* a form that acknowledges it: */}
       <input type="hidden" name="id" value={id} />{/* the contract's id, hidden, */}
       <input type="hidden" name="statement" value={statement} />{/* which document, hidden, */}
-      <p className="text-sm"><a href={href} target={href.startsWith("/") ? undefined : "_blank"} rel="noreferrer" className="font-medium text-teal-800 underline">Open the {title}</a> (opens in a new tab) and read it.</p>{/* the link to the document, */}
+      <p className="text-sm"><a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-lg border border-brand bg-brand px-3 py-1.5 font-medium text-white hover:opacity-90">Open the {title}</a> <span className="text-zinc-600">(opens in a new tab)</span></p>{/* a button to the document (a new tab, so this page stays open), */}
       <label className="flex items-start gap-2 text-sm">{/* the tick: */}
         <input type="checkbox" name="read" className="mt-1" />{/* a tick box, */}
         <span>I have opened and read the {title}, and I understand it.</span>{/* and its words. */}
