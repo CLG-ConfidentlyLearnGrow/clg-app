@@ -4,11 +4,11 @@
 import { notFound } from "next/navigation"; // Shows "not found".
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, Card, Empty, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note and link style.
-import { askRedo, deleteDraftModule, deleteLesson, deleteQuestion, removeLessonFile, unassignModule } from "@/app/actions/training"; // The server actions for the small buttons.
+import { askRedo, deleteDraftModule, deleteLesson, deleteQuestion, removeLessonFile, removeQuestionImage, unassignModule } from "@/app/actions/training"; // The server actions for the small buttons.
 import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is a full admin.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { AssignForm, LessonFileForm, LessonForm, ModuleForm, QuestionForm, SmallAction, type LessonRow, type ModuleRow, type QuestionRow } from "../forms"; // The admin forms and their shapes.
+import { AssignForm, LessonFileForm, LessonForm, ModuleForm, QuestionForm, QuestionImageForm, SmallAction, type LessonRow, type ModuleRow, type QuestionRow } from "../forms"; // The admin forms and their shapes.
 
 // Shows the module editing page.
 export default async function AdminTrainingModulePage({ params }: PageProps<"/admin/training/[id]">) { // Reads the address's id.
@@ -16,14 +16,15 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const { id } = await params; // The module's id.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, settings, done, people, assigned] = await Promise.all([ // Reads seven things at once:
-    supabase.from("training_modules").select("id, title, summary, audience, stage, required, holds_matching, counts_toward_certified, minutes, renew_months, status, position, version, in_order, needed_for").eq("id", id).maybeSingle(), // the module,
+  const [mod, lessons, questions, settings, done, people, assigned, pictures] = await Promise.all([ // Reads eight things at once:
+    supabase.from("training_modules").select("id, title, summary, audience, stage, required, holds_matching, counts_toward_certified, minutes, renew_months, status, position, version, in_order, needed_for, practice_task").eq("id", id).maybeSingle(), // the module,
     supabase.from("training_lessons").select("id, title, body, position, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons,
     supabase.rpc("training_questions_for_admin", { p_module: id }), // its questions with answers,
     supabase.from("training_settings").select("video_max_mb").eq("id", true).maybeSingle(), // the largest upload allowed,
     supabase.from("training_completions").select("id", { count: "exact", head: true }).eq("module_id", id), // how many people have finished it,
     supabase.rpc("training_people"), // the tutors and admin staff (to assign it to),
-    supabase.from("training_assignments").select("account_id, due_on, reason").eq("module_id", id).order("due_on"), // and who it is assigned to.
+    supabase.from("training_assignments").select("account_id, due_on, reason").eq("module_id", id).order("due_on"), // who it is assigned to,
+    supabase.from("training_questions").select("id, image_path, image_alt").eq("module_id", id).not("image_path", "is", null), // and the questions' pictures.
   ]); // End of the reads.
   if (!mod.data) notFound(); // No such module: not found.
   const m = mod.data as ModuleRow & { version: number }; // The module.
@@ -35,6 +36,8 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const staff = (people.data ?? []) as { account_id: string; full_name: string; is_tutor: boolean; is_admin: boolean }[]; // The tutors and admin staff.
   const fits = staff.filter((p) => (m.audience === "tutor" ? p.is_tutor : m.audience === "admin" ? p.is_admin : true)); // Only the people this module is made for.
   const nameOf = (pid: string) => staff.find((p) => p.account_id === pid)?.full_name ?? "Someone"; // A person's name, from their id.
+  const pictureRows = (pictures.data ?? []) as { id: string; image_path: string; image_alt: string | null }[]; // The questions that have a picture.
+  const pictureUrls = new Map(await Promise.all(pictureRows.map(async (p) => [p.id, { url: (await supabase.storage.from("training").createSignedUrl(p.image_path, 3600)).data?.signedUrl ?? null, alt: p.image_alt ?? "" }] as const))); // A link to each picture that works for one hour.
   const assignments = (assigned.data ?? []) as { account_id: string; due_on: string; reason: string | null }[]; // Who it is assigned to.
 
   return ( // Shows:
@@ -100,6 +103,19 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
               <summary className="cursor-pointer font-medium">{q.question_position}. {q.prompt}</summary>{/* its order and question, */}
               <div className="mt-4 space-y-4">{/* the contents: */}
                 <QuestionForm moduleId={m.id} q={q} nextPosition={nextQuestion} />{/* the question form, */}
+                <div className="space-y-3 rounded-lg bg-zinc-50 p-3">{/* the picture part: */}
+                  <p className="text-sm font-medium text-zinc-800">Screenshot or picture</p>{/* its heading, */}
+                  {pictureUrls.get(q.id)?.url ? ( // has a picture:
+                    <>{/* (a group:) */}
+                      {/* eslint-disable-next-line @next/next/no-img-element -- a private link that works for one hour, so the image optimiser cannot cache it */}
+                      <img src={pictureUrls.get(q.id)!.url!} alt={pictureUrls.get(q.id)!.alt} className="max-h-64 rounded-lg border border-zinc-200" />{/* the picture, */}
+                      <SmallAction action={removeQuestionImage} fields={{ id: q.id }} label="Remove picture" confirm="Remove this picture?" />{/* and a remove button, */}
+                    </> // End of the group.
+                  ) : ( // no picture:
+                    <p className="text-sm text-zinc-600">No picture. Add a screenshot to ask what to press or where to write.</p> // says so.
+                  )}{/* End of the choice. */}
+                  <QuestionImageForm questionId={q.id} />{/* the upload form (adds or replaces the picture). */}
+                </div>{/* End of the picture part. */}
                 <SmallAction action={deleteQuestion} fields={{ id: q.id, module_id: m.id }} label="Delete question" confirm="Delete this question?" />{/* and the delete button. */}
               </div>{/* End of the contents. */}
             </details> // End of the box.

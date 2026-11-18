@@ -11,7 +11,7 @@ import { Button, FormMessage } from "@/components/ui"; // The button and the rep
 import { initialFormState } from "@/lib/forms"; // The starting (empty) form reply.
 
 // One question as the quiz shows it (no answer included).
-export type QuizQuestion = { id: string; prompt: string; options: string[] }; // its id, the question and the choices.
+export type QuizQuestion = { id: string; prompt: string; options: string[]; image_url?: string | null; image_alt?: string | null }; // its id, the question, the choices, and any picture (a link that works for one hour) with its description.
 
 // Shows the quiz, or a "finish" button for a module with no quiz.
 export function QuizForm({ moduleId, questions, done, saved }: { moduleId: string; questions: QuizQuestion[]; done: boolean; saved: number[] }) { // Takes the module, its questions, whether it's already done, and any answers saved earlier.
@@ -24,6 +24,10 @@ export function QuizForm({ moduleId, questions, done, saved }: { moduleId: strin
       {questions.map((q, i) => ( // each question:
         <fieldset key={q.id} className="space-y-2">{/* a group: */}
           <legend className="text-sm font-medium text-zinc-900">{i + 1}. {q.prompt}</legend>{/* the number and question, */}
+          {q.image_url && ( // a question with a picture (for example a screenshot of the app):
+            // eslint-disable-next-line @next/next/no-img-element -- a private link that works for one hour, so the image optimiser cannot cache it
+            <img src={q.image_url} alt={q.image_alt ?? ""} className="max-h-96 w-full rounded-lg border border-zinc-200 object-contain" />
+          )}{/* End of the picture. */}
           {q.options.map((o, j) => ( // each choice:
             <label key={j} className="flex items-start gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-50">{/* a tappable row: */}
               <input type="radio" name={`q${i + 1}`} value={j + 1} required defaultChecked={saved[i] === j + 1} className="mt-0.5" />{/* a round button (counting choices from 1), ticked if it was saved earlier, */}

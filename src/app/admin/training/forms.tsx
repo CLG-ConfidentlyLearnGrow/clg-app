@@ -5,7 +5,7 @@
 "use client"; // Runs in the browser, so the forms can react straight away.
 
 import { useActionState, useState, useTransition, type FormEvent } from "react"; // Form helpers, remembered values, and a way to show work in progress.
-import { assignModule, attachLessonFile, saveHandbookPage, saveLesson, saveModule, createModule, saveQuestion, saveTrainingSettings } from "@/app/actions/training"; // The server actions these forms send to.
+import { assignModule, attachLessonFile, attachQuestionImage, reviewTask, saveHandbookPage, saveLesson, saveModule, createModule, saveQuestion, saveTrainingSettings } from "@/app/actions/training"; // The server actions these forms send to.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { BusyButton, Field, FormMessage, Select, TextArea } from "@/components/ui"; // The unstyled busy button, input box, reply message, drop-down and larger text box.
 import { initialFormState, type FormState } from "@/lib/forms"; // The starting (empty) form reply, and its shape.
@@ -27,7 +27,8 @@ export type ModuleRow = { // its details:
   status: string; // draft, published or retired,
   position: number; // order,
   in_order: boolean; // must be done in order (with the others ticked the same way),
-  needed_for: string | null; // a job it is needed before (drafting or term_review), if any.
+  needed_for: string | null; // a job it is needed before (drafting or term_review), if any,
+  practice_task: string | null; // a written task CLG checks before the module is finished, if any.
 }; // End of the shape.
 
 // A tick box with words beside it.
@@ -68,6 +69,7 @@ function ModuleFields({ m }: { m?: ModuleRow }) { // Takes the module (none for 
         <option value="drafting">Before drafting work</option>{/* drafting, */}
         <option value="term_review">Before writing a term review</option>{/* term reviews. */}
       </Select>{/* End of the choice. */}
+      <TextArea label="Practice task checked by CLG (optional)" name="practice_task" rows={5} maxLength={4000} defaultValue={m?.practice_task ?? ""} hint="For example: write a session summary for a made-up student. People write it in the app, and you approve it or send it back under Practice tasks. The module is finished once the quiz is passed and the task is approved. Use made-up students only." />{/* a practice task, */}
       <p className="text-sm text-zinc-600">When a tutor is given a term review without a module needed for it, the module is assigned to them and you are told. Training progress shows who is ready for each job.</p>{/* what "needed before a job" does, */}
       <p className="text-sm text-zinc-600">Safety modules (needed before new students) never count towards the training hours each quarter. Every other module does. The app sets this itself.</p>{/* how the quarterly hours are counted (automatic, Carla 16 Nov 2026). */}
     </> // End of the group.
@@ -163,6 +165,50 @@ export function LessonFileForm({ lessonId, maxMb }: { lessonId: string; maxMb: n
 // A quiz question as the question form needs it (with its answer).
 export type QuestionRow = { id: string; question_position: number; prompt: string; options: string[]; correct_option: number; explanation: string | null }; // its details.
 
+// The picture types a quiz question can show, and their content types.
+const QUESTION_IMAGE_TYPES: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" }; // PNG, JPEG or WebP.
+
+// The form that uploads a picture (for example a screenshot of the app) for
+// a quiz question, straight to the file store (Carla, 18 Nov 2026).
+export function QuestionImageForm({ questionId }: { questionId: string }) { // Takes the question.
+  const [state, formAction] = useActionState(attachQuestionImage, initialFormState); // The server's reply, and the form's sender.
+  const [local, setLocal] = useState<FormState>({}); // A message from the browser (e.g. wrong file type).
+  const [busy, startUpload] = useTransition(); // Whether it is uploading.
+  function onSubmit(e: FormEvent<HTMLFormElement>) { // When the form is sent:
+    e.preventDefault(); // stops the browser sending it itself,
+    const input = e.currentTarget.elements.namedItem("file") as HTMLInputElement; // finds the file picker,
+    const alt = (e.currentTarget.elements.namedItem("alt") as HTMLInputElement).value; // and the description.
+    const file = input.files?.[0]; // The chosen file.
+    if (!file) { setLocal({ error: "Choose a picture first." }); return; } // None chosen: asks for one.
+    const ext = file.name.toLowerCase().split(".").pop() ?? ""; // The file's extension.
+    if (!QUESTION_IMAGE_TYPES[ext]) { setLocal({ error: "Choose a PNG, JPEG or WebP picture." }); return; } // Wrong type: says which work.
+    if (file.size > 10 * 1024 * 1024) { setLocal({ error: "That picture is over 10 MB. Please use a smaller screenshot." }); return; } // Too big: explains.
+    setLocal({ message: "Uploading…" }); // Says it is uploading.
+    startUpload(async () => { // Starts uploading:
+      const path = `questions/${crypto.randomUUID()}.${ext}`; // a random storage name,
+      const up = await createBrowserSupabase().storage.from("training").upload(path, file, { contentType: QUESTION_IMAGE_TYPES[ext], upsert: false }); // uploads it (never replacing another file),
+      if (up.error) { setLocal({ error: "The upload did not work. Please check your connection and try again." }); return; } // failed: explains,
+      setLocal({}); // clears the browser message,
+      const form = new FormData(); // and sends the details to the server:
+      form.set("question_id", questionId); // which question,
+      form.set("path", path); // where the picture is,
+      form.set("alt", alt.slice(0, 300)); // and its description.
+      formAction(form); // (sent)
+    }); // End of the upload.
+  } // End of onSubmit.
+  return ( // Shows:
+    <form onSubmit={onSubmit} className="space-y-3">{/* a form that uploads when sent: */}
+      <FormMessage state={local.error || local.message ? local : state} />{/* the browser's message, or the server's reply, */}
+      <label className="block space-y-1 text-sm">{/* the file picker: */}
+        <span className="font-medium text-zinc-800">Screenshot or picture (PNG, JPEG or WebP, up to 10 MB)</span>{/* its label, */}
+        <input type="file" name="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" className="block text-sm" />{/* the picker. */}
+      </label>{/* End of the picker. */}
+      <Field label="What the picture shows (for screen readers)" name="alt" maxLength={300} hint="For example: the Sessions list with the Sign on button." />{/* the description, */}
+      <BusyButton type="submit" busy={busy} className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50">{busy ? "Uploading…" : "Upload and attach"}</BusyButton>{/* the send button. */}
+    </form> // End of the form.
+  ); // End of what's shown.
+} // End of QuestionImageForm.
+
 // The form that adds a quiz question, or changes one.
 export function QuestionForm({ moduleId, q, nextPosition }: { moduleId: string; q?: QuestionRow; nextPosition: number }) { // Takes the module, the question (none for new) and the next free order number.
   return ( // Shows:
@@ -251,3 +297,20 @@ export function AssignForm({ moduleId, people }: { moduleId: string; people: { i
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of AssignForm.
+
+// The form for checking a practice task: approve it, or send it back with
+// what to change (Carla, 18 Nov 2026).
+export function TaskReviewForm({ submissionId }: { submissionId: string }) { // Takes the submission.
+  const [state, formAction] = useActionState(reviewTask, initialFormState); // The reply and the form's sender.
+  return ( // Shows:
+    <form action={formAction} className="space-y-3">{/* the form: */}
+      <input type="hidden" name="submission_id" value={submissionId} />{/* the submission's id (hidden), */}
+      <TextArea label="Feedback (needed when sending it back)" name="feedback" rows={3} maxLength={2000} />{/* what to say to them, */}
+      <FormMessage state={state} />{/* the reply, */}
+      <div className="flex flex-wrap gap-3">{/* the two buttons: */}
+        <BusyButton type="submit" name="decision" value="approve" className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-900">Approve</BusyButton>{/* approve, */}
+        <BusyButton type="submit" name="decision" value="return" className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50">Send back</BusyButton>{/* or send back. */}
+      </div>{/* End of the buttons. */}
+    </form> // End of the form.
+  ); // End of what's shown.
+} // End of TaskReviewForm.

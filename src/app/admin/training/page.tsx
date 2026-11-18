@@ -10,12 +10,13 @@ import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { adelaideToday } from "@/lib/billing/run"; // Today's date in Adelaide.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { AUDIENCE_NAMES, CERT_NAMES, STAGE_NAMES, STATE_NAMES, STATE_STYLES, hrs, timeText, type Audience, type CertState, type Stage, type TrainingState } from "@/lib/training"; // Training words, colours and shapes.
-import { HandbookForm, NewModuleForm, SettingsForm } from "./forms"; // The admin forms.
+import { HandbookForm, NewModuleForm, SettingsForm, TaskReviewForm } from "./forms"; // The admin forms.
 
 // The page's sections.
 const SECTIONS = [ // Each section's id and words:
   { id: "modules", label: "Modules" }, // the modules,
   { id: "progress", label: "Progress" }, // everyone's progress,
+  { id: "tasks", label: "Practice tasks" }, // practice tasks waiting to be checked,
   { id: "handbook", label: "Handbooks" }, // the handbook,
   { id: "settings", label: "Settings" }, // the settings.
 ] as const; // End of the list (fixed).
@@ -31,14 +32,15 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
   const params = await searchParams; // The address's settings.
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "modules"; // The section asked for (modules by default).
   const supabase = await createClient(); // Connects to the database.
-  const [mods, progress, people, pages, settings, attempts, readiness] = await Promise.all([ // Reads seven things at once:
+  const [mods, progress, people, pages, settings, attempts, readiness, tasks] = await Promise.all([ // Reads eight things at once:
     supabase.from("training_modules").select("id, title, audience, stage, required, holds_matching, minutes, status, position, version, training_questions(count), training_lessons(count)").order("position").order("title"), // the modules (with lesson and question counts),
     supabase.rpc("training_progress"), // everyone's progress on compulsory modules,
     supabase.rpc("training_people"), // everyone's certification,
     supabase.from("handbook_pages").select("id, title, urgent, audience, status, position, updated_at").order("urgent", { ascending: false }).order("position").order("title"), // the handbook pages,
     supabase.from("training_settings").select("grace_days, quarter_minutes, video_max_mb").eq("id", true).maybeSingle(), // the settings,
     supabase.from("training_attempts").select("module_id, score, total").gte("created_at", new Date(Date.parse(`${adelaideToday()}T00:00:00Z`) - 90 * 86400000).toISOString()), // quiz tries in the last 90 days (86,400,000 ms is one day),
-    supabase.rpc("training_job_readiness"), // and each tutor's readiness for drafting and term reviews.
+    supabase.rpc("training_job_readiness"), // each tutor's readiness for drafting and term reviews,
+    supabase.from("training_task_submissions").select("id, account_id, module_id, answer, updated_at").eq("status", "submitted").order("updated_at"), // and practice tasks waiting to be checked (oldest first).
   ]); // End of the reads.
   const modules = (mods.data ?? []) as unknown as { id: string; title: string; audience: Audience; stage: Stage; required: boolean; holds_matching: boolean; minutes: number; status: string; position: number; version: number; training_questions: { count: number }[]; training_lessons: { count: number }[] }[]; // The modules.
   const rows = (progress.data ?? []) as ProgressRow[]; // The progress rows.
@@ -57,6 +59,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
     return Math.round((t.filter((a) => a.score === a.total).length / t.length) * 100); // otherwise the share of tries with everything right.
   }; // End of firstTryRate.
   const s = settings.data ?? { grace_days: 28, quarter_minutes: 180, video_max_mb: 500 }; // The settings (or the starting values).
+  const waitingTasks = (tasks.data ?? []) as { id: string; account_id: string; module_id: string; answer: string; updated_at: string }[]; // Practice tasks waiting to be checked.
 
   return ( // Shows:
     <DashboardFrame // the dashboard frame:
@@ -64,7 +67,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
       roles={viewer.roles} // the person's roles,
       current="training-admin" // this page's tab open,
       sub={section} // on the open section,
-      items={SECTIONS.map((x) => ({ ...x, href: `/admin/training?section=${x.id}`, count: x.id === "progress" ? overdue.length || undefined : undefined }))} // with the sections under the tab (overdue counted).
+      items={SECTIONS.map((x) => ({ ...x, href: `/admin/training?section=${x.id}`, count: x.id === "progress" ? overdue.length || undefined : x.id === "tasks" ? waitingTasks.length || undefined : undefined }))} // with the sections under the tab (overdue and waiting tasks counted).
     >{/* (end of the frame's settings) */}
       {section === "modules" && ( // The modules section:
         <>{/* (a group:) */}
@@ -127,6 +130,22 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
           </Card>{/* End of the progress card. */}
         </> // End of the group.
       )}{/* End of the progress section. */}
+
+      {section === "tasks" && ( // The practice tasks section:
+        <Card title="Practice tasks to check" description="Written tasks from modules with a practice task (for example a mock session summary). Approve it, or send it back with what to change. The module is finished once the quiz is passed and the task is approved. You cannot check your own.">{/* the tasks card: */}
+          {waitingTasks.length === 0 ? <Empty>Nothing waiting to be checked.</Empty> : ( // none: says so; otherwise:
+            <div className="space-y-6">{/* the tasks, with space between: */}
+              {waitingTasks.map((t) => ( // each task:
+                <div key={t.id} className="space-y-3 rounded-xl border border-zinc-200 p-4">{/* a box: */}
+                  <p className="text-sm font-medium">{persons.find((p) => p.account_id === t.account_id)?.full_name ?? "Someone"} · {modules.find((m) => m.id === t.module_id)?.title ?? "A module"}<span className="block text-xs font-normal text-zinc-500">Sent {plainDate(t.updated_at.slice(0, 10))}</span></p>{/* who, which module and when, */}
+                  <p className="whitespace-pre-wrap rounded-lg bg-zinc-50 p-3 text-sm">{t.answer}</p>{/* what they wrote, */}
+                  <TaskReviewForm submissionId={t.id} />{/* and the approve or send back form. */}
+                </div> // End of the box.
+              ))}{/* End of the tasks. */}
+            </div> // End of the list.
+          )}{/* End of the choice. */}
+        </Card> // End of the card.
+      )}{/* End of the practice tasks section. */}
 
       {section === "handbook" && ( // The handbook section:
         <>{/* (a group:) */}
