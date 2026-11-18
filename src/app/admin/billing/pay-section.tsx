@@ -5,6 +5,7 @@ import { approveHours, removePayLine } from "@/app/actions/pay"; // The server a
 import { Button, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // The button, card, "nothing yet" note, small heading, table and link style.
 import { xeroConfig } from "@/lib/billing/config"; // Xero's settings.
 import { dollars, plainDate } from "@/lib/billing/money"; // Money as dollars, and dates in words.
+import { workCategoryLabel } from "@/lib/billing/work-categories"; // The words for each kind of work outside sessions.
 import { listXeroEarningsRates, listXeroEmployees } from "@/lib/billing/payroll"; // Reads Xero Payroll's employees and earnings rates.
 import { xeroConnection } from "@/lib/billing/xero"; // Reads the saved Xero connection.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -68,15 +69,26 @@ export async function PaySection({
   const end = period?.period_end ?? pick; // The last day.
   const length = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1; // How many days the period has.
 
-  const [roles, pay, lines, problems, settings, emails, waitingHours] = await Promise.all([ // Reads seven things at once:
+  const [roles, pay, lines, problems, settings, emails, waitingHours, recentWork, ratesDue] = await Promise.all([ // Reads nine things at once:
     supabase.from("account_roles").select("account_id, role, account:accounts(full_name)").in("role", ["tutor", "admin"]), // every tutor and admin with their name,
     supabase.from("billing_staff_pay").select("*"), // everyone's pay details,
     supabase.from("billing_pay_lines").select("*").gte("work_date", start).lte("work_date", end).order("work_date"), // the pay lines in this period, by day,
     supabase.from("billing_pay_problems").select("*").gte("work_date", start).lte("work_date", end), // sessions waiting on a pay rate,
     supabase.from("billing_settings").select("pay_period_days, pay_period_anchor, casual_min_enabled").maybeSingle(), // the pay period settings,
     supabase.from("account_private").select("account_id, email"), // everyone's email,
-    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note, logged_late, work_type, source").eq("status", "submitted").order("work_date"), // and hours waiting for approval, by day.
+    supabase.from("billing_hour_logs").select("id, account_id, work_date, minutes, note, logged_late, work_type, source, work_category, achieved").eq("status", "submitted").order("work_date"), // hours waiting for approval, by day,
+    supabase // work outside sessions from the last 8 weeks, to check what was achieved (Carla, 18 Nov 2026):
+      .from("billing_hour_logs") // (from the hour logs table)
+      .select("id, account_id, work_date, minutes, note, status, work_category, achieved, review_note") // with what was done and achieved, and how it was reviewed,
+      .eq("source", "staff") // logged by staff themselves,
+      .gte("work_date", addDays(today, -56)) // in the last 8 weeks,
+      .order("work_date", { ascending: false }), // newest first,
+    supabase.rpc("award_rates_due"), // and whether new award rates are due (owner and Finance only; Carla, 18 Nov 2026).
   ]); // End of the reads.
+  const dueJuly = typeof ratesDue.data === "string" ? ratesDue.data : null; // The 1 July new award rates are needed for (or nothing).
+  type WorkRow = { id: string; account_id: string; work_date: string; minutes: number; note: string; status: string; work_category: string | null; achieved: string | null; review_note: string | null }; // One entry of work outside sessions.
+  const workByPerson = new Map<string, WorkRow[]>(); // The entries grouped by person.
+  for (const w of (recentWork.data ?? []) as WorkRow[]) workByPerson.set(w.account_id, [...(workByPerson.get(w.account_id) ?? []), w]); // Adds each entry to its person's group.
 
   const staff = new Map<string, string>(); // Each staff member's name, by id.
   const rolesOf = new Map<string, string[]>(); // Each staff member's roles, by id.
@@ -145,6 +157,16 @@ export async function PaySection({
 
   return ( // Shows:
     <>{/* (a group:) */}
+      {dueJuly && ( // If new award rates are due (Carla, 18 Nov 2026):
+        <Card title="New award pay rates are due">{/* a reminder card: */}
+          <p className="text-sm">{/* what to do: */}
+            The award pay rates for the financial year starting {plainDate(dueJuly)} have not been entered yet. The Fair Work
+            Commission usually publishes them in early June. Upload them under Award rates below. The app then raises any
+            staff rate below the new minimum on the start date and adds a line to the Xero to-do list for each change, so
+            Xero can be updated to match.{/* (the reminder's words: which year, where to upload, and what happens next) */}
+          </p>{/* End of the text. */}
+        </Card> // End of the reminder.
+      )}{/* End of that part. */}
       {(waitingHours.data ?? []).length > 0 && ( // if hours are waiting:
         <Card title="Hours waiting for approval" description="Tutoring work and office admin logged by staff on their My pay page, and guaranteed hours top-ups added by the app. Approved hours are paid in the next send to Xero.">{/* a card explaining them: */}
           <div className="space-y-4">{/* a block with space between parts: */}
@@ -152,10 +174,12 @@ export async function PaySection({
               <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">{/* a bordered box: */}
                 <p className="mb-3">{/* a line: */}
                   <strong>{staff.get(h.account_id) ?? "Staff"}</strong>, {plainDate(h.work_date)}:{" "}{/* who and the day, */}
-                  {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? `Training (${h.work_type === "tutoring" ? "tutor rate" : "admin rate"})` : h.work_type === "tutoring" ? "Tutoring work" : "Office admin"},{" "}{/* the kind of hours, */}
+                  {h.source === "guaranteed" ? "Guaranteed hours top-up" : h.source === "training" ? `Training (${h.work_type === "tutoring" ? "tutor rate" : "admin rate"})` : (workCategoryLabel(h.work_category) ?? (h.work_type === "tutoring" ? "Tutoring work" : "Office admin"))},{" "}{/* the kind of hours, */}
                   {hours(h.minutes)}. {h.note}{/* how long, and the description, */}
                   {h.logged_late && <span className="ml-1 text-xs text-amber-800">(logged late)</span>}{/* marked if logged late. */}
                 </p>{/* End of the line. */}
+                {h.achieved && <p className="mb-3 text-zinc-700">Finished or achieved: {h.achieved}</p>}{/* what they say they achieved (Carla, 18 Nov 2026), */}
+                {h.work_category === "no_show_time" && <p className="mb-3 text-xs text-zinc-600">This time is already paid with the session. Approving marks the work checked and adds no pay.</p>}{/* a note that no-show time is not paid again. */}
                 {canEdit ? ( // If this person can change pay:
                   <div className="grid gap-4 sm:grid-cols-2">{/* two columns on wider screens: */}
                     <form action={approveHours}>{/* a form that approves it: */}
@@ -314,6 +338,33 @@ export async function PaySection({
           </div> // End of the block.
         )}{/* End of the choice. */}
       </Card>{/* End of the card. */}
+
+      <Card title="Work outside sessions (last 8 weeks)" collapsible defaultOpen={false} description="What each person logged doing outside sessions, and what they say they finished or achieved, so CLG can check the time was well used. Open someone to see their entries.">{/* A card to check work outside sessions (Carla, 18 Nov 2026): */}
+        {workByPerson.size === 0 ? ( // if nobody logged any:
+          <Empty>No work outside sessions logged in the last 8 weeks.</Empty> // says so.
+        ) : ( // Otherwise:
+          <div className="space-y-2">{/* a block: */}
+            {[...workByPerson].sort((a, b) => (staff.get(a[0]) ?? "").localeCompare(staff.get(b[0]) ?? "")).map(([id, rows]) => ( // each person, by name:
+              <details key={id} className="rounded-xl border border-zinc-200 p-3 text-sm">{/* an open-and-close box: */}
+                <summary className="cursor-pointer">{/* its heading: */}
+                  <strong>{nameOf.get(id) ?? "Staff"}</strong>: {rows.length} {rows.length === 1 ? "entry" : "entries"}, {hours(rows.reduce((t, r) => t + r.minutes, 0))}{/* who, how many entries and the total hours. */}
+                </summary>{/* End of the heading. */}
+                <ul className="mt-2 space-y-2">{/* the entries: */}
+                  {rows.map((r) => ( // each entry:
+                    <li key={r.id} className="border-t border-zinc-100 pt-2">{/* a line: */}
+                      <span className="font-medium">{plainDate(r.work_date)}, {hours(r.minutes)}</span>{/* the day and hours, */}
+                      <span className="text-zinc-600"> · {workCategoryLabel(r.work_category) ?? "Work outside sessions"} · {r.status === "submitted" ? "waiting" : r.status}</span>{/* the kind of work and where it is up to, */}
+                      <span className="block">{r.note}</span>{/* what they did, */}
+                      {r.achieved ? <span className="block text-zinc-700">Achieved: {r.achieved}</span> : <span className="block text-zinc-500">No achievement written (logged before this was asked).</span>}{/* what they achieved (or a note for older entries), */}
+                      {r.review_note && <span className="block text-xs text-zinc-500">CLG note: {r.review_note}</span>}{/* and any note from the review. */}
+                    </li> // End of the line.
+                  ))}{/* End of the entries. */}
+                </ul>{/* End of the list. */}
+              </details> // End of the box.
+            ))}{/* End of the people. */}
+          </div> // End of the block.
+        )}{/* End of the choice. */}
+      </Card>{/* End of the work card. */}
 
       <Card title="Award rates" collapsible defaultOpen={false} description="The award minimum hourly rates, by work and employment type. Upload next year's rates before 1 July; anyone below the new minimum is raised on the start date, and work before that date is still paid at the old rate.">{/* A card for the yearly award rates: */}
         {awardDates.length === 0 ? <Empty>No award rates yet.</Empty> : awardDates.slice(0, 3).map((d) => ( // The three most recent years:

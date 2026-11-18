@@ -319,6 +319,31 @@ export async function recordOutcome(_prev: FormState, formData: FormData): Promi
 } // End of recordOutcome.
 
 // ---------------------------------------------------------------------------
+// Running late (Carla, 18 Nov 2026)
+// ---------------------------------------------------------------------------
+const lateSchema = z.object({ // The rules:
+  id: z.uuid(), // the session,
+  minutes: z.coerce.number().int().min(5).max(90), // about how late (5 to 90 minutes),
+  reason: z.string().trim().min(3).max(300), // and why (only CLG sees this).
+}); // End of the rules.
+
+// A tutor tells the family and CLG they are running late for a session.
+export async function tellRunningLate(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = lateSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: "Choose about how late you will be, and say briefly why." }; // Problem: asks for both.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("tell_running_late", { // Asks the database to send it:
+    p_session: parsed.data.id, // which session,
+    p_minutes: parsed.data.minutes, // about how late,
+    p_reason: parsed.data.reason, // and why.
+  }); // End of the request.
+  if (error) return { error: plainError(error, "Could not send that. Please contact CLG directly.") }; // Failed: plain message.
+  revalidatePath("/schedule"); // Refreshes the schedule page.
+  return { message: "Sent. The family and CLG have been told you are running late." }; // Confirms it.
+} // End of tellRunningLate.
+
+// ---------------------------------------------------------------------------
 // Tutors: how and where they work
 // ---------------------------------------------------------------------------
 // A tutor saves how they work (online, in person) and which libraries they use.
