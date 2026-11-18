@@ -104,8 +104,6 @@ Carla asked for a module on setting up weekly, termly and yearly student plans (
 - **Legal note.** No new personal information. Term reviews keep health and diagnosis details out, as before (Privacy Act 1988, APP 3 and 6).
 - Tests: `supabase/tests/training_plans_routine.test.sql`.
 
-Still to build (a separate pull request): screenshot quiz questions, and practice tasks checked by CLG.
-
 ## 11. Assigning modules, order, and readiness for jobs, 18 Nov 2026
 
 Carla: admins can assign modules with due dates; assigned modules are paid for their set time, and doing training outside designated training time is paid only with pre-approval. The safety modules are done in order. The app should flag when a tutor is booked for drafting or a term review without the modules. `20261121300200_training_assign_order_jobs.sql` adds:
