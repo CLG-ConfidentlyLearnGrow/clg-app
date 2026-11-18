@@ -31,18 +31,25 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
   const params = await searchParams; // The address's settings.
   const section = SECTIONS.find((s) => s.id === params.section)?.id ?? "modules"; // The section asked for (modules by default).
   const supabase = await createClient(); // Connects to the database.
-  const [mods, progress, people, pages, settings, attempts] = await Promise.all([ // Reads six things at once:
+  const [mods, progress, people, pages, settings, attempts, readiness] = await Promise.all([ // Reads seven things at once:
     supabase.from("training_modules").select("id, title, audience, stage, required, holds_matching, minutes, status, position, version, training_questions(count), training_lessons(count)").order("position").order("title"), // the modules (with lesson and question counts),
     supabase.rpc("training_progress"), // everyone's progress on compulsory modules,
     supabase.rpc("training_people"), // everyone's certification,
     supabase.from("handbook_pages").select("id, title, urgent, audience, status, position, updated_at").order("urgent", { ascending: false }).order("position").order("title"), // the handbook pages,
     supabase.from("training_settings").select("grace_days, quarter_minutes, video_max_mb").eq("id", true).maybeSingle(), // the settings,
-    supabase.from("training_attempts").select("module_id, score, total").gte("created_at", new Date(Date.parse(`${adelaideToday()}T00:00:00Z`) - 90 * 86400000).toISOString()), // and quiz tries in the last 90 days (86,400,000 ms is one day).
+    supabase.from("training_attempts").select("module_id, score, total").gte("created_at", new Date(Date.parse(`${adelaideToday()}T00:00:00Z`) - 90 * 86400000).toISOString()), // quiz tries in the last 90 days (86,400,000 ms is one day),
+    supabase.rpc("training_job_readiness"), // and each tutor's readiness for drafting and term reviews.
   ]); // End of the reads.
   const modules = (mods.data ?? []) as unknown as { id: string; title: string; audience: Audience; stage: Stage; required: boolean; holds_matching: boolean; minutes: number; status: string; position: number; version: number; training_questions: { count: number }[]; training_lessons: { count: number }[] }[]; // The modules.
   const rows = (progress.data ?? []) as ProgressRow[]; // The progress rows.
   const persons = (people.data ?? []) as PersonRow[]; // The people.
   const overdue = rows.filter((r) => r.state === "overdue"); // Overdue rows.
+  const ready = (readiness.data ?? []) as { account_id: string; job: string; missing: string[] }[]; // Who is ready for which job.
+  const readyText = (pid: string) => { // A tutor's readiness in words:
+    const jobs = ready.filter((r) => r.account_id === pid); // their rows,
+    if (jobs.length === 0) return "-"; // not a tutor: nothing,
+    return jobs.map((r) => `${r.job === "drafting" ? "Drafting" : "Term reviews"}: ${r.missing.length ? `not yet (${r.missing.join(", ")})` : "ready"}`).join(". "); // each job: ready, or what is missing.
+  }; // End of readyText.
   const tries = (attempts.data ?? []) as { module_id: string; score: number; total: number }[]; // Quiz tries.
   const firstTryRate = (id: string) => { // How often a module's quiz is passed first time (roughly):
     const t = tries.filter((a) => a.module_id === id); // its tries,
@@ -90,14 +97,15 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
         <>{/* (a group:) */}
           <Card title="Certification and holds" description={`CLG certified means all compulsory modules are done, plus ${hrs(s.quarter_minutes)} of training each quarter after that. "New matches held" means a safety module is overdue, so the tutor cannot take new students (their current students stay).`}>{/* the people card: */}
             {persons.length === 0 ? <Empty>No tutors or admin staff yet.</Empty> : ( // none: says so; otherwise:
-              <Table headings={["Name", "Certification", "This quarter", "Last quarter", "New matches"]}>{/* a table: */}
+              <Table headings={["Name", "Certification", "This quarter", "Last quarter", "New matches", "Ready for"]}>{/* a table: */}
                 {persons.map((p) => ( // each person:
                   <tr key={p.account_id}>{/* a row: */}
                     <td>{p.full_name}<span className="block text-xs text-zinc-500">{[p.is_tutor && "Tutor", p.is_admin && "Admin"].filter(Boolean).join(", ")}</span></td>{/* their name and roles, */}
                     <td>{CERT_NAMES[p.cert_state]}{p.certified_since ? <span className="block text-xs text-zinc-500">since {plainDate(p.certified_since)}</span> : null}</td>{/* their certification, */}
                     <td>{hrs(p.quarter_minutes)} of {hrs(p.target_minutes)}</td>{/* this quarter's hours, */}
                     <td>{hrs(p.last_quarter_minutes)}</td>{/* last quarter's hours, */}
-                    <td>{p.matching_held ? <span className="font-semibold text-red-800">Held</span> : p.is_tutor ? "OK" : "-"}</td>{/* whether new matches are held. */}
+                    <td>{p.matching_held ? <span className="font-semibold text-red-800">Held</span> : p.is_tutor ? "OK" : "-"}</td>{/* whether new matches are held, */}
+                    <td className="text-xs">{readyText(p.account_id)}</td>{/* and whether they are ready for drafting and term reviews. */}
                   </tr> // End of the row.
                 ))}{/* End of the people. */}
               </Table> // End of the table.
