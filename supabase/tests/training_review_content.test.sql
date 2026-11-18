@@ -11,12 +11,12 @@ begin;
 -- Acts as the database itself.
 select tests.claims(null);
 
--- There are 25 modules, all drafts of 15 minutes, numbered in order.
-select tests.eq((select count(*) from public.training_modules where id::text like '7a000000-0000-4000-8000-0000000000%' and status = 'draft' and minutes = 15), 25::bigint, '25 draft modules of 15 minutes'); -- checks the split
+-- There are 28 modules (the 25 from the split plus 26 to 28 added on 18 Nov), all drafts of 15 minutes.
+select tests.eq((select count(*) from public.training_modules where id::text like '7a000000-0000-4000-8000-0000000000%' and status = 'draft' and minutes = 15), 28::bigint, '28 draft modules of 15 minutes'); -- checks the split and the three added later
 -- The safety modules (1 to 8) and the refresher (17) hold new matches; the others don't.
 select tests.eq((select count(*) from public.training_modules where id::text like '7a000000-0000-4000-8000-0000000000%' and holds_matching), 9::bigint, 'modules 1-8 and 17 hold new matches'); -- checks the matching hold
 -- Every module has at least one lesson and two quiz questions.
-select tests.eq((select count(*) from public.training_modules m where m.id::text like '7a000000-0000-4000-8000-0000000000%' and (select count(*) from public.training_lessons l where l.module_id = m.id) >= 1 and (select count(*) from public.training_questions q where q.module_id = m.id) >= 2), 25::bigint, 'every module has lessons and a quiz'); -- checks content
+select tests.eq((select count(*) from public.training_modules m where m.id::text like '7a000000-0000-4000-8000-0000000000%' and (select count(*) from public.training_lessons l where l.module_id = m.id) >= 1 and (select count(*) from public.training_questions q where q.module_id = m.id) >= 2), 28::bigint, 'every module has lessons and a quiz'); -- checks content (all 28 modules)
 -- Lessons moved to the right place: "Honest work" is in module 4, the first three sessions in module 13.
 select tests.eq((select count(*) from public.training_lessons where module_id = '7a000000-0000-4000-8000-000000000004' and title = 'Honest work'), 1::bigint, 'honest work in module 4'); -- checks a move
 select tests.eq((select count(*) from public.training_lessons where module_id = '7a000000-0000-4000-8000-000000000013' and title = 'Your first three sessions with a new student'), 1::bigint, 'first three sessions in module 13'); -- checks a move

@@ -18,7 +18,7 @@ export const PARENT_TOUR: TourSource = { // The tour:
 
 This quick tour shows you the main parts of the app and why each one matters for your child. It takes about 4 minutes.
 
-You can skip it now and take it again any time from **App guide** in the side menu.
+You can skip it now and take it again any time: choose **Show me how** next to any page heading, or open **App guide** in the side menu.
 
 ## Getting around
 
@@ -96,7 +96,7 @@ Why: Keeping children safe is everyone's job, and you should always know what CL
 
 ## You are all set
 
-That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "cancel" or "invoice".
+That is the tour. Whenever you need a refresher, choose **Show me how** next to the page heading to see the steps for that page. For anything else, open **App guide** in the side menu and search, for example "cancel" or "invoice".
 
 After an app update, a **What is new** box shows what has changed for you.
 `, // End of the tour's text.

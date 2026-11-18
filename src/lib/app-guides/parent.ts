@@ -52,8 +52,11 @@ Your name is shown at the top right under **Signed in as** (on a phone, tap **Me
 ### See what has changed in the app
 After an app update, a **What is new** box shows the changes for your dashboard once. To see them again, choose **What is new** at the bottom of any page.
 
+### Get a refresher on the page you are on
+Every page has a **Show me how** button next to its heading. Choose it to see the App guide steps for that page, without leaving it. From there you can also choose **Open the whole App guide**, or **Take the app tour again**.
+
 ### Take the app tour again
-The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, choose **Show me how** next to any page heading, then **Take the app tour again**. You can also open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 ## Your children
 

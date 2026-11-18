@@ -39,8 +39,11 @@ All admins need two-step login, because the app holds children's information.
 - When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 - **App guide** in the side menu opens this guide. If you help families and tutors, their guides are listed under **Other guides you can open** at the bottom, so you can talk them through the app.
 
+### Get a refresher on the page you are on
+Every page has a **Show me how** button next to its heading. Choose it to see the App guide steps for that page, without leaving it. From there you can also choose **Open the whole App guide**, or **Take the app tour again**.
+
 ### Take the app tour again
-The first time you open the admin dashboard, a short **app tour** shows the parts your admin level uses and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+The first time you open the admin dashboard, a short **app tour** shows the parts your admin level uses and why each one matters. To take it again, choose **Show me how** next to any page heading, then **Take the app tour again**. You can also open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 Tip: If you help families and tutors, the App guide for parents, students or tutors has **See their tour**, so you know what they were shown.
 
@@ -250,6 +253,31 @@ Tip: Billing details should only go to the person who pays. Messages are checked
 Choose **Your privacy** to download your information or ask CLG about it. Tap your name under **Signed in as** to change it (on a phone, tap **Menu** at the top right first).
 `;
 
+// Staff employment contracts: sending, following and the Xero invite (Owner,
+// Operations and Finance; split out 18 Nov 2026 so the Finance guide has it too).
+const CONTRACTS = `
+## Employment contracts
+
+Open **Contracts** in the side menu. Staff read and sign their contract in the app, then acknowledge the Fair Work Information Statement, the Casual Employment Information Statement (casual staff only), the Child Safe Policy and the Staff Code of Conduct.
+
+### Send a contract
+1. Under **Send a contract**, choose the **Contract**, the **Staff member** and the **Employment type**.
+2. Fill in each box under **Details to fill in** (for example the start date, award levels and rates). Their name, email, employment type and the date fill in by themselves. Leave an optional box empty to show "Not applicable".
+3. Choose **Send contract**. They are emailed a link, and a card on their dashboard asks them to sign.
+4. If a mistake is spotted before they sign, open the contract and use **Withdraw this contract**, then send a corrected one. Sending a new contract to the same person also replaces one still waiting.
+
+### Follow a contract
+1. **Waiting on staff** lists contracts not yet signed or not yet finished. Choose **Open** to see where it is up to.
+2. The contract page shows the exact wording sent, when and how they signed, each document they acknowledged, and any pay sent to Xero since (accepting pay is also acceptance of the contract).
+
+### Send the Xero self-setup invite
+Once a contract is signed, the **Xero** column says **To do**, and the number next to **Contracts** counts these.
+1. Open the contract and follow the steps under **Xero self-setup**: in Xero, choose Payroll, then Employees, then New employee, then **Invite to self-onboard**, using the name and email shown.
+2. Choose **I have sent the Xero invite**.
+3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
+
+`;
+
 // Running CLG day to day: tutors, progress, curriculum, staff, records (Owner and Operations).
 const RUNNING = `
 ## Tutors and checks
@@ -295,27 +323,7 @@ Tip: Set the status to **Withdrawn** if they pull out or stop replying. It is de
 
 Declined applications are deleted 12 months after the decision.
 
-## Employment contracts
-
-Open **Contracts** in the side menu. Staff read and sign their contract in the app, then acknowledge the Fair Work Information Statement, the Casual Employment Information Statement (casual staff only), the Child Safe Policy and the Staff Code of Conduct.
-
-### Send a contract
-1. Under **Send a contract**, choose the **Contract**, the **Staff member** and the **Employment type**.
-2. Fill in each box under **Details to fill in** (for example the start date, award levels and rates). Their name, email, employment type and the date fill in by themselves. Leave an optional box empty to show "Not applicable".
-3. Choose **Send contract**. They are emailed a link, and a card on their dashboard asks them to sign.
-4. If a mistake is spotted before they sign, open the contract and use **Withdraw this contract**, then send a corrected one. Sending a new contract to the same person also replaces one still waiting.
-
-### Follow a contract
-1. **Waiting on staff** lists contracts not yet signed or not yet finished. Choose **Open** to see where it is up to.
-2. The contract page shows the exact wording sent, when and how they signed, each document they acknowledged, and any pay sent to Xero since (accepting pay is also acceptance of the contract).
-
-### Send the Xero self-setup invite
-Once a contract is signed, the **Xero** column says **To do**, and the number next to **Contracts** counts these.
-1. Open the contract and follow the steps under **Xero self-setup**: in Xero, choose Payroll, then Employees, then New employee, then **Invite to self-onboard**, using the name and email shown.
-2. Choose **I have sent the Xero invite**.
-3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
-
-## Progress
+${CONTRACTS}## Progress
 
 Open **Progress** in the side menu.
 
@@ -543,7 +551,7 @@ Tip: As a Support admin you see **Families**, **Matching** and **Sessions**. Pro
     title: "App guide for Finance admins", // its title,
     who: "For Finance admins, who look after invoices, payments, credits and staff pay.", // who it's for,
     text: START + `
-Tip: As a Finance admin you work in **Billing**. You see names on invoices, but not student records, sessions, notes or tutor checks.
-` + BILLING + PAY + SAFETY + YOUR_OWN + HELP, // its parts,
+Tip: As a Finance admin you work in **Billing** and **Contracts**. You see names on invoices, but not student records, sessions, notes or tutor checks.
+` + BILLING + PAY + CONTRACTS + SAFETY + YOUR_OWN + HELP, // its parts,
   }, // End of the finance guide.
 }; // End of the admin guides.

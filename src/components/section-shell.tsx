@@ -28,6 +28,7 @@ export function SectionShell({
   section, // The section currently open.
   subSection, // The smaller section open inside it, if it has any.
   sections, // Every section in the menu.
+  help, // A "Show me how" button to show beside the heading, if any (Carla, 18 Nov 2026).
   children, // The open section's contents.
 }: { // The settings' types:
   basePath: string; // address is text,
@@ -36,6 +37,7 @@ export function SectionShell({
   section: string; // open section is text,
   subSection?: string; // open smaller section is optional text,
   sections: Section[]; // sections is a list,
+  help?: ReactNode; // the help button is optional,
   children: ReactNode; // contents can be anything shown.
 }) { // End of the settings.
   const theme = role ? ROLE_THEME[role] : null; // The role's colours, if a role was given.
@@ -200,7 +202,10 @@ export function SectionShell({
           {phoneOpen && <div className={`mt-2 ${menuBox} ${menuScroll} max-h-[60dvh]`}>{links}</div>}{/* The menu links in their box, when open, no taller than about two-thirds of the screen and scrolling inside the box. */}
         </div>{/* End of the phone block. */}
 
-        <PageTitle title={heading} role={role} />{/* The heading: the open section's name (or the dashboard's), in the role's colour. */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4">{/* The heading row (the button drops below the heading on a narrow phone): */}
+          <PageTitle title={heading} role={role} />{/* the heading: the open section's name (or the dashboard's), in the role's colour, */}
+          {help && <div className="mb-6 sm:mt-9">{help}</div>}{/* and the "Show me how" button, level with the heading on wider screens. */}
+        </div>{/* End of the heading row. */}
         <div className="space-y-6">{children}</div>{/* The section's contents, with space between parts. */}
       </div>{/* End of the page area. */}
     </div> // End of the row.

@@ -91,3 +91,17 @@ Carla: tutors should be able to save a module part way through and come back to 
 - **Evidence.** Spacing learning over shorter sessions helps people remember more than one long sitting (EEF Teaching and Learning Toolkit and AERO's guidance on spaced practice), so stopping and coming back is good for learning, not just convenient.
 - **Pay.** Unchanged in the app: a compulsory module pays its set time once, when it is finished, however long it takes. The handbook's pay page, the tutor and admin guides and each compulsory module now say so, and that modules can be done in the person's own time but only the set time is paid.
 - **Legal note.** Under the Fair Work Act 2009 and the awards, training CLG requires is work time. Paying only the set time is fair while the set time is a realistic estimate of how long the module takes. If a compulsory module usually takes longer, raise its set time rather than leave the extra unpaid. Carla should confirm this with her pay adviser. Optional modules done in a person's own time are their choice and are not paid unless CLG agreed first.
+
+## 10. Goals, plans, the session routine and term reviews, 18 Nov 2026
+
+Carla asked for a module on setting up weekly, termly and yearly student plans (done before a tutor needs to make one), measurable goals, a clear note that the session routine stays the same each week while the content and how it is presented change, a 1-hour term review that goes through every goal, and a priority list. `20261121300100_training_plans_routine.sql` adds:
+
+- **Modules 26 to 28** (drafts, compulsory, tutors, starting course): measurable goals, the yearly and term plan, the weekly plan. They sit after module 13 in the list, so they are done before the first student.
+- **Module 11** gets a first lesson, "The CLG session routine" (check in, warm-up recall, review, new learning, practice, reflect and next step), plus a quiz question. Module 23's routine bullet points to it.
+- **Modules 24 and 25**: allow about 1 hour; go through each goal (reached, in progress, changed or dropped, with why); the work and the direction; what helped most, including what the family reports from home; then next term's focus and the recommendation. A new quiz question on the time.
+- **Priority order** in the list: 1 to 8 (safety), 9 to 13 and 26 to 28, 14 to 16, 18 and 19 (drafting), 24 and 25 (term reviews), 20 to 23, and 17 (refresher) last. Only modules still in their first place are moved.
+- **Evidence.** Measurable goals and planning backwards from them: AERO's guidance on formative assessment and EEF *Feedback*. A consistent routine with explicit instruction and guided practice: AERO's *Explicit instruction* and EEF *Special Educational Needs in Mainstream Schools* (predictable structure helps anxious students and those with learning needs). Retrieval at the start of each session: EEF *Cognitive science approaches in the classroom* (2021).
+- **Legal note.** No new personal information. Term reviews keep health and diagnosis details out, as before (Privacy Act 1988, APP 3 and 6).
+- Tests: `supabase/tests/training_plans_routine.test.sql`.
+
+Still to build (separate pull requests): admins assigning modules with due dates, flags when a tutor is booked for drafting or a term review without the modules, modules 1 to 8 locked in order, screenshot quiz questions, and practice tasks checked by CLG.

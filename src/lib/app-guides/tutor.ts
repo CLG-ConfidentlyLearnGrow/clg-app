@@ -47,8 +47,11 @@ Tutors and admins need two-step login, because the app holds children's informat
 ### Put CLG on your phone's home screen
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
 
+### Get a refresher on the page you are on
+Every page has a **Show me how** button next to its heading. Choose it to see the App guide steps for that page, without leaving it. From there you can also choose **Open the whole App guide**, or **Take the app tour again**.
+
 ### Take the app tour again
-The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
+The first time you open your dashboard, a short **app tour** shows the main parts of the app and why each one matters. To take it again, choose **Show me how** next to any page heading, then **Take the app tour again**. You can also open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 ## Your profile: checks, subjects and hours
 
