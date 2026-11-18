@@ -90,6 +90,14 @@ async function checkInsToFollowUp(): Promise<number | undefined> { // No inputs:
   return error || !count ? undefined : count; // No number if none, or if it could not be counted.
 } // End of checkInsToFollowUp.
 
+// How many tutor late starts are waiting for review, for the menu number
+// (Carla, 18 Nov 2026). The database only lets the owner and operations
+// admins read them; anyone else (or a problem) gets no number.
+async function latenessToReview(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
+  const { count, error } = await (await createClient()).from("session_lateness").select("id", { count: "exact", head: true }).eq("review_status", "open"); // Counts the open ones without reading them.
+  return error || !count ? undefined : count; // No number if none, or if it could not be counted.
+} // End of latenessToReview.
+
 // The signed-in staff member's own contracts: whether they have any (so the
 // "My contract" tab only shows once CLG has sent one), and how many are
 // waiting for them to sign or finish (Carla, 17 Nov 2026). A problem reading
@@ -146,6 +154,7 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
     if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
     if (isFull) items.push({ id: "check-ins", label: "Check-ins", href: "/admin/check-ins", count: await checkInsToFollowUp() }); // answers to the check-ins after a new match (full admins, Carla 16 Nov 2026), with ones needing follow-up counted,
+    if (isFull) items.push({ id: "lateness", label: "Tutor lateness", href: "/admin/lateness", count: await latenessToReview() }); // late starts by tutors to review (full admins, Carla 18 Nov 2026), with open ones counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),

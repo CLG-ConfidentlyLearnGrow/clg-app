@@ -10,6 +10,7 @@ import { PAY, requireAdminLevel, requireViewer } from "@/lib/auth"; // The pay a
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { xeroConfig } from "@/lib/billing/config"; // Checks whether Xero is set up.
 import { parseDollars } from "@/lib/billing/money"; // Turns a typed price into cents.
+import { WORK_CATEGORIES } from "@/lib/billing/work-categories"; // The kinds of work outside sessions (Carla, 18 Nov 2026).
 import { listXeroEmployees, sendTimesheets } from "@/lib/billing/payroll"; // Reads Xero's employees, and sends draft timesheets to Xero Payroll.
 import { xeroConnection } from "@/lib/billing/xero"; // Reads the stored Xero connection.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -226,30 +227,47 @@ export async function savePayPeriod(_prev: FormState, formData: FormData): Promi
 // Staff log their own admin hours; an admin approves or declines them.
 // ---------------------------------------------------------------------------
 
-// A staff member logs their own hours for approval.
+// A staff member logs their own hours for approval, with the kind of work,
+// what they did and what they finished or achieved (Carla, 18 Nov 2026).
 export async function logMyHours(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
   const parsed = z // Checks the form has:
-    .object({ day, hours: z.string(), note: z.string().max(300), type: z.enum(["tutoring", "admin"]).optional() }) // a day, hours, a description, and the kind of work,
+    .object({ // these fields:
+      day, // a day,
+      hours: z.string(), // the hours,
+      note: z.string().max(300), // what they did,
+      achieved: z.string().max(1000), // what they finished or achieved,
+      category: z.string(), // the kind of work,
+      session_id: z.union([uuid, z.literal("")]).optional(), // and the session (only for no-show time).
+    }) // (end of the fields)
     .safeParse(Object.fromEntries(formData)); // (from the form's fields).
-  if (!parsed.success) return { error: "Choose the day, the hours and what they were for." }; // Problem: asks for them.
-  // Only admin staff can log office admin; everyone else logs tutoring work.
-  const type = viewer.roles.includes("admin") ? (parsed.data.type ?? null) : "tutoring"; // Admins choose the kind; everyone else is tutoring work.
-  if (!type) return { error: "Choose tutoring work or office admin." }; // No kind chosen: asks for it.
-  if (parsed.data.note.trim().length < 3) return { error: "Please write a short description of what you did." }; // Needs a short description.
+  if (!parsed.success) return { error: "Choose the kind of work, the day and the hours, and say what you did and achieved." }; // Problem: asks for them.
+  const category = WORK_CATEGORIES.find((c) => c.id === parsed.data.category); // The kind of work chosen.
+  if (!category) return { error: "Choose what kind of work it was." }; // None chosen: asks for it.
+  if (category.type === "admin" && !viewer.roles.includes("admin")) return { error: "Only CLG admin staff can log office admin. Choose a kind of tutoring work instead." }; // Office admin is for admin staff only.
+  if (parsed.data.note.trim().length < 10) return { error: "Please write what you did (at least a short sentence)." }; // Needs a description.
+  if (parsed.data.achieved.trim().length < 10) return { error: "Please write what you finished or achieved in this time (at least a short sentence)." }; // Needs what was achieved.
+  const session = parsed.data.session_id || null; // The session chosen (if any).
+  if (category.id === "no_show_time" && !session) return { error: "Choose which session did not go ahead." }; // No-show time needs its session.
   const hours = Number(parsed.data.hours.replace(",", ".")); // Reads the hours (allowing a comma).
   if (!Number.isFinite(hours) || hours <= 0) return { error: "Enter the hours, for example 1.5." }; // Not a positive number: shows an example.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.rpc("billing_log_my_hours", { // Asks the database to log:
     p_day: parsed.data.day, // the day,
     p_minutes: Math.round(hours * 60), // the minutes,
-    p_note: parsed.data.note, // the description,
-    p_type: type, // and the kind of work.
+    p_note: parsed.data.note, // what they did,
+    p_category: category.id, // the kind of work,
+    p_achieved: parsed.data.achieved, // what they achieved,
+    p_session: category.id === "no_show_time" ? session : null, // and the session (only for no-show time).
   }); // End of the request.
   if (error) return plain(error, "Could not log the hours. Please try again."); // Failed: plain message.
   revalidatePath("/pay"); // Refreshes the staff pay page.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
-  return { message: "Hours logged. They are paid once CLG approves them." }; // Confirms, noting they're paid once approved.
+  return { // Confirms:
+    message: category.id === "no_show_time" // for no-show time,
+      ? "Saved. That time is already paid with the session, so CLG checks the work without paying it again." // that it is a record only,
+      : "Hours logged. They are paid once CLG approves them.", // otherwise that they are paid once approved.
+  }; // End of the confirmation.
 } // End of logMyHours.
 
 // A staff member takes back hours they logged (before approval).

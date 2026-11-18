@@ -58,6 +58,7 @@ import { // The scheduling forms:
   EndTimeForm, // change a session's end time,
   NoticeSettingsForm, // notice settings,
   OutcomeForm, // record what happened in a session,
+  RunningLateForm, // tell the family and CLG the tutor is running late,
   PlacesForm, // where a tutor teaches,
   RenewalForm, // answer "book again?",
   SignOnForm, // sign on,
@@ -333,6 +334,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       new Date(s.ends_at).getTime() < now && // already ended,
       new Date(s.ends_at).getTime() > weekAgo, // and in the last week.
   ); // End of the filter.
+  // The tutor's own late starts from the last 90 days, so the record CLG
+  // reviews is open to them too (Carla, 18 Nov 2026).
+  const lateRes = isTutor ? await supabase.rpc("list_session_lateness", { p_days: 90 }) : null; // Reads them (tutor dashboard only).
+  const myLate = ((lateRes?.data ?? []) as { id: string; tutor_id: string; starts_at: string; student_first_name: string; subject: string; told_minutes: number | null; told_before_start: boolean | null; signed_on_late_minutes: number | null; review_status: string; counts_as_late: boolean }[]).filter((l) => l.tutor_id === viewer.id && l.counts_as_late); // Only their own late starts (an admin who also tutors sees everyone's in the list; a notice followed by an on-time sign-on does not count).
   const toRecord = sessions.filter( // Sessions to record:
     (s) => s.status === "scheduled" && new Date(s.starts_at).getTime() <= now && (isAdmin || s.tutor_id === viewer.id), // still scheduled but started, and theirs (or any, for admins).
   ); // End of the filter.
@@ -512,6 +517,27 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               </ul>{/* End of the list. */}
             </Card> // End of the card.
           )}{/* End of this part. */}
+          {myLate.length > 0 && ( // If the tutor had late starts in the last 90 days:
+            <Card // a card:
+              collapsible // can fold,
+              defaultOpen={false} // folded to start,
+              title={`Your late starts (last 90 days): ${myLate.length}`} // its title, with how many,
+              description="Sessions you signed on to more than 5 minutes after the start, or told CLG you were running late for. CLG reviews these." // its help text.
+            >{/* (end of the card's settings) */}
+              <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+                {myLate.map((l) => ( // for each one:
+                  <li key={l.id} className="py-2 first:pt-0">{/* a row: */}
+                    <span className="font-medium">{sessionWhen(l.starts_at)}</span>{/* when, */}
+                    <span className="text-zinc-600">{/* in grey: */}
+                      {" "}· {l.student_first_name} · {l.subject}{/* the learner and subject, */}
+                      {l.signed_on_late_minutes != null ? ` · signed on ${l.signed_on_late_minutes} minutes late` : ""}{/* how late they signed on, */}
+                      {l.told_minutes != null ? ` · you gave notice${l.told_before_start ? " before the start" : " after the start"}` : " · no notice given"}{/* and whether they gave notice. */}
+                    </span>{/* End of the grey part. */}
+                  </li> // End of the row.
+                ))}{/* End of the loop. */}
+              </ul>{/* End of the list. */}
+            </Card> // End of the card.
+          )}{/* End of this part. */}
           <Card title="Upcoming sessions" description="Times are Adelaide time.">{/* the upcoming sessions card: */}
             {upcoming.length === 0 ? ( // if none:
               <Empty>{/* a line: */}
@@ -551,6 +577,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
                           ) : ( // otherwise:
                             <SignOnForm id={s.id} atLibrary={s.delivery === "library"} /> // the sign-on form (location check for a library).
                           ))}{/* End of this part. */}
+                        {isTutor && // in the tutor dashboard,
+                          s.tutor_id === viewer.id && // for the tutor's own session,
+                          !signOf.get(s.id)?.signed_on_at && // not yet signed on,
+                          new Date(s.starts_at).getTime() - 3 * 3600 * 1000 <= now && // from 3 hours before it starts
+                          new Date(s.starts_at).getTime() + 30 * 60 * 1000 >= now && ( // until 30 minutes after:
+                            <RunningLateForm id={s.id} /> // the running late form (Carla, 18 Nov 2026).
+                          )}{/* End of this part. */}
                         {new Date(s.starts_at).getTime() > now && ( // if it hasn't started:
                           <CancelForm id={s.id} kind="session" isAdmin={isDesk} isTutor={isTutor} startsAt={s.starts_at} today={localToday()} /> // the cancel form (reason and two make-up times in the session's week).
                         )}{/* End of this part. */}
