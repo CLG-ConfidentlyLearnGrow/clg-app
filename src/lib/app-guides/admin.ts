@@ -43,6 +43,14 @@ All admins need two-step login, because the app holds children's information.
 The first time you open the admin dashboard, a short **app tour** shows the parts your admin level uses and why each one matters. To take it again, open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 Tip: If you help families and tutors, the App guide for parents, students or tutors has **See their tour**, so you know what they were shown.
+
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away about help chat messages, session notices and (if you are the Child Safety Officer or deputy) child safety concerns sent to you, even when the app is closed or you have been signed out. They never show names or details. A concern marked as immediate danger pops up even in quiet hours.
+1. Choose **Turn on pop-ups** on the note at the top of your dashboard (or, if you have **Sessions**, choose **Notices** there and use the **Pop-up notifications** card).
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+
+Tip: If a family or tutor says pop-ups are not arriving: on an iPhone or iPad CLG must be added to the home screen first; if they said no before, they need to allow CLG in their phone or browser notification settings.
 `;
 
 // Sessions, as seen by front-desk admins (Owner, Operations, Support).

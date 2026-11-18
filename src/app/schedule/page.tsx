@@ -8,6 +8,7 @@
 import Link from "next/link"; // The Next.js link, for moving between pages without a full reload.
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
+import { PushSettings, type PushDevice } from "@/components/push-settings"; // The pop-up notifications controls and a device's shape (Carla, 18 Nov 2026).
 import { leaveWaitlist, markNoticesRead, removeAwayDates } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates.
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, field, drop-down, small heading and text link.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
@@ -1731,7 +1732,7 @@ async function TimesSection() { // The times to check section (admins).
 // ---------------------------------------------------------------------------
 async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string; unread: number; isAdmin: boolean }) { // The notices section (with the unread count, and whether they can change quiet hours).
   const supabase = await createClient(); // Connects to the database.
-  const [noticesRes, settingsRes, quietRes] = await Promise.all([ // Reads three things at once:
+  const [noticesRes, settingsRes, quietRes, devicesRes] = await Promise.all([ // Reads four things at once:
     supabase // their notices:
       .from("session_notices") // from session_notices,
       .select("id, title, body, deliver_at, read_at") // these details,
@@ -1746,6 +1747,11 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
       .from("quiet_hours_settings") // from the one shared setting,
       .select("starts_at, ends_at") // when they start and end,
       .maybeSingle(), // (one row).
+    supabase // their devices with pop-ups turned on (Carla, 18 Nov 2026):
+      .from("push_subscriptions") // from the devices table (they only ever see their own),
+      .select("id, device_label, endpoint, last_seen_at, created_at") // these details,
+      .eq("account_id", viewerId) // for this person,
+      .order("last_seen_at", { ascending: false }), // most recently used first.
   ]); // End of the reads.
   const notices = noticesRes.data ?? []; // The notices.
   const quietStarts = ((quietRes.data?.starts_at as string | undefined) ?? "21:00:00").slice(0, 5); // When quiet hours start, e.g. "21:00" (9pm if not found).
@@ -1781,6 +1787,9 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
             )}{/* End of this part. */}
           </> // End of the group.
         )}{/* End of this part. */}
+      </Card>{/* End of the card. */}
+      <Card title="Pop-up notifications">{/* the pop-up notifications card (Carla, 18 Nov 2026): */}
+        <PushSettings devices={(devicesRes.data ?? []) as PushDevice[]} />{/* turn pop-ups on or off for this device, see other devices, and send a test. */}
       </Card>{/* End of the card. */}
       <Card collapsible defaultOpen={false} title="Reminder settings">{/* the reminder settings fold-up card: */}
         <NoticeSettingsForm // the settings form:

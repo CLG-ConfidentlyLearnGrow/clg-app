@@ -69,7 +69,10 @@ const nextConfig: NextConfig = { // The Next.js settings:
     }, // (end of the rules)
   }, // (end of the build tool)
   async headers() { // the headers to send:
-    return [{ source: "/:path*", headers: securityHeaders }]; // these security headers on every page.
+    return [ // the list:
+      { source: "/:path*", headers: securityHeaders }, // these security headers on every page,
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] }, // and the pop-up script is always checked fresh, so changes reach devices straight away (Carla, 18 Nov 2026).
+    ]; // End of the list.
   }, // (end of headers)
 }; // End of the settings.
 

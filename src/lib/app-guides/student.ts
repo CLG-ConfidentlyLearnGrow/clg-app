@@ -131,6 +131,14 @@ About 3 weeks before your book-till date, you get a notice called **Book again?*
 ### Notices and reminders
 In **Sessions**, choose **Notices** to read reminders and news. Open **Reminder settings** to choose when your first reminder comes. Nothing is sent between 9pm and 5am your time.
 
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away about reminders, booking news and help chat replies, even when the app is closed or you have been signed out. They never show names or details.
+1. On your phone or computer, choose **Turn on pop-ups** on the note at the top of your dashboard, or go to **Sessions**, choose **Notices**, and choose **Turn on pop-ups on this device** on the **Pop-up notifications** card.
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+
+Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there, then turn on pop-ups. To stop them on a device, choose **Turn off on this device**.
+
 ## Billing (if you pay for yourself)
 
 ### Set up your payments

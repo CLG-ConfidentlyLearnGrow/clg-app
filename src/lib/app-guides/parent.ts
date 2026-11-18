@@ -203,7 +203,16 @@ Tip: Only CLG's office team sees your answers. The tutor does not.
 1. In **Sessions**, choose **Notices** to read news about bookings and reminders before each session.
 2. Open **Reminder settings** to choose when your first reminder comes (48 hr before by default). A final reminder always comes 1 hr before.
 
-Tip: Nothing is sent between 9pm and 5am your local time. Notices also come by email.
+Tip: Nothing is sent between 9pm and 5am your local time.
+
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away when there is a reminder, booking news, a help chat reply or a "your tutor is running late" notice, even when the app is closed or you have been signed out. They only say what kind of notice it is, never your child's name or other details. Tap one to open the app (sign in again if asked).
+1. On your phone or computer, choose **Turn on pop-ups** on the note at the top of your dashboard, or go to **Sessions**, choose **Notices**, and choose **Turn on pop-ups on this device** on the **Pop-up notifications** card.
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+4. Do this on each phone or computer you use. To stop pop-ups on a device, choose **Turn off on this device** there, or **Remove** next to it in the list.
+
+Tip: On an iPhone or iPad, add CLG to your home screen first (see **Add CLG to your home screen** at app.clgtutoring.com/install), open it from there, then turn on pop-ups. If you said no to pop-ups before, allow them for CLG in your phone or browser settings.
 
 ## Progress and learning
 

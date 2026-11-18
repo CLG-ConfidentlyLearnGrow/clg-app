@@ -22,6 +22,7 @@ const PUBLIC_PATHS = [
   "/privacy", // The privacy policy.
   "/install", // How to install the app.
   "/manifest.webmanifest", // The file that makes the app installable.
+  "/sw.js", // The small script that shows pop-up notifications (the browser fetches it without a sign-in).
   "/auth/confirm", // Where email links land.
   "/auth/continue", // The step after an email link.
   // Billing messages from Stripe and Xero, and the daily run. Each checks
@@ -41,6 +42,8 @@ const PUBLIC_PATHS = [
   "/api/problems/cron", // Removes old problem report screenshots and reports.
   // The daily tutor applications tidy-up (checks the same secret).
   "/api/applications/cron", // Removes tutor applications past their keeping period, and their CVs.
+  // The pop-up notification sender, woken by the database (checks the same secret).
+  "/api/push/cron", // Sends waiting pop-up notifications (Carla, 18 Nov 2026).
 ]; // End of the public pages list.
 
 // Keeps the Supabase session fresh on every request and sends signed-out
