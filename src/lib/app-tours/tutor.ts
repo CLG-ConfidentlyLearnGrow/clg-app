@@ -18,7 +18,7 @@ export const TUTOR_TOUR: TourSource = { // The tour:
 
 This tour shows you the main parts of the app, what you need to do in each, and why it matters. It takes about 4 minutes.
 
-You can skip it now and take it again any time from **App guide** in the side menu.
+You can skip it now and take it again any time: choose **Show me how** next to any page heading, or open **App guide** in the side menu.
 
 ## Getting around
 
@@ -112,7 +112,7 @@ Why: Every adult at CLG shares the job of keeping children safe and their inform
 
 ## You are all set
 
-That is the tour. Whenever you need the steps for something, open **App guide** in the side menu and search, for example "no-show" or "note".
+That is the tour. Whenever you need a refresher, choose **Show me how** next to the page heading to see the steps for that page. For anything else, open **App guide** in the side menu and search, for example "no-show" or "note".
 
 After an app update, a **What is new** box shows what has changed for tutors.
 `, // End of the tour's text.
