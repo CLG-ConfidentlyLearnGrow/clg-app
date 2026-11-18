@@ -23,17 +23,23 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
   const role = staffRole(as, viewer.roles); // The dashboard to show it in.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, mine, place] = await Promise.all([ // Reads five things at once:
+  const [mod, lessons, questions, mine, place, ordered, assignment] = await Promise.all([ // Reads seven things at once:
     supabase.from("training_modules").select("id, title, summary, minutes, required, status").eq("id", id).maybeSingle(), // the module (only if they can see it),
     supabase.from("training_lessons").select("id, title, body, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons, in order,
     supabase.from("training_questions").select("id, prompt, options").eq("module_id", id).order("position").order("id"), // its questions, in order (no answers),
     supabase.rpc("training_my_modules"), // where they're up to,
-    supabase.from("training_progress").select("done_lessons, saved_answers").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // and the place they saved (lessons done, answers kept).
+    supabase.from("training_progress").select("done_lessons, saved_answers").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // the place they saved (lessons done, answers kept),
+    supabase.from("training_modules").select("id, title, position, in_order").eq("in_order", true).eq("status", "published").order("position"), // the modules done in order,
+    supabase.from("training_assignments").select("due_on, reason").eq("module_id", id).eq("account_id", viewer.id).maybeSingle(), // and whether CLG assigned this module to them.
   ]); // End of the reads.
   if (!mod.data) notFound(); // Can't see it: not found.
   const m = mod.data; // The module.
   const me = ((mine.data ?? []) as MyModule[]).find((x) => x.module_id === id); // Where they're up to with it (if it's for them).
   const lessonRows = (lessons.data ?? []) as { id: string; title: string; body: string; file_path: string | null; file_name: string | null; link_url: string | null; link_label: string | null }[]; // The lessons.
+  const myStates = new Map(((mine.data ?? []) as MyModule[]).map((x) => [x.module_id, x.state])); // Where they are up to with each of their modules.
+  const thisInOrder = ((ordered.data ?? []) as { id: string; title: string; position: number; in_order: boolean }[]).find((x) => x.id === id); // This module, if it is done in order.
+  const waitingFor = thisInOrder ? ((ordered.data ?? []) as { id: string; title: string; position: number }[]).find((x) => x.position < thisInOrder.position && myStates.has(x.id) && !["done", "renew_soon"].includes(myStates.get(x.id) ?? "")) : undefined; // The first earlier in-order module they have not finished (if any).
+  const assigned = assignment.data as { due_on: string; reason: string | null } | null; // CLG's assignment of this module to them (if any).
   const doneLessons = new Set((place.data?.done_lessons ?? []) as string[]); // The lessons they have marked as done.
   const savedAnswers = (place.data?.saved_answers ?? []) as number[]; // The quiz answers they saved for later.
   const doneCount = lessonRows.filter((l) => doneLessons.has(l.id)).length; // How many of this module's lessons are done.
@@ -53,7 +59,13 @@ export default async function TrainingModulePage({ params, searchParams }: PageP
           {me?.due_on && (me.state === "to_do" || me.state === "overdue") && <span className="ml-2">Due {plainDate(me.due_on)}</span>}{/* and the due date. */}
         </p>{/* End of the details. */}
         {m.summary && <p className="text-sm text-zinc-700">{m.summary}</p>}{/* the summary, if any. */}
-        {me && m.required && <p className="text-sm text-zinc-600">You are paid for this module&apos;s set time ({timeText(m.minutes)}) once, when you finish it. Any time beyond that, or doing it again, is in your own time.</p>}{/* the pay rule for compulsory modules, */}
+        {assigned && <p className="text-sm text-teal-900">CLG has assigned you this module, due by {plainDate(assigned.due_on)}.{assigned.reason ? ` ${assigned.reason}.` : ""}</p>}{/* an assignment from CLG, */}
+        {me && (m.required || assigned) ? ( // compulsory or assigned:
+          <p className="text-sm text-zinc-600">You are paid for this module&apos;s set time ({timeText(m.minutes)}) once, when you finish it. Any time beyond that, or doing it again, is in your own time.</p> // the pay rule,
+        ) : me ? ( // optional and not assigned:
+          <p className="text-sm text-zinc-600">This module is optional. You can do it in your own time. It is only paid if CLG approved it first.</p> // the pay rule for optional training,
+        ) : null}{/* End of the pay rule. */}
+        {me && waitingFor && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">These modules are done in order. Please finish <TextLink href={`/training/${waitingFor.id}?as=${role}`}>{waitingFor.title}</TextLink> first. You can read this module now, but you can only finish it after that one.</p>}{/* a note when an earlier in-order module is not done, */}
         {me && doneCount > 0 && ( // Started before:
           <p className="text-sm text-teal-900">{/* where they were up to: */}
             You have done {doneCount} of {lessonRows.length} lessons.{" "}{/* how many are done, */}

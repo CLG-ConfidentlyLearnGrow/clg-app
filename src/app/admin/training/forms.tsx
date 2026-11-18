@@ -5,7 +5,7 @@
 "use client"; // Runs in the browser, so the forms can react straight away.
 
 import { useActionState, useState, useTransition, type FormEvent } from "react"; // Form helpers, remembered values, and a way to show work in progress.
-import { attachLessonFile, saveHandbookPage, saveLesson, saveModule, createModule, saveQuestion, saveTrainingSettings } from "@/app/actions/training"; // The server actions these forms send to.
+import { assignModule, attachLessonFile, saveHandbookPage, saveLesson, saveModule, createModule, saveQuestion, saveTrainingSettings } from "@/app/actions/training"; // The server actions these forms send to.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { BusyButton, Field, FormMessage, Select, TextArea } from "@/components/ui"; // The unstyled busy button, input box, reply message, drop-down and larger text box.
 import { initialFormState, type FormState } from "@/lib/forms"; // The starting (empty) form reply, and its shape.
@@ -25,7 +25,9 @@ export type ModuleRow = { // its details:
   minutes: number; // set time,
   renew_months: number | null; // redo period (if any),
   status: string; // draft, published or retired,
-  position: number; // order.
+  position: number; // order,
+  in_order: boolean; // must be done in order (with the others ticked the same way),
+  needed_for: string | null; // a job it is needed before (drafting or term_review), if any.
 }; // End of the shape.
 
 // A tick box with words beside it.
@@ -60,6 +62,13 @@ function ModuleFields({ m }: { m?: ModuleRow }) { // Takes the module (none for 
       </div>{/* End of the columns. */}
       <Tick name="required" label="Compulsory" hint="Everyone it is for must finish it. It is paid automatically for the set time." defaultChecked={m?.required} />{/* compulsory, */}
       <Tick name="holds_matching" label="Needed before new students (safety)" hint="Tutors cannot be matched with new students once it is overdue. Only works if it is compulsory." defaultChecked={m?.holds_matching} />{/* holds matches, */}
+      <Tick name="in_order" label="Must be done in order" hint="It can only be finished once every module above it with this ticked is done. Used for the safety modules 1 to 8." defaultChecked={m?.in_order} />{/* done in order, */}
+      <Select label="Needed before a job" name="needed_for" defaultValue={m?.needed_for ?? ""}>{/* a job it is needed before: */}
+        <option value="">No</option>{/* none, */}
+        <option value="drafting">Before drafting work</option>{/* drafting, */}
+        <option value="term_review">Before writing a term review</option>{/* term reviews. */}
+      </Select>{/* End of the choice. */}
+      <p className="text-sm text-zinc-600">When a tutor is given a term review without a module needed for it, the module is assigned to them and you are told. Training progress shows who is ready for each job.</p>{/* what "needed before a job" does, */}
       <p className="text-sm text-zinc-600">Safety modules (needed before new students) never count towards the training hours each quarter. Every other module does. The app sets this itself.</p>{/* how the quarterly hours are counted (automatic, Carla 16 Nov 2026). */}
     </> // End of the group.
   ); // End of what's shown.
@@ -224,3 +233,21 @@ export function HandbookForm({ page }: { page?: HandbookRow }) { // Takes the pa
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of HandbookForm.
+
+// The form that assigns this module to someone, with a due date and reason
+// (Carla, 18 Nov 2026).
+export function AssignForm({ moduleId, people }: { moduleId: string; people: { id: string; name: string }[] }) { // Takes the module and the people it can go to.
+  return ( // Shows:
+    <ActionForm action={assignModule} submitLabel="Assign">{/* a form that assigns it: */}
+      <input type="hidden" name="module_id" value={moduleId} />{/* the module's id (hidden), */}
+      <div className="grid gap-4 sm:grid-cols-2">{/* two columns on wider screens: */}
+        <Select label="Who" name="account_id" defaultValue="" required>{/* the person: */}
+          <option value="" disabled>Choose someone</option>{/* a prompt, */}
+          {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}{/* each person. */}
+        </Select>{/* End of the choice. */}
+        <Field label="Due by" name="due_on" type="date" required />{/* the due date, */}
+      </div>{/* End of the columns. */}
+      <Field label="Why (optional)" name="reason" maxLength={300} hint="For example: before their first term review." />{/* the reason. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of AssignForm.

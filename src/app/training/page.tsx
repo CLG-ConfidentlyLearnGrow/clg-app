@@ -34,7 +34,7 @@ export default async function TrainingPage({ searchParams }: PageProps<"/trainin
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="training">{/* the dashboard tabs and menu, with Training open: */}
       <p className="text-sm text-zinc-600">{/* a short explanation: */}
-        CLG training is paid work time. Compulsory modules are paid automatically for their set time once you finish them.{" "}{/* training is paid, */}
+        CLG training is paid work time. Compulsory modules, and modules CLG assigns to you, are paid automatically for their set time once you finish them. Other training you choose to do in your own time is only paid if CLG approved it first.{" "}{/* what training is paid, */}
         If something has happened and you need to know what to do, go to the{" "}<TextLink href={`/handbook?as=${role}`}>tutor handbook</TextLink>.{/* and where the handbook is. */}
       </p>{/* End of the explanation. */}
       {urgent.data && ( // If there's a pinned handbook page:

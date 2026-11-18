@@ -211,7 +211,9 @@ When a family uploads a school report or marked work, it shows under **New uploa
 1. In the side menu, choose **Training**. **To do now** lists your compulsory and due modules.
 2. Open a module, read each lesson, then do the quiz. You need 100%, and you can try as often as you like.
    - Short of time? Choose **Done, save my place** under each lesson you finish, or **Save my answers and finish later** in the quiz. Next time, **Carry on from lesson** takes you back to where you were.
-   - Compulsory modules are paid for their set time (for example 15 minutes) once you finish, however long you take. You can do modules in your own time if you wish, but only the set time is paid.
+   - Compulsory modules, and modules CLG assigns to you, are paid for their set time (for example 15 minutes) once you finish, however long you take. Other modules you choose to do in your own time are only paid if CLG approved it first.
+   - The safety modules (1 to 8) are done in order. If an earlier one is not finished, the module tells you which one to do first.
+   - Before your first term review or drafting job, finish the modules for it. If you are given a term review before you have done them, they are added to your To do list and you are told.
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook

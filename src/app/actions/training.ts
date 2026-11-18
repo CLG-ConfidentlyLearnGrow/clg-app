@@ -130,6 +130,8 @@ function moduleFields(formData: FormData) { // Takes the form.
       position: parsed.data.position, // order,
       required, // compulsory or not,
       holds_matching: required && formData.get("holds_matching") === "on", // holds matches (only if compulsory),
+      in_order: formData.get("in_order") === "on", // must be done in order with the other modules ticked the same way,
+      needed_for: (["drafting", "term_review"] as const).find((j) => j === formData.get("needed_for")) ?? null, // a job it is needed before (or none),
       // (whether it counts towards the quarter's hours is set by the database: every module except safety ones)
     }, // (end of the columns)
   } as const; // End of the values.
@@ -164,6 +166,37 @@ export async function saveModule(_prev: FormState, formData: FormData): Promise<
   revalidatePath("/training", "layout"); // And the training pages.
   return { message: status.data === "published" ? "Saved. It is published, so the people it is for can see it." : "Saved." }; // Says it's saved.
 } // End of saveModule.
+
+// Assigns a module to a tutor or admin staff member, with a due date
+// (Carla, 18 Nov 2026). An assigned module is paid for its set time.
+export async function assignModule(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireAdmin(); // Only owner and operations admins.
+  const moduleId = uuid.safeParse(formData.get("module_id")); // Reads and checks the module's id.
+  const person = uuid.safeParse(formData.get("account_id")); // Reads and checks the person's id.
+  if (!moduleId.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  if (!person.success) return { error: "Please choose who to assign it to." }; // No person chosen: asks for one.
+  const due = z.iso.date().safeParse(formData.get("due_on")); // Reads and checks the due date.
+  if (!due.success) return { error: "Please choose a due date." }; // No date: asks for one.
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300); // Why it is assigned (optional, up to 300 characters).
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_assign", { p_account: person.data, p_module: moduleId.data, p_due: due.data, p_reason: reason || null }); // Asks the database to assign it.
+  if (error) return plain(error, "Could not assign the module. Please try again."); // Failed: plain message.
+  revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
+  return { message: "Assigned. They have been told, and it is on their To do list." }; // Says it is done.
+} // End of assignModule.
+
+// Removes a module assignment.
+export async function unassignModule(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.
+  await requireAdmin(); // Only owner and operations admins.
+  const moduleId = uuid.safeParse(formData.get("module_id")); // Reads and checks the module's id.
+  const person = uuid.safeParse(formData.get("account_id")); // Reads and checks the person's id.
+  if (!moduleId.success || !person.success) return { error: "Something went wrong. Please reload the page." }; // Problem: asks to reload.
+  const supabase = await createClient(); // Connects to the database.
+  const { error } = await supabase.rpc("training_unassign", { p_account: person.data, p_module: moduleId.data }); // Asks the database to remove it.
+  if (error) return plain(error, "Could not remove it. Please try again."); // Failed: plain message.
+  revalidatePath(ADMIN_PAGE, "layout"); // Refreshes the admin pages.
+  return { message: "Removed." }; // Says it is done.
+} // End of unassignModule.
 
 // Deletes a draft module (published ones are retired instead, to keep records).
 export async function deleteDraftModule(_prev: FormState, formData: FormData): Promise<FormState> { // Gets the last reply and the form.

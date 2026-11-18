@@ -4,10 +4,11 @@
 import { notFound } from "next/navigation"; // Shows "not found".
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, Card, Empty, TextLink } from "@/components/ui"; // The back button, card, "nothing yet" note and link style.
-import { askRedo, deleteDraftModule, deleteLesson, deleteQuestion, removeLessonFile } from "@/app/actions/training"; // The server actions for the small buttons.
+import { askRedo, deleteDraftModule, deleteLesson, deleteQuestion, removeLessonFile, unassignModule } from "@/app/actions/training"; // The server actions for the small buttons.
+import { plainDate } from "@/lib/billing/money"; // Dates in words.
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is a full admin.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { LessonFileForm, LessonForm, ModuleForm, QuestionForm, SmallAction, type LessonRow, type ModuleRow, type QuestionRow } from "../forms"; // The admin forms and their shapes.
+import { AssignForm, LessonFileForm, LessonForm, ModuleForm, QuestionForm, SmallAction, type LessonRow, type ModuleRow, type QuestionRow } from "../forms"; // The admin forms and their shapes.
 
 // Shows the module editing page.
 export default async function AdminTrainingModulePage({ params }: PageProps<"/admin/training/[id]">) { // Reads the address's id.
@@ -15,12 +16,14 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const { id } = await params; // The module's id.
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound(); // Odd id: not found.
   const supabase = await createClient(); // Connects to the database.
-  const [mod, lessons, questions, settings, done] = await Promise.all([ // Reads five things at once:
-    supabase.from("training_modules").select("id, title, summary, audience, stage, required, holds_matching, counts_toward_certified, minutes, renew_months, status, position, version").eq("id", id).maybeSingle(), // the module,
+  const [mod, lessons, questions, settings, done, people, assigned] = await Promise.all([ // Reads seven things at once:
+    supabase.from("training_modules").select("id, title, summary, audience, stage, required, holds_matching, counts_toward_certified, minutes, renew_months, status, position, version, in_order, needed_for").eq("id", id).maybeSingle(), // the module,
     supabase.from("training_lessons").select("id, title, body, position, file_path, file_name, link_url, link_label").eq("module_id", id).order("position").order("id"), // its lessons,
     supabase.rpc("training_questions_for_admin", { p_module: id }), // its questions with answers,
     supabase.from("training_settings").select("video_max_mb").eq("id", true).maybeSingle(), // the largest upload allowed,
-    supabase.from("training_completions").select("id", { count: "exact", head: true }).eq("module_id", id), // and how many people have finished it.
+    supabase.from("training_completions").select("id", { count: "exact", head: true }).eq("module_id", id), // how many people have finished it,
+    supabase.rpc("training_people"), // the tutors and admin staff (to assign it to),
+    supabase.from("training_assignments").select("account_id, due_on, reason").eq("module_id", id).order("due_on"), // and who it is assigned to.
   ]); // End of the reads.
   if (!mod.data) notFound(); // No such module: not found.
   const m = mod.data as ModuleRow & { version: number }; // The module.
@@ -29,6 +32,10 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
   const maxMb = settings.data?.video_max_mb ?? 500; // The largest upload, in MB.
   const nextLesson = (lessonRows.at(-1)?.position ?? 0) + 1; // The next lesson's order number.
   const nextQuestion = (questionRows.at(-1)?.question_position ?? 0) + 1; // The next question's order number.
+  const staff = (people.data ?? []) as { account_id: string; full_name: string; is_tutor: boolean; is_admin: boolean }[]; // The tutors and admin staff.
+  const fits = staff.filter((p) => (m.audience === "tutor" ? p.is_tutor : m.audience === "admin" ? p.is_admin : true)); // Only the people this module is made for.
+  const nameOf = (pid: string) => staff.find((p) => p.account_id === pid)?.full_name ?? "Someone"; // A person's name, from their id.
+  const assignments = (assigned.data ?? []) as { account_id: string; due_on: string; reason: string | null }[]; // Who it is assigned to.
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="training-admin">{/* the dashboard tabs and menu, with Training setup open: */}
@@ -36,6 +43,26 @@ export default async function AdminTrainingModulePage({ params }: PageProps<"/ad
       <Card title="Module details" description={`Version ${m.version}. ${done.count ?? 0} completion(s) so far.`}>{/* the details card: */}
         <ModuleForm m={m} />{/* the details form. */}
       </Card>{/* End of the details card. */}
+
+      <Card title="Assign to someone" description="Give this module to a tutor or staff member with a due date. It goes on their To do list, they are told, and it is paid for its set time when they finish it (even if it is optional). Training they choose to do outside this is only paid if you approved it first.">{/* the assign card: */}
+        {m.status !== "published" ? ( // not published yet:
+          <Empty>Publish the module first, then you can assign it.</Empty> // says so.
+        ) : ( // published:
+          <div className="space-y-5">{/* a block: */}
+            {assignments.length > 0 && ( // anyone assigned:
+              <ul className="space-y-3 text-sm">{/* the list: */}
+                {assignments.map((a) => ( // each assignment:
+                  <li key={a.account_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2">{/* a row: */}
+                    <span>{nameOf(a.account_id)}, due {plainDate(a.due_on)}{a.reason ? <span className="block text-xs text-zinc-500">{a.reason}</span> : null}</span>{/* who, when and why, */}
+                    <SmallAction action={unassignModule} fields={{ module_id: m.id, account_id: a.account_id }} label="Remove" confirm="Remove this assignment?" />{/* and a remove button. */}
+                  </li> // End of the row.
+                ))}{/* End of the assignments. */}
+              </ul> // End of the list.
+            )}{/* End of the list part. */}
+            <AssignForm moduleId={m.id} people={fits.map((p) => ({ id: p.account_id, name: p.full_name }))} />{/* the assign form. */}
+          </div> // End of the block.
+        )}{/* End of the choice. */}
+      </Card>{/* End of the assign card. */}
 
       <Card title="Lessons" description="Short lessons work best: one idea each, with an example. Add a video or PDF to any lesson.">{/* the lessons card: */}
         {lessonRows.length === 0 && <Empty>No lessons yet. Add the first one below.</Empty>}{/* none: says so. */}

@@ -104,4 +104,15 @@ Carla asked for a module on setting up weekly, termly and yearly student plans (
 - **Legal note.** No new personal information. Term reviews keep health and diagnosis details out, as before (Privacy Act 1988, APP 3 and 6).
 - Tests: `supabase/tests/training_plans_routine.test.sql`.
 
-Still to build (separate pull requests): admins assigning modules with due dates, flags when a tutor is booked for drafting or a term review without the modules, modules 1 to 8 locked in order, screenshot quiz questions, and practice tasks checked by CLG.
+Still to build (a separate pull request): screenshot quiz questions, and practice tasks checked by CLG.
+
+## 11. Assigning modules, order, and readiness for jobs, 18 Nov 2026
+
+Carla: admins can assign modules with due dates; assigned modules are paid for their set time, and doing training outside designated training time is paid only with pre-approval. The safety modules are done in order. The app should flag when a tutor is booked for drafting or a term review without the modules. `20261121300200_training_assign_order_jobs.sql` adds:
+
+- **Assignments** (`training_assignments`, one per person per module, with due date and reason). Only full admins assign or remove them (`training_assign`, `training_unassign`), only for published modules made for that person. The person and full admins can read them. An assigned module shows as To do (overdue after the date) until it is finished after being assigned, and its completion is paid even if the module is optional. Other training is unpaid unless approved first and logged under My pay.
+- **Done in order** (`in_order`, ticked for 1 to 8). `training_finish` refuses an in-order module until every earlier in-order module (published, made for them) is done; the module page says which one to do first.
+- **Needed before a job** (`needed_for`: drafting for 18 and 19, term_review for 24 and 25). When a term review is made for a tutor who has not done those modules, a trigger assigns them (due the day before the review is due) and tells the tutor and full admins. `training_job_readiness` gives admins a **Ready for** column on Training progress. The app does not book drafting jobs yet, so Lauren checks that column before giving one; when drafting bookings exist, they can call the same check.
+- **Evidence.** Sequencing foundational safety content before practice, and short required learning tied to the task it prepares for, follows AITSL's guidance on induction and the EEF's *Effective Professional Development* guidance (2021): build knowledge, then rehearse it close to when it is used.
+- **Legal note.** Required training is work time under the Fair Work Act 2009 and the awards, so compulsory and assigned modules are paid automatically; optional training a person chooses is unpaid unless CLG approves it first. The handbook pay page says so. Assignments hold no personal information beyond who and when (Privacy Act 1988, APP 11).
+- Tests: `supabase/tests/training_assign_order_jobs.test.sql`.
