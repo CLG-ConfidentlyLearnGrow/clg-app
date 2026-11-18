@@ -72,7 +72,7 @@ Tip: **Where you stand** shows what is confirmed and when each check runs out. Y
 1. In the side menu, choose **Hours and availability**.
 2. Enter the most hours you can work each week, then choose **Save hours**.
 3. Under **Where you travel from**, add your home or another address you travel from (for example "Home" or "Uni"), then choose **Add address**. Only you and CLG admins can see it.
-4. Add each time you are available: the day, from and to, and where you can teach. Tick **Online**, **At public libraries within my travel distance**, **At learners' homes within my travel distance**, or a mix. For in-person times, choose the address you are **Travelling from** and the **Most km I will travel** (in a straight line). Choose **Add time**.
+4. Add each time you are available: the day, from and to, and where you can teach. Casual tutors give each time as a block of at least 2 hours, because casual work is paid in blocks of at least 2 hours. A shorter time is refused, and any older time shorter than 2 hours is marked so you can replace it. This does not apply to part-time or full-time staff with agreed weekly hours. Tick **Online**, **At public libraries within my travel distance**, **At learners' homes within my travel distance**, or a mix. For in-person times, choose the address you are **Travelling from** and the **Most km I will travel** (in a straight line). Choose **Add time**.
 5. The address and distance can be different for each time. Libraries within your distance (and within the family's) are offered for you, so you do not need to pick libraries.
 6. Remove a time you no longer have with its remove link. An address cannot be removed while a time still uses it.
 
@@ -100,6 +100,13 @@ Tip: When CLG offers a time to both you and the family, you see **Approve** and 
 1. From 30 minutes before the session, **Sign on** appears next to it on the Overview.
 2. Choose **Sign on**. For a library session, your phone asks once to share your location. The app only checks that you are at the library and keeps the result, never your location.
 3. You are signed off automatically at the booked end time.
+
+### Tell the family and CLG you are running late
+1. From 3 hours before a session until 30 minutes after it starts, **Running late?** shows next to it on the Overview (until you sign on).
+2. Open it, choose about how late you will be, and say briefly why. Only CLG sees the reason.
+3. Choose **Tell the family and CLG**. The parents (and the learner, if they have their own login) get an app notice and an email. CLG gets an app notice.
+4. If you sign on more than 5 minutes after the start, the app records a late start, whether or not you sent a notice. Session pay starts from when you sign on.
+5. **Your late starts (last 90 days)** on the Overview lists your own late starts. CLG reviews these.
 
 ### Join an online session
 Choose **Join** next to the session on the Overview, or on your **Weekly calendar**. It opens Microsoft Teams.
@@ -213,7 +220,9 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 
 ### Check your pay and log extra hours
 1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.
-2. Under **Log hours**, add work outside sessions (for example making worksheets), with the day, hours and what you did. Log each pay week's hours by the day after the pay week ends.
+2. Under **Log hours**, choose **What kind of work?** (for example **Lesson preparation and planning** or **Making learning materials**), then the day and hours. Write **What you did** and **What you finished or achieved**. CLG checks both before approving. Log each pay week's hours by the day after the pay week ends.
+   - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
+   - The 15 minutes after each session (summary and planning) and app training modules are added for you. Do not log them.
 3. Changed your mind? Choose **Take back** before it is approved.
 4. **Last 8 weeks** shows your sessions and hours. If a time looks wrong, record the right finish time on the session, or contact CLG.
 
