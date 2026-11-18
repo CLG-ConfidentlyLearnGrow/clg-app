@@ -36,7 +36,7 @@
 -- Billing module: billing tables and functions only; reads sessions,
 -- students and public holidays. Edits billing_build_pay in place, so other
 -- changes to it stay.
--- Safe to run more than once. Run after 20261121500100_award_levels_three_months.sql.
+-- Safe to run more than once. Run after 20261121700100_award_levels_three_months.sql.
 
 -- ---------------------------------------------------------------------------
 -- 1. The penalty percentages

@@ -10,7 +10,7 @@ begin;
 -- Runs this feature's database change (also checks it can run twice).
 \ir ../migrations/20261113230100_billing_award_rates.sql
 -- Runs the later award levels update again, since the line above put back the older versions of its functions.
-\ir ../migrations/20261121500100_award_levels_three_months.sql
+\ir ../migrations/20261121700100_award_levels_three_months.sql
 
 -- T1 is a casual tutor paid $33/hr for school tutoring and $70/hr tertiary.
 insert into public.billing_staff_pay (account_id, employment, school_rate_cents, tertiary_rate_cents) values ('00000000-0000-0000-0000-000000000011', 'casual', 3300, 7000) -- T1's pay details

@@ -15,9 +15,9 @@
 begin;
 -- Runs both updates again: they must be safe to run twice.
 -- (award levels and the move to Level 2)
-\ir ../migrations/20261121500100_award_levels_three_months.sql
+\ir ../migrations/20261121700100_award_levels_three_months.sql
 -- (penalty rates)
-\ir ../migrations/20261121500200_award_penalty_rates.sql
+\ir ../migrations/20261121700200_award_penalty_rates.sql
 
 -- Keeps today and Cara's student id.
 select private.billing_today() as today, (select id from public.students where full_name = 'Cara One') as cara \gset
