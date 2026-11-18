@@ -82,6 +82,8 @@ select tests.eq(((select string_agg(level || ':' || min_rate_cents, ',' order by
 -- ---------------------------------------------------------------------------
 -- 4. Penalty rate top-ups
 -- ---------------------------------------------------------------------------
+-- T1 is based in SA (public holidays follow the tutor's state; Carla, 18 Nov 2026).
+insert into public.tutor_work_settings (tutor_id, work_state) values ('00000000-0000-0000-0000-000000000011', 'SA') on conflict (tutor_id) do update set work_state = 'SA'; -- T1's work state
 -- A public holiday in SA on last week's Tuesday.
 insert into public.public_holidays (state, holiday_on, name) values ('SA', :'tue', 'Test holiday') on conflict do nothing; -- the holiday
 -- Three completed sessions for T1 ($33.85): Saturday 10-11am, Monday 6:30-7:30pm, and the holiday 10-11am.
@@ -106,6 +108,17 @@ select tests.eq((select sum(minutes) from public.billing_pay_lines where account
 select tests.eq((select count(*) from public.billing_pay_lines where kind = 'penalty' and note like 'Award penalty rate: 60 min Saturday at 145% ($39.27/hr)%'), 1::bigint, 'the note explains the top-up'); -- the note
 select tests.eq((public.billing_build_pay(:'mon'::date, :'sat'::date) = :built)::int, 1, 'working out pay again gives the same lines'); -- safe to repeat
 select tests.eq((select count(*) from public.billing_pay_lines where kind = 'penalty' and account_id = '00000000-0000-0000-0000-000000000011'), 3::bigint, 'still three top-ups after a re-run'); -- no duplicates
+
+-- Public holidays follow the tutor's state, not the learner's: T1 moves to Victoria.
+update public.tutor_work_settings set work_state = 'VIC' where tutor_id = '00000000-0000-0000-0000-000000000011'; -- T1 is now based in Victoria
+select public.billing_build_pay(:'mon'::date, :'sat'::date) as built_vic \gset
+-- (works out pay again)
+select tests.eq((select count(*) from public.billing_pay_lines l join public.sessions s on s.id = l.session_id where l.kind = 'penalty' and (s.starts_at at time zone 'Australia/Adelaide')::date = :'tue'), 0::bigint, 'an SA holiday is not a holiday for a Victorian tutor'); -- no holiday top-up (the SA learner does not count)
+insert into public.public_holidays (state, holiday_on, name) values ('VIC', :'tue', 'Test Victorian holiday') on conflict do nothing; -- the same day becomes a Victorian holiday
+select public.billing_build_pay(:'mon'::date, :'sat'::date) as built_vic2 \gset
+-- (works out pay again)
+select tests.eq((select l.amount_cents from public.billing_pay_lines l join public.sessions s on s.id = l.session_id where l.kind = 'penalty' and (s.starts_at at time zone 'Australia/Adelaide')::date = :'tue'), 3385, 'a holiday in the tutor''s own state is paid'); -- the holiday top-up is back
+update public.tutor_work_settings set work_state = 'SA' where tutor_id = '00000000-0000-0000-0000-000000000011'; -- T1 back in SA for the rest
 
 -- A tutor paid above every award rate gets no top-up.
 update public.billing_staff_pay set school_rate_cents = 7000 where account_id = '00000000-0000-0000-0000-000000000011'; -- T1 now $70/hr

@@ -19,7 +19,10 @@
 -- time you work ... CLG pays that higher rate." So:
 --   * For each school tutoring session, the app splits the time worked into
 --     those bands (Adelaide time, using the public holidays list for the
---     learner's state).
+--     state the TUTOR is based in, from their work settings; SA if not
+--     set). Carla, 18 Nov 2026: "The tutors are only paid public holiday
+--     rates when it is a public holiday in the state they are based in".
+--     The learner's state does not matter for this.
 --   * For each band, if the tutor's own hourly rate is below the award rate
 --     for that band, the difference is paid as a "Penalty rate top-up" line.
 --     A tutor whose rate is at or above the award rate gets no top-up.
@@ -34,7 +37,7 @@
 -- time (the tutor chooses when to do it).
 --
 -- Billing module: billing tables and functions only; reads sessions,
--- students and public holidays. Edits billing_build_pay in place, so other
+-- tutor work settings and public holidays. Edits billing_build_pay in place, so other
 -- changes to it stay.
 -- Safe to run more than once. Run after 20261121700100_award_levels_three_months.sql.
 
@@ -151,11 +154,11 @@ begin -- start
   for r in -- each school tutoring session pay line in the dates:
     select l.account_id, l.staff_name, l.work_date, l.session_id, l.minutes, l.rate_cents, l.note, -- the line
            se.worked_from, se.starts_at, -- when the time started
-           st.state, -- the learner's state (for public holidays)
+           coalesce(tws.work_state, 'SA'::public.au_state) as state, -- the state the tutor is based in (SA if not set), for public holidays
            coalesce(sp.employment, 'casual') as employment -- the tutor's employment type
     from public.billing_pay_lines l -- pay lines
     join public.sessions se on se.id = l.session_id -- their session (sessions belong to scheduling; billing only reads them)
-    join public.students st on st.id = se.student_id -- the learner
+    left join public.tutor_work_settings tws on tws.tutor_id = l.account_id -- the tutor's work settings (where they are based)
     left join public.billing_staff_pay sp on sp.account_id = l.account_id -- the tutor's pay details
     where l.kind = 'session' and l.work_kind = 'school' -- school tutoring session time
       and l.work_date between p_from and p_to -- in the dates

@@ -74,7 +74,9 @@ Saturday, $47.39 Sunday, $67.70 public holiday).
 
 - When pay is worked out, each school tutoring session's paid time is split
   into these bands, minute by minute. Public holidays come from the app's
-  public holidays list for the learner's state.
+  public holidays list for the state the tutor is based in (their work
+  settings; SA if not set). Carla, 18 Nov 2026: tutors are only paid public
+  holiday rates when it is a public holiday in the state they are based in.
 - For each band, if the tutor's own hourly rate is below the award rate,
   the difference is paid on a **Penalty rate top-up** line. There is no
   averaging across bands, so a high weekday rate never hides a shortfall on
