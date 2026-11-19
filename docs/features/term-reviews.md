@@ -122,3 +122,46 @@ don't line up with term dates.
 - Migration `supabase/migrations/20261113900100_paid_term_reviews.sql`.
 - Tests `supabase/tests/progress_term_review_offers.test.sql` (and updates
   to the term review, study plan add-on and billing tests).
+
+## Changes, 19 Nov 2026: tutors paid for term reviews, after training
+
+Carla: term reviews are "paid at the tutor's rate (the tutor also needs to
+have completed the corresponding modules)". A review takes about 1 hour.
+
+### How it works
+
+- When CLG approves a term review, the tutor gets a **Term review** pay
+  line: 1 hour at their tutor rate (school or tertiary, matching their
+  latest session with the student), dated the day it was approved. It is
+  added when pay is worked out (the daily run or **Work out pay**), once
+  per review. With no tutor rate entered, it is added once one is.
+- A tutor cannot send a review to CLG until they have finished the
+  published modules marked as needed before term reviews (modules 24 and
+  25). They can save a draft at any time. Since 18 Nov those modules are
+  assigned to the tutor automatically, due the day before the review.
+- The time is fixed at 60 minutes in
+  `private.billing_term_review_minutes()`.
+
+### What the evidence says
+
+- Written feedback to families works best when it is specific, tied to
+  goals and gives a clear next step (EEF *Teacher Feedback to Improve Pupil
+  Learning*; AERO formative assessment guidance). Requiring the term review
+  modules before the first review, and paying the writing time, supports
+  tutors to take the time to do that well.
+
+### Legal rules it touches
+
+- **Fair Work Act 2009 and the awards**: writing a term review is work CLG
+  asks for, so it is paid at no less than the award rate (the pay line is
+  flagged if a rate is under the award). Pay goes only through Xero
+  Payroll. Carla's 12 Nov rule that tutors see no family financial
+  information is unchanged: tutors see their own pay line, never the
+  family's price.
+- **Privacy (APPs)**: the pay line note holds only the student's first
+  name and the term, which Finance admins already see on session lines.
+
+### Files
+
+- Migration `supabase/migrations/20261122300100_term_review_pay.sql`.
+- Tests `supabase/tests/billing_term_review_pay.test.sql`.

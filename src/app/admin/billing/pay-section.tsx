@@ -17,7 +17,7 @@ type Line = {
   account_id: string | null; // who (if known),
   staff_name: string; // their name,
   work_date: string; // the day worked,
-  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary" | "training"; // what kind of pay,
+  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary" | "training" | "term_review"; // what kind of pay,
   work_kind: string; // the kind of work (school, tertiary or admin),
   minutes: number; // minutes,
   rate_cents: number; // the rate in cents,
@@ -36,6 +36,7 @@ const KIND_LABELS: Record<Line["kind"], string> = { // Words for each kind of pa
   guaranteed: "Guaranteed hours top-up", // guaranteed hours top-up.
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
   training: "Training", // compulsory training, for its set time.
+  term_review: "Term review", // writing a term review CLG approved, 1 hour at the tutor rate.
 }; // End of the list.
 
 // Adds days to a date (written as YYYY-MM-DD).

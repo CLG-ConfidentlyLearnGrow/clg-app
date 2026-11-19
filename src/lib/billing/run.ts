@@ -89,6 +89,10 @@ export async function runBilling(): Promise<Summary> {
   const training = await db.rpc("billing_build_training_hours", { p_from: from, p_to: yesterday }); // Asks the database to add training hours for the fortnight.
   if (training.error) summary.problems.push(`Training hours: ${training.error.message}`); // Notes any problem.
 
+  // Term reviews CLG approved in the fortnight: 1 hour each at the tutor's rate (Carla, 19 Nov 2026).
+  const reviews = await db.rpc("billing_build_term_review_pay", { p_from: from, p_to: yesterday }); // Asks the database to add term review pay for the fortnight.
+  if (reviews.error) summary.problems.push(`Term review pay: ${reviews.error.message}`); // Notes any problem.
+
   // Part-time and full-time staff: top up to their agreed hours once a pay
   // period ends. Top-ups wait for an admin to approve them.
   const topUps = await db.rpc("billing_check_guaranteed_hours", { p_day: yesterday }); // Asks the database to add any guaranteed-hours top-ups for yesterday's pay period.
