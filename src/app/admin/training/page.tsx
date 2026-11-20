@@ -39,7 +39,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
     supabase.from("handbook_pages").select("id, title, urgent, audience, status, position, updated_at").order("urgent", { ascending: false }).order("position").order("title"), // the handbook pages,
     supabase.from("training_settings").select("grace_days, quarter_minutes, video_max_mb").eq("id", true).maybeSingle(), // the settings,
     supabase.from("training_attempts").select("module_id, score, total").gte("created_at", new Date(Date.parse(`${adelaideToday()}T00:00:00Z`) - 90 * 86400000).toISOString()), // quiz tries in the last 90 days (86,400,000 ms is one day),
-    supabase.rpc("training_job_readiness"), // each tutor's readiness for drafting and term reviews,
+    supabase.rpc("training_job_readiness"), // each tutor's readiness for drafting, term reviews and study plans,
     supabase.from("training_task_submissions").select("id, account_id, module_id, answer, updated_at").eq("status", "submitted").order("updated_at"), // and practice tasks waiting to be checked (oldest first).
   ]); // End of the reads.
   const modules = (mods.data ?? []) as unknown as { id: string; title: string; audience: Audience; stage: Stage; required: boolean; holds_matching: boolean; minutes: number; status: string; position: number; version: number; training_questions: { count: number }[]; training_lessons: { count: number }[] }[]; // The modules.
@@ -50,7 +50,8 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
   const readyText = (pid: string) => { // A tutor's readiness in words:
     const jobs = ready.filter((r) => r.account_id === pid); // their rows,
     if (jobs.length === 0) return "-"; // not a tutor: nothing,
-    return jobs.map((r) => `${r.job === "drafting" ? "Drafting" : "Term reviews"}: ${r.missing.length ? `not yet (${r.missing.join(", ")})` : "ready"}`).join(". "); // each job: ready, or what is missing.
+    const jobName: Record<string, string> = { drafting: "Drafting", term_review: "Term reviews", study_plan: "Study plans" }; // Each job's name in words.
+    return jobs.map((r) => `${jobName[r.job] ?? r.job}: ${r.missing.length ? `not yet (${r.missing.join(", ")})` : "ready"}`).join(". "); // each job: ready, or what is missing.
   }; // End of readyText.
   const tries = (attempts.data ?? []) as { module_id: string; score: number; total: number }[]; // Quiz tries.
   const firstTryRate = (id: string) => { // How often a module's quiz is passed first time (roughly):
@@ -108,7 +109,7 @@ export default async function AdminTrainingPage({ searchParams }: PageProps<"/ad
                     <td>{hrs(p.quarter_minutes)} of {hrs(p.target_minutes)}</td>{/* this quarter's hours, */}
                     <td>{hrs(p.last_quarter_minutes)}</td>{/* last quarter's hours, */}
                     <td>{p.matching_held ? <span className="font-semibold text-red-800">Held</span> : p.is_tutor ? "OK" : "-"}</td>{/* whether new matches are held, */}
-                    <td className="text-xs">{readyText(p.account_id)}</td>{/* and whether they are ready for drafting and term reviews. */}
+                    <td className="text-xs">{readyText(p.account_id)}</td>{/* and whether they are ready for drafting, term reviews and study plans. */}
                   </tr> // End of the row.
                 ))}{/* End of the people. */}
               </Table> // End of the table.

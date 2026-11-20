@@ -27,7 +27,7 @@ export type ModuleRow = { // its details:
   status: string; // draft, published or retired,
   position: number; // order,
   in_order: boolean; // must be done in order (with the others ticked the same way),
-  needed_for: string | null; // a job it is needed before (drafting or term_review), if any,
+  needed_for: string | null; // a job it is needed before (drafting, term_review or study_plan), if any,
   practice_task: string | null; // a written task CLG checks before the module is finished, if any.
 }; // End of the shape.
 
@@ -67,7 +67,8 @@ function ModuleFields({ m }: { m?: ModuleRow }) { // Takes the module (none for 
       <Select label="Needed before a job" name="needed_for" defaultValue={m?.needed_for ?? ""}>{/* a job it is needed before: */}
         <option value="">No</option>{/* none, */}
         <option value="drafting">Before drafting work</option>{/* drafting, */}
-        <option value="term_review">Before writing a term review</option>{/* term reviews. */}
+        <option value="term_review">Before writing a term review</option>{/* term reviews, */}
+        <option value="study_plan">Before study plan work (paid add-on)</option>{/* study plans. */}
       </Select>{/* End of the choice. */}
       <TextArea label="Practice task checked by CLG (optional)" name="practice_task" rows={5} maxLength={4000} defaultValue={m?.practice_task ?? ""} hint="For example: write a session summary for a made-up student. People write it in the app, and you approve it or send it back under Practice tasks. The module is finished once the quiz is passed and the task is approved. Use made-up students only." />{/* a practice task, */}
       <p className="text-sm text-zinc-600">When a tutor is given a term review without a module needed for it, the module is assigned to them and you are told. Training progress shows who is ready for each job.</p>{/* what "needed before a job" does, */}

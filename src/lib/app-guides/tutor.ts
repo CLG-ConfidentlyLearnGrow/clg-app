@@ -233,6 +233,7 @@ When a family uploads a school report or marked work, it shows under **New uploa
    - Some modules end with a **Practice task (checked by CLG)**, for example a session summary for a made-up student. Write it in the box and choose **Send to CLG to check**. Lauren or Carla approves it or sends it back with what to change. The module is finished once the quiz is passed and the task is approved. Never write about a real student in a practice task.
    - The safety modules (1 to 8) are done in order. If an earlier one is not finished, the module tells you which one to do first.
    - Before your first term review or drafting job, finish the modules for it. If you are given a term review before you have done them, they are added to your To do list and you are told.
+   - If you teach a student whose family pays for study plans, the study plan module is added to your To do list, due before your next session with them, and you are told. It is paid for its set time.
 3. When you finish, download your certificate from the module. Compulsory safety modules must be done before new students are matched with you.
 
 ### Use the handbook
