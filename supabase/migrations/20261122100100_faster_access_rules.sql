@@ -124,35 +124,60 @@ $$; -- End of the run.
 -- busiest pages search by, where none existed. Without them the database
 -- reads a whole table to find a few rows.
 -- ===========================================================================
-create index if not exists bookings_family_id_idx on public.bookings (family_id); -- Bookings by family (family pages, billing).
-create index if not exists consent_records_student_id_idx on public.consent_records (student_id); -- Consent records by student (privacy pages).
-create index if not exists session_notices_session_id_idx on public.session_notices (session_id); -- Session notices by session (Sessions page).
-create index if not exists session_notices_booking_id_idx on public.session_notices (booking_id); -- Session notices by booking (Sessions page).
-create index if not exists billing_invoice_lines_student_id_idx on public.billing_invoice_lines (student_id); -- Invoice lines by student (billing pages).
-create index if not exists billing_credits_invoice_id_idx on public.billing_credits (invoice_id); -- Credits by invoice (billing pages).
-create index if not exists billing_pause_events_family_id_idx on public.billing_pause_events (family_id); -- Pause history by family (billing pages).
-create index if not exists progress_notices_student_id_idx on public.progress_notices (student_id); -- Progress notices by student (dashboards).
-create index if not exists student_reflections_student_id_idx on public.student_reflections (student_id); -- Student reflections by student (progress pages).
-create index if not exists student_login_offers_student_id_idx on public.student_login_offers (student_id); -- Own-login offers by student (parent dashboard).
-create index if not exists safety_concerns_student_id_idx on public.safety_concerns (student_id); -- Child safety concerns by student (safety pages).
-create index if not exists safety_word_flags_student_id_idx on public.safety_word_flags (student_id); -- Flagged words by student (safety pages).
-create index if not exists safety_holds_student_id_idx on public.safety_holds (student_id); -- Safety holds by student (matching checks).
-create index if not exists match_blocks_student_id_idx on public.match_blocks (student_id); -- Match blocks by student (matching checks).
-create index if not exists match_check_ins_student_id_idx on public.match_check_ins (student_id); -- Match check-ins by student (check-in pages).
-create index if not exists help_messages_student_id_idx on public.help_messages (student_id); -- Help chat messages by student (help chats).
-create index if not exists billing_payers_account_id_idx on public.billing_payers (account_id); -- Extra bill payers by person (who sees billing).
-create index if not exists billing_accounts_bill_payer_id_idx on public.billing_accounts (bill_payer_id); -- Billing accounts by bill payer (who sees billing).
-create index if not exists billing_invoice_shares_payer_id_idx on public.billing_invoice_shares (payer_id); -- Invoice shares by payer (who sees billing).
-create index if not exists help_chats_started_by_idx on public.help_chats (started_by); -- Help chats by the person who started them (their Help page).
-create index if not exists help_chat_reads_account_id_idx on public.help_chat_reads (account_id); -- Read markers by person (the unread help number on every page).
-create index if not exists session_makeup_offers_makeup_session_id_idx on public.session_makeup_offers (makeup_session_id); -- Make-up offers by make-up session (Sessions page).
-create index if not exists sessions_makeup_for_idx on public.sessions (makeup_for); -- Make-up sessions by the session they replace (Sessions page).
-create index if not exists term_renewals_next_booking_id_idx on public.term_renewals (next_booking_id); -- Renewals by the next booking (renewals page).
-create index if not exists employment_contracts_template_id_idx on public.employment_contracts (template_id); -- Contracts by template (Contracts page).
-create index if not exists training_completions_module_id_idx on public.training_completions (module_id); -- Training completions by module (training pages).
-create index if not exists training_attempts_module_id_idx on public.training_attempts (module_id); -- Training attempts by module (training pages).
-create index if not exists training_progress_module_id_idx on public.training_progress (module_id); -- Saved training progress by module (training pages).
-create index if not exists sessions_ends_at_idx on public.sessions (ends_at); -- Sessions by finishing time (the "summaries still to write" list looks at the last 30 days).
+-- Each index is only made when its table and column are there, so this
+-- file still runs if an earlier update file has not been run yet (it says
+-- which ones it skipped). Run this file again after running that update.
+do $$ -- Runs the steps below once.
+declare -- Working values:
+  v_ix record; -- one index at a time, from the list below.
+begin -- Start of the steps.
+  for v_ix in -- Goes through each index to make:
+    select * from (values -- the list (index name, table, column):
+      ('bookings_family_id_idx', 'bookings', 'family_id'), -- Bookings by family (family pages, billing).
+      ('consent_records_student_id_idx', 'consent_records', 'student_id'), -- Consent records by student (privacy pages).
+      ('session_notices_session_id_idx', 'session_notices', 'session_id'), -- Session notices by session (Sessions page).
+      ('session_notices_booking_id_idx', 'session_notices', 'booking_id'), -- Session notices by booking (Sessions page).
+      ('billing_invoice_lines_student_id_idx', 'billing_invoice_lines', 'student_id'), -- Invoice lines by student (billing pages).
+      ('billing_credits_invoice_id_idx', 'billing_credits', 'invoice_id'), -- Credits by invoice (billing pages).
+      ('billing_pause_events_family_id_idx', 'billing_pause_events', 'family_id'), -- Pause history by family (billing pages).
+      ('progress_notices_student_id_idx', 'progress_notices', 'student_id'), -- Progress notices by student (dashboards).
+      ('student_reflections_student_id_idx', 'student_reflections', 'student_id'), -- Student reflections by student (progress pages).
+      ('student_login_offers_student_id_idx', 'student_login_offers', 'student_id'), -- Own-login offers by student (parent dashboard).
+      ('safety_concerns_student_id_idx', 'safety_concerns', 'student_id'), -- Child safety concerns by student (safety pages).
+      ('safety_word_flags_student_id_idx', 'safety_word_flags', 'student_id'), -- Flagged words by student (safety pages).
+      ('safety_holds_student_id_idx', 'safety_holds', 'student_id'), -- Safety holds by student (matching checks).
+      ('match_blocks_student_id_idx', 'match_blocks', 'student_id'), -- Match blocks by student (matching checks).
+      ('match_check_ins_student_id_idx', 'match_check_ins', 'student_id'), -- Match check-ins by student (check-in pages).
+      ('help_messages_student_id_idx', 'help_messages', 'student_id'), -- Help chat messages by student (help chats).
+      ('billing_payers_account_id_idx', 'billing_payers', 'account_id'), -- Extra bill payers by person (who sees billing).
+      ('billing_accounts_bill_payer_id_idx', 'billing_accounts', 'bill_payer_id'), -- Billing accounts by bill payer (who sees billing).
+      ('billing_invoice_shares_payer_id_idx', 'billing_invoice_shares', 'payer_id'), -- Invoice shares by payer (who sees billing).
+      ('help_chats_started_by_idx', 'help_chats', 'started_by'), -- Help chats by the person who started them (their Help page).
+      ('help_chat_reads_account_id_idx', 'help_chat_reads', 'account_id'), -- Read markers by person (the unread help number on every page).
+      ('session_makeup_offers_makeup_session_id_idx', 'session_makeup_offers', 'makeup_session_id'), -- Make-up offers by make-up session (Sessions page).
+      ('sessions_makeup_for_idx', 'sessions', 'makeup_for'), -- Make-up sessions by the session they replace (Sessions page).
+      ('term_renewals_next_booking_id_idx', 'term_renewals', 'next_booking_id'), -- Renewals by the next booking (renewals page).
+      ('employment_contracts_template_id_idx', 'employment_contracts', 'template_id'), -- Contracts by template (Contracts page).
+      ('training_completions_module_id_idx', 'training_completions', 'module_id'), -- Training completions by module (training pages).
+      ('training_attempts_module_id_idx', 'training_attempts', 'module_id'), -- Training attempts by module (training pages).
+      ('training_progress_module_id_idx', 'training_progress', 'module_id'), -- Saved training progress by module (training pages).
+      ('sessions_ends_at_idx', 'sessions', 'ends_at') -- Sessions by finishing time (the "summaries still to write" list looks at the last 30 days).
+    ) as t(index_name, table_name, column_name) -- (names for the three parts)
+  loop -- For each one:
+    if exists ( -- if the table has that column:
+      select 1 from pg_catalog.pg_attribute a -- looks in the database's list of columns
+      where a.attrelid = to_regclass('public.' || quote_ident(v_ix.table_name)) -- for this table (nothing if the table is missing),
+        and a.attname = v_ix.column_name -- for this column,
+        and not a.attisdropped -- that has not been removed.
+    ) then -- Found:
+      execute format('create index if not exists %I on public.%I (%I)', -- makes the index (skipped if it is already there),
+        v_ix.index_name, v_ix.table_name, v_ix.column_name); -- filling in its name, table and column.
+    else -- Not found (an earlier update file has not been run yet):
+      raise notice 'Skipped index % (table %, column % not there yet)', v_ix.index_name, v_ix.table_name, v_ix.column_name; -- says which one, and carries on.
+    end if; -- End of the check.
+  end loop; -- End of the list.
+end; -- End of the steps.
+$$; -- End of the run.
 
 -- ===========================================================================
 -- Step 4: the "summaries still to write" list (public.list_notes_due) is
