@@ -44,11 +44,12 @@ export function nextLevels(current: SkillLevel): SkillLevel[] {
 
 export const levelName = (level: string) => SKILL_LEVEL_NAMES[level as SkillLevel] ?? level; // Turns a level code into its plain name, or shows the code if unknown.
 
-// A session is due a note within 6 hr, and admins are told then too, so a
-// late tutor can be followed up well before families' 48 hr promise
-// (Carla, 16 Nov 2026; it was 24 hr and 48 hr).
-export const NOTE_DUE_HOURS = 6; // Hours after a session when its note is due.
-export const NOTE_OVERDUE_HOURS = 6; // Hours after a session when admins are told the note is late.
+// A session is due a note within 6 hr, when the tutor is reminded. Admins
+// are told if it is still missing at 12 hr, so the tutor's reminder has time
+// to work and a late tutor is still followed up well before families' 48 hr
+// promise (Carla, 16 Nov 2026 for 6 hr; 20 Nov 2026 for admins at 12 hr).
+export const NOTE_DUE_HOURS = 6; // Hours after a session when its note is due (and the tutor is reminded).
+export const NOTE_OVERDUE_HOURS = 12; // Hours after a session when admins are told the note is still missing.
 
 // Sessions in a row with no skill moving before the plan needs a look.
 export const STALLED_AFTER_SESSIONS = 4; // Sessions in a row with no skill moving.

@@ -104,14 +104,14 @@ export function SessionRequestForm({ students, today }: { students: Child[]; tod
         </Select>{/* End of the drop-down. */}
       </div>{/* End of the columns. */}
       <Select label="What would you like?" name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>{/* the kind of request drop-down: */}
-        <option value="extra">An extra session before a test, exam or other big event</option>{/* an extra session before an event, */}
+        <option value="extra">An extra session before a significant date (a test, exam or assignment due date)</option>{/* an extra session before a significant date (Carla, 20 Nov 2026: not "event"), */}
         <option value="public_holiday">A one-off at another time in a public holiday week</option>{/* a one-off in a public holiday week, */}
         <option value="away_cover">Another time or tutor while our tutor is away</option>{/* cover while the tutor is away. */}
       </Select>{/* End of the drop-down. */}
       {kind === "extra" && ( // For an extra session:
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* two columns: */}
-          <Field label="Date of the event" name="event_on" type="date" min={today} required />{/* the event's date (today or later), */}
-          <Field label="What is it?" name="event_label" maxLength={200} placeholder="For example: algebra test" />{/* what the event is. */}
+          <Field label="Significant date" name="event_on" type="date" min={today} required hint="The day of the test or exam, or the day the assignment is due." />{/* the significant date (today or later), */}
+          <Field label="What is it?" name="event_label" maxLength={200} placeholder="For example: algebra test, English essay due, or Year 12 exam" />{/* what the significant date is for. */}
         </div> // End of the columns.
       )}{/* End of this part. */}
       {kind === "public_holiday" && <Field label="Public holiday date" name="event_on" type="date" min={today} />}{/* For a public holiday: the holiday's date. */}

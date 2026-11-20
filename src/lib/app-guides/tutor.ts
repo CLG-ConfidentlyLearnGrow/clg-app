@@ -151,7 +151,7 @@ If CLG wants to move a student's sessions to you (or change the day and time), a
 
 ### Offer a time for a family's request
 1. In **Sessions**, choose **Requests**.
-2. Find the request from your student's family (for example an extra session before a test).
+2. Find the request from your student's family (for example an extra session before a significant date, such as a test, exam or assignment due date).
 3. If you can, choose a date, time, length and place, add a note for the family, and choose **Offer this time**. The family then approves it.
 
 ### Answer a check-in about a new student
@@ -194,7 +194,7 @@ Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there
 3. You only see students you are matched with, and only what you need to teach them.
 
 ### Write a session note
-Notes are due within 6 hr of each session and take about three minutes. Families are promised them within 48 hr, so CLG follows up anything later than 6 hr.
+Notes are due within 6 hr of each session and take about three minutes. The app reminds you at 6 hr if a note is missing, and CLG follows up anything still missing at 12 hr. Families are promised them within 48 hr.
 1. On **Your students**, **Session notes to write** lists what is due. Choose **Write note**.
 2. Fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home.
 3. Use **Note for CLG staff only** for anything just for CLG.

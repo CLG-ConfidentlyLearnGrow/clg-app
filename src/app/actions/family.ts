@@ -130,5 +130,7 @@ export async function updateChild(_prev: FormState, formData: FormData): Promise
   if (!(await saveStudyDetails(supabase, v.student_id, v.program, subjects))) return failed; // Saves degree and unit details; stops if that fails.
 
   revalidatePath("/dashboard", "layout"); // Refreshes the dashboard and everything under it.
+  revalidatePath("/admin"); // Refreshes the admin page too, where admins can change these details.
+  revalidatePath("/matching"); // And the Matching tab, which checks year level and school before an offer.
   return { message: "Saved." }; // Tells the person it worked.
 } // End of updateChild.

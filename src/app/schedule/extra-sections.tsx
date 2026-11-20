@@ -124,8 +124,8 @@ type SessionRequest = { // A request as listed:
   subject: string; // the subject,
   tutor_id: string | null; // the usual tutor (if any),
   tutor_name: string | null; // their name,
-  event_on: string | null; // the event's date (if any),
-  event_label: string | null; // what the event is (if any),
+  event_on: string | null; // the significant date (if any),
+  event_label: string | null; // what the significant date is for (if any),
   wants: string | null; // what they'd like for cover (if any),
   note: string | null; // the family's note (if any),
   status: string; // its status,
@@ -205,11 +205,11 @@ export async function RequestsSection({ // The requests and public holidays sect
 
   const line = (r: SessionRequest) => // One line describing a request:
     `${r.student_name} · ${r.subject} · ${KIND_NAMES[r.kind] ?? r.kind}` + // the student, subject and kind,
-    (r.kind === "extra" && r.event_on ? ` before ${r.event_label ?? "an event"} on ${shortDate(r.event_on)}` : "") + // the event (for an extra session),
+    (r.kind === "extra" && r.event_on ? ` before ${r.event_label ?? "a significant date"} on ${shortDate(r.event_on)}` : "") + // the significant date (for an extra session),
     (r.kind !== "extra" && r.event_on ? ` · ${shortDate(r.event_on)}` : "") + // the date (for other kinds),
     (r.wants ? ` · wants ${WANTS_NAMES[r.wants] ?? r.wants}` : ""); // and what they'd like (if given).
 
-  // A day before the event is the latest an extra session can be.
+  // A day before the significant date is the latest an extra session can be.
   const dayBefore = (iso: string) => { // Gives the day before a date:
     const d = new Date(`${iso}T00:00:00`); // the date,
     d.setDate(d.getDate() - 1); // moved back a day,
@@ -244,7 +244,7 @@ export async function RequestsSection({ // The requests and public holidays sect
       )}{/* End of this part. */}
 
       {canAsk && children.length > 0 && ( // If they can ask and have a child with a subject:
-        <Card collapsible defaultOpen={false} title="Ask for a session" description="An extra session before a big event, a one-off for a public holiday week, or cover while your tutor is away.">{/* a fold-up card: */}
+        <Card collapsible defaultOpen={false} title="Ask for a session" description="An extra session before a significant date (a test, exam or assignment due date), a one-off for a public holiday week, or cover while your tutor is away.">{/* a fold-up card: */}
           <SessionRequestForm students={children} today={today} />{/* the ask-for-a-session form. */}
         </Card> // End of the card.
       )}{/* End of this part. */}

@@ -19,8 +19,8 @@ select tests.claims(null);
 
 -- Note reminders: 6 hr, and no 24 or 48 hr left.
 select tests.eq(case when strpos(pg_get_functiondef('private.queue_note_reminders()'::regprocedure), 'interval ''6 hours''') > 0 and strpos(pg_get_functiondef('private.queue_note_reminders()'::regprocedure), 'interval ''48 hours''') = 0 and strpos(pg_get_functiondef('private.queue_note_reminders()'::regprocedure), 'interval ''24 hours''') = 0 then 1::bigint else 0::bigint end, 1::bigint, 'note reminders at 6 hr'); -- checks the reminder job
--- Admin to-do count: notes 6 hr or more late.
-select tests.eq(case when strpos(pg_get_functiondef('public.to_do_counts()'::regprocedure), 'd.hours_since_end >= 6') > 0 then 1::bigint else 0::bigint end, 1::bigint, 'to-do count at 6 hr'); -- checks the admin count
+-- Admin to-do count: no longer 48 hr (since 20 Nov 2026 it is 12 hr, checked in summaries_admins_12_hours.test.sql).
+select tests.eq(case when strpos(pg_get_functiondef('public.to_do_counts()'::regprocedure), 'd.hours_since_end >= 48') = 0 then 1::bigint else 0::bigint end, 1::bigint, 'to-do count not at 48 hr'); -- checks the admin count
 -- The "on time" measure: within 6 hr.
 select tests.eq(case when strpos(pg_get_functiondef('public.progress_measures(date, date)'::regprocedure), 'h.ends_at + interval ''6 hours''') > 0 then 1::bigint else 0::bigint end, 1::bigint, 'on-time measure at 6 hr'); -- checks the measure
 
