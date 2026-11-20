@@ -19,7 +19,7 @@ Operations admin; Lauren finishes at the end of 2026.
   a **Significant date** (a test, exam or assignment due date). The words in
   notices and error messages changed too. Stored column names stay
   (`event_on`, `event_label`). Migration:
-  `20261123400100_significant_dates_wording.sql`.
+  `20261123400110_significant_dates_wording.sql`.
 - **Missing summaries: admins told at 12 hr.** The tutor is still reminded at
   6 hr, when the summary is due. Admins are now told, and the to-do count and
   Notes overdue list count it, only if it is still missing at 12 hr.
