@@ -78,9 +78,12 @@ export async function updateSession(request: NextRequest) {
 
   // If Supabase sends an email link back to the wrong page (for example the
   // home page, when the address isn't in its Redirect URLs list), pass it on
-  // to the page that handles email links.
+  // to the page that handles email links. Addresses under /api/ are left
+  // alone: email links never land there, and other services (such as Xero
+  // returning the owner after Connect Xero) send their own "code".
   const params = request.nextUrl.searchParams; // The extra bits after "?" in the address.
-  if (path !== "/auth/confirm" && (params.has("code") || params.has("error_code"))) { // An email link has landed on the wrong page:
+  const isApi = path.startsWith("/api/"); // True for the app's behind-the-scenes addresses, which handle their own codes.
+  if (path !== "/auth/confirm" && !isApi && (params.has("code") || params.has("error_code"))) { // An email link has landed on the wrong page:
     const url = request.nextUrl.clone(); // Copies the address,
     url.pathname = "/auth/confirm"; // points it at the email link page,
     return NextResponse.redirect(url); // and sends the browser there.
