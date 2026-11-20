@@ -139,6 +139,16 @@ begin -- (start)
 end; -- (end)
 $$; -- (end of the block)
 
+-- Since 20 Nov 2026 a family must choose how often they pay before booking.
+-- Sam's family has not chosen yet, so asking for a booking is refused.
+select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03 (Sam's parent).
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails_with(format($$select public.request_booking(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'online', null, %L::date, %L::date + 28)$$, :'sam', :'first_day', :'first_day'), 'choose how often you would like to pay', 'booking needs a payment plan first'); -- Checks: no plan, no booking.
+reset role; -- Goes back to the all-powerful test user (access rules off).
+-- Every family in the tests so far chooses a plan (per term), so the booking tests below can run.
+insert into public.billing_accounts (family_id, plan, plan_chosen_at) select id, 'term', now() from public.families -- each family, per term, chosen now,
+on conflict (family_id) do update set plan_chosen_at = coalesce(public.billing_accounts.plan_chosen_at, now()); -- (or marks an existing account as chosen).
+
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.fails(format($$select public.request_booking(%L, 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'home', null, %L::date, %L::date + 28)$$, :'sam', :'first_day', :'first_day'), 'parent books a home session'); -- Checks this is refused: parent books a home session.

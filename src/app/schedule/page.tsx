@@ -297,6 +297,12 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
     const a = approvals.get(b.id); // the request's approvals,
     return isFamily && b.status === "requested" && !b.expired && a?.needs_family_ok && !a.family_ok_at && b.tutor_id !== viewer.id; // in a family dashboard: requested, not expired, needs the family, not yet approved by them, and not this tutor's.
   }); // End of the filter.
+  // A family must choose how often they pay before booking or approving
+  // (Carla, 20 Nov 2026). Only the person who pays gets rows back here.
+  const planChoices = isFamily // For a family dashboard:
+    ? (((await supabase.rpc("billing_my_plan_choices")).data ?? []) as { family_id: string; chosen: boolean }[]) // their plan choices,
+    : []; // otherwise none.
+  const planMissing = planChoices.some((c) => !c.chosen); // Whether any family they pay for has not chosen yet.
 
   // Numbers on tabs that need action ("How long to book", Libraries).
   const counts = await schedulingCounts(supabase); // The scheduling to-do numbers.
@@ -354,6 +360,12 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
               </p>{/* End of the line. */}
               <AvailabilityCheckForm id={myCheck.id} />{/* the confirm form. */}
             </Card> // End of the card.
+          )}{/* End of this part. */}
+          {!isDesk && planMissing && ( // For a payer who has not chosen a plan yet:
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber notice: */}
+              Please choose how often you would like to pay before booking or approving sessions.{" "}{/* what is needed, then, */}
+              <TextLink href="/billing">Choose in Billing</TextLink>{/* a link to Billing. */}
+            </p> // End of the notice.
           )}{/* End of this part. */}
           {!isDesk && familyToApprove.length > 0 && ( // For families with offers to approve:
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber notice: */}

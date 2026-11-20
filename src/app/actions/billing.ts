@@ -272,8 +272,10 @@ async function myFamilyAccount(familyId: string) {
   return data; // Hands it back.
 } // End of myFamilyAccount.
 
-// A parent or adult learner chooses how often the family pays. Allowed
-// until CLG sends the first invoice; the database checks this too.
+// The person who pays chooses how often the family pays. It is needed before
+// booking, and can be changed at any time: the change applies from the next
+// session not already on an invoice (Carla, 20 Nov 2026). The database checks
+// who may do it.
 export async function chooseBillingPlan(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = z // Checks the form has:
@@ -284,7 +286,7 @@ export async function chooseBillingPlan(_prev: FormState, formData: FormData): P
   const { error } = await supabase.rpc("billing_choose_plan", { p_family: parsed.data.family_id, p_plan: parsed.data.plan }); // Asks the database to save the choice.
   if (error) return plain(error, "Could not save your choice. Please try again."); // Failed: plain message.
   revalidatePath("/billing"); // Refreshes the family billing page.
-  return { message: "Thanks, your choice is saved." }; // Thanks them.
+  return { message: "Thanks, your choice is saved. It applies from your next session that is not already on an invoice." }; // Thanks them, and says when it applies.
 } // End of chooseBillingPlan.
 
 // A family agrees to the billing terms.

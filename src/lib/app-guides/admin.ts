@@ -476,6 +476,8 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
 3. If two people share invoices, choose who also pays and their share, then **Save split** (Owner and Finance).
 
+Tip: A family must choose how often they pay before they can ask for a booking or approve a time you offer. If they are stuck, you can set the plan here. The person who pays can change the plan later in their Billing page: it applies from their next session not already on an invoice, and you get a notice.
+
 Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students do not, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
 ### Add credit (Owner and Finance)
