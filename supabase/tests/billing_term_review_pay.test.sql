@@ -9,7 +9,12 @@
 -- Starts a transaction so nothing here is kept.
 begin;
 -- Runs the changes this relies on again (an earlier test may have re-run older files), then this one twice.
+-- Module 29 is needed before study plans, which the older file's rule does not know yet, so it is cleared while that file runs again.
+update public.training_modules set needed_for = null where needed_for = 'study_plan'; -- clears it for now
 \ir ../migrations/20261121300200_training_assign_order_jobs.sql
+-- Puts back the rule that knows study plans, and module 29's job.
+\ir ../migrations/20261123300100_training_goals_study_plans.sql
+update public.training_modules set needed_for = 'study_plan' where id = '7a000000-0000-4000-8000-000000000029'; -- module 29 is needed before study plans again
 \ir ../migrations/20261122300100_term_review_pay.sql
 \ir ../migrations/20261122300100_term_review_pay.sql
 

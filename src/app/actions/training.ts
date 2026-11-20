@@ -147,7 +147,7 @@ function moduleFields(formData: FormData) { // Takes the form.
       required, // compulsory or not,
       holds_matching: required && formData.get("holds_matching") === "on", // holds matches (only if compulsory),
       in_order: formData.get("in_order") === "on", // must be done in order with the other modules ticked the same way,
-      needed_for: (["drafting", "term_review"] as const).find((j) => j === formData.get("needed_for")) ?? null, // a job it is needed before (or none),
+      needed_for: (["drafting", "term_review", "study_plan"] as const).find((j) => j === formData.get("needed_for")) ?? null, // a job it is needed before (or none),
       practice_task: String(formData.get("practice_task") ?? "").trim().slice(0, 4000) || null, // a practice task CLG checks (or none),
       // (whether it counts towards the quarter's hours is set by the database: every module except safety ones)
     }, // (end of the columns)

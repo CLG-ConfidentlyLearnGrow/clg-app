@@ -125,3 +125,16 @@ Carla: for modules about the app, questions should show screenshots and ask what
 - **Evidence.** Rehearsing the real task with feedback before doing it with students: EEF *Effective Professional Development* (2021) names modelling, rehearsal and feedback among the mechanisms that work. Checking against clear criteria: EEF *Feedback* (2021).
 - **Legal note.** Tasks use made-up students, and the page and task wording say never to write about a real student (Privacy Act 1988, APP 6 and 11; the Children's Online Privacy Code). Submissions are training records, kept with completions.
 - Tests: `supabase/tests/training_screenshots_tasks.test.sql`.
+
+## 13. Goals for every student, and study plans as a paid add-on, 20 Nov 2026
+
+Carla: "The Yearly plan is just the goals ... The term and weekly plans are extra add-ons to the Tutoring that customers can pay for." A "Goals" view on the student page, and linking plans to a student calendar, are ideas for later and are not built.
+
+- **Module 27** becomes "Setting a student's goals" (part of all tutoring): agree two or three measurable goals in the first three sessions and update them each term. Practice task: write two measurable goals for a made-up student (Lily).
+- **Module 28** becomes "Each week's next step" (part of all tutoring).
+- **Module 29** "Term and weekly study plans" (new draft, optional, needed before study plan work): what families get, and setting up and keeping the term plan. Practice task: a term plan for Lily. It sits after the term review modules in the list.
+- Modules 27 and 28 are only rewritten while they are still drafts with their 18 Nov titles, so anything Carla has published or renamed is kept.
+- **Assigning module 29.** When a tutor teaches a student with the paid study plan add-on (the add-on is given, a tutor is assigned, or study plans become paid), any study plan modules the tutor still needs are assigned, due the day before their next booked session with that student (or in a week), and the tutor and full admins are told. While study plans are free for everyone, nothing is assigned. The "Ready for" column shows study plans too.
+- **Evidence.** Clear, specific goals with feedback against them are among the strongest levers in tutoring (EEF Teaching and Learning Toolkit: feedback, metacognition and self-regulation; AERO formative assessment guidance). Spaced, planned study between sessions supports retention (AERO, spacing and retrieval practice). Training a tutor just before they need it keeps the starting course short.
+- **Legal note.** No new personal information. Practice tasks use a made-up student. Assigned modules are work time and paid for their set time (Fair Work Act 2009 and the awards). Training only reads add-ons, tutor assignments and sessions; it writes only its own assignments.
+- Tests: `supabase/tests/training_goals_study_plans.test.sql` (and the older training tests now clear module 29's job while they re-run the 18 Nov file).
