@@ -37,7 +37,7 @@ import { ActionForm } from "@/components/action-form"; // The form wrapper that 
 import { Button, Field, FormMessage, Select, TextArea } from "@/components/ui"; // Shared form parts: button, text box, form message, drop-down and big text box.
 import { initialFormState, type FormState } from "@/lib/forms"; // A form's starting state, and the type for a form's reply.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while it sends.
-import { CANCEL_REASONS, QUARTER_HOURS, SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, dayLabel, placeLabel, sessionWhen, weekDates } from "@/lib/scheduling"; // Scheduling helpers: cancel reasons, quarter-hour times, session lengths, weekday names, a time in words, a day in words, a place in words, a session time in words, and a session's week.
+import { CANCEL_REASONS, HOME_MIN_MINUTES, QUARTER_HOURS, SESSION_LENGTHS, WEEKDAY_NAMES, clockTime, dayLabel, placeLabel, sessionWhen, weekDates } from "@/lib/scheduling"; // Scheduling helpers: cancel reasons, the shortest home session, quarter-hour times, session lengths, weekday names, a time in words, a day in words, a place in words, a session time in words, and a session's week.
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>; // The shape of a server action that a form sends to.
 
@@ -365,8 +365,8 @@ export function OfferForm({ // Its settings:
         weekday, // the day,
         start_time: start, // the start,
         minutes, // the length,
-        delivery: place === "online" ? "online" : "library", // online or library,
-        library_id: place === "online" ? null : place, // and the library (none if online).
+        delivery: place === "online" || place === "home" || place === "school" ? place : "library", // online, home, school, or a library,
+        library_id: place === "online" || place === "home" || place === "school" ? null : place, // and the library (none unless at a library).
       }; // (end of the typed time)
   const isSuggestion = !!suggested && !other && sameOption(suggested, option); // True if the admin kept the app's suggestion.
   return ( // Shows:
@@ -405,14 +405,24 @@ export function OfferForm({ // Its settings:
             </Select>{/* End of the drop-down. */}
             <Field label="Start time" name="other_start" type="time" step={300} value={start} onChange={(e) => setStart(e.target.value)} required />{/* The start time, in 5-minute steps. */}
             <Select label="Length" name="other_minutes" value={String(minutes)} onChange={(e) => setMinutes(Number(e.target.value))}>{/* A drop-down for the length: */}
-              {SESSION_LENGTHS.map((m) => ( // for each allowed length:
+              {SESSION_LENGTHS.filter((m) => place !== "home" || m >= HOME_MIN_MINUTES).map((m) => ( // for each allowed length (2 hr or more at home):
                 <option key={m} value={String(m)}>{/* a choice: */}
                   {m % 60 === 0 ? `${m / 60} hr` : `${Math.floor(m / 60)}.5 hr`}{/* in hours (for example 1 hr or 1.5 hr). */}
                 </option> // End of the choice.
               ))}{/* End of the loop. */}
             </Select>{/* End of the drop-down. */}
-            <Select label="Place" name="other_place" value={place} onChange={(e) => setPlace(e.target.value)}>{/* A drop-down for the place: */}
+            <Select // A drop-down for the place:
+              label="Place" // its label,
+              name="other_place" // its field name,
+              value={place} // the chosen place,
+              onChange={(e) => { // when the place changes:
+                setPlace(e.target.value); // keeps the new place,
+                if (e.target.value === "home" && minutes < HOME_MIN_MINUTES) setMinutes(HOME_MIN_MINUTES); // and moves a home session up to 2 hr.
+              }} // (end of the change step)
+            >{/* (end of the drop-down's settings) */}
               <option value="online">Online</option>{/* online, */}
+              <option value="home">At the student&apos;s home (special circumstances, at least 2 hr)</option>{/* at home (CLG only), */}
+              <option value="school">At the student&apos;s school (special circumstances)</option>{/* at school (CLG only), */}
               {libraries.map((l) => ( // for each library:
                 <option key={l.id} value={l.id}>{/* a choice: */}
                   {l.name}{/* its name. */}
@@ -423,6 +433,13 @@ export function OfferForm({ // Its settings:
               This time is not in the tutor&apos;s availability, so check with them first. The app still checks their weekly
               maximum and other bookings.{/* (to check with the tutor first) */}
             </p>{/* End of the paragraph. */}
+            {(place === "home" || place === "school") && ( // For a home or school session:
+              <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900 sm:col-span-2">{/* an amber note: */}
+                {place === "home" // the words for home or school:
+                  ? "Home sessions are for special circumstances and are booked for at least 2 hours at a time, because the tutor travels there. Check the family's address and the tutor's travel with both first, and put the address and any arrangements in the note below." // home,
+                  : "School sessions are for special circumstances. Confirm with the school first (the room, the sign-in rules and who the tutor reports to), and put those arrangements in the note below."}{/* school. */}
+              </p> // End of the note.
+            )}{/* End of this part. */}
           </div> // End of the block.
         )}{/* End of this part. */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* A row of two boxes: */}

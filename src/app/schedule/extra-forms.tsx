@@ -164,8 +164,8 @@ export function OfferOneOffForm({ // The "offer a one-off time" form, given:
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{/* three columns on wider screens: */}
         <Field label="Date" name="date" type="date" min={today} max={before ?? undefined} required />{/* the date (between today and the latest date), */}
         <Field label="Start" name="start_time" type="time" required />{/* the start time, */}
-        <Select label="Length" name="minutes" defaultValue="60">{/* the length drop-down: */}
-          {[60, 90, 120].map((m) => ( // for 1, 1.5 and 2 hr:
+        <Select label="Length" name="minutes" defaultValue={delivery === "home" ? "120" : "60"} key={delivery === "home" ? "home" : "other"}>{/* the length drop-down (reset when home is picked or unpicked): */}
+          {(delivery === "home" ? [120, 150, 180, 210, 240] : [60, 90, 120]).map((m) => ( // 2 to 4 hr at home (the tutor travels there), otherwise 1, 1.5 and 2 hr:
             <option key={m} value={m}>{/* an option: */}
               {m === 60 ? "1 hr" : `${m / 60} hr`}{/* its length in hours, */}
             </option> // end of the option.
@@ -175,7 +175,7 @@ export function OfferOneOffForm({ // The "offer a one-off time" form, given:
       <Select label="Where" name="delivery" value={delivery} onChange={(e) => setDelivery(e.target.value)}>{/* the "Where" drop-down: */}
         <option value="online">Online</option>{/* online, */}
         <option value="library">At a library</option>{/* at a library, */}
-        {isAdmin && <option value="home">At home (special circumstances)</option>}{/* at home (admins only), */}
+        {isAdmin && <option value="home">At home (special circumstances, at least 2 hr)</option>}{/* at home (admins only, 2 hr or more), */}
         {isAdmin && <option value="school">At school (special circumstances)</option>}{/* at school (admins only). */}
       </Select>{/* End of the drop-down. */}
       {delivery === "library" && ( // For a library session:

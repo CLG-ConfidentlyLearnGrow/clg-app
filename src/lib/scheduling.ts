@@ -5,6 +5,10 @@
 // The session lengths families can book, in minutes (1 hr to 3 hr in half-hour steps).
 export const SESSION_LENGTHS = [60, 90, 120, 150, 180] as const;
 
+// Home sessions are booked for at least 2 hours at a time, because the tutor
+// travels there (Carla, 20 Nov 2026). The database checks this too.
+export const HOME_MIN_MINUTES = 120; // The shortest home session, in minutes.
+
 // All students are in South Australia for now. Times are shown in the
 // student's local time; this is the default until other states join.
 export const LOCAL_TIME_ZONE = "Australia/Adelaide";

@@ -77,11 +77,21 @@ Open **Sessions** in the side menu. Its sections include **Overview**, **Booking
 ### Book a session for a family
 1. In **Sessions**, choose **Book a session**.
 2. Choose who it is for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
-3. Choose **Find times**. **Available times** shows only tutors who suit: checks in date for the student's state, teach the subject at the student's level, free then, and under their weekly hours. Libraries are offered when they are within the tutor's travel distance for that time and the family's travel distance (or you ticked them). **At home** times are offered when the learner's address is within a tutor's distance and the tutor ticked learners' homes for that time.
+3. Choose **Find times**. **Available times** shows only tutors who suit: checks in date for the student's state, teach the subject at the student's level, free then, and under their weekly hours. Libraries are offered when they are within the tutor's travel distance for that time and the family's travel distance (or you ticked them). **At home** times are offered when the learner's address is within a tutor's distance, the tutor ticked learners' homes for that time, and the session is 2 hr or longer.
 4. Choose a time. If you did not pick the suggested one, say why (it helps improve the suggestions).
 5. Add a note for the tutor and family if needed, and choose **Send to tutor and family**. They each have 3 days to approve, with a reminder after 2 days. It is confirmed once both say yes. If not, the offer closes for now: the tutor and family are told, you get a notice saying who did not answer, and the student is back in **Matching**.
 
 Tip: A student needs their details, preferred times and **How long to book** filled in before times can be offered. The family's address and travel distance are under **Session places** (from **Matching**). Libraries need a map point to be matched by distance; libraries loaded from OpenStreetMap have one.
+
+### Book a home or school session (special circumstances)
+Home and school sessions are only arranged by CLG. Home sessions are booked for at least 2 hr at a time, because the tutor travels there.
+1. Check with the family and the tutor first. For a home session, confirm the address and that the tutor can travel there. For a school session, confirm the room, the school's sign-in rules and who the tutor reports to.
+2. In **Matching**, choose the student, then **Offer this tutor** (or use the recommended offer).
+3. In **Time and place**, choose **Another time or place…**, then the day, start time and length, and choose **At the student's home** or **At the student's school** as the **Place**. For home, only 2 hr or longer can be chosen.
+4. Put the address and any arrangements in **Note for the tutor and family**, give the reason, and choose **Send to tutor and family**. The app still checks the tutor's weekly maximum and other bookings.
+5. For a single extra session, use **Sessions**, **Requests**, and choose **At home** or **At school** under **Where** (home sessions are 2 to 4 hr).
+
+Tip: **Times to check** does not list home or school sessions for a missing location, because there is no place to check against. A missing sign-on or a different finish time is still listed.
 
 ### Cancel a session for someone
 1. In **Sessions**, choose **Overview**, find the session and choose **Cancel**.
