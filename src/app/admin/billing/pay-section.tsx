@@ -17,7 +17,7 @@ type Line = {
   account_id: string | null; // who (if known),
   staff_name: string; // their name,
   work_date: string; // the day worked,
-  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary" | "training" | "term_review"; // what kind of pay,
+  kind: "session" | "late_cancel" | "min_topup" | "admin" | "tutoring_work" | "guaranteed" | "summary" | "training" | "term_review" | "penalty"; // what kind of pay,
   work_kind: string; // the kind of work (school, tertiary or admin),
   minutes: number; // minutes,
   rate_cents: number; // the rate in cents,
@@ -37,6 +37,7 @@ const KIND_LABELS: Record<Line["kind"], string> = { // Words for each kind of pa
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
   training: "Training", // compulsory training, for its set time.
   term_review: "Term review", // writing a term review CLG approved, 1 hour at the tutor rate.
+  penalty: "Penalty rate top-up", // extra pay for evenings, early mornings, weekends or public holidays under the award (Carla, 18 Nov 2026).
 }; // End of the list.
 
 // Adds days to a date (written as YYYY-MM-DD).
@@ -70,7 +71,7 @@ export async function PaySection({
   const end = period?.period_end ?? pick; // The last day.
   const length = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1; // How many days the period has.
 
-  const [roles, pay, lines, problems, settings, emails, waitingHours, recentWork, ratesDue] = await Promise.all([ // Reads nine things at once:
+  const [roles, pay, lines, problems, settings, emails, waitingHours, recentWork, ratesDue, levels] = await Promise.all([ // Reads ten things at once:
     supabase.from("account_roles").select("account_id, role, account:accounts(full_name)").in("role", ["tutor", "admin"]), // every tutor and admin with their name,
     supabase.from("billing_staff_pay").select("*"), // everyone's pay details,
     supabase.from("billing_pay_lines").select("*").gte("work_date", start).lte("work_date", end).order("work_date"), // the pay lines in this period, by day,
@@ -84,8 +85,11 @@ export async function PaySection({
       .eq("source", "staff") // logged by staff themselves,
       .gte("work_date", addDays(today, -56)) // in the last 8 weeks,
       .order("work_date", { ascending: false }), // newest first,
-    supabase.rpc("award_rates_due"), // and whether new award rates are due (owner and Finance only; Carla, 18 Nov 2026).
+    supabase.rpc("award_rates_due"), // whether new award rates are due (owner and Finance only; Carla, 18 Nov 2026),
+    supabase.rpc("billing_staff_levels"), // and each person's award level today (owner and Finance only; Carla, 18 Nov 2026).
   ]); // End of the reads.
+  type LevelRow = { account_id: string; level: number; level_two_from: string | null; started_on: string | null }; // One person's award level.
+  const levelOf = new Map(((levels.data ?? []) as LevelRow[]).map((l) => [l.account_id, l])); // Each person's level, by id.
   const dueJuly = typeof ratesDue.data === "string" ? ratesDue.data : null; // The 1 July new award rates are needed for (or nothing).
   type WorkRow = { id: string; account_id: string; work_date: string; minutes: number; note: string; status: string; work_category: string | null; achieved: string | null; review_note: string | null }; // One entry of work outside sessions.
   const workByPerson = new Map<string, WorkRow[]>(); // The entries grouped by person.
@@ -103,7 +107,7 @@ export async function PaySection({
   function summary(id: string, p: StaffPay | null) {
     const held = rolesOf.get(id) ?? []; // The roles they hold.
     const parts: string[] = []; // The rate parts.
-    if (held.includes("tutor")) parts.push(`tutor school ${rateText(p?.school_rate_cents)}, tertiary ${rateText(p?.tertiary_rate_cents)}`); // Tutors: school and tertiary rates.
+    if (held.includes("tutor")) parts.push(`tutor school ${rateText(p?.school_rate_cents)}${levelOf.get(id) ? ` (Level ${levelOf.get(id)?.level})` : ""}, tertiary ${rateText(p?.tertiary_rate_cents)}`); // Tutors: school rate with award level, and tertiary rate.
     if (held.includes("admin")) parts.push(`admin ${rateText(p?.admin_rate_cents)}`); // Admins: the admin rate.
     const roleNames = held.map((r) => (r === "admin" ? "Admin" : "Tutor")).join(" and "); // Their roles in words.
     return `${roleNames}${p ? ` · ${p.employment.replace("_", "-")}` : ""} · ${parts.join(" · ")}`; // e.g. "Tutor · casual · tutor school $40, tertiary $45".
@@ -123,13 +127,13 @@ export async function PaySection({
   const nameOf = new Map<string, string>([...staff, ...((formerRows ?? []) as { id: string; full_name: string }[]).map((a) => [a.id, a.full_name] as [string, string])]); // Everyone's name, by id.
 
   const [awardRes, changeRes] = await Promise.all([ // Reads two things at once:
-    supabase.from("billing_award_rates").select("work_kind, employment, min_rate_cents, award, effective_from").order("effective_from", { ascending: false }), // award rates, newest first,
+    supabase.from("billing_award_rates").select("work_kind, employment, level, min_rate_cents, award, effective_from").order("effective_from", { ascending: false }).order("work_kind").order("employment").order("level"), // award rates, newest first, then by work, employment and level,
     supabase.from("billing_staff_rate_changes").select("id, account_id, work_kind, old_cents, new_cents, effective_from").order("created_at", { ascending: false }).limit(20), // and the last 20 automatic raises.
   ]); // End of the reads.
-  const awardRows = (awardRes.data ?? []) as { work_kind: string; employment: string; min_rate_cents: number; award: string; effective_from: string }[]; // The award rates.
+  const awardRows = (awardRes.data ?? []) as { work_kind: string; employment: string; level: number; min_rate_cents: number; award: string; effective_from: string }[]; // The award rates.
   const awardDates = [...new Set(awardRows.map((a) => a.effective_from))]; // Each start date, newest first.
   const currentDate = awardDates.find((d) => d <= start) ?? awardDates[awardDates.length - 1]; // The start date in force for this pay period.
-  const templateCsv = ["work,employment,hourly_rate,award", ...awardRows.filter((a) => a.effective_from === currentDate).map((a) => `${a.work_kind},${a.employment},${(a.min_rate_cents / 100).toFixed(2)},${a.award}`)].join("\n"); // This year's rates as a file to download and change.
+  const templateCsv = ["work,employment,level,hourly_rate,award", ...awardRows.filter((a) => a.effective_from === currentDate).map((a) => `${a.work_kind},${a.employment},${a.level},${(a.min_rate_cents / 100).toFixed(2)},${a.award}`)].join("\n"); // This year's rates (with levels) as a file to download and change.
   const yearNow = Number(start.slice(0, 4)); // The pay period's year.
   const nextJuly = `${start.slice(5) >= "07-01" ? yearNow + 1 : yearNow}-07-01`; // The next 1 July.
   const WORK_LABELS: Record<string, string> = { school: "School tutoring", tertiary: "Tertiary tutoring", admin: "Admin" }; // Plain names for the kinds of work.
@@ -243,8 +247,8 @@ export async function PaySection({
                       <td>{/* a cell: */}
                         {KIND_LABELS[l.kind]} ({l.work_kind}){l.note ? `: ${l.note}` : ""}{/* the kind of pay, kind of work, and note. */}
                       </td>{/* End of the cell. */}
-                      <td>{hours(l.minutes)}</td>{/* Hours, */}
-                      <td>{dollars(l.rate_cents)}/hr</td>{/* rate, */}
+                      <td>{l.kind === "penalty" ? "(in session)" : hours(l.minutes)}</td>{/* Hours (a penalty top-up has none of its own: the session line counts them), */}
+                      <td>{l.kind === "penalty" ? "see note" : `${dollars(l.rate_cents)}/hr`}</td>{/* rate (a penalty top-up's rates are in its note), */}
                       <td>{dollars(l.amount_cents)}</td>{/* pay, */}
                       <td>{/* a cell: */}
                         {l.status === "sent" ? ( // if sent:
@@ -282,7 +286,7 @@ export async function PaySection({
       )}{/* End of that part. */}
 
       {canEdit && ( // For the owner and Finance:
-        <Card title={`Xero to-do${xeroTasks.length ? ` (${xeroTasks.length})` : ""}`} description="Changes to make to staff employee records in Xero, so Xero pays the same as the app. A line is added whenever someone's employment type, agreed hours or rates change, or they leave CLG. Tick each one off once Xero matches.">{/* a card listing what Xero still needs: */}
+        <Card title={`Xero to-do${xeroTasks.length ? ` (${xeroTasks.length})` : ""}`} description="Changes to make in Xero, so Xero pays the same as the app. A line is added whenever someone's employment type, start date, award level, agreed hours or rates change, when they leave CLG, and when timesheets include award penalty rate top-ups to add to the pay run. Tick each one off once Xero matches.">{/* a card listing what Xero still needs: */}
           {xeroTasks.length === 0 ? ( // Nothing to do:
             <Empty>Xero is up to date with the app.</Empty> // says so.
           ) : ( // Otherwise:
@@ -290,7 +294,7 @@ export async function PaySection({
               {xeroTasks.map((t) => ( // for each line:
                 <li key={t.id} className="rounded-xl border border-amber-200 bg-amber-50 p-3">{/* an amber box: */}
                   <p className="text-sm font-medium text-zinc-900">{/* the first line: */}
-                    {nameOf.get(t.account_id) ?? "Former staff member"} · {t.kind === "left" ? "Left CLG" : "Pay details changed"}{/* who, and what kind of change, */}
+                    {nameOf.get(t.account_id) ?? "Former staff member"} · {t.kind === "left" ? "Left CLG" : t.kind === "penalty_pay" ? "Penalty rate top-up to pay" : "Pay details changed"}{/* who, and what kind of change, */}
                   </p>{/* End of the first line. */}
                   <p className="mt-1 text-sm text-zinc-700">{t.details}</p>{/* what to change, */}
                   <p className="mt-1 text-xs text-zinc-500">Changed in the app {t.created_at.slice(0, 10)}</p>{/* when it changed, */}
@@ -301,6 +305,21 @@ export async function PaySection({
           )}{/* End of the choice. */}
         </Card> // End of the card.
       )}{/* End of the Xero to-do part. */}
+
+      {canEdit && (() => { // For the owner and Finance: tutors with a school rate but no start date (Carla, 18 Nov 2026).
+        const noStart = staffList.filter((s) => (rolesOf.get(s.id) ?? []).includes("tutor") && payOf.get(s.id)?.school_rate_cents != null && !payOf.get(s.id)?.started_on); // Who is missing a start date.
+        if (noStart.length === 0) return null; // Nobody: shows nothing.
+        return ( // Otherwise shows:
+          <Card title={`Start dates needed (${noStart.length})`}>{/* an amber reminder card: */}
+            <p className="text-sm text-amber-900">{/* what it means: */}
+              Under the Miscellaneous Award, a tutor moves from Level 1 to Level 2 after 3 months. The app needs each
+              tutor&apos;s start date to do this on time. Until a start date is saved, the app treats them as Level 1, which
+              could underpay someone who has been with CLG longer. Open each person under Pay rates below and enter their start date.{/* why it matters and what to do. */}
+            </p>{/* End of the note. */}
+            <p className="mt-2 text-sm">{noStart.map((s) => s.name).join(", ")}</p>{/* who is missing one. */}
+          </Card> // End of the card.
+        ); // End of what is shown.
+      })()}{/* End of the start dates part. */}
 
       <Card title="Pay rates" description="A separate hourly rate for each role a person holds: tutors have a school and a tertiary rate, admins have an admin rate. Someone who is both has all three. Pay is only worked out for a role once its rate is entered.">{/* A card of pay rates, explaining them: */}
         {xeroNote && <p className="mb-4 text-sm text-red-800">{xeroNote}</p>}{/* the Xero note, if any, */}
@@ -371,11 +390,12 @@ export async function PaySection({
         {awardDates.length === 0 ? <Empty>No award rates yet.</Empty> : awardDates.slice(0, 3).map((d) => ( // The three most recent years:
           <div key={d} className="mb-4">{/* one year: */}
             <SubHeading>{d > start ? `Starting ${plainDate(d)} (coming up)` : d === currentDate ? `From ${plainDate(d)} (in force now)` : `From ${plainDate(d)} (earlier)`}</SubHeading>{/* its start date and whether it's current */}
-            <Table headings={["Work", "Employment", "Minimum", "Award"]}>{/* a table of its rates: */}
+            <Table headings={["Work", "Employment", "Level", "Minimum", "Award"]}>{/* a table of its rates: */}
               {awardRows.filter((a) => a.effective_from === d).map((a) => ( // each rate:
-                <tr key={`${a.work_kind}-${a.employment}`}>{/* a row: */}
+                <tr key={`${a.work_kind}-${a.employment}-${a.level}`}>{/* a row: */}
                   <td>{WORK_LABELS[a.work_kind] ?? a.work_kind}</td>{/* the work, */}
                   <td>{a.employment.replace("_", "-")}</td>{/* the employment type, */}
+                  <td>{a.level}</td>{/* the level, */}
                   <td>{dollars(a.min_rate_cents)}/hr</td>{/* the minimum, */}
                   <td>{a.award}</td>{/* and the award. */}
                 </tr> // End of the row.

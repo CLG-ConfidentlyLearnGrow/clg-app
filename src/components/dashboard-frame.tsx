@@ -10,7 +10,9 @@
 // so does a staff member's employment contract while it waits to be signed
 // (Carla, 17 Nov 2026). Every page except the App guide itself has a "Show
 // me how" button by its heading, which opens the App guide steps for that
-// page as a refresher (Carla, 18 Nov 2026).
+// page as a refresher (Carla, 18 Nov 2026). A small note invites people to
+// turn on pop-up notifications on the device they are using, until they
+// turn them on or choose "Not now" (Carla, 18 Nov 2026).
 //
 import type { ReactNode } from "react"; // The type for "anything that can be shown".
 import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
@@ -21,6 +23,7 @@ import { WhatsNew } from "@/components/whats-new"; // The "What's new" pop-up fo
 import { firstTimeTour } from "@/components/first-time-tour"; // The first-time app tour for this dashboard, if it should open.
 import { CheckInPrompts } from "@/components/check-in-prompts"; // The check-in cards after a new match (Carla, 16 Nov 2026).
 import { ContractPrompt } from "@/components/contract-prompt"; // The "contract ready to sign" card for staff (Carla, 17 Nov 2026).
+import { PushPrompt } from "@/components/push-settings"; // The "turn on pop-up notifications" note (Carla, 18 Nov 2026).
 import { PageHelp } from "@/components/page-help"; // The "Show me how" button and pop-up (Carla, 18 Nov 2026).
 import { GuideParts } from "@/components/app-guide-view"; // Shows a few App guide parts, for that pop-up.
 import { getAdminLevel, type Role } from "@/lib/auth"; // Reads the signed-in admin's level (to pick their guide), and the type for a role.
@@ -72,6 +75,7 @@ export async function DashboardFrame({
       >{/* (end of the frame's settings) */}
         {current !== "contract" && <ContractPrompt role={role} />}{/* A card while a staff member has a contract to sign (tutor and admin dashboards, not on the contract page itself), */}
         <CheckInPrompts role={role} />{/* Any check-ins waiting for them after a new match (tutor, parent and student dashboards only), */}
+        <PushPrompt />{/* the "turn on pop-up notifications" note (only on devices that could have them but do not yet), */}
         {children}{/* then the page's own contents. */}
       </SectionShell>{/* End of the page frame. */}
     </> // End of the group.

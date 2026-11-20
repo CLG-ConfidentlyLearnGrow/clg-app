@@ -10,7 +10,7 @@ import { ContractText } from "@/components/contract-text"; // Shows a contract's
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, Card, Empty, Table, TextLink } from "@/components/ui"; // Shared page parts.
 import { needsTwoStep, requireViewer } from "@/lib/auth"; // Checks two-step login, and makes sure someone is signed in.
-import { CONTRACT_STATUS_NAMES, EMPLOYMENT_NAMES, contractHref, type ContractStatus, type Employment } from "@/lib/employment-contracts"; // Contract words and the page address.
+import { CONTRACT_STATUS_NAMES, EMPLOYMENT_NAMES, contractHref, documentLinks, type ContractDocument, type ContractStatus, type Employment } from "@/lib/employment-contracts"; // Contract words, the page address, and the document link swap list.
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { AcknowledgeForm, SignForm } from "./forms"; // The signing and acknowledging forms.
@@ -33,11 +33,11 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
     const [{ data }, { data: acks }, { data: docs }] = await Promise.all([ // reads three things at once:
       supabase.from("employment_contracts").select("id, title, body, body_sha256, status, employment, sent_at, signed_at, signed_name, statements, completed_at").eq("id", id).eq("account_id", viewer.id).maybeSingle(), // their contract,
       supabase.from("employment_contract_acknowledgements").select("statement, statement_title, statement_url, acknowledged_at").eq("contract_id", id), // what they have acknowledged,
-      supabase.from("employment_contract_documents").select("key, title, url, sort").order("sort"), // and the document links.
+      supabase.from("employment_contract_documents").select("key, title, url, also_known_as, sort").order("sort"), // and the document links (with their older addresses).
     ]); // End of the reads.
     const c = data as { id: string; title: string; body: string; body_sha256: string; status: ContractStatus; employment: Employment; sent_at: string; signed_at: string | null; signed_name: string | null; statements: string[]; completed_at: string | null } | null; // The contract (or nothing).
     const done = (acks ?? []) as { statement: string; statement_title: string; statement_url: string; acknowledged_at: string }[]; // The acknowledgements made.
-    const links = (docs ?? []) as { key: string; title: string; url: string }[]; // The document links.
+    const links = (docs ?? []) as ContractDocument[]; // The document links.
     return ( // Shows:
       <DashboardFrame role={role} roles={viewer.roles} current="contract">{/* the dashboard frame, */}
         <div className="space-y-6">{/* the cards, with space between: */}
@@ -49,7 +49,7 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
               <Card title={c.title} description={`${EMPLOYMENT_NAMES[c.employment]} · sent ${shortDate(c.sent_at)} · ${CONTRACT_STATUS_NAMES[c.status]}`}>{/* the contract card: */}
                 {c.status === "sent" && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">Please read the whole contract carefully. If anything is unclear or looks wrong, ask CLG in the <TextLink href="/help">Help chat</TextLink> before signing.</p>}{/* a note before signing, */}
                 {c.status === "withdrawn" && <p className="mb-4 rounded-xl bg-zinc-100 px-4 py-3 text-sm">CLG has withdrawn this contract, so it does not need signing. If a new one was sent, it is in your list of contracts.</p>}{/* a note if withdrawn, */}
-                <ContractText text={c.body} />{/* the wording. */}
+                <ContractText text={c.body} links={documentLinks(links)} />{/* the wording (old document addresses open the app pages). */}
               </Card>{/* End of the contract card. */}
               {c.status === "sent" && ( // Waiting to be signed:
                 <Card title="Sign your contract" description="Signing needs two-step login. Your signature is recorded with the date, the time, and a fingerprint of the exact wording above.">{/* the signing card: */}

@@ -26,7 +26,7 @@
 -- ---------------------------------------------------------------------------
 alter table public.billing_pay_lines drop constraint if exists billing_pay_lines_kind_check; -- removes the old list of kinds
 alter table public.billing_pay_lines add constraint billing_pay_lines_kind_check -- adds the list back with "term_review" included
-  check (kind in ('session', 'late_cancel', 'min_topup', 'admin', 'tutoring_work', 'guaranteed', 'summary', 'training', 'term_review')); -- every kind of pay line
+  check (kind in ('session', 'late_cancel', 'min_topup', 'admin', 'tutoring_work', 'guaranteed', 'summary', 'training', 'penalty', 'term_review')); -- every kind of pay line (keeps "penalty" from the award penalty rates change, so neither change removes the other)
 alter table public.billing_pay_lines add column if not exists term_review_id uuid references public.term_reviews (id) on delete set null; -- which term review a line pays for (blank on other lines)
 create unique index if not exists billing_pay_lines_term_review_once -- each term review is paid once
   on public.billing_pay_lines (term_review_id) where term_review_id is not null; -- (only lines that have one)

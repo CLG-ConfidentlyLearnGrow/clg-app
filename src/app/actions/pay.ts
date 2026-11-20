@@ -66,6 +66,10 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
     if (!Number.isFinite(h) || h < 0.25 || h > 60) return { error: "Enter agreed hours per week between 0.25 and 60, or leave it empty." }; // must be between 0.25 and 60 hours.
     guaranteed = Math.round(h * 60); // Stores it as minutes.
   } // End of agreed hours.
+  const startedText = String(formData.get("started_on") ?? "").trim(); // The typed start date (Carla, 18 Nov 2026).
+  if (startedText !== "" && !day.safeParse(startedText).success) return { error: "Enter the start date as a date, or leave it empty." }; // Must be a proper date if given.
+  const levelText = String(formData.get("school_level") ?? "1"); // The chosen school tutoring award level.
+  if (!["1", "3", "4"].includes(levelText)) return { error: "Choose a school tutoring award level." }; // Only the listed choices.
   const xero = (v?: string) => (v && v.trim() ? v.trim() : null); // Helper: a Xero id, or none if blank.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { error } = await supabase.from("billing_staff_pay").upsert({ // Saves (or replaces) the pay details:
@@ -73,6 +77,8 @@ export async function saveStaffPay(_prev: FormState, formData: FormData): Promis
     employment: parsed.data.employment, // employment type,
     ...rates, // the three rates,
     guaranteed_weekly_minutes: guaranteed, // agreed weekly minutes,
+    started_on: startedText === "" ? null : startedText, // the start date (or none),
+    school_level: Number(levelText), // the school tutoring award level,
     ...(formData.has("xero_employee_id") // and, only if the Xero fields were on the form:
       ? { // (the Xero links)
           xero_employee_id: xero(parsed.data.xero_employee_id), // employee id,
@@ -310,8 +316,9 @@ export async function declineHours(_prev: FormState, formData: FormData): Promis
 } // End of declineHours.
 
 // Saves a year's award minimum rates from an uploaded file (or pasted text).
-// Each line: work, employment, hourly rate, award name. For example:
-//   school,casual,33.50,Miscellaneous Award MA000104 Level 1 casual
+// Each line: work, employment, level, hourly rate, award name. For example:
+//   school,casual,2,33.85,Miscellaneous Award MA000104 Level 2 casual
+// An older file without the level column is read as Level 1.
 // Staff below the new minimum are raised on the start date.
 export async function uploadAwardRates(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdminLevel(PAY); // Only the owner and Finance admins.
@@ -321,17 +328,20 @@ export async function uploadAwardRates(_prev: FormState, formData: FormData): Pr
   const pasted = String(formData.get("csv") ?? ""); // Any pasted text.
   const text = file instanceof File && file.size > 0 ? await file.text() : pasted; // Uses the file if there is one, otherwise the pasted text.
   if (text.length > 20000) return { error: "That file is too big. It should be a short list of rates." }; // Guards against the wrong file.
-  const rows: { work_kind: string; employment: string; rate_cents: number; award: string }[] = []; // The rates found.
+  const rows: { work_kind: string; employment: string; level: number; rate_cents: number; award: string }[] = []; // The rates found.
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean); // Each non-empty line.
+  const withLevel = /level/i.test(lines[0] ?? "") || /^[^,]+,[^,]+,\s*[1-4]\s*,/.test(lines[0] ?? ""); // True if the file has a level column (its heading says "level", or the third column is 1 to 4).
   for (const [i, line] of lines.entries()) { // Goes through the lines one by one.
     const parts = line.split(",").map((p) => p.trim().replace(/^"|"$/g, "")); // Splits on commas and drops any quote marks.
     if (i === 0 && /work/i.test(parts[0] ?? "")) continue; // Skips the heading line.
-    const [work, employment, amount, ...award] = parts; // The four columns (the award name may contain commas).
+    const [work, employment, levelText, amount, ...award] = withLevel ? parts : [parts[0], parts[1], "1", ...parts.slice(2)]; // The columns (level 1 if the file has no level column; the award name may contain commas).
+    const level = Number(levelText); // The level as a number.
+    if (![1, 2, 3, 4].includes(level)) return { error: `Line ${i + 1} is not right: "${line}". The level must be 1, 2, 3 or 4.` }; // A level that does not exist.
     const cents = parseDollars((amount ?? "").replace("$", "")); // Turns the rate into cents.
     if (!work || !employment || cents === null) { // A line that doesn't make sense:
-      return { error: `Line ${i + 1} is not right: "${line}". Each line needs work, employment, hourly rate and award name.` }; // says which line.
+      return { error: `Line ${i + 1} is not right: "${line}". Each line needs work, employment, level, hourly rate and award name.` }; // says which line.
     } // End of that check.
-    rows.push({ work_kind: work.toLowerCase(), employment: employment.toLowerCase().replace("-", "_").replace(" ", "_"), rate_cents: cents, award: award.join(", ") }); // Adds the rate.
+    rows.push({ work_kind: work.toLowerCase(), employment: employment.toLowerCase().replace("-", "_").replace(" ", "_"), level, rate_cents: cents, award: award.join(", ") }); // Adds the rate.
   } // End of the lines.
   if (rows.length === 0) return { error: "The file has no rates in it." }; // Nothing found.
   const supabase = await createClient(); // Connects to the database as the signed-in person.

@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 
 // The plain database messages that are safe to show as they are (they start
 // with these words); anything else gets a general message.
-const PLAIN = /^(Only |Please |Choose |That |This |The contract has|The details)/; // The starts of this module's own plain messages.
+const PLAIN = /^(Only |Please |Choose |That |This |Each |The contract has|The details|The country)/; // The starts of this module's own plain messages.
 
 // Picks the message to show for a database problem.
 function problem(error: { message: string } | null, fallback: string): string { // Takes the problem and a general message.
@@ -96,20 +96,62 @@ export async function discardContractTemplate(_prev: FormState, formData: FormDa
 const documentSchema = z.object({ // The form's fields:
   key: z.string().regex(/^[a-z_]{2,40}$/, "That document was not found."), // which document,
   title: z.string().trim().min(3, "Please give the document a name.").max(200, "Please keep the name under 200 characters."), // its name,
-  url: z.string().trim().max(500, "Please keep the link under 500 characters.").regex(/^(https:\/\/|\/)/, "The link must start with https:// or be a page in this app (starting with /)."), // its link.
+  url: z.string().trim().max(500, "Please keep the link under 500 characters.").regex(/^(https:\/\/|\/)/, "The link must start with https:// or be a page in this app (starting with /)."), // its link (Australia's),
+  country_urls: z.string().max(5000, "Please keep the country links shorter.").default(""), // and links for other countries, one per line.
 }); // End of the rules.
+
+// Reads the "other countries" box: one line each, a two-letter country code,
+// a space, then the link (for example "NZ https://..."). Gives back the
+// links by country, or a plain message about the first line it cannot read.
+function readCountryUrls(text: string): { urls: Record<string, string> } | { error: string } { // Takes the box's text.
+  const urls: Record<string, string> = {}; // The links found so far.
+  for (const raw of text.split(/\r?\n/)) { // Goes through each line:
+    const line = raw.trim(); // without spaces at the ends,
+    if (!line) continue; // skipping blank lines.
+    const m = line.match(/^([A-Za-z]{2})\s*[:\-]?\s+(\S+)$/); // A code, a space, then the link?
+    if (!m) return { error: `This line could not be read: "${line}". Write the two-letter country code, a space, then the link.` }; // No: says which line.
+    urls[m[1].toUpperCase()] = m[2]; // Keeps it under the capitalised code.
+  } // End of the lines.
+  return { urls }; // Hands back the links.
+} // End of readCountryUrls.
 
 // Changes the name or link of a document staff acknowledge.
 export async function saveContractDocument(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdminLevel(["owner"]); // Only the owner (the database checks again).
   const parsed = documentSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const countries = readCountryUrls(parsed.data.country_urls); // Reads the other-country links.
+  if ("error" in countries) return { error: countries.error }; // A line could not be read: says which.
   const supabase = await createClient(); // Connects as the owner.
-  const { error } = await supabase.rpc("employment_contract_document_save", { p_key: parsed.data.key, p_title: parsed.data.title, p_url: parsed.data.url }); // Saves it.
+  const { error } = await supabase.rpc("employment_contract_document_save", { p_key: parsed.data.key, p_title: parsed.data.title, p_url: parsed.data.url }); // Saves the name and main link.
   if (error) return { error: problem(error, "Could not save the link. Please try again.") }; // Failed: says why.
+  const { error: countryError } = await supabase.rpc("employment_contract_document_save_country_urls", { p_key: parsed.data.key, p_urls: countries.urls }); // Saves the other-country links.
+  if (countryError) return { error: problem(countryError, "The name and main link were saved, but the country links were not. Please check them and save again.") }; // Failed: says why.
   refresh(); // Refreshes the pages.
   return { message: "Saved. Contracts signed from now on use this name and link." }; // Confirms it.
 } // End of saveContractDocument.
+
+// The rules for a document's wording kept in the app.
+const documentTextSchema = z.object({ // The form's fields:
+  key: z.string().regex(/^[a-z_]{2,40}$/, "That document was not found."), // which document,
+  body: z.string().max(100000, "The wording is too long (over 100,000 characters).").default(""), // its wording.
+}); // End of the rules.
+
+// Saves the wording of a document kept in the app (such as the Child Safe
+// Policy), and whether it is approved (final). Until approved, its page shows
+// a draft label (Carla, 18 Nov 2026).
+export async function saveContractDocumentText(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(["owner"]); // Only the owner (the database checks again).
+  const parsed = documentTextSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const approved = formData.get("approved") === "on"; // Whether "Approved" is ticked.
+  const supabase = await createClient(); // Connects as the owner.
+  const { error } = await supabase.rpc("employment_contract_document_save_text", { p_key: parsed.data.key, p_body: parsed.data.body.replace(/\r\n?/g, "\n"), p_approved: approved }); // Saves it (with tidy line endings).
+  if (error) return { error: problem(error, "Could not save the wording. Please try again.") }; // Failed: says why.
+  refresh(); // Refreshes the pages.
+  revalidatePath(`/policies/${parsed.data.key}`); // Refreshes the document's own page.
+  return { message: approved ? "Saved and approved. Staff see it without the draft label." : "Saved as a draft. Staff see it with a draft label until you tick Approved." }; // Confirms it.
+} // End of saveContractDocumentText.
 
 // ---------------------------------------------------------------------------
 // Sending and withdrawing (owner and Operations admins).

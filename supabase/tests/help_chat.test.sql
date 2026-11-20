@@ -269,5 +269,25 @@ update public.safety_word_flags set status = 'no_concern' where source_table = '
 select private.help_chat_tidy(); -- runs the nightly tidy-up again
 select tests.eq((select count(*) from public.help_chats where id = :'chat1'), 0::bigint, 'once the flag is closed as no concern, the old chat is deleted'); -- deleted
 
+-- ---------------------------------------------------------------------------
+-- Admins who are also parents (Carla, 18 Nov 2026): "Who is it about?" only
+-- lists people linked to the account, never everyone in the app.
+-- ---------------------------------------------------------------------------
+select tests.claims(:'olive', 'aal2'); -- signs in as Olive (owner, with two-step sign-in)
+set role authenticated; -- acts as a signed-in person
+select tests.eq((select count(*) from public.help_my_students()), 0::bigint, 'an admin with no children or students of their own is offered nobody'); -- the list is empty
+select tests.fails(format($q$select public.help_start_chat('other', 'About a student', 'Hello', %L)$q$, :'cal'), 'an admin cannot start a family-style chat about a student who is not theirs'); -- refused
+reset role; -- back to the database itself
+insert into public.account_roles (account_id, role) values (:'olive', 'parent') on conflict do nothing; -- Olive is also a parent
+insert into public.parent_profiles (account_id) values (:'olive') on conflict do nothing; -- with a parent profile
+insert into public.students (full_name, date_of_birth, state) values ('Olly Own', current_date - interval '9 years', 'SA') returning id as olly \gset
+-- (adds Olive's own child, Olly; keeps the id as olly)
+insert into public.parent_student_links (parent_id, student_id) values (:'olive', :'olly'); -- links Olly to Olive
+select tests.claims(:'olive', 'aal2'); -- signs in as Olive again
+set role authenticated; -- acts as a signed-in person
+select tests.eq((select count(*) from public.help_my_students() where id = :'olly' and connection = 'child'), 1::bigint, 'an admin who is a parent is offered their own child'); -- Olly is listed
+select tests.eq((select count(*) from public.help_my_students()), 1::bigint, 'an admin who is a parent is offered nobody else'); -- only Olly
+reset role; -- back to the database itself
+
 -- Undoes everything above.
 rollback;

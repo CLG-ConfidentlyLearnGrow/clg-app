@@ -32,7 +32,7 @@ CLG sends your contract in the app. A card on your dashboard and **My contract**
 1. Read the whole contract. If anything is unclear or looks wrong, ask CLG in **Help chat** before signing.
 2. Under **Sign your contract**, tick that you have read it and agree, and that you agree to sign electronically.
 3. Type your full name exactly as shown, then choose **Sign and accept**. You need two-step login to sign.
-4. Under **Acknowledgements**, open each document (the Fair Work Information Statement, the Casual Employment Information Statement if you are casual, the Child Safe Policy and the Staff Code of Conduct), tick that you have read it, type your name and acknowledge it.
+4. Under **Acknowledgements**, choose the **Open** button for each document (the Fair Work Information Statement, the Casual Employment Information Statement if you are casual, the Child Safe Policy and the Staff Code of Conduct), tick that you have read it, type your name and acknowledge it. CLG's own policies open as pages inside the app, and buttons in the contract open them too.
 5. CLG then sends you an email from Xero to enter your tax, bank and superannuation details.
 
 Tip: Your signed contract stays in **My contract**, so you can read it again at any time.
@@ -171,6 +171,14 @@ Tip: Only CLG's office team sees your answers. The family does not, and you do n
 ### Notices and reminders
 In **Sessions**, choose **Notices**. Open **Reminder settings** to choose when your first reminder comes before each session. Nothing is sent between 9pm and 5am your local time.
 
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away about reminders, booking news, progress note reminders and help chat replies, even when the app is closed or you have been signed out. They never show a student's name or other details, so they are safe on a locked screen.
+1. On your phone or computer, choose **Turn on pop-ups** on the note at the top of your dashboard, or go to **Sessions**, choose **Notices**, and choose **Turn on pop-ups on this device** on the **Pop-up notifications** card.
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+
+Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there, then turn on pop-ups. To stop them on a device, choose **Turn off on this device**.
+
 ## Students and progress
 
 ### See your students
@@ -229,7 +237,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
    - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
    - The 15 minutes after each session (summary and planning), app training modules, and 1 hour for each term review CLG approves are added for you. Do not log them.
 3. Changed your mind? Choose **Take back** before it is approved.
-4. **Last 8 weeks** shows your sessions and hours. If a time looks wrong, record the right finish time on the session, or contact CLG.
+4. **Last 8 weeks** shows your sessions and hours. If you tutor school students on a weekday before 7am or after 7pm, a weekend or a public holiday, and your rate is below the award rate for that time, a **Penalty rate top-up** line pays the difference. Under the award you move from Level 1 to Level 2 after 3 months with CLG, and the app raises your school rate then if it is below the Level 2 minimum. If a time looks wrong, record the right finish time on the session, or contact CLG.
 
 ## Help and safety
 

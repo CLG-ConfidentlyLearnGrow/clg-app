@@ -85,6 +85,9 @@ select public.save_term_review('50000000-0000-0000-0000-0000000000a2', 'Sent by 
 reset role; -- back to the test runner
 select tests.eq((select count(*) from public.term_reviews where id = '50000000-0000-0000-0000-0000000000a2' and status = 'submitted'), 1::bigint, 'admin sends without the check'); -- checks it was sent
 
+-- Both new kinds of pay line are allowed together: term reviews and award penalty rate top-ups (neither change removed the other).
+select tests.eq((select count(*) from pg_constraint c where c.conname = 'billing_pay_lines_kind_check' and pg_get_constraintdef(c.oid) like '%''term_review''%' and pg_get_constraintdef(c.oid) like '%''penalty''%'), 1::bigint, 'term review and penalty kinds both allowed'); -- counts the list of allowed kinds that has both, which should be one
+
 -- Undoes everything above.
 rollback;
 -- Says the test passed.

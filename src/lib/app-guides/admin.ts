@@ -46,6 +46,14 @@ Every page has a **Show me how** button next to its heading. Choose it to see th
 The first time you open the admin dashboard, a short **app tour** shows the parts your admin level uses and why each one matters. To take it again, choose **Show me how** next to any page heading, then **Take the app tour again**. You can also open **App guide** in the side menu and choose **Take the tour again** at the top. If you stopped part-way, the button says **Carry on the tour** and starts where you left off.
 
 Tip: If you help families and tutors, the App guide for parents, students or tutors has **See their tour**, so you know what they were shown.
+
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away about help chat messages, session notices and (if you are the Child Safety Officer or deputy) child safety concerns sent to you, even when the app is closed or you have been signed out. They never show names or details. A concern marked as immediate danger pops up even in quiet hours.
+1. Choose **Turn on pop-ups** on the note at the top of your dashboard (or, if you have **Sessions**, choose **Notices** there and use the **Pop-up notifications** card).
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+
+Tip: If a family or tutor says pop-ups are not arriving: on an iPhone or iPad CLG must be added to the home screen first; if they said no before, they need to allow CLG in their phone or browser notification settings.
 `;
 
 // Sessions, as seen by front-desk admins (Owner, Operations, Support).
@@ -462,9 +470,11 @@ Under **Record admin hours**, choose the person, day, hours and what it was for,
 Open **Contracts**. Once a contract is signed, open it and follow **Xero self-setup** to send Xero's **Invite to self-onboard**, then choose **I have sent the Xero invite**.
 
 ### Pay rates and the Xero to-do list
-- **Pay rates**: each person's employment type, agreed hours, and an hourly rate for each role. Choose **Save pay details**.
-- **Xero to-do**: changes to make to employee records in Xero so Xero pays the same as the app. Choose **Done in Xero** once Xero matches.
-- **Award rates**: upload next year's award minimum rates before 1 July. From 1 June each year, until they are uploaded, the owner and Finance admins get an app notice every 14 days, Billing shows a to-do number, and **New award pay rates are due** shows at the top of Staff pay. Once uploaded, the app raises any rate below the new minimum on the start date and adds a **Xero to-do** line for each change.
+- **Pay rates**: each person's employment type, agreed hours, **Start date with CLG**, **School tutoring award level** (tutors), and an hourly rate for each role. Choose **Save pay details**.
+- **Start date and Level 2**: under the Miscellaneous Award, a tutor is Level 1 for their first 3 months, then Level 2. The app works this out from **Start date with CLG**. At 3 months it raises their school rate if it is below the Level 2 minimum, tells the owner and Finance admins, and adds a **Xero to-do** to change their classification. Choose Level 3 or 4 only when a tutor has the qualifications for it. **Start dates needed** lists tutors with no start date yet.
+- **Penalty rate top-ups**: when a tutor's own rate is below the award rate for school tutoring on a weekday before 7am or after 7pm, a Saturday, a Sunday or a public holiday, **Work out pay** adds a **Penalty rate top-up** line with the difference. Its note shows the minutes and award rate. Public holiday rates apply only on a public holiday in the state the tutor is based in (their work state; SA if not set), whatever the learner's state. Top-ups are not sent to Xero as hours: **Send to Xero Payroll** adds a **Xero to-do** with the amount to add to that pay run.
+- **Xero to-do**: changes to make in Xero so Xero pays the same as the app, including penalty rate top-ups to add to a pay run. Choose **Done in Xero** once Xero matches.
+- **Award rates**: upload next year's award minimum rates before 1 July. From 1 June each year, until they are uploaded, the owner and Finance admins get an app notice every 14 days, Billing shows a to-do number, and **New award pay rates are due** shows at the top of Staff pay. Each line of the file has work, employment, level (1 to 4), hourly rate and award name; **Download this year's rates** gives a file to change. Once uploaded, the app raises any rate below the new minimum for each person's level on the start date and adds a **Xero to-do** line for each change.
 `;
 
 // The guide for each admin level, built from the parts above.
@@ -501,7 +511,8 @@ In **Privacy and records**:
 1. Open **Contracts**, then **Contract templates and document links**.
 2. To update a contract, open the version **In use** and paste the new wording: in the contract's Claude Doc, choose Export, then Markdown, then paste everything into **Wording**. Put gaps in square brackets, for example [Start date]. **Gaps found** shows which fill in by themselves and which an admin types.
 3. Choose **Save as a new draft version**, check the **Preview**, then tick the box and choose **Publish this version**. Contracts already sent keep their own wording.
-4. Under **Documents staff acknowledge**, change a document's name or link (for example when the Child Safe Policy moves into the app).
+4. Under **Documents staff acknowledge**, each document shows **Link set** when it has a link, and **Open link** lets you check it opens the right document. Change the name or **Link (Australia)**, add any **Links for other countries** (one per line, for example NZ then the link), then choose **Save name and links**.
+5. The Child Safe Policy and the Staff Code of Conduct are kept in the app, so contracts show them as buttons that open a page in the app. Paste each one's wording into **Wording** (from its Claude Doc: Export, then Markdown), choose **Save wording**, and tick **Approved** once the wording is final. Until then, staff see a draft label on the page.
 
 ### Staff leaving CLG
 In the **Staff directory**, open the person and use the "left CLG" panel. Their matches end and their records are kept for 7 years. Then follow the checklist shown (final pay, Microsoft 365, materials, Working with Children Check link).
