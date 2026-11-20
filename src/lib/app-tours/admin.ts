@@ -154,7 +154,7 @@ export const ADMIN_TOURS: Record<AdminLevel, TourSource> = { // level -> tour:
     text: WELCOME + FAMILIES + MATCHING_SESSIONS + RUNNING + BILLING + PAY + `
 ## Owner only
 
-You can change admin levels and invite admins, change prices and billing settings, see **Reports**, delete records on request, check **App issues**, set who receives child safety concerns and the flagged words, and approve or cancel emergency owner access.
+You can change admin levels and invite admins, change prices and billing settings, see **Reports** and set quarterly and yearly **Goals** there, delete records on request, check **App issues**, set who receives child safety concerns and the flagged words, and approve or cancel emergency owner access.
 
 Why: These settings affect everyone's access, money and children's records, so only the owner can change them.
 
@@ -164,6 +164,14 @@ Where: **Staff and accounts**, **Billing**, **Reports**, **Privacy and records**
   operations: { // The operations tour:
     title: "Welcome, Operations", // its title,
     text: WELCOME + FAMILIES + MATCHING_SESSIONS + RUNNING + BILLING + `
+## Reports and goals
+
+**Reports** has the monthly, quarterly and yearly reports (without money, which only the owner sees). **Goals** shows each quarterly and yearly goal the owner set, with **On track** or **Behind**.
+
+Why: Checking the goals each month shows whether CLG is on track, and gives you and the owner something clear to talk about at the monthly check-in.
+
+Where: **Reports**, then **All reports** or **Goals**.
+
 ## Emergency owner access
 
 If the owner cannot be reached and something only the owner can do is urgent, ask for emergency owner access with your reason. It starts 24 hr later unless the owner approves or cancels it, and ends after 7 days.

@@ -191,3 +191,94 @@ export function reportCsv(r: SavedReport): string { // Takes the report.
   add("Money", "Sessions not on an invoice yet", f.money.sessions_not_billed); // Missing invoices.
   return rows.map((row) => row.map(cell).join(",")).join("\r\n") + "\r\n"; // Joins cells with commas and lines with Windows line endings (Excel likes these).
 } // End of reportCsv.
+
+// ---------------------------------------------------------------------------
+// Goals (Carla, 20 Nov 2026): the owner sets a target for a quarter or a
+// financial year, and the owner and Operations admins check how it is going
+// each month. Goals only use figures without money, so Operations admins can
+// see them.
+// ---------------------------------------------------------------------------
+
+// A report's figures with the money part left out (what Operations admins get).
+export type FiguresNoMoney = Omit<ReportFigures, "money"> & { money?: ReportFigures["money"] }; // Every figure, with money only there for the owner.
+
+// The two kinds of goal period.
+export type GoalKind = "quarterly" | "yearly"; // a quarter, or a financial year (1 July to 30 June).
+
+// One goal, as saved in the database.
+export type ReportGoal = { // A goal:
+  id: string; // its id,
+  kind: GoalKind; // a quarter or a financial year,
+  period_start: string; // the period's first day,
+  metric: GoalMetricId; // which figure,
+  target: number; // the target number,
+  note: string | null; // why, or how it will be reached (optional).
+}; // End of ReportGoal.
+
+// Each figure a goal can be set on.
+export const GOAL_METRICS = [ // The figures, in the order they are shown:
+  { id: "matched", label: "Students matched with a tutor", unit: "", better: "up", grows: true, value: (f: FiguresNoMoney) => f.matching.matched }, // matched (more is better, adds up over the period),
+  { id: "matched_within_14_days", label: "Students matched within 2 weeks", unit: "", better: "up", grows: true, value: (f: FiguresNoMoney) => f.matching.within_14_days }, // matched quickly (more is better, adds up),
+  { id: "average_wait_days", label: "Average wait for a tutor", unit: " days", better: "down", grows: false, value: (f: FiguresNoMoney) => f.matching.average_days }, // average wait (fewer days is better),
+  { id: "new_students", label: "New students added", unit: "", better: "up", grows: true, value: (f: FiguresNoMoney) => f.enquiries.new_students }, // new students (more is better, adds up),
+  { id: "booked", label: "New students who booked", unit: "", better: "up", grows: true, value: (f: FiguresNoMoney) => f.enquiries.booked }, // booked (more is better, adds up),
+  { id: "booked_percent", label: "Share of new students who booked", unit: "%", better: "up", grows: false, value: (f: FiguresNoMoney) => f.enquiries.booked_percent }, // share booked (higher is better),
+  { id: "families_left", label: "Families who left", unit: "", better: "down", grows: true, value: (f: FiguresNoMoney) => f.leaving.families }, // families who left (fewer is better, adds up),
+  { id: "waiting_now", label: "Students still waiting at the end", unit: "", better: "down", grows: false, value: (f: FiguresNoMoney) => f.waiting_now.waiting }, // still waiting (fewer is better).
+] as const; // End of the figures (fixed).
+
+// The id of a figure a goal can be set on.
+export type GoalMetricId = (typeof GOAL_METRICS)[number]["id"]; // one of the ids above.
+
+// Finds a figure's details by its id.
+export function goalMetric(id: string) { // Takes the figure's id.
+  return GOAL_METRICS.find((m) => m.id === id); // Hands back its details (or nothing if unknown).
+} // End of goalMetric.
+
+// The words for a goal's target, e.g. "at least 20" or "10 days or fewer".
+export function goalTargetWords(id: string, target: number): string { // Takes the figure's id and the target.
+  const m = goalMetric(id); // The figure's details.
+  if (!m) return String(target); // Unknown figure: just the number.
+  return m.better === "up" ? `at least ${target}${m.unit}` : `${target}${m.unit} or fewer`; // "at least" when more is better, "or fewer" when fewer is better.
+} // End of goalTargetWords.
+
+// Whether a finished period met its goal: true, false, or null if there is no figure.
+export function goalMet(id: string, target: number, f: FiguresNoMoney): boolean | null { // Takes the figure's id, the target and the period's figures.
+  const m = goalMetric(id); // The figure's details.
+  const v = m?.value(f); // The period's figure.
+  if (!m || v === null || v === undefined) return null; // No figure (for example no one matched, so no average wait): cannot say.
+  return m.better === "up" ? v >= target : v <= target; // Met if at or above (more is better) or at or below (fewer is better).
+} // End of goalMet.
+
+// How a goal is going part-way through its period. Figures that add up over
+// the period (like students matched) are compared with the share of the
+// target expected by now; the others are compared with the target itself.
+export function goalProgress(id: string, target: number, f: FiguresNoMoney, elapsedDays: number, totalDays: number): { value: number | null; expected: number; onTrack: boolean | null } { // Takes the figure's id, target, figures so far, and days gone and in total.
+  const m = goalMetric(id); // The figure's details.
+  const v = m?.value(f) ?? null; // The figure so far.
+  const share = totalDays > 0 ? Math.min(1, elapsedDays / totalDays) : 1; // How far through the period it is (0 to 1).
+  const expected = m?.grows ? Math.round(target * share * 10) / 10 : target; // What it should be by now (part of the target for figures that add up).
+  if (!m || v === null) return { value: v, expected, onTrack: null }; // No figure yet: cannot say.
+  return { value: v, expected, onTrack: m.better === "up" ? v >= expected : v <= expected }; // On track if at or past what is expected by now.
+} // End of goalProgress.
+
+// The first day of the quarter a date falls in (1 Jan, 1 Apr, 1 Jul or 1 Oct).
+export function quarterStart(day: string): string { // Takes a date (YYYY-MM-DD).
+  const [y, m] = day.split("-").map(Number); // The year and month.
+  const q = Math.floor((m - 1) / 3) * 3 + 1; // The quarter's first month.
+  return `${y}-${String(q).padStart(2, "0")}-01`; // The 1st of that month.
+} // End of quarterStart.
+
+// The first day of the financial year a date falls in (1 July).
+export function yearStart(day: string): string { // Takes a date (YYYY-MM-DD).
+  const [y, m] = day.split("-").map(Number); // The year and month.
+  return `${m >= 7 ? y : y - 1}-07-01`; // 1 July this year from July, otherwise last year.
+} // End of yearStart.
+
+// The words for a goal period, e.g. "Jan to Mar 2027" or "2026 to 2027 financial year".
+export function goalPeriodLabel(kind: GoalKind, start: string): string { // Takes the kind and first day.
+  const [y, m] = start.split("-").map(Number); // The year and month it starts.
+  if (kind === "yearly") return `${y} to ${y + 1} financial year`; // A financial year.
+  const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; // Short month names.
+  return `${names[m - 1]} to ${names[m + 1]} ${y}`; // A quarter, e.g. "Jan to Mar 2027".
+} // End of goalPeriodLabel.

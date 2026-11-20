@@ -40,9 +40,10 @@ export const TRAINING_SETUP_TABS = [ // Each sub-tab's id and its name on screen
   { id: "settings", label: "Settings" }, // the settings.
 ] as const; // End of the list (fixed).
 
-// Reports' sub-tabs (owner only, /admin/reports).
+// Reports' sub-tabs (/admin/reports). The owner sees all of them; Operations admins see "All reports" and "Goals".
 export const REPORTS_TABS = [ // Each sub-tab's id and its name on screen:
   { id: "reports", label: "All reports" }, // the list of reports,
+  { id: "goals", label: "Goals" }, // quarterly and yearly goals and how they are going (owner and Operations, Carla 20 Nov 2026),
   { id: "make", label: "Report for your dates" }, // make one for any dates,
   { id: "settings", label: "Settings" }, // super and other costs.
 ] as const; // End of the list (fixed).

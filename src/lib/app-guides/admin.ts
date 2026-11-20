@@ -522,7 +522,13 @@ Under **Add staff**, choose the admin role and level. Only the owner can invite 
 - **Stripe and Xero**: connect CLG's Stripe and Xero accounts.
 
 ### Reports
-Open **Reports**. The app makes a report each month, each quarter and each financial year, with matching waits, enquiries, how full each tutor's week is, why people left, and money and profit per hour. Use **Report for your dates** for any dates, and **Settings** for super and running costs.
+Open **Reports**. The app makes a report each month, each quarter and each financial year, with matching waits, enquiries, how full each tutor's week is, why people left, and money and profit per hour. Use **Report for your dates** for any dates, and **Settings** for super and running costs. Operations admins can open every report too, but never see the money part, the spreadsheet download, **Report for your dates** or **Settings**.
+
+### Set quarterly and yearly goals
+1. Open **Reports**, then **Goals**.
+2. Under **Set a goal**, choose the period (this or next quarter, or this or next financial year), the figure (for example students matched within 2 weeks, or the average wait), and the target. Add a note if it helps.
+3. Choose **Save goal**. Saving a goal for a figure that already has one in that period changes it. Use **Remove** to take a goal away.
+4. Each month, **Goals** shows each goal with the figure so far, what is expected by now, and **On track** or **Behind**. Quarterly and yearly reports show whether each goal was **Met**. Goals never use money, so Operations admins see them too.
 
 ### Records, roles and deleting
 In **Privacy and records**:
@@ -560,6 +566,16 @@ If an Operations admin asks for emergency owner access, you are emailed at once 
     text: START + FAMILIES + MATCHING + SESSIONS + RUNNING + BILLING + `
 ### Staff pay (view only)
 You can see **Staff pay** under Billing, but only the owner and Finance admins change pay or approve hours.
+
+## Reports and goals
+
+### Open a report
+Open **Reports**. The app makes a report each month, each quarter and each financial year, with matching waits, enquiries, how full each tutor's week is and why people left. Choose **Open** on a report to see it. Money (income, wages and profit) is only shown to the owner, so it is not in the reports you see.
+
+### Check how the goals are going
+1. Open **Reports**, then **Goals**. The owner sets goals for each quarter and financial year.
+2. Each goal shows the figure so far, what is expected by now, and **On track** or **Behind**. Figures that add up over time, such as students matched, are compared with the share of the goal expected by now.
+3. Use this at the monthly check-in with the owner to talk about why each goal is on track or behind. Quarterly and yearly reports show whether each goal was **Met**.
 
 ## Emergency owner access
 

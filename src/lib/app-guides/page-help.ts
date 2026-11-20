@@ -47,8 +47,9 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "employment-contracts" }, // sending and following contracts,
     { part: "owner-only", tasks: ["contract templates"] }, // and the owner's contract templates.
   ], // End of Contracts.
-  reports: [ // Reports (owner):
-    { part: "owner-only", tasks: ["reports"] }, // the owner's reports,
+  reports: [ // Reports (owner and Operations):
+    { part: "owner-only", tasks: ["reports", "goals"] }, // the owner's reports and setting goals,
+    { part: "reports-and-goals" }, // Operations admins' reports and goals (Carla, 20 Nov 2026),
     { part: "matching", tasks: ["reports"] }, // and the matching reports.
   ], // End of Reports.
   problems: [{ part: "owner-only", tasks: ["app issues"] }], // App issues: reviewing problem reports.
