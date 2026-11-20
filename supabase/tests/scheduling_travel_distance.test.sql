@@ -77,8 +77,18 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select count(*) from public.tutor_travel_places where id = :'start'), 1::bigint, 'admins can see a tutor''s address'); -- Checks: the owner can see it.
-select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, false, '{}'::uuid[], null, array[6]::smallint[]) -- Counts Saturday times:
-  where tutor_id = '00000000-0000-0000-0000-000000000013' and delivery = 'home'), 5::bigint, 'admins are offered the home within the tutor''s distance'); -- (Norwood is about 2.8 km from the tutor's home).
+reset role; -- Goes back to the all-powerful test user (access rules off).
+update public.tutor_availability set ends_at = '12:00' where id = :'sat'; -- For a moment, T3's Saturday runs to 12pm, so a 2 hr home session fits,
+update public.tutor_work_settings set max_weekly_hours = 10 where tutor_id = '00000000-0000-0000-0000-000000000013'; -- and T3 may work up to 10 hr a week (it was 3).
+set role authenticated; -- Back to acting as the signed-in owner.
+select tests.eq((select case when count(*) > 0 then 1 else 0 end from public.find_session_times(:'sam', 'General Maths', 120, false, '{}'::uuid[], null, array[6]::smallint[]) -- Counts Saturday 2 hr times:
+  where tutor_id = '00000000-0000-0000-0000-000000000013' and delivery = 'home')::bigint, 1::bigint, 'admins are offered the home within the tutor''s distance'); -- (Norwood is about 2.8 km from the tutor's home; home sessions are 2 hr or more since 20 Nov 2026).
+select tests.eq((select count(*) from public.find_session_times(:'sam', 'General Maths', 60, false, '{}'::uuid[], null, array[6]::smallint[]) -- Counts Saturday 1 hr times:
+  where tutor_id = '00000000-0000-0000-0000-000000000013' and delivery = 'home'), 0::bigint, 'a 1 hr home session is not offered'); -- (home sessions are booked for at least 2 hours, Carla 20 Nov 2026).
+reset role; -- Goes back to the all-powerful test user (access rules off).
+update public.tutor_availability set ends_at = '11:00' where id = :'sat'; -- Puts T3's Saturday back to 9 to 11am,
+update public.tutor_work_settings set max_weekly_hours = 3 where tutor_id = '00000000-0000-0000-0000-000000000013'; -- and their weekly maximum back to 3 hr.
+set role authenticated; -- Back to acting as the signed-in owner.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 update public.student_places set travel_km = 2 where student_id = :'sam'; -- The family now travels only 2 km.
 set role authenticated; -- Back to acting as the signed-in owner.
