@@ -42,6 +42,8 @@ const PUBLIC_PATHS = [
   "/api/problems/cron", // Removes old problem report screenshots and reports.
   // The daily tutor applications tidy-up (checks the same secret).
   "/api/applications/cron", // Removes tutor applications past their keeping period, and their CVs.
+  // The daily staff probation run (checks the same secret).
+  "/api/probation/cron", // Sets up probations for new staff and reminds the owner when one is due (Carla, 20 Nov 2026).
   // The pop-up notification sender, woken by the database (checks the same secret).
   "/api/push/cron", // Sends waiting pop-up notifications (Carla, 18 Nov 2026).
 ]; // End of the public pages list.
