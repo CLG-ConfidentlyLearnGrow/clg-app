@@ -33,6 +33,14 @@ The side menu (on a phone, the **Admin menu** button above the page) shows only 
 You sign in with two-step login each time.
 
 Why: The app holds children's information, so each admin level sees only what its job needs, and two-step login keeps accounts safe even if a password leaks.
+
+## Your Overview
+
+The admin dashboard opens on **Overview**. Quick-look boxes show what matters for your admin level (for example sessions today, students waiting for a tutor, families on hold or tutor checks to renew). **Needs your attention** lists each part of the side menu with something waiting, and says **All caught up** when nothing is.
+
+Why: Starting each day from one screen means urgent jobs, such as a child safety concern or a lapsed check, are seen first.
+
+Where: **Home**, or **Overview** at the top of the side menu.
 `;
 
 // Families (front-desk levels: Owner, Operations, Support).

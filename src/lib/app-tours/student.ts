@@ -29,6 +29,14 @@ A number next to a menu item means something is waiting for you.
 
 Why: The numbers tell you when a step is due or a session time needs your answer, so check them when you sign in.
 
+## Your Overview
+
+Your dashboard opens on **Overview**: your next session, your steps this week, new updates from your tutor, and anything waiting for you under **Needs your attention**.
+
+Why: Planning your week around your next session and your steps helps you learn more between sessions.
+
+Where: **Home**, or **Overview** at the top of the side menu.
+
 ## Your learning
 
 **Your steps this week** lists the small things to do before your next session. Your progress page shows your next step, your goals and skills, your roadmap of tests and assignments, and the notes from each session.
