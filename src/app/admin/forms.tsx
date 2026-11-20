@@ -1,11 +1,10 @@
-// Summary: admin forms: invite staff, record checks, tutor work state, assign tutors, unlock accounts,
+// Summary: admin forms: invite staff, record checks, tutor work state, unlock accounts,
 // holds, tutors leaving, erasing a student, keeping periods and sending a check back.
 //
 "use client"; // Runs in the browser, so the forms can show their result straight away.
 
 import { // The server actions for these forms:
   declineCheck, // send a check back,
-  assignTutor, // assign a tutor,
   eraseStudent, // erase a student,
   inviteStaff, // invite staff,
   markTutorLeft, // mark a tutor as finished,
@@ -114,35 +113,6 @@ export function WorkStateForm({ tutors }: { tutors: Option[] }) {
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of WorkStateForm.
-
-// Only subjects the tutor teaches at this student's year level are offered.
-export function AssignForm({
-  studentId, // the student,
-  tutors, // and the tutors with the subjects they can teach this student.
-}: { // (their types:)
-  studentId: string; // an id,
-  tutors: { id: string; name: string; subjects: string[] }[]; // a list of tutors with subjects.
-}) { // (end of the settings)
-  return ( // Shows:
-    <ActionForm action={assignTutor} submitLabel="Assign tutor">{/* a form that assigns the tutor: */}
-      <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
-      <Select label="Tutor and subject" name="pick" required defaultValue="">{/* a drop-down of tutor and subject: */}
-        <option value="" disabled>{/* a blank first option that can't be picked: */}
-          Choose…{/* "Choose…", */}
-        </option>{/* (end of the option) */}
-        {tutors.map((t) => ( // for each tutor:
-          <optgroup key={t.id} label={t.name}>{/* a group named after them: */}
-            {t.subjects.map((s) => ( // for each subject:
-              <option key={s} value={`${t.id}|${s}`}>{/* an option, sent as "tutor|subject": */}
-                {t.name}: {s}{/* e.g. "Sam: Maths". */}
-              </option> // (end of the option)
-            ))}{/* End of the subjects loop. */}
-          </optgroup> // End of the group.
-        ))}{/* End of the tutors loop. */}
-      </Select>{/* End of the drop-down. */}
-    </ActionForm> // End of the form.
-  ); // End of what's shown.
-} // End of AssignForm.
 
 // The form for unlocking an account.
 export function UnlockForm() {

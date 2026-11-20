@@ -54,9 +54,6 @@ export const PARENT_SECTIONS = [ // Each section's id and its name on screen:
   { id: "add", label: "Add a child" }, // the add-a-child form.
 ] as const; // End of the list.
 
-// The student dashboard's own section.
-export const STUDENT_SECTIONS = [{ id: "learning", label: "Your learning" }] as const; // Just "Your learning".
-
 // The address of a dashboard's Sessions tab, e.g. "/schedule?as=tutor".
 // "as" tells the Sessions page which dashboard it belongs to, so a person
 // who is both an admin and a tutor sees the right sessions in each.

@@ -13,9 +13,6 @@ export const PRIVACY_REQUEST_KINDS = [
   { id: "other", label: "Something else about privacy", hint: "" }, // Anything else.
 ] as const; // "as const" keeps the exact ids so they can be type checked.
 
-// The allowed request ids ("access", "correction" and so on), for type checking.
-export type PrivacyRequestKind = (typeof PRIVACY_REQUEST_KINDS)[number]["id"];
-
 // Turns a request id into its plain label, or shows the id if unknown.
 export function requestKindLabel(kind: string): string {
   return PRIVACY_REQUEST_KINDS.find((k) => k.id === kind)?.label ?? kind; // Looks up the label; falls back to the id.
