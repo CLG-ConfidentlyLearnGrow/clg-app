@@ -43,11 +43,11 @@ insert into public.billing_staff_pay (account_id, employment, school_rate_cents,
   ('00000000-0000-0000-0000-000000000012', 'part_time', 2000, null); -- tutor T2, part-time, school rate only.
 select tests.fails($$select public.billing_add_admin_time('00000000-0000-0000-0000-000000000011', '2026-09-08', 60, 'Notes')$$, 'admin hours need an admin rate first'); -- Checks this is refused: admin hours need an admin rate first.
 update public.billing_staff_pay set admin_rate_cents = 3400 where account_id = '00000000-0000-0000-0000-000000000011'; -- Gives tutor T1 an admin rate too.
-select tests.eq((select count(*) from public.billing_award_rates), 9, 'owner reads award rates'); -- Checks: owner reads award rates.
+select tests.eq((select count(*) from public.billing_award_rates), 18, 'owner reads award rates'); -- Checks: owner reads all 18 award rates (9 Level 1 rates, plus school Levels 2 to 4 added 18 Nov 2026).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.billing_award_rates), 9, 'operations reads award rates'); -- Checks: operations reads award rates.
+select tests.eq((select count(*) from public.billing_award_rates), 18, 'operations reads award rates'); -- Checks: operations reads award rates. (18 rates since school Levels 2 to 4 were added, 18 Nov 2026)
 update public.billing_award_rates set min_rate_cents = 1 where work_kind = 'school'; -- Lowers the award minimum for school work, for this test.
 select tests.eq((select count(*) from public.billing_award_rates where min_rate_cents = 1), 0, 'only the owner changes award rates'); -- Checks: only the owner changes award rates.
 reset role; -- Goes back to the all-powerful test user (access rules off).

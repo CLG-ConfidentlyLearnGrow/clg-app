@@ -235,7 +235,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
    - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
    - The 15 minutes after each session (summary and planning) and app training modules are added for you. Do not log them.
 3. Changed your mind? Choose **Take back** before it is approved.
-4. **Last 8 weeks** shows your sessions and hours. If a time looks wrong, record the right finish time on the session, or contact CLG.
+4. **Last 8 weeks** shows your sessions and hours. If you tutor school students on a weekday before 7am or after 7pm, a weekend or a public holiday, and your rate is below the award rate for that time, a **Penalty rate top-up** line pays the difference. Under the award you move from Level 1 to Level 2 after 3 months with CLG, and the app raises your school rate then if it is below the Level 2 minimum. If a time looks wrong, record the right finish time on the session, or contact CLG.
 
 ## Help and safety
 

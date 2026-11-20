@@ -1,7 +1,8 @@
 // Summary: sends pay lines to Xero Payroll as draft timesheets, one per
 // person per pay period, for Carla to check and approve in Xero before the
 // pay run. Each kind of work (school, tertiary, admin) goes on its own
-// earnings rate.
+// earnings rate. Award penalty rate top-ups are not sent as hours: they go
+// on the Xero to-do list with the amount to add to the pay run.
 
 // Stops this file ever being sent to the browser.
 import "server-only";
@@ -71,7 +72,7 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
 
   const { data: lines } = await db // Reads the pay lines waiting to be sent:
     .from("billing_pay_lines") // from the pay lines table,
-    .select("id, account_id, staff_name, work_date, work_kind, minutes") // with who, when, what kind and how long,
+    .select("id, account_id, staff_name, work_date, kind, work_kind, minutes") // with who, when, what kind and how long,
     .eq("status", "pending") // only those not yet sent,
     .gte("work_date", period.period_start) // on or after the first day,
     .lte("work_date", period.period_end); // and on or before the last day.
@@ -101,13 +102,21 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
       tertiary: p.xero_tertiary_rate_id, // tertiary tutoring rate,
       admin: p.xero_admin_rate_id, // office admin rate.
     }; // End of the rate list.
-    const kinds = [...new Set(own.map((l) => l.work_kind))]; // The kinds of work this person did (no repeats).
+    const timed = own.filter((l) => l.kind !== "penalty"); // Lines paid by the hour (penalty top-ups go to the Xero to-do list instead; Carla, 18 Nov 2026).
+    const kinds = [...new Set(timed.map((l) => l.work_kind))]; // The kinds of work this person did (no repeats).
     const missing = kinds.filter((k) => !rateId[k]); // Kinds with no rate chosen yet.
     if (missing.length) { // Some rate is missing:
       problems.push(`${name}: choose a Xero earnings rate for ${missing.join(" and ")} work.`); // notes which,
       continue; // and moves on.
     } // End of the rate check.
     try { // Sending to Xero could fail.
+      if (kinds.length === 0) { // Only penalty top-ups are waiting (no hours to send):
+        const { error: noteError } = await db.rpc("billing_note_penalty_pay", { p_lines: own.map((l) => l.id) }); // adds them to the Xero to-do list,
+        if (noteError) throw new Error(noteError.message); // (treating a failure as a problem)
+        const { error: markError } = await db.rpc("billing_mark_pay_sent", { p_lines: own.map((l) => l.id), p_timesheet: "penalty-to-do" }); // and marks them as passed on.
+        if (markError) throw new Error(markError.message); // (treating a failure as a problem)
+        continue; // Moves on to the next person.
+      } // End of the top-ups only case.
       const res = await xeroPayroll<{ Timesheets: { TimesheetID: string }[] }>( // Sends a timesheet to Xero:
         "POST", // creating something new,
         "Timesheets", // a timesheet,
@@ -119,7 +128,7 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
             Status: "DRAFT", // as a draft for Carla to approve,
             TimesheetLines: kinds.map((k) => ({ // with one line per kind of work:
               EarningsRateID: rateId[k], // paid at that kind's rate,
-              NumberOfUnits: dailyUnits(period.period_start, days, own.filter((l) => l.work_kind === k)), // with hours for each day.
+              NumberOfUnits: dailyUnits(period.period_start, days, timed.filter((l) => l.work_kind === k)), // with hours for each day.
             })), // End of the lines.
           }, // End of the timesheet.
         ], // End of the content.
@@ -129,6 +138,10 @@ export async function sendTimesheets(periodStart: string): Promise<{ sent: numbe
       if (!id) throw new Error("Xero did not return a timesheet."); // No id means it didn't work.
       const { error } = await db.rpc("billing_mark_pay_sent", { p_lines: own.map((l) => l.id), p_timesheet: id }); // Marks these lines as sent.
       if (error) throw new Error(error.message); // Treats a save failure as a problem.
+      if (own.length > timed.length) { // Some penalty top-ups went with this timesheet:
+        const { error: noteError } = await db.rpc("billing_note_penalty_pay", { p_lines: own.map((l) => l.id) }); // adds them to the Xero to-do list, with the amount to add to the pay run.
+        if (noteError) problems.push(`${name}: the timesheet was sent, but the penalty top-up could not be added to the Xero to-do list (${noteError.message}). Add it to the pay run by hand.`); // Notes the problem plainly.
+      } // End of the top-ups.
       sent++; // Counts this person as sent.
     } catch (e) { // Something went wrong for this person:
       problems.push(`${name}: ${(e as Error).message}`); // notes what.
