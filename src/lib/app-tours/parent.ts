@@ -28,6 +28,14 @@ The side menu on the left (on a phone, the **Parent menu** button above the page
 
 Why: The numbers are how the app tells you a session time needs your yes, or a detail is missing. Checking them when you sign in means nothing is missed.
 
+## Your Overview
+
+Your dashboard opens on **Overview**: a quick look at your next session, session times waiting for your yes, new updates from tutors, and each child with their tutor and next session. **Needs your attention** lists anything waiting for you, and says **All caught up** when nothing is.
+
+Why: One look tells you whether anything needs you today, so nothing is missed and you do not need to open every page.
+
+Where: **Home**, or **Overview** at the top of the side menu.
+
 ## Your children
 
 This is where you add each child and keep their details up to date: year level, school, subjects, goals, and any learning needs you choose to share.

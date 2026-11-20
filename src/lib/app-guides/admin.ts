@@ -34,10 +34,17 @@ All admins need two-step login, because the app holds children's information.
 
 ### Get around the admin dashboard
 - Choose the **Admin** tab at the top. If you also tutor or are a parent, the other tabs take you to those dashboards.
+- **Home** and the **Admin** tab open your **Overview** (first in the side menu). See **See what needs you on the Overview** below.
 - The side menu shows only what your admin level can use. A number next to an item means something is waiting there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 - **Home**, **Child safety** (in red), **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
 - When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 - **App guide** in the side menu opens this guide. If you help families and tutors, their guides are listed under **Other guides you can open** at the bottom, so you can talk them through the app.
+
+### See what needs you on the Overview
+Your admin dashboard opens on **Overview**. It only shows what your admin level can open:
+- Quick-look boxes. Owner, Operations and Support see **Sessions today**, **Next 7 days** and **Waiting for a tutor**. Owner, Operations and Finance see **Families on hold** and **Invoices to approve** (Finance also sees **Pay to approve**). Owner and Operations see **Checks to renew**. Tap a box to open that page.
+- **Needs your attention**: one line for each side-menu item with something waiting (for example children to check, check-ins to follow up, help chats waiting for CLG, or new reports). Child safety concerns and flagged words show first, in red, for the Child Safety Officer and Deputy. When nothing is waiting, it says **All caught up**.
+- **Tutor checks to renew** (Owner and Operations): tutors whose checks have expired or expire within 60 days, soonest first, with a link to **Tutors and checks**.
 
 ### Get a refresher on the page you are on
 Every page has a **Show me how** button next to its heading. Choose it to see the App guide steps for that page, without leaving it. From there you can also choose **Open the whole App guide**, or **Take the app tour again**.

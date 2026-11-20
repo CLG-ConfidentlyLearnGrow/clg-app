@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
@@ -36,6 +36,13 @@ CLG sends your contract in the app. A card on your dashboard and **My contract**
 5. CLG then sends you an email from Xero to enter your tax, bank and superannuation details.
 
 Tip: Your signed contract stays in **My contract**, so you can read it again at any time.
+
+### See what needs you on the Overview
+**Home** (top of every page) and the **Tutor** tab open your **Overview**. It shows:
+- **Next 7 days** (sessions and hours), **Next session**, **Your students** and **Child safety checks**. Tap a box to open that page.
+- **Needs your attention**: one line for each thing waiting for you (for example session notes or term reviews to write, a booking to accept, a check to renew, or training to do). Tap a line to go straight to it. When nothing is waiting, it says **All caught up**.
+- **Coming up**: your next sessions in the coming week.
+- **Child safety checks to sort out**: any check that is missing, expired or due to renew within 60 days, with a link to add or renew it.
 
 ### Set up and use two-step login
 Tutors and admins need two-step login, because the app holds children's information.

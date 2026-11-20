@@ -18,7 +18,7 @@ import type { ReactNode } from "react"; // The type for "anything that can be sh
 import { RoleTabs } from "@/components/role-tabs"; // The tabs for each dashboard the person can use.
 import { SectionShell, type Section } from "@/components/section-shell"; // The page frame with a side menu, and one menu item's shape.
 import { getDashboardMenu } from "@/lib/dashboard-menu"; // Builds a dashboard's side menu.
-import { ROLE_TABS } from "@/lib/roles"; // Each dashboard's name and address.
+import { ROLE_PAGES, ROLE_TABS } from "@/lib/roles"; // Each dashboard's main working page, and its name and address.
 import { WhatsNew } from "@/components/whats-new"; // The "What's new" pop-up for this dashboard.
 import { firstTimeTour } from "@/components/first-time-tour"; // The first-time app tour for this dashboard, if it should open.
 import { CheckInPrompts } from "@/components/check-in-prompts"; // The check-in cards after a new match (Carla, 16 Nov 2026).
@@ -61,7 +61,7 @@ export async function DashboardFrame({
       <RoleTabs roles={roles} active={role} />{/* the dashboard tabs, with this one open, */}
       {tour ?? <WhatsNew role={role} />}{/* the first-time tour if it's due, otherwise the "What's new" pop-up (if this dashboard has unseen updates), */}
       <SectionShell // the page frame:
-        basePath={ROLE_TABS[role].href} // at the dashboard's address (each menu item has its own address anyway),
+        basePath={ROLE_PAGES[role]} // at the dashboard's main working page (each menu item has its own address anyway),
         label={ROLE_TABS[role].label} // labelled with the dashboard's name,
         role={role} // in the dashboard's colours,
         section={current} // on the open item,

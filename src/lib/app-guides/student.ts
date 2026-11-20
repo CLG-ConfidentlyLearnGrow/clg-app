@@ -15,11 +15,21 @@ export const STUDENT_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting around
 
-- **Home** (top of every page) takes you back to your dashboard.
+- **Home** (top of every page) takes you to your **Overview**: a quick look at your next session, your steps this week and anything waiting for you.
 - Your progress page has a **Back to home** button at the top.
-- The side menu has **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+- The side menu has **Overview**, **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 - **Child safety** (in red, top of every page) is there if you ever feel unsafe or are worried about someone.
 - **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
+
+### See what needs you on the Overview
+Your dashboard opens on **Overview** (also first in the side menu). It shows:
+- **Next session**, **Next 7 days**, **Steps this week** and **New from tutors**. Tap a box to open that page.
+- **Needs your attention**: one line for each thing waiting for you, such as an overdue step or a session time to answer. When nothing is waiting, it says **All caught up**.
+- **Your steps this week**: tick each one off when it is done.
+- **Coming up** (your next sessions) and **Your tutors**, with a link to your progress page.
+- **Billing**, only if you pay for your own sessions.
+
+Only your own sessions, steps and tutors are shown.
 
 ### Sign in for the first time
 1. Your parent or CLG sends you a login link by email.
