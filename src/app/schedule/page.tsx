@@ -693,7 +693,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}{/* The "where you teach" section (tutors). */}
 
-      {section === "libraries" && isAdmin && <LibrariesAdminSection filter={one(params.libs)} hrefFor={(f) => `${here("libraries")}&libs=${f}`} />}{/* The libraries section (admins). */}
+      {section === "libraries" && isAdmin && <LibrariesAdminSection filter={one(params.libs)} search={one(params.q)} hrefFor={(f) => `${here("libraries")}&libs=${f}${one(params.q) ? `&q=${encodeURIComponent(one(params.q))}` : ""}`} hiddenFields={{ as: role, section: "libraries" }} />}{/* The libraries section (admins). */}
 
       {section === "requests" && (canBook || isTutor) && ( // The requests section:
         <RequestsSection viewerId={viewer.id} isAdmin={isDesk} isTutor={isTutor} canAsk={canBook && !isDesk} /> // requests (only families can ask).

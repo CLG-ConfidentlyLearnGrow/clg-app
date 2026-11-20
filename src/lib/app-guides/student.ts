@@ -131,6 +131,8 @@ When you start with a new tutor, a card on your dashboard asks how it is going 1
 ### Book again before your book-till date
 About 3 weeks before your book-till date, you get a notice called **Book again?**. Go to **Sessions**, then **Book again**. Say whether you want the same day, time and tutor, choose a new book-till date, say again whether you want sessions during school holidays and on public holidays, then choose **Send answer**.
 
+Tip: Most libraries are closed on public holidays, so a library session that falls on one does not go ahead. **Requests** shows **library closed** for those weeks, and you can ask for a one-off at another time that week.
+
 ### Notices and reminders
 In **Sessions**, choose **Notices** to read reminders and news. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (it moves to the **Done** list at the bottom). Open **Reminder settings** to choose when your first reminder comes. Nothing is sent between 9pm and 5am your time.
 

@@ -32,7 +32,7 @@ select id as sam from public.students where full_name = 'Sam Three' \gset
 -- Admin: libraries, tutor checks and weekly hours.
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-insert into public.libraries (name, suburb) values ('Alpha Library', 'Adelaide'), ('Beta Library', 'Norwood'); -- Adds two libraries: Alpha in Adelaide and Beta in Norwood.
+insert into public.libraries (name, suburb, open_public_holidays) values ('Alpha Library', 'Adelaide', true), ('Beta Library', 'Norwood', true); -- Adds two libraries: Alpha in Adelaide and Beta in Norwood, set as open on public holidays so these tests give the same answer whatever the date (closed-on-holiday rules are in scheduling_library_public_holidays.test.sql).
 insert into public.tutor_checks (tutor_id, kind, reference, expires_on) -- Gives both tutors current checks:
 select t, k::public.tutor_check_kind, 'REF', current_date + 365 -- (each check, expiring in a year)
 from unnest(array['00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000014']::uuid[]) t -- (for tutors T3 and T4)

@@ -182,8 +182,14 @@ Choose **Reports** at the top of Matching to see:
 
 ### See the list of libraries
 1. In **Sessions**, choose **Libraries** (Owner and Operations admins).
-2. Use the buttons at the top of the list: **Active (ready for sessions)** shows libraries that are shown, confirmed and have opening hours, so sessions can be offered there. **To confirm or add hours** shows libraries still needing a look. **Hidden** shows libraries you have hidden. **All** shows every library. Each button shows how many are in it.
-3. To make a library active, add its opening hours under **Add opening hours**, then confirm it.
+2. Type a name, suburb or address in the search box and choose **Search**. Choose **Clear search** to see them all again.
+3. Use the buttons at the top of the list: **Active (ready for sessions)** shows libraries that are shown, confirmed and have opening hours, so sessions can be offered there. **★ Asked for, to confirm** shows libraries a tutor, family or student has asked for that are not confirmed yet (they also have a ★ in the list). **To confirm or add hours** shows libraries still needing a look. **Hidden** shows libraries you have hidden. **All** shows every library. Each button shows how many are in it.
+4. To make a library active, add its opening hours under **Add opening hours**, then confirm it.
+
+### Libraries on public holidays
+Every library is set as closed on public holidays, so no session is held at a library on one. A weekly booking simply has no session that week, and the family can ask for a one-off at another time.
+1. If a library does open on public holidays, choose **Set as open on public holidays** under it in **Sessions**, **Libraries**.
+2. To change it back, choose **Set as closed on public holidays**.
 `;
 
 // What every admin has for themselves: training, handbook, staff directory, pay.

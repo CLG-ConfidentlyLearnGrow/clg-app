@@ -72,3 +72,31 @@ notices" rule with `(select auth.uid())`. Tests:
   CLG goes international.
 - The library list shows the same library details as before (public
   addresses of public libraries, OpenStreetMap credit kept).
+
+## 5. Follow-ups (Carla, 20 Nov 2026)
+
+Carla: "Can it be default that libraries close on public holidays", and
+"Ability to search through libraries, and filter for current libraries -
+maybe even have a star on libraries which are yet to be confirmed, but have
+been asked for by a tutor, family or student".
+
+- **Closed on public holidays by default.** `libraries.open_public_holidays`
+  (false for every library). One-off times skip a library closed that day;
+  a weekly booking makes no session there that day (the family can ask for a
+  one-off that week); any other session there that day is refused with a
+  plain message. Admins choose **Set as open on public holidays** per
+  library. Existing booked sessions are not cancelled: the migration ends
+  by listing any upcoming ones so CLG can sort them out with the family.
+  The family's **Public holiday weeks** list says **library closed**.
+  Matches the family terms (no sessions on SA public holidays unless
+  agreed) and avoids sending a child to a closed building (child safety:
+  a safe, supervised public venue is part of the in-person session plan).
+- **Search and a star.** The Libraries list has a search box (name, suburb
+  or address) and a **★ Asked for, to confirm** filter; those libraries
+  show a ★. The to-do list now says "Asked for by a tutor, family or
+  student" instead of "Suggested by a tutor".
+
+Migration `20261122560200_libraries_closed_public_holidays.sql`, tests
+`supabase/tests/scheduling_library_public_holidays.test.sql`. No new
+personal information; the public holiday list keeps the same access rule
+(admins see all, families their own).
