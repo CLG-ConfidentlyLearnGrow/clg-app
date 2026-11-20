@@ -42,7 +42,7 @@ Only your own sessions, steps and tutors are shown.
 3. Enter your name, email, password, date of birth, state, year level or stage of study, and your school, university or TAFE (or "Not studying").
 4. Agree to the privacy policy and terms, then choose **Create account**, and open the link CLG emails you.
 
-Tip: Students under 16 join through a parent's account.
+Tip: Students under 16 join through their family's account.
 
 ### Put CLG on your phone's home screen
 Choose **Add CLG to your home screen** at the bottom of any page and follow the steps for your phone.
@@ -161,6 +161,8 @@ Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there
 2. Choose how often you would like to pay, and agree to the payment terms.
 3. Choose **Set up automatic payment** and enter your card or bank details on Stripe's secure page. CLG never sees them.
 4. Pay any invoice with **Pay (amount) now**.
+
+Tip: You do not need a Family profile to pay. An adult learner who pays for themselves does it all here, on the Student dashboard.
 
 Tip: Only the person or people paying see Billing. If your parent or someone else pays, you will not see it, unless CLG has made you the bill payer or an extra payer. If your sessions are on hold, your dashboard says so: check with whoever pays.
 

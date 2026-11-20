@@ -46,7 +46,7 @@ export async function setJobTitle(_prev: FormState, formData: FormData): Promise
 // Roles
 // ---------------------------------------------------------------------------
 
-const ROLE_WORDS: Record<string, string> = { tutor: "tutor", admin: "admin", parent: "parent", student: "student" }; // The word for each role in messages.
+const ROLE_WORDS: Record<string, string> = { tutor: "tutor", admin: "admin", parent: "Family", student: "student" }; // The word for each role in messages.
 
 // The rules for adding a role:
 const addSchema = z.object({

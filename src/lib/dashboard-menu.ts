@@ -217,12 +217,12 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
   } // End of the parent menu.
 
   // The student menu. Billing shows for an adult learner who pays for
-  // themselves; someone who is also a parent sees Billing on the parent menu.
+  // themselves; someone who also has a Family profile sees Billing on the Family menu.
   return [ // Hands back:
     { id: "learning", label: "Your learning", href: "/dashboard/student", count: todo.get("student", "learning") }, // Your learning (with steps overdue),
     ...sessions, // Sessions,
     { id: "calendar", label: "Weekly calendar", href: "/dashboard/calendar?as=student" }, // their week at a glance, and the link for their own calendar (Carla, 15 Nov 2026),
-    ...(!roles.includes("parent") && (await paysForFamily()) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay (Carla, 16 Nov 2026); someone who is also a parent sees it on their Parent tab,
+    ...(!roles.includes("parent") && (await paysForFamily()) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay (Carla, 16 Nov 2026); someone who also has a Family profile sees it on their Family tab,
     { id: "guide", label: "App guide", href: "/guide?as=student" }, // and the step-by-step guide to the app for students (Carla, 16 Nov 2026).
   ]; // End of the student menu.
 } // End of buildDashboardMenu.

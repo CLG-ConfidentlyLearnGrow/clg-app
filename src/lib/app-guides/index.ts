@@ -149,7 +149,7 @@ export function guidesFor(roles: Role[], level: AdminLevel | null): GuideId[] { 
 
 // Each guide's short name, for the list of other guides.
 export const GUIDE_NAMES: Record<GuideId, string> = { // id -> name:
-  parent: "Parents and carers", // parents,
+  parent: "Family", // the Family profile (parents and carers),
   student: "Students", // students,
   tutor: "Tutors", // tutors,
   owner: "Admin: Owner", // the owner,

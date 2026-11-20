@@ -22,7 +22,7 @@ You can skip it now and take it again any time: choose **Show me how** next to a
 
 ## Getting around
 
-The side menu on the left (on a phone, the **Parent menu** button above the page) has everything for your family. A number next to a menu item means something is waiting for you there.
+The side menu on the left (on a phone, the **Family menu** button above the page) has everything for your family. A number next to a menu item means something is waiting for you there.
 
 **Home** always brings you back here. It is at the top on a computer, and under **Menu** at the top right on a phone. If you have more than one role, tabs at the top switch between your dashboards.
 

@@ -14,7 +14,7 @@ export const ROLE_ORDER: Role[] = ["admin", "tutor", "parent", "student"];
 export const ROLE_TABS: Record<Role, { label: string; href: string }> = {
   admin: { label: "Admin", href: "/home?as=admin" }, // Admin tab opens the admin Overview.
   tutor: { label: "Tutor", href: "/home?as=tutor" }, // Tutor tab opens the tutor Overview.
-  parent: { label: "Parent", href: "/home?as=parent" }, // Parent tab opens the parent Overview.
+  parent: { label: "Family", href: "/home?as=parent" }, // Family tab opens the Family Overview (the "parent" role is shown as "Family": Carla, 20 Nov 2026).
   student: { label: "Student", href: "/home?as=student" }, // Student tab opens the student Overview.
 }; // End of the tab list.
 

@@ -18,7 +18,7 @@ export default function Home() {
       />{/* (end of the logo) */}
       <p className="mt-4 text-lg text-zinc-600">Confidently Learn &amp; Grow</p>{/* The tagline, */}
       <p className="mt-6 max-w-xl text-zinc-700">{/* a short line: */}
-        Tutoring, homework and learning support, all in one place for students, parents and tutors.{/* about what CLG offers. */}
+        Tutoring, homework and learning support, all in one place for students, families and tutors.{/* about what CLG offers. */}
       </p>{/* End of the line. */}
       <div className="mt-8 flex flex-wrap justify-center gap-3">{/* A row of buttons: */}
         <Link // a link:

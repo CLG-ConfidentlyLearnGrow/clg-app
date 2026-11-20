@@ -78,7 +78,7 @@ the job is done.
 - **Tutor**: sessions this week (with hours), the next session, number of
   students, child safety checks (each one that is missing, expired or due
   within 60 days), and the next 5 sessions in the coming week.
-- **Parent**: sessions on hold (every parent is told, as before), each own
+- **Family** (the parent role): sessions on hold (every parent is told, as before), each own
   child with their tutors and next session, the family's next sessions, new
   updates from tutors, and a **Billing** card only for the person or people
   who pay.

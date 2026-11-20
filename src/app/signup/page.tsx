@@ -9,7 +9,7 @@ export default function SignupPage() {
     <Page title="Create an account">{/* a page titled "Create an account", */}
       <Card>{/* with a card: */}
         <p className="mb-4 text-sm text-zinc-600">{/* a short note: */}
-          Parents, and students aged 16 or over, can create an account here straight away. Students under 16 use CLG through a parent&apos;s account. Tutors and admins join using the invitation link CLG emails them. Want to tutor with CLG? <TextLink href="/apply">Apply to tutor</TextLink>.{/* who can sign up here, how others join, and where to apply to tutor. */}
+          Families (parents and carers), and students aged 16 or over, can create an account here straight away. Students under 16 use CLG through a family account. Tutors and admins join using the invitation link CLG emails them. Want to tutor with CLG? <TextLink href="/apply">Apply to tutor</TextLink>.{/* who can sign up here, how others join, and where to apply to tutor. */}
         </p>{/* End of the note. */}
         <SignupForm />{/* The sign-up form. */}
         <p className="mt-4 text-sm">{/* A small line: */}
