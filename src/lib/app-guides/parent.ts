@@ -273,7 +273,8 @@ Tip: Until your family has a bill payer, any parent can set it up. The first par
 ### Change how often you pay
 1. In **Billing**, open **Change how often you pay** under your family's name.
 2. Choose the new plan and choose **Save change**.
-3. The new plan applies from your next session that is not already on an invoice. Invoices you already have stay as they are, so pay those as usual. Weekly plans pay by card.
+3. If you already have an invoice, the change is booked: you stay on your current plan until your next invoice, and the new plan starts with that invoice. The page shows the change and the day your next invoice is expected. Invoices you already have stay as they are, so pay those as usual. Weekly plans pay by card.
+4. To stay on your current plan, choose **Cancel this change** before it starts.
 
 ### Agree to the payment terms
 Before your first invoice, read the **Payment terms** card and agree. Sessions are paid in advance, and if an invoice is overdue, all your family's sessions go on hold until it is paid.

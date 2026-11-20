@@ -1,8 +1,9 @@
-// Summary: the form where a family chooses how often to pay.
+// Summary: the forms where a family chooses how often to pay, and cancels a
+// plan change they booked for their next invoice.
 //
 "use client"; // Runs in the browser, so the form can show its result straight away.
 
-import { chooseBillingPlan } from "@/app/actions/billing"; // The server action that saves the choice.
+import { cancelBillingPlanChange, chooseBillingPlan } from "@/app/actions/billing"; // The server actions that save the choice and cancel a booked change.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 
 // What each plan means, in the family's words.
@@ -22,7 +23,7 @@ export function ChoosePlanForm({ familyId, plan, chosen }: { familyId: string; p
         <legend className="sr-only">How often would you like to pay?</legend>{/* its heading, for screen readers only, */}
         {CHOICES.map((c) => ( // for each choice:
           <label key={c.value} className="flex items-start gap-2 text-sm">{/* a line holding: */}
-            <input type="radio" name="plan" value={c.value} required defaultChecked={chosen && plan === c.value} className="mt-1" />{/* a round button for this choice, ticked if it's the current plan, */}
+            <input type="radio" name="plan" value={c.value} required defaultChecked={chosen && plan === c.value} className="mt-1" />{/* a round button for this choice, ticked if it is the current plan, */}
             <span>{/* the words: */}
               <strong>{c.label}</strong>{/* the plan's name in bold, */}
               <span className="block text-zinc-600">{c.note}</span>{/* and its note below. */}
@@ -31,5 +32,14 @@ export function ChoosePlanForm({ familyId, plan, chosen }: { familyId: string; p
         ))}{/* End of the choices loop. */}
       </fieldset>{/* End of the group. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of ChoosePlanForm.
+
+// A button that cancels a plan change booked for the next invoice.
+export function CancelPlanChangeForm({ familyId }: { familyId: string }) { // Takes the family's id.
+  return ( // Shows:
+    <ActionForm action={cancelBillingPlanChange} submitLabel="Cancel this change">{/* a form that cancels the booked change, */}
+      <input type="hidden" name="family_id" value={familyId} />{/* with the family's id (hidden). */}
+    </ActionForm> // End of the form.
+  ); // End of what is shown.
+} // End of CancelPlanChangeForm.
