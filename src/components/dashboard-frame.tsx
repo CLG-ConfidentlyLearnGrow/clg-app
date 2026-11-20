@@ -50,7 +50,7 @@ export async function DashboardFrame({
   children: ReactNode; // contents can be anything shown.
 }) { // End of the settings.
   const menu = await getDashboardMenu(role, roles); // The dashboard's side menu.
-  const sections = menu.map((s) => (s.id === current && items ? { ...s, items } : s)); // The open item gets its smaller sections.
+  const sections = menu.map((s) => (s.id === current && items ? { ...s, items, countsInside: true } : s)); // The open item gets the page's own smaller sections, with their up-to-date numbers (which then carry all of its numbers).
   const tour = await firstTimeTour(role); // The first-time tour, if this dashboard's tour hasn't been seen yet (otherwise nothing).
   const guideId = ownGuide(role, role === "admin" ? await getAdminLevel() : null); // This dashboard's App guide (none for an admin without a level).
   const open = sections.find((s) => s.id === current); // The open menu item (for its name and the guide's address).

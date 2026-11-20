@@ -10,6 +10,7 @@ import { PROBLEM_PRIORITY_LABELS, PROBLEM_STATUSES, PROBLEM_STATUS_LABELS, type 
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { SendToGitHubForm, UpdateProblemForm } from "./forms"; // The reviewer's forms.
+import { problemTabs } from "@/lib/menu-sub-tabs"; // App issues' sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // The filters along the top of the queue: open reports (the default), each
 // status on its own, or everything.
@@ -39,10 +40,7 @@ export default async function ProblemReportsPage({ searchParams }: PageProps<"/a
   const filter = FILTERS.find((f) => f.id === params.status) ?? FILTERS[0]; // The filter chosen (open reports by default).
   const id = typeof params.id === "string" && /^[0-9a-f-]{36}$/.test(params.id) ? params.id : null; // The report to open, if any.
 
-  const items = [ // This page's sections under its tab:
-    { id: "queue", label: "Reports", href: "/admin/problems" }, // the queue,
-    ...(isOwner ? [{ id: "reviewers", label: "Who checks app issues", href: "/admin/problems?section=reviewers" }] : []), // and the reviewer list (owner only).
-  ]; // End of the sections.
+  const items = problemTabs(isOwner); // This page's sub-tabs under its tab (the shared list the side menu also uses).
 
   // Not on the list: explains, instead of showing an empty queue.
   if (!isReviewer) { // Not a reviewer:

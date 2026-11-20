@@ -21,6 +21,10 @@ export type ToDoCounts = { // What the page code gets back:
   forRole: (role: Role) => number | undefined; // (a function: role in, number out)
   // The number on one dashboard's Sessions tab in the side menu.
   sessionsFor: (role: Role) => number | undefined; // (a function: role in, number out)
+  // The number on one of Sessions' sub-tabs (e.g. Notices) in one dashboard's
+  // side menu, counted only on the dashboard where that number belongs, so
+  // the sub-tabs add up to the Sessions number (Carla, 20 Nov 2026).
+  sessionTab: (role: Role, section: string) => number | undefined; // (a function: role and sub-tab in, number out)
 }; // End of the shape.
 
 // What adds up to each dashboard tab. Family billing belongs to the parent
@@ -74,6 +78,7 @@ export async function getToDoCounts(roles: Role[]): Promise<ToDoCounts> { // Get
   return { // Hands back:
     get: (area, section) => shown(rows.find((r) => r.area === area && r.section === section)?.n ?? 0), // one menu item's number,
     forRole: (role) => shown(sum(areasFor(role, roles)) + sessionsSum(role)), // a dashboard tab's total (its sections plus its Sessions tab),
-    sessionsFor: (role) => shown(sessionsSum(role)), // and one dashboard's Sessions number.
+    sessionsFor: (role) => shown(sessionsSum(role)), // one dashboard's Sessions number,
+    sessionTab: (role, section) => (sessionSectionsFor(role, roles).includes(section) ? shown(rows.find((r) => r.area === "sessions" && r.section === section)?.n ?? 0) : undefined), // and one Sessions sub-tab's number (only on the dashboard it belongs to).
   }; // (end)
 } // End of getToDoCounts.

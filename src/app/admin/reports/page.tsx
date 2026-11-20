@@ -11,13 +11,10 @@ import { addDays, localToday, shortDate } from "@/lib/scheduling"; // Date helpe
 import { REPORT_KIND_LABELS, money, num, periodLabel, reasonLabel, type SavedReport } from "@/lib/reports"; // Report names, number and money display, and the report type.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { MakeReportForm, ReportSettingsForm } from "./forms"; // The forms on this page.
+import { REPORTS_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // The page's sections.
-const SECTIONS = [ // Each section's id and its name on screen:
-  { id: "reports", label: "All reports" }, // the list of reports,
-  { id: "make", label: "Report for your dates" }, // make one for any dates,
-  { id: "settings", label: "Settings" }, // super and other costs.
-] as const; // End of the list (fixed).
+const SECTIONS = REPORTS_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 // The common ranges offered as one-tap buttons, worked out from today.
 function quickRanges(today: string) { // Takes today's date (YYYY-MM-DD).

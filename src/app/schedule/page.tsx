@@ -15,6 +15,7 @@ import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard 
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
 import { ROLE_ORDER } from "@/lib/roles"; // The order of the dashboards.
 import { sessionsHref } from "@/lib/dashboard-menu"; // The address of a dashboard's Sessions tab.
+import { sessionTabs } from "@/lib/menu-sub-tabs"; // Each dashboard's Sessions sub-tabs (Carla, 20 Nov 2026).
 import { // The extra sections:
   BlocksSection, // blocks,
   LibrariesAdminSection, // libraries (admins),
@@ -172,31 +173,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   // The menu's sections for one dashboard. Each dashboard sees only the
   // parts that fit it: admins everything, tutors their schedule, offers and
   // notices, families booking, their schedule and notices.
-  const sectionsFor = (r: Role) => { // Takes the dashboard:
-    const isAdmin = r === "admin" && fullLevel; // a full admin in the admin dashboard,
-    const isDesk = r === "admin" && deskLevel; // a front-desk admin in the admin dashboard,
-    const isTutor = r === "tutor"; // the tutor dashboard,
-    const canBook = isDesk || r === "parent" || r === "student"; // dashboards that can book (front desk and families; tutors can't).
-    return [ // The side menu's sections:
-      { id: "sessions", label: "Overview" }, // the overview (upcoming sessions),
-      { id: "bookings", label: "Bookings" }, // bookings,
-      ...(isDesk ? [{ id: "book", label: "Book a session" }] : []), // book a session (front desk),
-      // Admins set where each student can have sessions; families give
-      // preferred times and study dates only (Carla, 2 Nov 2026).
-      ...(canBook ? [{ id: "child-places", label: isAdmin ? "Session places" : "Preferred times" }] : []), // session places (admins) or preferred times (families),
-      ...(canBook ? [{ id: "booking-length", label: "How long to book" }] : []), // how long to book (those who can book),
-      { id: "away", label: "Away dates" }, // away dates,
-      ...(canBook || isTutor ? [{ id: "requests", label: "Requests" }] : []), // requests (those who can book, and tutors),
-      { id: "blocks", label: "Blocks" }, // blocks,
-      { id: "notices", label: "Notices" }, // notices,
-      ...(canBook ? [{ id: "next-term", label: "Book again" }] : []), // book again (those who can book),
-      ...(isDesk ? [{ id: "waitlist", label: "Waitlist" }] : []), // waitlist (front desk),
-      ...(isTutor ? [{ id: "places", label: "Where you teach" }] : []), // where you teach (tutors),
-      ...(isAdmin ? [{ id: "times", label: "Times to check" }] : []), // times to check (admins),
-      ...(isAdmin ? [{ id: "tutor-availability", label: "Tutor availability" }] : []), // tutor availability (admins),
-      ...(isAdmin ? [{ id: "libraries", label: "Libraries" }] : []), // libraries (admins).
-    ]; // End of the sections.
-  }; // End of sectionsFor.
+  const sectionsFor = (r: Role) => sessionTabs(r, adminLevel); // One dashboard's Sessions sub-tabs (the shared list the side menu also uses, so it can show them from any page).
   // Matching has its own tab now.
   if (params.section === "matching") redirect("/matching"); // Matching asked for: goes to its page.
 

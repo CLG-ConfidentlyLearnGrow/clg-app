@@ -17,7 +17,7 @@ export const STUDENT_GUIDE: GuideSource = { // The guide:
 
 - **Home** (top of every page) takes you to your **Overview**: a quick look at your next session, your steps this week and anything waiting for you.
 - Your progress page has a **Back to home** button at the top.
-- The side menu has **Overview**, **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+- The side menu has **Overview**, **Your learning**, **Sessions**, **Weekly calendar** and **App guide**. If you pay for your own sessions, you also see **Billing**. A number next to a menu item means something is waiting for you. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
 - **Child safety** (in red, top of every page) is there if you ever feel unsafe or are worried about someone.
 - **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 

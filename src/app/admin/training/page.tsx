@@ -11,15 +11,10 @@ import { adelaideToday } from "@/lib/billing/run"; // Today's date in Adelaide.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { AUDIENCE_NAMES, CERT_NAMES, STAGE_NAMES, STATE_NAMES, STATE_STYLES, hrs, timeText, type Audience, type CertState, type Stage, type TrainingState } from "@/lib/training"; // Training words, colours and shapes.
 import { HandbookForm, NewModuleForm, SettingsForm, TaskReviewForm } from "./forms"; // The admin forms.
+import { TRAINING_SETUP_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // The page's sections.
-const SECTIONS = [ // Each section's id and words:
-  { id: "modules", label: "Modules" }, // the modules,
-  { id: "progress", label: "Progress" }, // everyone's progress,
-  { id: "tasks", label: "Practice tasks" }, // practice tasks waiting to be checked,
-  { id: "handbook", label: "Handbooks" }, // the handbook,
-  { id: "settings", label: "Settings" }, // the settings.
-] as const; // End of the list (fixed).
+const SECTIONS = TRAINING_SETUP_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 // One row of the progress table from the database.
 type ProgressRow = { account_id: string; full_name: string; module_id: string; module_title: string; state: TrainingState; due_on: string | null; completed_on: string | null; expires_on: string | null }; // a person, a module, and where they're up to.

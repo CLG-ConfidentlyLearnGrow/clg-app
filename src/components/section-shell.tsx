@@ -12,8 +12,11 @@ import { ROLE_THEME } from "@/lib/role-theme"; // The colours for each role.
 
 // One menu section: its id, its words, an optional count of things to do,
 // an optional address (when it opens another page, e.g. Sessions or Billing),
-// and optional smaller sections shown under it while it's open.
-export type Section = { id: string; label: string; count?: number; href?: string; items?: Section[] }; // (the shape described above)
+// optional smaller sections (sub-tabs) that can be opened under it, and
+// "countsInside", which says its sub-tabs carry all of its numbers (so a
+// folded heading can show their total, and an open one can leave the
+// numbers to its sub-tabs).
+export type Section = { id: string; label: string; count?: number; href?: string; items?: Section[]; countsInside?: boolean }; // (the shape described above)
 
 // Dashboard layout: side headings for each section, which can be hidden to
 // give the page more room. On phones the menu opens from a button at the top.
@@ -82,10 +85,15 @@ export function SectionShell({
     }; // End of the clean-up.
   }, [open]); // Runs again when the menu is hidden or shown.
   const [phoneOpen, setPhoneOpen] = useState(false); // Whether the phone menu is open (starts closed).
-  // Clicking an open heading that has smaller sections under it (e.g.
-  // Sessions) folds them away, and clicking it again unfolds them (Carla,
-  // 12 Nov 2026). This remembers which heading is folded (none to start).
-  const [foldedId, setFoldedId] = useState<string | null>(null); // The folded heading's id, or nothing.
+  // Every heading with sub-tabs has an arrow beside it. Clicking the arrow
+  // opens or closes its sub-tabs right there, from any page, without loading
+  // another page (Carla, 20 Nov 2026). Clicking the open heading's name also
+  // folds or unfolds its sub-tabs (Carla, 12 Nov 2026). To start with, only
+  // the heading of the page you are on is open. This remembers the headings
+  // the person has opened or closed themselves since (none to start).
+  const [openChoice, setOpenChoice] = useState<Record<string, boolean>>({}); // Each heading's id, with true (opened) or false (closed), for the ones the person has changed.
+  const isShowing = (s: Section) => openChoice[s.id] ?? s.id === section; // Whether a heading's sub-tabs show: the person's choice, or open only for the page you are on.
+  const flip = (s: Section) => setOpenChoice((was) => ({ ...was, [s.id]: !isShowing(s) })); // Opens a heading's sub-tabs if closed, or closes them if open.
 
   // Shows or hides the side menu.
   function toggle() {
@@ -97,78 +105,109 @@ export function SectionShell({
   const heading = currentSub ? `${current?.label}: ${currentSub.label}` : (current?.label ?? label); // The page heading, e.g. "Sessions: Bookings".
 
   // The number to show beside a menu item (Carla, 20 Nov 2026). A heading
-  // with smaller sections under it (e.g. Sessions: Overview, Bookings,
+  // whose sub-tabs carry its numbers (e.g. Sessions: Overview, Bookings,
   // Notices) shows the total of their numbers while they are folded away,
   // so nothing waiting is hidden, and shows no number while they are open,
-  // because each smaller section then shows its own. Any other item shows
-  // its own number.
-  function shownCount(s: Section, fold?: { showing: boolean }): number | undefined {
-    if (!s.items?.length) return s.count; // No smaller sections loaded: its own number (if any).
-    if (fold?.showing) return undefined; // Smaller sections showing: no total (each shows its own number).
-    const total = s.items.reduce((sum, x) => sum + (x.count ?? 0), 0); // Adds up the smaller sections' numbers.
+  // because each sub-tab then shows its own. A heading whose sub-tabs have
+  // no numbers of their own keeps its own number either way, and any other
+  // item shows its own number.
+  function shownCount(s: Section, showing: boolean): number | undefined {
+    if (!s.items?.length || !s.countsInside) return s.count; // No sub-tabs, or sub-tabs without their own numbers: its own number (if any).
+    if (showing) return undefined; // Sub-tabs showing: no total (each shows its own number).
+    const total = s.items.reduce((sum, x) => sum + (x.count ?? 0), 0); // Adds up the sub-tabs' numbers.
     return total > 0 ? total : undefined; // The total, or nothing when there is nothing to do.
   } // End of shownCount.
 
-  // One menu link (used for sections and for the smaller sections under them).
-  // "fold" is given for an open heading with smaller sections: it says
-  // whether they're showing, and clicking folds or unfolds them instead of
-  // reloading the page.
-  function itemLink(s: Section, active: boolean, small: boolean, fold?: { showing: boolean }) {
+  // One sub-tab's link (e.g. Sessions: Bookings), shown indented under its
+  // heading. "active" fills it in when it is the page you are on.
+  function subLink(x: Section, active: boolean) {
     return ( // Shows:
       <Link // a link:
-        href={s.href ?? `${basePath}?section=${s.id}`} // to its own address, or to this section of the page,
-        data-no-loading={fold ? "" : undefined} // marked as staying on this page when it only folds or unfolds (so no loading bar shows),
-        onClick={(e) => { // when clicked:
-          if (fold) { // on an open heading with smaller sections:
-            e.preventDefault(); // stays on this page,
-            setFoldedId(fold.showing ? s.id : null); // and folds them away (or unfolds them if folded).
-            return; // (nothing else to do)
-          } // End of the fold part.
-          setFoldedId(null); // Moving to another section: nothing stays folded,
+        href={x.href ?? `${basePath}?section=${x.id}`} // to its own address, or to this section of the page,
+        onClick={() => { // when clicked:
+          setOpenChoice({}); // moving page: every heading goes back to its usual open or closed state,
           setPhoneOpen(false); // and the phone menu closes.
         }} // (end of the click)
-        aria-current={active ? "page" : undefined} // telling screen readers it's the current page when open,
-        aria-expanded={fold ? fold.showing : undefined} // telling screen readers whether its smaller sections are showing,
-        className={`flex items-center justify-between gap-2 rounded-md px-3 ${small ? "py-1.5 text-[13px]" : "py-2 text-sm"} ${ // in a row with words on the left and count on the right (a little smaller for smaller sections), with:
-          active ? activeItem : idleItem // the open look or the normal look.
-        }`} // (end of the look)
+        aria-current={active ? "page" : undefined} // telling screen readers it is the current page when open,
+        className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] ${active ? activeItem : idleItem}`} // in a row with words on the left and count on the right, a little smaller than headings, in the open or normal look.
       >{/* (end of the link's settings) */}
-        <span className="flex items-center gap-1.5">{/* The words (with an arrow for a heading that can fold): */}
-          {s.label}{/* the section's words, */}
-          {s.items?.length ? <span aria-hidden className="text-[10px] opacity-70">{fold?.showing ? "▾" : "▸"}</span> : null}{/* a small arrow: down while its smaller sections show, right otherwise (hidden from screen readers). */}
-        </span>{/* End of the words. */}
-        {shownCount(s, fold) ? ( // If there is a number to show:
-          <span // a small rounded badge:
-            className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`} // in the open or normal count look,
-          >{/* (end of the badge's settings) */}
-            {shownCount(s, fold)}{/* showing the number. */}
-          </span> // End of the badge.
+        <span>{x.label}</span>{/* The sub-tab's words. */}
+        {x.count ? ( // If there is a number to show:
+          <span className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`}>{x.count}</span> // a small rounded badge showing it, in the open or normal count look.
         ) : null}{/* Otherwise nothing. */}
       </Link> // End of the link.
     ); // End of what's shown.
-  } // End of itemLink.
+  } // End of subLink.
 
-  const links = ( // The list of menu links, used in both the side and phone menus:
+  // One heading row: its link (words and number) and, when it has sub-tabs,
+  // an arrow button that opens or closes them in place (Carla, 20 Nov 2026).
+  // "where" says which copy of the menu this is (side or phone), so each
+  // copy's sub-tab list gets its own name for screen readers.
+  function headingRow(s: Section, where: string) {
+    const current = s.id === section; // Whether this heading is the page you are on.
+    const hasSubs = (s.items?.length ?? 0) > 0; // Whether it has sub-tabs.
+    const showing = hasSubs && isShowing(s); // Whether its sub-tabs are showing now.
+    const listId = `menu-${where}-${s.id}`; // The name of its sub-tab list (for the arrow button to point to).
+    const active = current && !(showing && s.items?.some((x) => x.id === subSection)); // Filled in when it is the page you are on and the open sub-tab is not showing under it (so a folded heading still shows where you are).
+    const count = shownCount(s, showing); // The number to show beside it (if any).
+    return ( // Shows:
+      <li key={s.id}>{/* a list item: */}
+        <div className={`flex items-stretch rounded-md ${active ? activeItem : idleItem}`}>{/* one row holding the link and the arrow, filled in when it is the page you are on: */}
+          <Link // the heading's link:
+            href={s.href ?? `${basePath}?section=${s.id}`} // to its own address, or to this section of the page,
+            data-no-loading={current && hasSubs ? "" : undefined} // marked as staying on this page when it only folds or unfolds (so no loading bar shows),
+            onClick={(e) => { // when clicked:
+              if (current && hasSubs) { // on the open heading with sub-tabs:
+                e.preventDefault(); // stays on this page,
+                flip(s); // and folds or unfolds its sub-tabs.
+                return; // (nothing else to do)
+              } // End of the fold part.
+              setOpenChoice({}); // Moving page: every heading goes back to its usual open or closed state,
+              setPhoneOpen(false); // and the phone menu closes.
+            }} // (end of the click)
+            aria-current={active ? "page" : undefined} // telling screen readers it is the current page when open,
+            className={`flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-2 text-sm ${hasSubs ? "pl-3 pr-1" : anySubs ? "pl-3 pr-10" : "px-3"}`} // taking the row's width, words on the left and number on the right (less space on the right when the arrow follows, and room left where other rows have an arrow, so every number lines up).
+          >{/* (end of the link's settings) */}
+            <span className="min-w-0">{s.label}</span>{/* The heading's words. */}
+            {count ? ( // If there is a number to show:
+              <span className={`shrink-0 rounded-full px-2 text-xs ${active ? activeCount : idleCount}`}>{count}</span> // a small rounded badge showing it, in the open or normal count look.
+            ) : null}{/* Otherwise nothing. */}
+          </Link>{/* End of the link. */}
+          {hasSubs && ( // If it has sub-tabs, the arrow button:
+            <button // a button:
+              type="button" // that does not send any form,
+              onClick={() => flip(s)} // that opens or closes the sub-tabs right here, without loading a page,
+              aria-expanded={showing} // telling screen readers whether the sub-tabs are showing,
+              aria-controls={listId} // and which list it opens,
+              aria-label={`${showing ? "Hide" : "Show"} ${s.label} sub-tabs`} // named for screen readers, e.g. "Show Billing sub-tabs",
+              title={showing ? "Hide sub-tabs" : "Show sub-tabs"} // with a tooltip saying what it will do,
+              className="flex w-9 shrink-0 items-center justify-center rounded-md hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px]" // a square-ish target at the end of the row, slightly darker on hover, with a clear outline when reached by keyboard.
+            >{/* (end of the button's settings) */}
+              <svg aria-hidden="true" viewBox="0 0 20 20" className={`h-4 w-4 transition-transform motion-reduce:transition-none ${showing ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{/* an arrow (hidden from screen readers) pointing right when closed and turning to point down when open: */}
+                <path d="M7.5 5l5 5-5 5" />{/* the arrow's shape. */}
+              </svg>{/* End of the arrow. */}
+            </button> // End of the button.
+          )}{/* End of the arrow part. */}
+        </div>{/* End of the row. */}
+        {showing && ( // If its sub-tabs are showing:
+          <ul id={listId} className={`mt-1 ml-3 space-y-0.5 border-l-2 pl-2 ${theme ? theme.accentBorder : "border-teal-700"}`}>{/* an indented list with a coloured line on its left: */}
+            {s.items?.map((x) => ( // for each sub-tab:
+              <li key={x.id}>{subLink(x, current && x.id === subSection)}</li> // its link (filled in when it is the page you are on).
+            ))}{/* End of the sub-tabs. */}
+          </ul> // End of the indented list.
+        )}{/* End of this part. */}
+      </li> // End of the list item.
+    ); // End of what's shown.
+  } // End of headingRow.
+
+  const anySubs = sections.some((s) => (s.items?.length ?? 0) > 0); // Whether any heading has sub-tabs (and so an arrow), to line up the numbers.
+
+  // The list of menu links, used in both the side and phone menus. "where"
+  // says which one it is (see headingRow).
+  const links = (where: string) => ( // Shows:
     <nav aria-label={`${label} sections`}>{/* a navigation area named for screen readers, */}
       <ul className="space-y-1">{/* a list with space between items, */}
-        {sections.map((s) => { // for each section:
-          const open = s.id === section; // whether it's the open one,
-          const canFold = open && (s.items?.length ?? 0) > 0; // whether it's an open heading with smaller sections,
-          const subs = canFold && foldedId !== s.id ? (s.items ?? []) : []; // its smaller sections (shown while it's open and not folded),
-          const active = open && !subs.some((x) => x.id === subSection); // filled in when none of its showing smaller sections is the open one (so a folded heading shows where you are).
-          return ( // Shows:
-            <li key={s.id}>{/* a list item: */}
-              {itemLink(s, active, false, canFold ? { showing: subs.length > 0 } : undefined)}{/* the section's link (folding its smaller sections when it's open), */}
-              {subs.length > 0 && ( // and, if it has smaller sections open:
-                <ul className={`mt-1 ml-3 space-y-0.5 border-l-2 pl-2 ${theme ? theme.accentBorder : "border-teal-700"}`}>{/* an indented list with a coloured line on its left: */}
-                  {subs.map((x) => ( // for each smaller section:
-                    <li key={x.id}>{itemLink(x, x.id === subSection, true)}</li> // its link (filled in when open).
-                  ))}{/* End of the smaller sections. */}
-                </ul> // End of the indented list.
-              )}{/* End of this part. */}
-            </li> // End of the list item.
-          ); // End of what's shown for this section.
-        })}{/* End of the loop. */}
+        {sections.map((s) => headingRow(s, where))}{/* and each heading's row (with its sub-tabs when showing). */}
       </ul>{/* End of the list. */}
     </nav> // End of the navigation area.
   ); // End of the menu links.
@@ -194,7 +233,7 @@ export function SectionShell({
             {open && <span>Hide menu</span>}{/* "Hide menu" in words when showing. */}
             {!open && <span className="sr-only">Show menu</span>}{/* "Show menu" for screen readers only when hidden. */}
           </button>{/* End of the button. */}
-          {open && <div className={`${menuBox} ${menuScroll} min-h-0`}>{links}</div>}{/* The menu links in their box, when showing, scrolling inside the box when there are more than fit on screen. */}
+          {open && <div className={`${menuBox} ${menuScroll} min-h-0`}>{links("side")}</div>}{/* The menu links in their box, when showing, scrolling inside the box when there are more than fit on screen. */}
         </div>{/* End of the in-view block. */}
       </aside>{/* End of the side menu. */}
 
@@ -212,7 +251,7 @@ export function SectionShell({
             </span>{/* End of the words. */}
             <span aria-hidden>{phoneOpen ? "▲" : "▼"}</span>{/* An up or down arrow (hidden from screen readers). */}
           </button>{/* End of the button. */}
-          {phoneOpen && <div className={`mt-2 ${menuBox} ${menuScroll} max-h-[60dvh]`}>{links}</div>}{/* The menu links in their box, when open, no taller than about two-thirds of the screen and scrolling inside the box. */}
+          {phoneOpen && <div className={`mt-2 ${menuBox} ${menuScroll} max-h-[60dvh]`}>{links("phone")}</div>}{/* The menu links in their box, when open, no taller than about two-thirds of the screen and scrolling inside the box. */}
         </div>{/* End of the phone block. */}
 
         <div className="flex flex-wrap items-start justify-between gap-x-4">{/* The heading row (the button drops below the heading on a narrow phone): */}

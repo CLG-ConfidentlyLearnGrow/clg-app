@@ -20,7 +20,7 @@ The app has a few parts that are always there:
 
 - **Home** (top of every page) takes you to your **Overview**: a quick look at what needs you, your children and their next sessions.
 - A page you open from your dashboard, such as a child's progress page, has a **Back** button at the top that takes you back.
-- The side menu on your dashboard has **Overview**, **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+- The side menu on your dashboard has **Overview**, **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
 - **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 - If you have more than one role (for example you look after a child and also learn with CLG yourself), tabs at the top (such as **Family** and **Student**) let you switch between your dashboards.
