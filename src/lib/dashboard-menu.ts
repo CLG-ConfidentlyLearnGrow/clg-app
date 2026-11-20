@@ -3,6 +3,7 @@
 // Matching, Billing, Teams links, Materials and My pay sit with the other
 // tabs instead of in the top bar or a line of links (Carla, 12 Nov 2026).
 //
+import { cache } from "react"; // Remembers a result for the rest of one page load.
 import type { Section } from "@/components/section-shell"; // The shape of one menu item (for type checking only).
 import { ADMIN_SECTIONS } from "@/app/admin/sections"; // The admin page's own sections.
 import { FINANCE, FRONT_DESK, FULL_ADMIN, getAdminLevel, type Role } from "@/lib/auth"; // Admin level groups, the level reader, and the role type.
@@ -116,9 +117,29 @@ async function contractsXeroToDo(): Promise<number | undefined> { // No inputs: 
   return error || !count ? undefined : count; // No number if none, or if it could not be counted.
 } // End of contractsXeroToDo.
 
+// The Overview item that starts every dashboard's side menu: a quick look at
+// everything that needs the person in that role (Carla, 20 Nov 2026).
+function overviewItem(role: Role): Section { // Takes the dashboard.
+  return { id: "overview", label: "Overview", href: `/home?as=${role}` }; // Its id, words and address.
+} // End of overviewItem.
+
 // Builds one dashboard's side menu, with to-do numbers. Each item knows its
 // own address, so the menu works the same on every page that shows it.
+// The menu is built once per page load and shared (the page frame and the
+// Overview both use it), so its database reads are not repeated.
 export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
+  return menuOnce(role, roles.join(",")); // Builds it (or reuses it), keyed by the dashboard and the roles as text.
+} // End of getDashboardMenu.
+
+// Remembers each built menu for the rest of one page load. The roles are
+// passed as text, because remembering works on plain values, not lists.
+const menuOnce = cache(async (role: Role, rolesKey: string): Promise<Section[]> => { // Takes the dashboard and the roles as text.
+  const roles = rolesKey.split(",").filter(Boolean) as Role[]; // Turns the text back into a list of roles.
+  return [overviewItem(role), ...(await buildDashboardMenu(role, roles))]; // The Overview first, then the rest of the menu.
+}); // End of menuOnce.
+
+// Builds the rest of one dashboard's side menu (everything after Overview).
+async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
   const todo = await getToDoCounts(roles); // The to-do numbers.
   const sessions: Section[] = (await hasSessions(role)) // The Sessions tab, if this dashboard has one:
     ? [{ id: "sessions", label: "Sessions", href: sessionsHref(role), count: todo.sessionsFor(role) }] // its words, address and number,
@@ -204,4 +225,4 @@ export async function getDashboardMenu(role: Role, roles: Role[]): Promise<Secti
     ...(!roles.includes("parent") && (await paysForFamily()) ? [{ id: "billing", label: "Billing", href: "/billing", count: todo.get("family", "billing") }] : []), // Billing, only for students who pay (Carla, 16 Nov 2026); someone who also has a Family profile sees it on their Family tab,
     { id: "guide", label: "App guide", href: "/guide?as=student" }, // and the step-by-step guide to the app for students (Carla, 16 Nov 2026).
   ]; // End of the student menu.
-} // End of getDashboardMenu.
+} // End of buildDashboardMenu.

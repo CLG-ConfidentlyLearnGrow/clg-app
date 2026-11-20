@@ -30,6 +30,14 @@ Everything you need is in the side menu (on a phone, the **Tutor menu** button a
 
 Why: The numbers are how the app tells you about booking requests, notes due and checks running out. Checking them each day keeps families and CLG in the loop.
 
+## Your Overview
+
+Your dashboard opens on **Overview**: your sessions and hours for the next 7 days, your next session, your students, and the state of your child safety checks. **Needs your attention** lists notes, reviews, bookings and checks waiting for you, and says **All caught up** when nothing is.
+
+Why: Checking it each time you sign in keeps notes on time, families answered and your checks current.
+
+Where: **Home**, or **Overview** at the top of the side menu.
+
 ## Your child safety checks
 
 Add your Working with Children Check, RRHAN-EC training and first aid, with a copy of each card or certificate. CLG checks them and confirms them.

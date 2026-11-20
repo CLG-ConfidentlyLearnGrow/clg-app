@@ -18,9 +18,9 @@ export const PARENT_GUIDE: GuideSource = { // The guide:
 
 The app has a few parts that are always there:
 
-- **Home** (top of every page) takes you back to your dashboard.
+- **Home** (top of every page) takes you to your **Overview**: a quick look at what needs you, your children and their next sessions.
 - A page you open from your dashboard, such as a child's progress page, has a **Back** button at the top that takes you back.
-- The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+- The side menu on your dashboard has **Overview**, **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
 - **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
 - If you have more than one role (for example you look after a child and also learn with CLG yourself), tabs at the top (such as **Family** and **Student**) let you switch between your dashboards.
@@ -38,6 +38,16 @@ Tip: If CLG set up your account for you, open the link in your welcome email to 
 3. Enter your name, email and a password (at least 12 characters, with upper and lowercase letters and a number).
 4. Tick that you agree to the privacy policy and terms, then choose **Create account**.
 5. Check your email and open the link to confirm your account.
+
+### See what needs you on the Overview
+Your dashboard opens on **Overview** (also first in the side menu). It shows, at a glance:
+- **Next session**, **Next 7 days**, **Times to approve** and **New from tutors**. Tap a box to open that page.
+- **Needs your attention**: one line for each thing waiting for you (for example a session time to approve, or a child's details to finish). Tap a line to go straight to it. When nothing is waiting, it says **All caught up**.
+- **Your children**: each child with their tutors and next session, and a **Progress** link.
+- **Coming up**: your family's next sessions in the coming week.
+- **Billing** (only if you pay): invoices to pay and anything still to set up.
+
+Tip: If your family's sessions are on hold because an invoice is overdue, an amber **Sessions on hold** box shows at the top, even if someone else pays.
 
 ### Agree to the family terms
 The first time you sign in, the app shows **Welcome to CLG**. Read the summary of the privacy policy and terms, then agree to carry on. You can read them again at any time from **Privacy** at the bottom of each page.

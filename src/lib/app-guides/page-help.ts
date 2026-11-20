@@ -21,6 +21,9 @@ type HelpRef = { part: string; tasks?: string[] }; // The part's link id, and th
 // Which guide parts belong to each side-menu item (by the item's id, as in
 // src/lib/dashboard-menu.ts). Parts are listed in the order they show.
 const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
+  // The Overview every dashboard opens on (Carla, 20 Nov 2026).
+  overview: [{ part: "getting-around", tasks: ["overview"] }, { part: "getting-started", tasks: ["overview"] }], // Overview: the Overview task in the guide's first part.
+
   // Admin dashboard sections.
   families: [{ part: "families" }], // Families: the whole Families part.
   matching: [{ part: "matching" }], // Matching: the whole Matching part.
