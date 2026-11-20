@@ -21,6 +21,7 @@ const SERVICES = [ // The outside services CLG uses, what each does and where:
   { name: "Stripe", does: "Takes payments (card or bank details go straight to Stripe; CLG never sees them)", where: "Australia and the United States" }, // Stripe,
   { name: "Xero", does: "Invoices and accounts (names, emails, invoice lines)", where: "Australia, New Zealand and the United States" }, // Xero,
   { name: "Microsoft 365", does: "Teams links for online sessions, and CLG's email", where: "Australia" }, // Microsoft 365,
+  { name: "Pop-up notification services (Apple, Google, Microsoft or Mozilla)", does: "Only if you turn on pop-up notifications: your browser's own notification service delivers each pop-up to your device. Each pop-up is encrypted so only your device can read it, and pop-ups never include names or details, only the kind of notice", where: "May be outside Australia (mostly the United States)" }, // Pop-up notifications (Carla approved 20 Nov 2026): the browser maker's push service carries encrypted pop-ups with no personal details.
   { name: "OpenStreetMap", does: "Finds the map point of an address you save for travel distances (only the address is sent, never your name or contact details), and shows the map pictures on CLG staff's travel map (no personal details are sent)", where: "Run by the OpenStreetMap Foundation, outside Australia (United Kingdom and Europe)" }, // OpenStreetMap (Carla, 16 Nov 2026): address search and map pictures, no contract, so only the address is sent.
 ]; // End of the list.
 
@@ -143,7 +144,10 @@ export default function PrivacyPage() {
         <p className="mb-3 text-sm">{/* a line: */}
           The app&apos;s information is stored in Sydney, Australia, encrypted while stored and while travelling. Some
           services CLG uses are based overseas. Each has a contract that requires it to protect the information, except
-          OpenStreetMap, which receives only an address and never a name or contact details.{/* stored in Sydney, encrypted, overseas services under contract, and OpenStreetMap gets only an address. */}
+          OpenStreetMap, which receives only an address and never a name or contact details. If you turn on pop-up
+          notifications, your browser&apos;s notification service (for example Apple, Google, Microsoft or Mozilla) delivers
+          them to your device. These services may be outside Australia. Each pop-up is encrypted so only your device can
+          read it, and pop-ups never include names or details, only the kind of notice.{/* stored in Sydney, encrypted, overseas services under contract, OpenStreetMap gets only an address, and pop-ups go through the browser's own encrypted notification service with no details (Carla approved 20 Nov 2026). */}
         </p>{/* End of the line. */}
         <ul className="list-disc space-y-1 pl-5 text-sm">{/* A bulleted list: */}
           {SERVICES.map((s) => ( // for each service:
