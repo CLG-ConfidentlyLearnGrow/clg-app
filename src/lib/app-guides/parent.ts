@@ -178,6 +178,8 @@ Tip: Adding away dates early gets you full credit for those sessions.
 2. **Public holiday weeks** lists sessions that fall on a public holiday.
 3. Choose **Skip public holidays** for that booking, then ask for a one-off at another time that week if you like.
 
+Tip: Most libraries are closed on public holidays, so a library session that falls on one does not go ahead. The list shows **library closed** for those weeks, and you can ask for a one-off at another time that week.
+
 ### Book again before your book-till date
 About 3 weeks before your child's book-till date (the date you chose in **How long to book**), CLG asks whether you would like to keep going. You get a notice called **Book again?**.
 1. In **Sessions**, choose **Book again**.

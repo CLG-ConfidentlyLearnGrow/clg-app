@@ -3,7 +3,7 @@
 // The database decides what each person can see.
 
 import { markHoursChecked, removeLibraryHours, removeOwnTerm, liftBlock } from "@/app/actions/scheduling-extra"; // Scheduling actions: hours still right, clear hours, remove own dates, lift a block.
-import { setLibraryActive } from "@/app/actions/scheduling"; // The action to hide or show a library.
+import { setLibraryActive, setLibraryPublicHolidays } from "@/app/actions/scheduling"; // The actions to hide or show a library, and to set it open or closed on public holidays.
 import { Card, Empty, SubHeading } from "@/components/ui"; // Shared page parts: card, empty line and small heading.
 import { WEEKDAY_NAMES, clockTime, localToday, shortDate } from "@/lib/scheduling"; // Weekday names, time and date wording, and today's date.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
@@ -188,7 +188,8 @@ export async function RequestsSection({ // The requests and public holidays sect
     holiday_on: string; // the holiday's date,
     holiday_name: string; // its name,
     skipping: boolean; // whether the booking skips holidays,
-    session_id: string | null; // and the session that day (if any).
+    session_id: string | null; // the session that day (if any),
+    library_closed: boolean; // and whether the booking's library is closed that day (Carla, 20 Nov 2026).
   }[]).filter((h) => mine.has(h.student_id)); // (end of the type) Only their own children's (only families see this card).
   const children = ( // The children they can ask for:
     (studentsRes.data ?? []) as { id: string; full_name: string; account_id: string | null; student_subjects: { subject: string }[] }[] // from the students,
@@ -220,7 +221,7 @@ export async function RequestsSection({ // The requests and public holidays sect
       {canAsk && holidays.length > 0 && ( // If they can ask and there are holiday sessions:
         <Card // a card:
           title="Public holiday weeks" // its title,
-          description="Sessions that fall on a public holiday in the next few months. You can skip public holidays for a booking and ask for a one-off at another time that week." // its help text.
+          description="Sessions that fall on a public holiday in the next few months. You can skip public holidays for a booking and ask for a one-off at another time that week. Most libraries are closed on public holidays, so there is no library session that day." // its help text.
         >{/* (end of the card's settings) */}
           <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
             {holidays.map((h) => ( // for each holiday session:
@@ -232,7 +233,7 @@ export async function RequestsSection({ // The requests and public holidays sect
                   <span className="text-zinc-600">{/* in grey: */}
                     {" "}{/* a space, */}
                     · {h.student_name} · {h.subject} ·{" "}{/* the student and subject, then a space, */}
-                    {h.skipping ? "skipped (no session that day)" : h.session_id ? "session booked that day" : "no session that day"}{/* whether there's a session that day. */}
+                    {h.library_closed && !h.session_id ? "library closed (no session that day)" : h.skipping ? "skipped (no session that day)" : h.session_id ? "session booked that day" : "no session that day"}{/* whether there is a session that day (and says so if the library is closed). */}
                   </span>{/* End of the grey part. */}
                 </p>{/* End of the line. */}
                 <SkipPublicHolidaysForm bookingId={h.booking_id} skipping={h.skipping} />{/* the skip-holidays switch. */}
@@ -430,15 +431,21 @@ export async function BlocksSection({ // The blocks section, given:
 const LIBRARY_FILTERS = [ // the filters, in the order shown:
   { key: "all", label: "All" }, // every library,
   { key: "ready", label: "Active (ready for sessions)" }, // shown, confirmed and with opening hours: sessions can be offered there,
+  { key: "requested", label: "★ Asked for, to confirm" }, // not confirmed yet, but a tutor, family or student asked for it (Carla, 20 Nov 2026),
   { key: "todo", label: "To confirm or add hours" }, // shown, but not confirmed yet or missing opening hours,
   { key: "hidden", label: "Hidden" }, // hidden libraries.
 ] as const; // (fixed list)
 type LibraryFilter = (typeof LIBRARY_FILTERS)[number]["key"]; // One filter's key, for type checking.
 
-export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: string; hrefFor: (f: string) => string }) { // The admin libraries section (with the chosen filter, and how to build each filter's address).
+export async function LibrariesAdminSection({ filter, search, hrefFor, hiddenFields }: { // The admin libraries section, given:
+  filter?: string; // the chosen filter (from the address),
+  search?: string; // the words searched for (from the address, Carla 20 Nov 2026),
+  hrefFor: (f: string) => string; // how to build each filter's address,
+  hiddenFields: Record<string, string>; // and the address settings the search form keeps (which dashboard and section).
+}) { // (end of what it is given)
   const supabase = await createClient(); // Connects to the database.
   const [libsRes, hoursRes, checksRes] = await Promise.all([ // Reads three things at once:
-    supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by, osm_ref").order("name"), // the libraries, by name,
+    supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by, osm_ref, open_public_holidays").order("name"), // the libraries, by name,
     supabase.from("library_hours").select("library_id, weekday, opens, closes").order("weekday").order("opens"), // their opening hours, by day and time,
     supabase.rpc("library_checks"), // and libraries needing a look.
   ]); // End of the reads.
@@ -450,16 +457,29 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
     address: string | null; // an address (if known),
     active: boolean; // whether it's in use,
     confirmed_at: string | null; // when it was confirmed (if yet),
-    osm_ref: string | null; // and its OpenStreetMap reference (if any).
+    suggested_by: string | null; // the tutor who suggested it (if any),
+    osm_ref: string | null; // its OpenStreetMap reference (if any),
+    open_public_holidays: boolean; // and whether it opens on public holidays (closed unless an admin says so).
   }[]; // (end of the type)
   const hours = (hoursRes.data ?? []) as { library_id: string; weekday: number; opens: string; closes: string }[]; // The opening hours.
   const hoursOf = (id: string) => hours.filter((h) => h.library_id === id); // Gives one library's opening hours.
   const withHours = new Set(hours.map((h) => h.library_id)); // The libraries that have opening hours (quick to look up).
   const groupOf = (l: (typeof libraries)[number]): LibraryFilter => // Works out which group a library is in:
     !l.active ? "hidden" : l.confirmed_at && withHours.has(l.id) ? "ready" : "todo"; // hidden, ready for sessions, or still to do.
+  const unconfirmed = new Set(libraries.filter((l) => !l.confirmed_at).map((l) => l.id)); // The libraries not yet confirmed (quick to look up).
+  const askedFor = new Set( // The libraries not yet confirmed that a tutor, family or student asked for (shown with a star):
+    [...checks.map((c) => c.library_id), ...libraries.filter((l) => l.suggested_by).map((l) => l.id)] // those on the to-do list or suggested by a tutor,
+      .filter((id) => unconfirmed.has(id)), // that are still not confirmed.
+  ); // End of the set.
+  const inFilter = (l: (typeof libraries)[number], key: LibraryFilter) => // Whether a library belongs under a filter:
+    key === "all" ? true : key === "requested" ? askedFor.has(l.id) : groupOf(l) === key; // all, asked for (star), or its group.
+  const words = (search ?? "").trim().toLowerCase(); // The search words, in lower case (blank if none).
+  const matches = (l: (typeof libraries)[number]) => // Whether a library matches the search:
+    !words || [l.name, l.suburb, l.address].some((t) => (t ?? "").toLowerCase().includes(words)); // no search, or the words are in its name, suburb or address.
+  const searched = libraries.filter(matches); // The libraries matching the search.
   const chosen: LibraryFilter = LIBRARY_FILTERS.some((f) => f.key === filter) ? (filter as LibraryFilter) : "all"; // The chosen filter (all if none or unknown).
-  const countOf = (key: LibraryFilter) => (key === "all" ? libraries.length : libraries.filter((l) => groupOf(l) === key).length); // How many libraries are in a group.
-  const shown = chosen === "all" ? libraries : libraries.filter((l) => groupOf(l) === chosen); // The libraries to list under the chosen filter.
+  const countOf = (key: LibraryFilter) => searched.filter((l) => inFilter(l, key)).length; // How many matching libraries are under a filter.
+  const shown = searched.filter((l) => inFilter(l, chosen)); // The libraries to list: matching the search and the chosen filter.
   return ( // Shows:
     <Card // a card:
       title="Libraries" // its title,
@@ -472,7 +492,7 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
             {checks.map((c) => ( // for each:
               <li key={c.library_id} className="flex flex-wrap items-center justify-between gap-2">{/* a row: */}
                 <span>{/* (a group) */}
-                  <a href={`${hrefFor("all")}#lib-${c.library_id}`} className="font-medium underline">{/* a link to the library below (in the full list, so it is always there): */}
+                  <a href={`${hrefFor("all").replace(/&q=[^&]*/, "")}#lib-${c.library_id}`} className="font-medium underline">{/* a link to the library below (in the full list, so it is always there): */}
                     {c.name}{/* its name, */}
                   </a>{/* end of the link. */}
                   {c.suburb && ` · ${c.suburb}`}: {c.problem}{/* its suburb and what needs doing. */}
@@ -490,9 +510,28 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
           </ul>{/* End of the list. */}
           <p className="mt-2 text-xs text-amber-900">{/* a help line: */}
             Only libraries a tutor or family has chosen are listed. Hours are re-checked every 6 months, and whenever
-            sessions are first booked at a library, check its public holiday and school holiday hours.{/* when hours are checked. */}
+            sessions are first booked at a library, check its school holiday hours. Libraries are set as closed on public
+            holidays unless you set one as open.{/* when hours are checked, and the public holiday default. */}
           </p>{/* End of the help line. */}
         </div> // End of the box.
+      )}{/* End of this part. */}
+      {libraries.length > 0 && ( // If there are any libraries:
+        <form method="get" className="mb-3 flex flex-wrap gap-2 text-sm" role="search">{/* the search box (Carla, 20 Nov 2026): */}
+          {Object.entries({ ...hiddenFields, libs: chosen }).map(([k, v]) => ( // for each address setting to keep (dashboard, section and filter):
+            <input key={k} type="hidden" name={k} value={v} /> // a hidden field.
+          ))}{/* End of the hidden fields. */}
+          <label htmlFor="library-search" className="sr-only">Search libraries</label>{/* a label for screen readers, */}
+          <input // the search box:
+            id="library-search" // (linked to the label)
+            type="search" // a search box,
+            name="q" // sent as "q" in the address,
+            defaultValue={search ?? ""} // showing what was searched for,
+            placeholder="Search by name, suburb or address" // a hint,
+            className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-1.5" // styled to fill the line.
+          />{/* End of the search box. */}
+          <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-1.5">Search</button>{/* the search button, */}
+          {words && <a href={hrefFor(chosen).replace(/&q=[^&]*/, "")} className="self-center text-xs text-teal-800 underline">Clear search</a>}{/* and a clear link (if searching). */}
+        </form> // End of the search box.
       )}{/* End of this part. */}
       {libraries.length > 0 && ( // If there are any libraries:
         <nav aria-label="Filter libraries" className="mb-4 flex flex-wrap gap-2 text-xs">{/* the filter buttons: */}
@@ -509,7 +548,7 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
         </nav> // End of the filter buttons.
       )}{/* End of this part. */}
       {shown.length === 0 ? ( // if no libraries to list:
-        <Empty>{libraries.length === 0 ? "No libraries yet." : "No libraries in this group."}</Empty> // says so.
+        <Empty>{libraries.length === 0 ? "No libraries yet." : words ? "No libraries match your search in this group." : "No libraries in this group."}</Empty> // says so.
       ) : ( // otherwise:
         <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
           {shown.map((l) => { // for each library to list:
@@ -518,6 +557,7 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
               <li key={l.id} id={`lib-${l.id}`} className="space-y-2 py-4 first:pt-0">{/* a row (with a link target): */}
                 <div className="flex items-center justify-between gap-3">{/* the top line: */}
                   <span className={l.active ? "" : "text-zinc-400"}>{/* (greyed if hidden) */}
+                    {askedFor.has(l.id) && <span className="mr-1 text-amber-600" title="Asked for by a tutor, family or student, not yet confirmed" aria-label="Asked for, not yet confirmed">★</span>}{/* a star if asked for but not confirmed, */}
                     <span className="font-medium">{l.name}</span>{/* its name, */}
                     {l.address && ` · ${l.address}`}{/* its address (if known), */}
                     {l.suburb && ` · ${l.suburb}`}{/* its suburb (if known), */}
@@ -544,6 +584,16 @@ export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: stri
                     </form>{/* End of the form. */}
                   </div> // End of the line.
                 )}{/* End of this part. */}
+                <div className="text-xs text-zinc-600">{/* the public holiday line (Carla, 20 Nov 2026): */}
+                  {l.open_public_holidays ? "Open on public holidays." : "Closed on public holidays (no sessions there on them)."}{" "}{/* open or closed on public holidays, then a space, */}
+                  <form action={setLibraryPublicHolidays} className="inline">{/* the change form: */}
+                    <input type="hidden" name="id" value={l.id} />{/* the library (hidden), */}
+                    <input type="hidden" name="open" value={l.open_public_holidays ? "false" : "true"} />{/* the new setting (hidden), */}
+                    <BusyButton type="submit" className="text-xs text-teal-800 underline">{/* the button: */}
+                      {l.open_public_holidays ? "Set as closed on public holidays" : "Set as open on public holidays"}{/* its words. */}
+                    </BusyButton>{/* End of the button. */}
+                  </form>{/* End of the form. */}
+                </div>{/* End of the public holiday line. */}
                 <details>{/* a fold-out: */}
                   <summary className="cursor-pointer text-xs text-teal-800 underline">Add opening hours</summary>{/* its heading, */}
                   <div className="mt-2 space-y-3">{/* a box: */}

@@ -429,6 +429,22 @@ export async function setLibraryActive(formData: FormData) {
   revalidatePath("/schedule"); // Refreshes the schedule page.
 } // End of setLibraryActive.
 
+// Sets whether a library opens on public holidays (Carla, 20 Nov 2026:
+// libraries are closed on public holidays unless an admin says otherwise).
+// The database only lets admins change libraries.
+export async function setLibraryPublicHolidays(formData: FormData) {
+  const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
+  if (!viewer.roles.includes("admin")) return; // Only admins can do this.
+  const id = z.uuid().safeParse(formData.get("id")); // Reads and checks the library's id.
+  if (!id.success) return; // Bad id: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  await supabase // Saves:
+    .from("libraries") // in the libraries table,
+    .update({ open_public_holidays: formData.get("open") === "true" }) // open or closed on public holidays, from the form,
+    .eq("id", id.data); // for this library.
+  revalidatePath("/schedule"); // Refreshes the schedule page.
+} // End of setLibraryPublicHolidays.
+
 // ---------------------------------------------------------------------------
 // Away dates
 // ---------------------------------------------------------------------------
