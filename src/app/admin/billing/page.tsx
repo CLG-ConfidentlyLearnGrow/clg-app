@@ -46,6 +46,7 @@ type Account = { // A family's billing account:
   bill_payer_id: string | null; // the bill payer (if chosen),
   terms_accepted_at: string | null; // when terms were accepted (if yet),
   plan_chosen_at: string | null; // when the plan was chosen (if yet),
+  pending_plan: BillingPlan | null; // a plan change the family booked for their next invoice (if any),
   paused: boolean; // whether support is paused,
   paused_since: string | null; // since when (if paused).
 }; // End of Account.
@@ -110,7 +111,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
       .order("name"), // by name.
     supabase // the billing accounts:
       .from("billing_accounts") // from billing_accounts,
-      .select("family_id, plan, method, payment_ready, bill_payer_id, terms_accepted_at, plan_chosen_at, paused, paused_since"), // with plan, payment and pause details.
+      .select("family_id, plan, method, payment_ready, bill_payer_id, terms_accepted_at, plan_chosen_at, pending_plan, paused, paused_since"), // with plan (and any booked change), payment and pause details.
     supabase.from("billing_family_rates").select("family_id, amount_cents, price:billing_price_items(name)"), // kept rates, with the price's name,
     supabase.from("billing_price_items").select("id, code, name, unit, amount_cents, gst_applies, active, session_level").order("code"), // the price list,
     supabase.from("billing_credits").select("family_id, amount_cents"), // every credit,
@@ -221,12 +222,18 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                   title={`${f.name}${acct?.paused ? " (paused)" : ""}`} // the family's name (and paused, if so),
                   description={ // a summary line:
                     acct // if they have an account:
-                      ? `${acct.plan_chosen_at ? PLAN_LABELS[acct.plan] : "Plan not chosen yet"} · ${acct.payment_ready ? METHOD_LABELS[acct.method] : "No automatic payment yet"} · Credit ${dollars(balance.get(f.id))}${acct.terms_accepted_at ? "" : " · Terms not accepted yet"}` // the plan, payment method, credit, and whether terms are accepted,
+                      ? `${acct.plan_chosen_at ? PLAN_LABELS[acct.plan] : "Plan not chosen yet"}${acct.pending_plan ? ` (changing to ${PLAN_LABELS[acct.pending_plan]} from the next invoice)` : ""} · ${acct.payment_ready ? METHOD_LABELS[acct.method] : "No automatic payment yet"} · Credit ${dollars(balance.get(f.id))}${acct.terms_accepted_at ? "" : " · Terms not accepted yet"}` // the plan (and any booked change), payment method, credit, and whether terms are accepted,
                       : "No billing plan yet" // otherwise no plan yet.
                   } // (end of the summary)
                 >{/* (end of the card's settings) */}
                   <p className="mb-4 text-sm text-zinc-600">Students: {f.students.map((s) => s.full_name).join(", ") || "none"}</p>{/* the students' names. */}
                   <SubHeading>Plan and bill payer</SubHeading>{/* a small heading, */}
+                  {acct?.pending_plan && ( // if the family booked a plan change:
+                    <p className="mb-3 text-sm text-zinc-600">{/* a note: */}
+                      The family asked to change to {PLAN_LABELS[acct.pending_plan]} from their next invoice. Saving the plan here
+                      sets it straight away and clears that booked change.{/* what is booked, and what saving here does. */}
+                    </p> // End of the note.
+                  )}{/* End of that part. */}
                   <FamilyPlanForm // the plan and bill payer form:
                     familyId={f.id} // the family,
                     plan={acct?.plan ?? "weekly"} // the plan (weekly to start),

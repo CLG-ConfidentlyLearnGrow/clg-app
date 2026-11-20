@@ -2,8 +2,8 @@
 -- can change it later (Carla, 20 Nov 2026). Uses Cal's family, with parent
 -- P1 (...01) linked as Cal's parent, and the owner (...a0). Checks:
 --   * the payer can change the plan after the first invoice was sent;
---   * the change applies from the next session not already invoiced (the
---     invoice already sent keeps its plan);
+--   * the change is booked for the next invoice (the invoice already sent
+--     keeps its plan; billing_plan_change_next_invoice.test.sql checks the rest);
 --   * admins are told about the change;
 --   * weekly still needs a card;
 --   * the booking functions check a plan was chosen.
@@ -16,6 +16,8 @@ begin;
 -- Runs the change again (and twice), to check it is safe to run more than once.
 \ir ../migrations/20261123400500_payment_plan_required.sql
 \ir ../migrations/20261123400500_payment_plan_required.sql
+-- Then the later change that books a plan change for the next invoice (20 Nov 2026).
+\ir ../migrations/20261123500100_payment_plan_change_next_invoice.sql
 
 -- Keeps Cal's student id as cal and his family id as fam.
 select id as cal, family_id as fam from public.students where full_name = 'Cal Two' \gset
@@ -44,9 +46,9 @@ set local role authenticated; -- acts as a signed-in user
 select tests.eq((select count(*) from public.billing_my_plan_choices() where family_id = :'fam' and chosen and can_change), 1::bigint, 'plan can still be changed after the first invoice'); -- checks the list
 select public.billing_choose_plan(:'fam', 'monthly'); -- changes to monthly
 reset role; -- back to the test user
-select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam' and plan = 'monthly'), 1::bigint, 'plan changed to monthly'); -- checks the change
+select tests.eq((select count(*) from public.billing_accounts where family_id = :'fam' and plan = 'term' and pending_plan = 'monthly'), 1::bigint, 'change to monthly booked for the next invoice'); -- checks the change is booked
 select tests.eq((select count(*) from public.billing_invoices where family_id = :'fam' and plan = 'term' and status = 'open'), 1::bigint, 'the invoice already sent keeps its plan'); -- checks the sent invoice is untouched
-select tests.eq((select case when count(*) > 0 then 1 else 0 end from public.session_notices where title = 'Payment plan changed' and body like '%from term to monthly%')::bigint, 1::bigint, 'admins are told about the change'); -- checks the notice
+select tests.eq((select case when count(*) > 0 then 1 else 0 end from public.session_notices where title = 'Payment plan change booked' and body like '%from term to monthly%')::bigint, 1::bigint, 'admins are told about the change'); -- checks the notice
 
 -- Weekly still needs a card.
 update public.billing_accounts set method = 'bank_debit', stripe_payment_method_id = 'pm_x' where family_id = :'fam'; -- gives the family a saved bank debit

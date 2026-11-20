@@ -7,7 +7,7 @@ import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard 
 import { requireViewer } from "@/lib/auth"; // Makes sure someone is signed in.
 import { METHOD_LABELS, PLAN_LABELS, PLAN_SCOPE_NOTE, STATUS_LABELS, dollars, plainDate, type BillingMethod, type BillingPlan } from "@/lib/billing/money"; // Billing words and helpers: methods, plans, statuses, dollars, dates, and their types.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { ChoosePlanForm } from "./plan-form"; // The form for choosing a plan.
+import { CancelPlanChangeForm, ChoosePlanForm } from "./plan-form"; // The forms for choosing a plan and cancelling a booked change.
 import { AcceptTermsForm } from "./terms-form"; // The form for agreeing to the payment terms.
 
 // A family's billing account as the database gives it.
@@ -15,6 +15,7 @@ type Account = {
   family_id: string; // the family,
   bill_payer_id: string | null; // the bill payer (if chosen),
   plan: BillingPlan; // the plan,
+  pending_plan: BillingPlan | null; // a plan change booked for the next invoice (if any),
   method: BillingMethod; // card or bank debit,
   payment_ready: boolean; // whether automatic payment is set up,
   terms_accepted_at: string | null; // when the terms were agreed (if they were),
@@ -70,7 +71,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   ]; // End of the list.
 
   const [accounts, families, invoices, onHold, splits] = await Promise.all([ // Reads five things at once:
-    supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, method, payment_ready, terms_accepted_at, paused").in("family_id", myFamilies), // their own families' billing accounts,
+    supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, pending_plan, method, payment_ready, terms_accepted_at, paused").in("family_id", myFamilies), // their own families' billing accounts,
     supabase.from("families").select("id, name").in("id", myFamilies), // their own families' names,
     supabase // the invoices:
       .from("billing_invoices") // (from the invoices table)
@@ -92,10 +93,15 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   const nameOf = new Map((families.data ?? []).map((f) => [f.id, f.name])); // Each family's name, by id.
   const invoiceRows = (invoices.data ?? []) as unknown as Invoice[]; // The invoices.
   const credit = new Map<string, number>(); // Each family's credit.
-  await Promise.all( // Reads every family's credit at once:
+  const changeStarts = new Map<string, string | null>(); // The day each booked plan change is expected to start.
+  await Promise.all( // Reads every family's credit (and booked change day) at once:
     accountRows.map(async (a) => { // for each account:
       const { data } = await supabase.rpc("billing_credit_balance", { p_family: a.family_id }); // asks the database for the credit,
       credit.set(a.family_id, data ?? 0); // and keeps it.
+      if (a.pending_plan) { // If a plan change is booked (only then, to keep the page fast):
+        const starts = await supabase.rpc("billing_plan_change_starts", { p_family: a.family_id }); // asks when the next invoice is due,
+        changeStarts.set(a.family_id, (starts.data as string | null) ?? null); // and keeps it (none when no sessions are booked yet).
+      } // End of that check.
     }), // (end of each account)
   ); // (end of the reads)
   // What this person still owes on each unpaid invoice: the whole invoice,
@@ -141,7 +147,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
           <Card // a card:
             key={`plan-${c.family_id}`} // (its key)
             title={choiceRows.length > 1 ? `How often would you like to pay? (${c.family_name})` : "How often would you like to pay?"} // titled with the question (and family name if more than one),
-            description="Please choose before booking or approving sessions: it is needed first. You can change it later, and the change applies from your next session that is not already on an invoice." // that it is needed first, and how changes work (Carla, 20 Nov 2026).
+            description="Please choose before booking or approving sessions: it is needed first. You can change it at any time. Once you have an invoice, a change starts from your next invoice." // that it is needed first, and how changes work (Carla, 20 Nov 2026).
           >{/* (end of the card's settings) */}
             <ChoosePlanForm familyId={c.family_id} plan={c.plan} chosen={false} />{/* The plan form. */}
           </Card> // End of the card.
@@ -173,7 +179,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
               <dl className="grid gap-2 text-sm sm:grid-cols-3">{/* three columns on wider screens: */}
                 <div>{/* a group: */}
                   <dt className="text-zinc-500">Plan</dt>{/* "Plan", */}
-                  <dd>{choiceOf.get(a.family_id)?.chosen === false ? "Not chosen yet" : PLAN_LABELS[a.plan]}</dd>{/* the plan (or "Not chosen yet"). */}
+                  <dd>{choiceOf.get(a.family_id)?.chosen === false ? "Not chosen yet" : PLAN_LABELS[a.plan]}</dd>{/* the plan (or "Not chosen yet"), */}
+                  {a.pending_plan && ( // and if a change is booked:
+                    <dd className="text-zinc-600">Changing to {PLAN_LABELS[a.pending_plan]} from your next invoice</dd> // the plan it changes to.
+                  )}{/* End of that part. */}
                 </div>{/* End of the group. */}
                 <div>{/* A group: */}
                   <dt className="text-zinc-500">Automatic payment</dt>{/* "Automatic payment", */}
@@ -188,13 +197,25 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                 <input type="hidden" name="family_id" value={a.family_id} />{/* the family (hidden), */}
                 <Button type="submit">{ready ? "Change card or bank account" : "Set up automatic payment"}</Button>{/* the button, worded for set up or change. */}
               </form>{/* End of the form. */}
+              {a.pending_plan && ( // If a plan change is booked for the next invoice:
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* a highlighted box: */}
+                  <p className="mb-3">{/* a note: */}
+                    You asked to change to <strong>{PLAN_LABELS[a.pending_plan]}</strong>. You stay on{" "}
+                    <strong>{PLAN_LABELS[a.plan]}</strong> until your next invoice, and the new plan starts with that invoice
+                    {changeStarts.get(a.family_id) ? ` (expected on ${plainDate(changeStarts.get(a.family_id))})` : ""}. Invoices you
+                    already have stay as they are.{/* what changes, and when it is expected, */}
+                  </p>{/* End of the note. */}
+                  <CancelPlanChangeForm familyId={a.family_id} />{/* and a button to cancel it. */}
+                </div> // End of the box.
+              )}{/* End of that part. */}
               {choiceOf.get(a.family_id)?.chosen && choiceOf.get(a.family_id)?.can_change && ( // If they chose a plan and can still change it:
                 <details className="mt-4 text-sm">{/* a section that opens when clicked: */}
                   <summary className="cursor-pointer">Change how often you pay</summary>{/* its heading, */}
                   <div className="mt-3 space-y-3">{/* a block: */}
                     <p className="text-zinc-600">{/* a note: */}
-                      The new plan applies from your next session that is not already on an invoice. Invoices you already have
-                      stay as they are, so please pay those as usual. CLG is told about the change.{/* how a change works. */}
+                      You can change your plan at any time. Once you have an invoice, the change is booked and starts from your
+                      next invoice: until then you stay on your current plan. Invoices you already have stay as they are, so
+                      please pay those as usual. You can cancel a booked change before it starts. CLG is told about the change.{/* how a change works. */}
                     </p>{/* End of the note. */}
                     <ChoosePlanForm familyId={a.family_id} plan={a.plan} chosen />{/* the plan form. */}
                   </div>{/* End of the block. */}

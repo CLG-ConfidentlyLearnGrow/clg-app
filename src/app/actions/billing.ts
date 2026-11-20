@@ -55,7 +55,15 @@ export async function saveFamilyBilling(_prev: FormState, formData: FormData): P
     return { error: "Weekly families pay by card. Ask the family to save a card first, or choose monthly or per term." }; // explains weekly families pay by card.
   } // End of that check.
   const viewer = await requireViewer(); // Gets the admin's details.
-  const values = { plan, bill_payer_id: bill_payer_id || null, plan_chosen_at: new Date().toISOString(), plan_chosen_by: viewer.id }; // What to save: plan, bill payer (or none), and when and by whom it was chosen.
+  const values = { // What to save:
+    plan, // the plan (an admin's change applies straight away),
+    bill_payer_id: bill_payer_id || null, // the bill payer (or none),
+    plan_chosen_at: new Date().toISOString(), // when the plan was chosen,
+    plan_chosen_by: viewer.id, // and by whom,
+    pending_plan: null, // and clears any change the family had booked for their next invoice,
+    pending_plan_at: null, // (when it was booked)
+    pending_plan_by: null, // (and by whom), because the admin has set the plan themselves.
+  }; // End of what to save.
   const result = existing.data // Saves it:
     ? await supabase.from("billing_accounts").update(values).eq("family_id", family_id) // updating the existing account,
     : await supabase.from("billing_accounts").insert({ family_id, ...values }); // or making a new one.
@@ -273,9 +281,9 @@ async function myFamilyAccount(familyId: string) {
 } // End of myFamilyAccount.
 
 // The person who pays chooses how often the family pays. It is needed before
-// booking, and can be changed at any time: the change applies from the next
-// session not already on an invoice (Carla, 20 Nov 2026). The database checks
-// who may do it.
+// booking, and can be changed at any time. Before the first invoice it is
+// saved straight away; after that the change is booked and starts from the
+// family's next invoice (Carla, 20 Nov 2026). The database checks who may do it.
 export async function chooseBillingPlan(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireViewer(); // Makes sure someone is signed in.
   const parsed = z // Checks the form has:
@@ -286,8 +294,31 @@ export async function chooseBillingPlan(_prev: FormState, formData: FormData): P
   const { error } = await supabase.rpc("billing_choose_plan", { p_family: parsed.data.family_id, p_plan: parsed.data.plan }); // Asks the database to save the choice.
   if (error) return plain(error, "Could not save your choice. Please try again."); // Failed: plain message.
   revalidatePath("/billing"); // Refreshes the family billing page.
-  return { message: "Thanks, your choice is saved. It applies from your next session that is not already on an invoice." }; // Thanks them, and says when it applies.
+  const { data: account } = await supabase // Reads back what was saved:
+    .from("billing_accounts") // from the billing accounts table,
+    .select("plan, pending_plan") // the current plan and any booked change,
+    .eq("family_id", parsed.data.family_id) // for this family,
+    .maybeSingle(); // (one at most).
+  if (account?.pending_plan) { // A change was booked for the next invoice:
+    return { message: "Thanks, your change is booked. It starts from your next invoice. Until then your current plan stays the same." }; // says when it starts.
+  } // End of that case.
+  return { message: "Thanks, your choice is saved." }; // Otherwise the plan was saved straight away (or a booked change was cancelled).
 } // End of chooseBillingPlan.
+
+// The person who pays cancels a plan change they booked for the next
+// invoice, so they stay on their current plan. The database checks who may
+// do it (the person who pays, or an admin).
+export async function cancelBillingPlanChange(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form's last reply (unused) and its fields.
+  await requireViewer(); // Makes sure someone is signed in.
+  const familyId = uuid.safeParse(formData.get("family_id")); // Reads and checks the family id.
+  if (!familyId.success) return { error: "Something went wrong. Please refresh the page and try again." }; // Problem: asks them to try again.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("billing_cancel_plan_change", { p_family: familyId.data }); // Asks the database to cancel the booked change.
+  if (error) return plain(error, "Could not cancel the change. Please try again."); // Failed: plain message.
+  revalidatePath("/billing"); // Refreshes the family billing page.
+  revalidatePath(ADMIN_PAGE); // Refreshes the admin billing page too, in case an admin cancelled it.
+  return { message: "The change is cancelled. Your current plan stays the same." }; // Confirms it.
+} // End of cancelBillingPlanChange.
 
 // A family agrees to the billing terms.
 export async function acceptBillingTerms(_prev: FormState, formData: FormData): Promise<FormState> {

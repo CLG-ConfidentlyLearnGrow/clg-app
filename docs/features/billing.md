@@ -183,3 +183,13 @@ session not already paid for.
 - Legal: Australian Consumer Law (clear payment terms before the service is
   agreed; no surprise charges, since the change only affects sessions not yet
   invoiced). Privacy unchanged.
+
+## Plan changes start from the next invoice (20 Nov 2026)
+
+Carla: families can change plan at any time, and the change only comes into
+effect for the next invoice. Once a family has an invoice, a change is now
+booked and made by the daily run when the current plan's next invoice is due,
+so that invoice is on the new plan. The family sees the booked change and can
+cancel it. See
+[payment-plan-change-next-invoice.md](payment-plan-change-next-invoice.md).
+Migration: `20261123500100_payment_plan_change_next_invoice.sql`.
