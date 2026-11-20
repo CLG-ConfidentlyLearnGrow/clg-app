@@ -207,6 +207,8 @@ When a family uploads a school report or marked work, it shows under **New uploa
 1. When a family books a term review, it shows under **Term reviews to write**. Choose **Write review**.
 2. Write how the term went, the focus for next term and your recommendation.
 3. Send it by the date shown. CLG checks it before the family sees it, and may send it back with changes to make.
+4. Before you can send a term review, finish the term review modules in **Training**. You can save your draft at any time.
+5. Allow about 1 hour to write it. Once CLG approves it, 1 hour at your tutor rate is added to your pay for you. Do not log it.
 
 ### Find materials
 1. In the side menu, choose **CLG materials**.
@@ -233,7 +235,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.
 2. Under **Log hours**, choose **What kind of work?** (for example **Lesson preparation and planning** or **Making learning materials**), then the day and hours. Write **What you did** and **What you finished or achieved**. CLG checks both before approving. Log each pay week's hours by the day after the pay week ends.
    - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
-   - The 15 minutes after each session (summary and planning) and app training modules are added for you. Do not log them.
+   - The 15 minutes after each session (summary and planning), app training modules, and 1 hour for each term review CLG approves are added for you. Do not log them.
 3. Changed your mind? Choose **Take back** before it is approved.
 4. **Last 8 weeks** shows your sessions and hours. If you tutor school students on a weekday before 7am or after 7pm, a weekend or a public holiday, and your rate is below the award rate for that time, a **Penalty rate top-up** line pays the difference. Under the award you move from Level 1 to Level 2 after 3 months with CLG, and the app raises your school rate then if it is below the Level 2 minimum. If a time looks wrong, record the right finish time on the session, or contact CLG.
 

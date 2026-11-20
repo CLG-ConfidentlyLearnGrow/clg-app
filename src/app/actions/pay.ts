@@ -179,6 +179,9 @@ export async function workOutPay(_prev: FormState, formData: FormData): Promise<
   // Add compulsory training as hours waiting for approval (before the agreed-hours check, so it counts).
   const training = await supabase.rpc("billing_build_training_hours", { p_from: parsed.data.from, p_to: parsed.data.to }); // Adds training hours for the period.
   if (training.error) return plain(training.error, "Could not add training hours."); // Failed: plain message.
+  // Add 1 hour at the tutor's rate for each term review CLG approved (Carla, 19 Nov 2026), before the agreed-hours check so it counts.
+  const reviews = await supabase.rpc("billing_build_term_review_pay", { p_from: parsed.data.from, p_to: parsed.data.to }); // Builds the term review pay lines.
+  if (reviews.error) return plain(reviews.error, "Could not work out term review pay."); // Failed: plain message.
   // Then check agreed hours for part-time and full-time staff (only once the pay period has ended).
   const topUps = await supabase.rpc("billing_check_guaranteed_hours", { p_day: parsed.data.to }); // Adds any guaranteed-hours top-ups for the period.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
@@ -201,6 +204,7 @@ export async function sendTimesheetsNow(_prev: FormState, formData: FormData): P
   const { data: period } = await supabase.rpc("billing_pay_period", { p_day: start.data }).single<{ period_start: string; period_end: string }>(); // Reads the pay period's first and last day.
   if (period) await supabase.rpc("billing_build_pay", { p_from: period.period_start, p_to: period.period_end }); // Works out pay again for that period.
   if (period) await supabase.rpc("billing_build_summary_pay", { p_from: period.period_start, p_to: period.period_end }); // And the session summary time for that period.
+  if (period) await supabase.rpc("billing_build_term_review_pay", { p_from: period.period_start, p_to: period.period_end }); // And term reviews approved in that period.
   const result = await sendTimesheets(start.data); // Sends the timesheets.
   revalidatePath(PAGE); // Refreshes the page so it shows the change.
   const done = `Sent ${result.sent} draft timesheet(s) to Xero Payroll. Check and approve them in Xero before the pay run.`; // What was done.

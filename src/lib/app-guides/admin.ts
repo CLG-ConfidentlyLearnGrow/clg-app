@@ -330,7 +330,8 @@ Open **Progress** in the side menu.
 ### Check term reviews before families see them
 1. **Term reviews to check** lists reviews tutors have written.
 2. Check each one: is it written to the family, honest about progress, and clear about next term?
-3. Approve it, or send it back with what needs changing.
+3. Approve it, or send it back with what needs changing. Approving it pays the tutor 1 hour at their tutor rate.
+4. Tutors cannot send a term review until they have finished the term review training modules.
 
 ### Keep notes on track
 - **Notes overdue** lists sessions with no note after the due time. Follow up with the tutor.
@@ -460,6 +461,7 @@ Open **Billing**, then **Staff pay**.
 ### Send a pay period to Xero
 1. Open the pay period (use **Earlier** and **Later** to move between periods).
 2. Check the lines, then choose **Send to Xero Payroll**. If something changed, choose **Work out pay again** first.
+3. Each term review you approve adds a **Term review** line: 1 hour at the tutor's rate, on the day you approved it. A tutor needs a tutor rate entered for it to be added.
 
 ### Record admin hours for someone
 Under **Record admin hours**, choose the person, day, hours and what it was for, then **Record hours**.

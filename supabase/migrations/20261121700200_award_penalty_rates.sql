@@ -77,7 +77,7 @@ on conflict do nothing; -- already there: leave it
 -- ---------------------------------------------------------------------------
 alter table public.billing_pay_lines drop constraint if exists billing_pay_lines_kind_check; -- removes the old list of kinds
 alter table public.billing_pay_lines add constraint billing_pay_lines_kind_check -- adds the list back with "penalty" included
-  check (kind in ('session', 'late_cancel', 'min_topup', 'admin', 'tutoring_work', 'guaranteed', 'summary', 'training', 'penalty')); -- every kind of pay line
+  check (kind in ('session', 'late_cancel', 'min_topup', 'admin', 'tutoring_work', 'guaranteed', 'summary', 'training', 'penalty', 'term_review')); -- every kind of pay line (keeps "term_review" from the term review pay change, so the two can run in either order)
 alter table public.billing_pay_lines drop constraint if exists billing_pay_lines_minutes_check; -- removes the old "more than 0 minutes" rule
 alter table public.billing_pay_lines add constraint billing_pay_lines_minutes_check -- adds it back:
   check (minutes > 0 or (kind = 'penalty' and minutes = 0)); -- every line has minutes, except penalty top-ups (the session line already has them)

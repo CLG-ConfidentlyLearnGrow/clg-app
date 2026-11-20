@@ -22,6 +22,7 @@ const KIND_LABELS: Record<string, string> = { // Each kind of pay line's words:
   summary: "Session summary and planning", // 5 min summary plus 10 min planning the next session.
   penalty: "Penalty rate top-up (evenings, early mornings, weekends or public holidays)", // extra pay under the award (Carla, 18 Nov 2026).
   training: "Training", // compulsory training, for its set time.
+  term_review: "Term review", // writing a term review CLG approved, 1 hour at the tutor rate.
 }; // End of the list.
 
 const hours = (m: number) => `${Math.round((m / 60) * 100) / 100} hr`; // Minutes written as hours, e.g. "1.5 hr".
