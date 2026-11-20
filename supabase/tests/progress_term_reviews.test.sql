@@ -138,7 +138,6 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ===========================================================================
 select tests.claims(null); -- Signs out, so no one is signed in.
 -- No longer sent (2 Nov 2026).
-select tests.eq(private.queue_monthly_summaries(current_date), 0, 'monthly summaries are no longer made'); -- Checks: monthly summaries are no longer made.
 select tests.eq((select count(*) from public.progress_notices where kind = 'monthly_summary'), 0, 'no monthly summary sent'); -- Checks: no monthly summary sent.
 
 -- Put the real terms back, and the add-on as it was.

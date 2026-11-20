@@ -101,34 +101,6 @@ export async function recordCheck(_prev: FormState, formData: FormData): Promise
   return { message: "Check saved and marked as verified by you." }; // Confirms it.
 } // End of recordCheck.
 
-// The rules for assigning a tutor:
-const assignSchema = z.object({
-  tutor_id: z.uuid("Choose a tutor and subject."), // which tutor,
-  student_id: z.uuid("Choose a student."), // which student,
-  subject: z.string().trim().min(1, "Enter the subject.").max(100), // which subject.
-}); // End of the rules.
-
-// Assigns a tutor to a student for a subject.
-export async function assignTutor(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin(); // Makes sure the person is a full admin.
-  const [tutor_id, ...rest] = String(formData.get("pick") ?? "").split("|"); // Splits the picked "tutor|subject" choice.
-  const parsed = assignSchema.safeParse({ // Checks against the rules:
-    tutor_id, // the tutor,
-    subject: rest.join("|"), // the subject (rejoined in case it contained "|"),
-    student_id: formData.get("student_id"), // and the student.
-  }); // End of the check.
-  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
-
-  const supabase = await createClient(); // Connects to the database as the signed-in person.
-  const { error } = await supabase.from("tutor_assignments").insert(parsed.data); // Saves the assignment.
-  // The database explains why an assignment isn't allowed (checks missing,
-  // parent link not yet verified).
-  if (error) return { error: error.code === "23514" ? error.message : "Could not assign the tutor." }; // Shows the database's reason, or a general message.
-
-  revalidatePath("/admin"); // Refreshes the admin pages so they show the change.
-  return { message: "Tutor assigned." }; // Confirms it.
-} // End of assignTutor.
-
 // Unlocks an account locked after too many sign-in tries.
 export async function unlockAccount(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin(); // Makes sure the person is a full admin.

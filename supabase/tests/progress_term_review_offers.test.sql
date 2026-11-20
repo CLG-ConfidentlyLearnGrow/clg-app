@@ -132,11 +132,6 @@ select tests.eq((select count(*) from public.term_review_offers where id = '0000
 select tests.eq((select count(*) from public.term_reviews where offer_id = '00000000-0000-0000-0000-0000000f0002'), 1, 'no charge: tutor still gets the draft'); -- Checks: the tutor still gets a draft.
 
 -- ===========================================================================
--- Monthly summaries stay off
--- ===========================================================================
-select tests.eq(private.queue_monthly_summaries(current_date), 0, 'monthly summaries are not made'); -- Checks: no monthly summaries.
-
--- ===========================================================================
 -- Put everything back
 -- ===========================================================================
 create temp table made_invoices as select invoice_id from public.term_review_offers where invoice_id is not null; -- Notes the invoices the test made.

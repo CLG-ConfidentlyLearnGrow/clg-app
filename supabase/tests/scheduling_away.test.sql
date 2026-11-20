@@ -19,8 +19,6 @@ select tests.fails(format($$select public.add_away_dates(null, %L, %L::date + 9,
 select tests.fails(format($$select public.add_away_dates(null, %L, current_date - 10, current_date - 5)$$, :'sam'), 'dates in the past'); -- Checks this is refused: dates in the past.
 select tests.fails($$select public.add_away_dates('00000000-0000-0000-0000-000000000013', null, current_date + 1, current_date + 2)$$, 'family adds a tutor''s away dates'); -- Checks this is refused: family adds a tutor's away dates.
 select tests.fails($$insert into public.away_dates (student_id, from_date, to_date) select id, current_date, current_date from public.students$$, 'family writes the table directly'); -- Checks this is refused: family writes the table directly.
-select tests.eq(c.sessions, 4, 'booking shows 4 sessions') from public.count_booking_sessions(:'sam', '00000000-0000-0000-0000-000000000013', 1::smallint, :'first_day'::date, :'first_day'::date + 28) c; -- Checks a four-week booking shows 4 sessions.
-select tests.eq(c.skipped, 1, 'and 1 away date skipped') from public.count_booking_sessions(:'sam', '00000000-0000-0000-0000-000000000013', 1::smallint, :'first_day'::date, :'first_day'::date + 28) c; -- Checks 1 away date is skipped.
 -- Asks for a Monday 4pm online booking with tutor T3 for four weeks, and keeps its id as booking.
 select public.request_booking(:'sam', 'General Maths', '00000000-0000-0000-0000-000000000013', 1::smallint, '16:00', 60, 'online', null, :'first_day'::date, :'first_day'::date + 28) as booking \gset
 reset role; -- Goes back to the all-powerful test user (access rules off).
@@ -28,7 +26,6 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000004'); -- Signs in as test account ...04.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.fails(format($$select public.add_away_dates(null, %L, current_date + 1, current_date + 2)$$, :'sam'), 'other parent adds away dates'); -- Checks this is refused: other parent adds away dates.
-select tests.fails(format($$select * from public.count_booking_sessions(%L, '00000000-0000-0000-0000-000000000013', 1::smallint, current_date, current_date + 7)$$, :'sam'), 'other parent counts sessions'); -- Checks this is refused: other parent counts sessions.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.

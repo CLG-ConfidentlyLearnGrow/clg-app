@@ -51,20 +51,12 @@ select tests.fails($$select * from public.student_places$$, 'anon'); -- Checks t
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- ---------------------------------------------------------------------------
--- Pipeline
+-- Pipeline: the first Matching page functions (list_matching and
+-- matching_pipeline) were removed on 20 Nov 2026 because nothing used them;
+-- the Matching page's own checks are in scheduling_matching_redesign.test.sql.
 -- ---------------------------------------------------------------------------
 select tests.claims(null); -- Signs out, so no one is signed in.
-insert into public.student_subjects (student_id, subject) values (:'sam', 'English'); -- Adds English to Sam's subjects.
-
-select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
-set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.list_matching('needs_tutor') where student_id = :'sam' and subject = 'English'), 1, 'new subject needs a tutor'); -- Checks: new subject needs a tutor.
-select tests.eq((select count(*) from public.list_matching(null, 'sam three') where subject = 'English' and has_places), 1, 'search by name; places noted'); -- Checks: search by name; places noted.
-select tests.eq((select count(*) from public.list_matching(null, 'engl') where student_id = :'sam'), 1, 'search by subject'); -- Checks: search by subject.
-select tests.eq((select (subjects >= 1)::int from public.matching_pipeline() where stage = 'needs_tutor'), 1, 'pipeline counts'); -- Checks: pipeline counts.
-select tests.eq((select count(*) from public.list_matching(null, null, 1, 0)), 1, 'one page at a time'); -- Checks: one page at a time.
-select tests.eq((select count(*) from public.list_matching('active') where student_id = :'sam' and subject = 'General Maths' and tutor_name is not null), 1, 'running booking is active, with the tutor'); -- Checks: running booking is active, with the tutor.
-reset role; -- Goes back to the all-powerful test user (access rules off).
+insert into public.student_subjects (student_id, subject) values (:'sam', 'English'); -- Adds English to Sam's subjects (later checks in this file use it).
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
@@ -72,17 +64,13 @@ select public.join_waitlist(:'sam', 'English', 60, true, '{}', null, null, null,
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.list_matching('waitlist') where student_id = :'sam' and subject = 'English'), 1, 'waitlisted'); -- Checks: waitlisted.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.list_matching()$$, 'families cannot see the pipeline'); -- Checks this is refused: families can't see the pipeline.
-select tests.fails($$select * from public.matching_pipeline()$$, 'families cannot see the counts'); -- Checks this is refused: families can't see the counts.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as test account ...13 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.fails($$select * from public.list_matching()$$, 'tutors cannot see the pipeline'); -- Checks this is refused: tutors can't see the pipeline.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Put things back for the later tests.
