@@ -171,6 +171,14 @@ Tip: Only CLG's office team sees your answers. The family does not, and you do n
 ### Notices and reminders
 In **Sessions**, choose **Notices**. Open **Reminder settings** to choose when your first reminder comes before each session. Nothing is sent between 9pm and 5am your local time.
 
+### Get pop-up notifications on your phone or computer
+Pop-ups tell you straight away about reminders, booking news, progress note reminders and help chat replies, even when the app is closed or you have been signed out. They never show a student's name or other details, so they are safe on a locked screen.
+1. On your phone or computer, choose **Turn on pop-ups** on the note at the top of your dashboard, or go to **Sessions**, choose **Notices**, and choose **Turn on pop-ups on this device** on the **Pop-up notifications** card.
+2. When your browser asks, choose **Allow**.
+3. Choose **Send me a test** to check it works.
+
+Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there, then turn on pop-ups. To stop them on a device, choose **Turn off on this device**.
+
 ## Students and progress
 
 ### See your students
