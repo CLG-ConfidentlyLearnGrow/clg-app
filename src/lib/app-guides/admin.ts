@@ -62,6 +62,11 @@ const SESSIONS = `
 
 Open **Sessions** in the side menu. Its sections include **Overview**, **Bookings**, **Book a session**, **How long to book**, **Away dates**, **Requests**, **Blocks**, **Notices**, **Book again** and **Waitlist**. Times are Adelaide time.
 
+### Tick off notices
+1. In **Sessions**, choose **Notices**.
+2. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (for example, confirmed a library). Done notices move to the **Done** list at the bottom.
+3. Ticked by mistake? Open **Done** and choose **Not done yet: put it back**. **Mark all as read** marks every notice as seen at once.
+
 ### Book a session for a family
 1. In **Sessions**, choose **Book a session**.
 2. Choose who it is for, the subject, how long (1 hr minimum, in half-hour steps) and the first week. Narrow the days and times if you like.
@@ -174,6 +179,11 @@ Choose **Reports** at the top of Matching to see:
 2. The map shows CLG's approved libraries (charcoal dots), each tutor's travel areas (solid bronze circles) and each family's travel area (dashed green circles). Circles are straight-line distances.
 3. Click a circle to see who it is, the distance, and (for tutors) the weekly times that use it. Street addresses are not shown on the map.
 4. Use the tick boxes to show or hide libraries, tutor areas or family areas. Choose one tutor in the **Tutor** list to zoom to their areas.
+
+### See the list of libraries
+1. In **Sessions**, choose **Libraries** (Owner and Operations admins).
+2. Use the buttons at the top of the list: **Active (ready for sessions)** shows libraries that are shown, confirmed and have opening hours, so sessions can be offered there. **To confirm or add hours** shows libraries still needing a look. **Hidden** shows libraries you have hidden. **All** shows every library. Each button shows how many are in it.
+3. To make a library active, add its opening hours under **Add opening hours**, then confirm it.
 `;
 
 // What every admin has for themselves: training, handbook, staff directory, pay.

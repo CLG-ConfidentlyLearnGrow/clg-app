@@ -202,9 +202,10 @@ Tip: Only CLG's office team sees your answers. The tutor does not.
 2. Choose the tutor and write why. Only CLG sees the reason, and the tutor is not told.
 3. Choose **Block this tutor**. The app stops suggesting that tutor for your child, and CLG will contact you to talk it through.
 
-### Read notices and choose when reminders come
+### Read and tick off notices, and choose when reminders come
 1. In **Sessions**, choose **Notices** to read news about bookings and reminders before each session.
-2. Open **Reminder settings** to choose when your first reminder comes (48 hr before by default). A final reminder always comes 1 hr before.
+2. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it. Done notices move to the **Done** list at the bottom (choose **Not done yet: put it back** if you ticked one by mistake).
+3. Open **Reminder settings** to choose when your first reminder comes (48 hr before by default). A final reminder always comes 1 hr before.
 
 Tip: Nothing is sent between 9pm and 5am your local time.
 
