@@ -53,7 +53,7 @@ const signUpSchema = z
       v.signup_as !== "learner" || // not a learner,
       (!!v.date_of_birth && new Date(v.date_of_birth) <= yearsAgo(16)), // or the date of birth is at least 16 years ago.
     { // (the message and where it shows)
-      message: "Students under 16 join through a parent's account. Ask a parent to sign up.", // the message,
+      message: "Students under 16 join through a family account. Ask a parent or carer to sign up as a family and add you.", // the message,
       path: ["date_of_birth"], // shown by the date of birth field.
     }, // (end)
   ) // End of the age check.

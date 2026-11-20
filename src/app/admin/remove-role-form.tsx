@@ -19,7 +19,7 @@ export function RemoveRoleForm() {
         </option>{/* (end of the option) */}
         <option value="tutor">Remove tutor role (ends tutor access today)</option>{/* remove tutor role, */}
         <option value="admin">Remove admin role</option>{/* remove admin role, */}
-        <option value="parent">Remove parent role (they stop seeing their children)</option>{/* remove parent role, */}
+        <option value="parent">Remove Family profile (they stop seeing their children)</option>{/* remove parent role, */}
         <option value="student">Remove student role (their student record is kept, without the login)</option>{/* remove student role, */}
         <option value="delete">Delete the whole account</option>{/* or delete the whole account. */}
       </Select>{/* End of the drop-down. */}

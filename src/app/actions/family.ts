@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 // A parent adds their child.
 export async function addChild(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
-  if (!viewer.roles.includes("parent")) return { error: "Only parents can add a child." }; // Only parents can add a child.
+  if (!viewer.roles.includes("parent")) return { error: "Only someone with a Family profile can add a child." }; // Only parents can add a child.
 
   const parsed = childSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the child rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
@@ -71,7 +71,7 @@ const editSchema = z.object({
 export async function updateChild(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
   if (!viewer.roles.includes("parent") && !viewer.roles.includes("admin")) { // Not a parent or admin:
-    return { error: "Only a parent can change these details." }; // explains only a parent can.
+    return { error: "Only someone with a Family profile can change these details." }; // explains only a parent can.
   } // End of that check.
   const parsed = editSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.

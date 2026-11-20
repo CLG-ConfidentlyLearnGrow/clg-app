@@ -8,7 +8,7 @@ import type { Role } from "@/lib/auth";
 // you're in. Colours are set in globals.css. Class names are written out in
 // full so the styling tool can find them.
 export type RoleTheme = {
-  title: string; // shown above the page heading, e.g. "Parent dashboard"
+  title: string; // shown above the page heading, e.g. "Family dashboard"
   accent: string; // background in the accent colour (bars, dots)
   accentBorder: string; // border in the accent colour
   accentTopBorder: string; // top border in the accent colour
@@ -41,7 +41,7 @@ export const ROLE_THEME: Record<Role, RoleTheme> = {
     hoverTint: "hover:bg-tutor-tint", // Pale background when hovered.
   }, // End of this role's look.
   parent: { // The parent dashboard's look.
-    title: "Parent dashboard", // Heading shown above the page title.
+    title: "Family dashboard", // Heading shown above the page title (the parent role is shown as "Family": Carla, 20 Nov 2026).
     accent: "bg-parent-accent", // Accent-coloured background.
     accentBorder: "border-parent-accent", // Accent-coloured border.
     accentTopBorder: "border-t-parent-accent", // Accent-coloured top border.

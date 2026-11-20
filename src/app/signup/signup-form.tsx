@@ -19,7 +19,7 @@ export function SignupForm() {
         <legend className="text-sm font-medium">I am signing up as</legend>{/* its heading, */}
         <label className="flex items-center gap-2 text-sm">{/* a line holding: */}
           <input type="radio" name="signup_as" value="parent" checked={kind === "parent"} onChange={() => setKind("parent")} />{/* a round button for "parent", */}
-          A parent or carer (you can add your children next){/* and its words. */}
+          A family (a parent or carer): you can add your children next{/* and its words (the Family profile: Carla, 20 Nov 2026). */}
         </label>{/* End of the line. */}
         <label className="flex items-center gap-2 text-sm">{/* A line holding: */}
           <input type="radio" name="signup_as" value="learner" checked={kind === "learner"} onChange={() => setKind("learner")} />{/* a round button for "student", */}

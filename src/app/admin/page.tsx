@@ -377,7 +377,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               collapsible // can fold,
               defaultOpen={false} // folded to start,
               title="Give a student their own login" // its title,
-              description="For a student aged 16 or over who is on a parent's account. They keep their details, history and tutor, and their parent can still see everything." // its help text.
+              description="For a student aged 16 or over who is on a family account. They keep their details, history and tutor, and their parent can still see everything." // its help text.
             >{/* (end of the card's settings) */}
               <StudentLoginForm students={loginReady} />{/* the form, with students who can get one. */}
             </Card>{/* End of the card. */}

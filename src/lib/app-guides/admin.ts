@@ -33,7 +33,7 @@ All admins need two-step login, because the app holds children's information.
 4. Each time you sign in, enter the 6-digit code from your authenticator app.
 
 ### Get around the admin dashboard
-- Choose the **Admin** tab at the top. If you also tutor or are a parent, the other tabs take you to those dashboards.
+- Choose the **Admin** tab at the top. If you also tutor or have a **Family** profile, the other tabs take you to those dashboards.
 - The side menu shows only what your admin level can use. A number next to an item means something is waiting there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 - **Home**, **Child safety** (in red), **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page. On a phone, **Child safety** stays in the top bar and the rest are under the **Menu** button (top right), along with your name and **Sign out**.
 - When you open something from a list (a report, an application, a training module, a handbook page, a material, a student's progress, or a student in Matching on a phone), a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
@@ -122,7 +122,7 @@ Open **Families** in the side menu.
 ### Set up a family for them
 Use this during a phone call, or when a family would rather CLG fills it in.
 1. In **Families**, open **Set up a family**.
-2. Choose who the account is for (a parent, or an adult student), then enter their full name and email, and the child's details. Add one child at a time, using the same parent email for each child.
+2. Choose who the account is for (a family, or a student with their own login), then enter their full name and email, and the child's details. Add one child at a time, using the same parent email for each child.
 3. Choose **Set up and add child** (or **Set up student**).
 4. The family gets an email link to choose a password, and sees **Please finish (name)'s details** for anything still missing.
 

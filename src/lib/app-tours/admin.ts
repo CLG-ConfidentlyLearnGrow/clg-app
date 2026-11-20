@@ -26,7 +26,7 @@ You can skip it now and take it again any time: choose **Show me how** next to a
 
 ## Getting around
 
-The side menu (on a phone, the **Admin menu** button above the page) shows only what your admin level can use. A number next to an item means something is waiting there. If you also tutor or are a parent, tabs at the top switch between your dashboards.
+The side menu (on a phone, the **Admin menu** button above the page) shows only what your admin level can use. A number next to an item means something is waiting there. If you also tutor or have a Family profile, tabs at the top switch between your dashboards.
 
 **Home**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page on a computer, and under **Menu** at the top right on a phone.
 

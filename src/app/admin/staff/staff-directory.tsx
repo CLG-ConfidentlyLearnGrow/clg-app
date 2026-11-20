@@ -94,7 +94,7 @@ function appRoles(p: StaffMember): string[] {
   const out: string[] = []; // The list of roles in words.
   if (p.is_admin) out.push(p.admin_level ? LEVEL_NAMES[p.admin_level] : "Admin"); // Admins: their level.
   if (p.is_tutor) out.push(p.tutor_active === false ? "Tutor (finished)" : "Tutor"); // Tutors: whether they've finished.
-  if (p.is_parent) out.push("Parent"); // Parents.
+  if (p.is_parent) out.push("Family"); // Parents.
   if (p.is_student) out.push("Student"); // Students.
   if (hasLeft(p) && p.left_on) out.push(`Left CLG ${plainDate(p.left_on)}`); // Former staff: when they left.
   return out; // Gives back the list.
@@ -264,7 +264,7 @@ export function StaffDirectory({
             <option value="operations">Operations admins</option>{/* operations, */}
             <option value="support">Support admins</option>{/* support, */}
             <option value="finance">Finance admins</option>{/* finance, */}
-            <option value="parent">Also a parent</option>{/* also a parent. */}
+            <option value="parent">Also a family (parent or carer)</option>{/* also a parent. */}
           </FilterSelect>{/* End of the role filter. */}
           <FilterSelect label="Job title" value={title} onChange={setTitle}>{/* Job title: */}
             <option value="all">Any job title</option>{/* any, */}
@@ -533,7 +533,7 @@ function RolesPanel({ person: p, isOwner, isMe }: { person: StaffMember; isOwner
       why: p.admin_level === "owner" ? "The owner's admin role cannot be removed." : isMe ? "You cannot remove your own admin role." : undefined, // and why not, if it can't be.
     }); // (end of the role)
   if (p.is_tutor) held.push({ role: "tutor", label: p.tutor_active === false ? "Tutor (finished)" : "Tutor", canRemove: isOwner && p.tutor_active !== false }); // Tutors: removable by the owner unless already finished.
-  if (p.is_parent) held.push({ role: "parent", label: "Parent", canRemove: isOwner }); // Parents: removable by the owner.
+  if (p.is_parent) held.push({ role: "parent", label: "Family", canRemove: isOwner }); // Parents: removable by the owner.
   if (p.is_student) held.push({ role: "student", label: "Student", canRemove: isOwner }); // Students: removable by the owner.
 
   return ( // Shows:
@@ -620,7 +620,7 @@ function AddRoleForm({ person: p, isOwner, staffOnly = false }: { person: StaffM
   const options: { value: string; label: string }[] = []; // The roles that can be added.
   if (!p.is_tutor) options.push({ value: "tutor", label: "Tutor" }); // Tutor, if they aren't one.
   if (!p.is_admin && isOwner) options.push({ value: "admin", label: "Admin" }); // Admin, if they aren't one and this is the owner.
-  if (!p.is_parent && !staffOnly) options.push({ value: "parent", label: "Parent" }); // Parent, if they aren't one (not when bringing staff back).
+  if (!p.is_parent && !staffOnly) options.push({ value: "parent", label: "Family" }); // Parent, if they aren't one (not when bringing staff back).
   const choices = options; // The choices.
   if (choices.length === 0) return null; // Nothing to add: shows nothing.
   return ( // Shows:
@@ -701,7 +701,7 @@ function LeaveTeamPanel({ person: p }: { person: StaffMember }) {
           <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">{/* what will happen: */}
             <li>Their {[p.is_tutor && "tutor", p.is_admin && "admin"].filter(Boolean).join(" and ")} access ends straight away, and they are signed out everywhere.</li>{/* access ends, */}
             {p.is_tutor && <li>Their matches with students end and their calendar link stops working.</li>}{/* matches and calendar (tutors), */}
-            {p.is_parent && <li>They keep their parent account and still see their own children.</li>}{/* parent account kept, */}
+            {p.is_parent && <li>They keep their Family profile and still see their own children.</li>}{/* parent account kept, */}
             <li>Pay, hours, sessions, checks and child safety records are kept for 7 years, as the law requires, then deleted.</li>{/* records kept, */}
             <li>You can bring them back later by adding a role.</li>{/* bring back later. */}
           </ul>{/* End of the list. */}

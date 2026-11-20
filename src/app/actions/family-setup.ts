@@ -72,7 +72,7 @@ export async function setUpFamily(_prev: FormState, formData: FormData): Promise
   if (found) { // The email already has an account:
     if (!found.is_parent) { // but not as a parent:
       return { // explains:
-        error: `${email} already has a CLG account, but not as a parent. Ask them to add their child from their own account, or use a different email.`, // (the message)
+        error: `${email} already has a CLG account, but without a Family profile. Ask them to add their child from their own account, or use a different email.`, // (the message)
       }; // End of the message.
     } // End of that case.
     parentId = found.account_id; // Uses the existing parent account.
@@ -146,7 +146,7 @@ async function setUpLearner(
   const sixteen = new Date(); // Today,
   sixteen.setFullYear(sixteen.getFullYear() - 16); // moved back 16 years.
   if (new Date(v.date_of_birth) > sixteen) { // Born after that (under 16):
-    return { error: "Students under 16 use CLG through a parent's account. Set up the parent instead." }; // explains they use a parent's account.
+    return { error: "Students under 16 use CLG through a family account. Set up the family (the parent or carer) instead." }; // explains they use a parent's account.
   } // End of the age check.
 
   const made = await makeAccount(email, { // Makes their account and sends the invitation:
@@ -214,7 +214,7 @@ export async function giveStudentLogin(_prev: FormState, formData: FormData): Pr
 // checks they manage this child and the child is 16 or over.
 export async function giveMyChildLogin(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
-  if (!viewer.roles.includes("parent")) return { error: "Only a parent can do this." }; // Only parents.
+  if (!viewer.roles.includes("parent")) return { error: "Only someone with a Family profile can do this." }; // Only parents.
   return offerOwnLogin(formData, "parent_offer_student_login"); // Uses the shared steps with the parent's database check.
 } // End of giveMyChildLogin.
 

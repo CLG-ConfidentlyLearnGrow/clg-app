@@ -9,7 +9,7 @@ import { Field } from "@/components/ui"; // A labelled input box.
 // An admin gives a student on a parent's account their own login.
 export function StudentLoginForm({ students }: { students: { id: string; name: string }[] }) {
   if (students.length === 0) { // No students to choose from:
-    return <p className="text-sm text-zinc-600">No students aged 16 or over are on a parent&apos;s account.</p>; // says so.
+    return <p className="text-sm text-zinc-600">No students aged 16 or over are on a family account.</p>; // says so.
   } // End of that case.
   return ( // Shows:
     <ActionForm action={giveStudentLogin} submitLabel="Send login link">{/* a form that sends the login link: */}

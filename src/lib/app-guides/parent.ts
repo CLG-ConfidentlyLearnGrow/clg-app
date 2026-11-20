@@ -11,8 +11,8 @@ import type { GuideSource } from "./index"; // The shape of a guide's words (for
 // The parent guide's words. (Text inside the backticks is the guide itself,
 // not code, so its lines don't carry code comments.)
 export const PARENT_GUIDE: GuideSource = { // The guide:
-  title: "App guide for parents and carers", // its title,
-  who: "For parents and carers with a CLG account.", // who it's for,
+  title: "App guide for families", // its title (the Family profile: Carla, 20 Nov 2026),
+  who: "For parents and carers who use the Family dashboard. An adult learner who pays for themselves uses the Student guide.", // who it is for,
   text: `
 ## Getting around
 
@@ -23,7 +23,7 @@ The app has a few parts that are always there:
 - The side menu on your dashboard has **Your children**, **Sessions**, **Weekly calendar**, **Add a child**, **Billing** (only if you pay) and **App guide**. A number next to a menu item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 - **Child safety** (in red, top of every page) is where to go if you are ever worried about a child.
 - **Help chat**, **Feedback**, **Your privacy** and **Report app issue** are at the top of every page too. On a phone, tap **Menu** (top right) to see them, your name and **Sign out**.
-- If you have more than one role (for example you are a parent and also learn with CLG yourself), tabs at the top let you switch between your dashboards.
+- If you have more than one role (for example you look after a child and also learn with CLG yourself), tabs at the top (such as **Family** and **Student**) let you switch between your dashboards.
 
 ### Sign in
 1. Go to app.clgtutoring.com and choose **Sign in**.
@@ -34,7 +34,7 @@ Tip: If CLG set up your account for you, open the link in your welcome email to 
 
 ### Create an account yourself
 1. Choose **Create an account** on the sign-in page.
-2. Under **I am signing up as**, choose parent.
+2. Under **I am signing up as**, choose **A family (a parent or carer)**.
 3. Enter your name, email and a password (at least 12 characters, with upper and lowercase letters and a number).
 4. Tick that you agree to the privacy policy and terms, then choose **Create account**.
 5. Check your email and open the link to confirm your account.

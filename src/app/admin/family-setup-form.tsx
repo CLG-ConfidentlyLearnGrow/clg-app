@@ -21,11 +21,11 @@ export function FamilySetupForm() {
         <legend className="text-sm font-medium">Who is the account for?</legend>{/* its heading, */}
         <label className="flex items-center gap-2 text-sm">{/* a line holding: */}
           <input type="radio" name="who" value="parent" checked={who === "parent"} onChange={() => setWho("parent")} />{/* a round button for "parent", */}
-          A parent or carer, with their child. Use this for most students under 18, including those 16 or over.{/* and its words. */}
+          A family (a parent or carer), with their child. Use this for most students under 18, including those 16 or over.{/* and its words. */}
         </label>{/* End of the line. */}
         <label className="flex items-center gap-2 text-sm">{/* A line holding: */}
           <input type="radio" name="who" value="learner" checked={who === "learner"} onChange={() => setWho("learner")} />{/* a round button for "student", */}
-          A student with their own login, and no parent account: an adult learner, or a student 16 or over who manages their own support. A student on a parent&apos;s account can be given their own login later.{/* and its words. */}
+          A student with their own login, and no family account: an adult learner, or a student 16 or over who manages their own support. A student on a family account can be given their own login later.{/* and its words. */}
         </label>{/* End of the line. */}
       </fieldset>{/* End of the group. */}
       <Field // A name box:

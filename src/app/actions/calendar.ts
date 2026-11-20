@@ -60,7 +60,7 @@ export async function turnOffCalendarLink(): Promise<CalendarLinkState> { // No 
 // back a plain problem message, or nothing if all is well.
 async function familyProblem(): Promise<string | null> { // No inputs.
   const viewer = await requireViewer(); // The signed-in person (sends signed-out people to log in).
-  if (!viewer.roles.includes("parent") && !viewer.roles.includes("student")) return "Only parents and students have a family calendar link."; // Neither: says so.
+  if (!viewer.roles.includes("parent") && !viewer.roles.includes("student")) return "Only someone with a Family or Student profile has a family calendar link."; // Neither: says so.
   return null; // All is well.
 } // End of familyProblem.
 

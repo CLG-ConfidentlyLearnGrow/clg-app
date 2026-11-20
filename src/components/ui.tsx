@@ -36,7 +36,7 @@ export function Page({
 } // End of Page.
 
 // The page heading. With "role", a coloured label above it names the
-// dashboard (e.g. "Parent dashboard") and the bar under it takes that
+// dashboard (e.g. "Family dashboard") and the bar under it takes that
 // dashboard's colour, so it's clear which profile you're in.
 export function PageTitle({ title, intro, role }: { title: string; intro?: ReactNode; role?: Role }) {
   const theme = role ? ROLE_THEME[role] : null; // The role's colours, if a role was given.
@@ -49,7 +49,7 @@ export function PageTitle({ title, intro, role }: { title: string; intro?: React
         >{/* (end of the label's settings) */}
           {/* A small dot in the role's colour (hidden from screen readers). */}
           <span className={`h-2 w-2 rounded-full ${theme.accent}`} aria-hidden />
-          {/* The dashboard's name, e.g. "Parent dashboard". */}
+          {/* The dashboard's name, e.g. "Family dashboard". */}
           {theme.title}
         </p> // End of the paragraph.
       )}{/* End of the label. */}
