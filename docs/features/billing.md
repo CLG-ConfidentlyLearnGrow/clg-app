@@ -155,3 +155,31 @@ only when the cancel came with less than 2 hr notice (was 24 hr or less).
 Notice counts from when the cancel was saved. See
 [cancel-reasons-makeup-times.md](cancel-reasons-makeup-times.md). Migration:
 `20261118100300_makeup_cancel_pay_rules.sql`.
+
+## Plan required before booking, and families can change it (20 Nov 2026)
+
+Carla, from Emma's admin role review: choosing a payment plan is compulsory,
+and families need a way to change plan type, carrying on from the next
+session not already paid for.
+
+- A family must choose a plan before they ask for a booking or approve a time
+  CLG offers (`request_booking`, `approve_booking`). CLG admins can still make
+  offers and can set the plan for a family on Admin > Billing.
+- The person who pays can change the plan at any time on their Billing page.
+  The invoice builder only ever bills sessions that are not already on a live
+  invoice, so the new plan carries on from the next session not already
+  invoiced. Invoices already sent (paid or not) stay as they are. Draft
+  invoices waiting for approval also stay; Carla can cancel one if it should
+  be rebuilt on the new plan.
+- Admins (owner and Operations) get a notice when a family changes plan after
+  being invoiced. Weekly still needs a card.
+- Migration `20261123400500_payment_plan_required.sql`. Tests:
+  `supabase/tests/billing_choose_plan_change.test.sql`, and
+  `scheduling.test.sql` checks a booking is refused without a plan.
+- Evidence: regular, uninterrupted sessions matter most for one to one
+  tuition (EEF Toolkit); agreeing payment up front avoids pauses that break
+  that regularity. Letting families switch plans keeps payment manageable,
+  which supports retention.
+- Legal: Australian Consumer Law (clear payment terms before the service is
+  agreed; no surprise charges, since the change only affects sessions not yet
+  invoiced). Privacy unchanged.

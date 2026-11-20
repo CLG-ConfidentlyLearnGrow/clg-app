@@ -158,7 +158,7 @@ Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there
 
 ### Set up your payments
 1. In the side menu, choose **Billing**.
-2. Choose how often you would like to pay, and agree to the payment terms.
+2. Choose how often you would like to pay (you need to do this before booking), and agree to the payment terms. To change it later, open **Change how often you pay**: the new plan applies from your next session not already on an invoice.
 3. Choose **Set up automatic payment** and enter your card or bank details on Stripe's secure page. CLG never sees them.
 4. Pay any invoice with **Pay (amount) now**.
 

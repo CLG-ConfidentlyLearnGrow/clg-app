@@ -141,7 +141,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
           <Card // a card:
             key={`plan-${c.family_id}`} // (its key)
             title={choiceRows.length > 1 ? `How often would you like to pay? (${c.family_name})` : "How often would you like to pay?"} // titled with the question (and family name if more than one),
-            description="Please choose before your first invoice. You can change it until CLG sends that invoice." // with when to choose by.
+            description="Please choose before booking or approving sessions: it is needed first. You can change it later, and the change applies from your next session that is not already on an invoice." // that it is needed first, and how changes work (Carla, 20 Nov 2026).
           >{/* (end of the card's settings) */}
             <ChoosePlanForm familyId={c.family_id} plan={c.plan} chosen={false} />{/* The plan form. */}
           </Card> // End of the card.
@@ -191,7 +191,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
               {choiceOf.get(a.family_id)?.chosen && choiceOf.get(a.family_id)?.can_change && ( // If they chose a plan and can still change it:
                 <details className="mt-4 text-sm">{/* a section that opens when clicked: */}
                   <summary className="cursor-pointer">Change how often you pay</summary>{/* its heading, */}
-                  <div className="mt-3">{/* a block: */}
+                  <div className="mt-3 space-y-3">{/* a block: */}
+                    <p className="text-zinc-600">{/* a note: */}
+                      The new plan applies from your next session that is not already on an invoice. Invoices you already have
+                      stay as they are, so please pay those as usual. CLG is told about the change.{/* how a change works. */}
+                    </p>{/* End of the note. */}
                     <ChoosePlanForm familyId={a.family_id} plan={a.plan} chosen />{/* the plan form. */}
                   </div>{/* End of the block. */}
                 </details> // End of the section.

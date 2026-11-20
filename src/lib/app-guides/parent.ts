@@ -268,7 +268,12 @@ Tip: Until your family has a bill payer, any parent can set it up. The first par
 ### Choose how often to pay
 1. In **Billing**, find **How often would you like to pay?**
 2. Choose weekly, monthly, per term or upfront.
-3. Save. You can change it until CLG sends your first invoice.
+3. Save. You need to choose before you can book or approve sessions.
+
+### Change how often you pay
+1. In **Billing**, open **Change how often you pay** under your family's name.
+2. Choose the new plan and choose **Save change**.
+3. The new plan applies from your next session that is not already on an invoice. Invoices you already have stay as they are, so pay those as usual. Weekly plans pay by card.
 
 ### Agree to the payment terms
 Before your first invoice, read the **Payment terms** card and agree. Sessions are paid in advance, and if an invoice is overdue, all your family's sessions go on hold until it is paid.
