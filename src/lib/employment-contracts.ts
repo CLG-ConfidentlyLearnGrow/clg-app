@@ -109,3 +109,14 @@ export function findGaps(text: string): Gap[] { // Takes the template text.
 
 // The ending of a contract record's address, for links.
 export const contractHref = (id: string) => `/contract?id=${id}`; // The staff member's own page for one contract.
+
+// One document staff acknowledge, as read from the database.
+export type ContractDocument = { key: string; title: string; url: string; also_known_as: string[] | null }; // Its key, name, link and older addresses.
+
+// Builds the swap list for ContractText: each document's older addresses
+// (such as its Claude Doc) open its current link (its app page) instead.
+export function documentLinks(docs: ContractDocument[]): Record<string, string> { // Takes the documents.
+  const map: Record<string, string> = {}; // The swap list so far.
+  for (const d of docs) for (const old of d.also_known_as ?? []) map[old] = d.url; // Each older address points to the current link.
+  return map; // Hands back the list.
+} // End of documentLinks.

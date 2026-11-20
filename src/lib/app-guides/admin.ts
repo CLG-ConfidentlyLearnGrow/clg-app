@@ -499,7 +499,8 @@ In **Privacy and records**:
 1. Open **Contracts**, then **Contract templates and document links**.
 2. To update a contract, open the version **In use** and paste the new wording: in the contract's Claude Doc, choose Export, then Markdown, then paste everything into **Wording**. Put gaps in square brackets, for example [Start date]. **Gaps found** shows which fill in by themselves and which an admin types.
 3. Choose **Save as a new draft version**, check the **Preview**, then tick the box and choose **Publish this version**. Contracts already sent keep their own wording.
-4. Under **Documents staff acknowledge**, change a document's name or link (for example when the Child Safe Policy moves into the app).
+4. Under **Documents staff acknowledge**, each document shows **Link set** when it has a link, and **Open link** lets you check it opens the right document. Change the name or **Link (Australia)**, add any **Links for other countries** (one per line, for example NZ then the link), then choose **Save name and links**.
+5. The Child Safe Policy and the Staff Code of Conduct are kept in the app, so contracts show them as buttons that open a page in the app. Paste each one's wording into **Wording** (from its Claude Doc: Export, then Markdown), choose **Save wording**, and tick **Approved** once the wording is final. Until then, staff see a draft label on the page.
 
 ### Staff leaving CLG
 In the **Staff directory**, open the person and use the "left CLG" panel. Their matches end and their records are kept for 7 years. Then follow the checklist shown (final pay, Microsoft 365, materials, Working with Children Check link).
