@@ -7,13 +7,11 @@ import { addDays, currentTime, localToday, sessionWhen } from "@/lib/scheduling"
 import { graphConfig } from "@/lib/teams/graph"; // Reads the Microsoft app settings.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { MeetingLinkForm, RunTeamsNowForm, TeamsSettingsForm } from "./forms"; // The forms on this page.
+import { TEAMS_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // Teams links (admin only): settings, and the link for each online session.
 
-const SECTIONS = [ // The page's sections:
-  { id: "sessions", label: "Online sessions" }, // online sessions,
-  { id: "settings", label: "Settings" }, // settings.
-] as const; // End of the list (fixed).
+const SECTIONS = TEAMS_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 // A session as the database gives it.
 type Session = {

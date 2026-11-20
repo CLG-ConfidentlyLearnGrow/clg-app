@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
+Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 

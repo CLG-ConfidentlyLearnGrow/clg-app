@@ -7,14 +7,12 @@ import { BackButton, Card, Empty, Field, Select, TextArea, TextLink } from "@/co
 import { requireAdmin } from "@/lib/auth"; // Makes sure the person is an admin.
 import { REGIONS, REQUEST_STATUS_LABELS, plainDate, plainDateTime, requestKindLabel } from "@/lib/privacy"; // Regions and regulators, request statuses, dates in words, and request names.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
+import { PRIVACY_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // Privacy requests and the breach register (owner and operations admins).
 // See docs/features/privacy-laws-baseline.md for the rules behind the dates.
 
-const SECTIONS = [ // The page's sections:
-  { id: "requests", label: "Privacy requests" }, // privacy requests,
-  { id: "breaches", label: "Breach register" }, // breach register.
-] as const; // End of the list (fixed).
+const SECTIONS = PRIVACY_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 // A privacy request as the database gives it.
 type Request = {

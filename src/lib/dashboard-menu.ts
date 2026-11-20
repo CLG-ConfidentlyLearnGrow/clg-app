@@ -9,6 +9,15 @@ import { ADMIN_SECTIONS } from "@/app/admin/sections"; // The admin page's own s
 import { FINANCE, FRONT_DESK, FULL_ADMIN, getAdminLevel, type Role } from "@/lib/auth"; // Admin level groups, the level reader, and the role type.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person (for the problem reports number).
+import { BILLING_TABS, MATERIALS_TABS, PRIVACY_TABS, REPORTS_TABS, TEAMS_TABS, TRAINING_SETUP_TABS, problemTabs, sessionTabs } from "@/lib/menu-sub-tabs"; // The sub-tabs under some headings, so the menu can open them from any page (Carla, 20 Nov 2026).
+
+// Turns a fixed list of sub-tabs into menu items with their addresses, e.g.
+// Billing's "Invoices" becomes a link to /admin/billing?section=invoices.
+// "count" gives a sub-tab its number, where one is known without extra
+// database reads (otherwise no number).
+function subTabs(list: readonly { id: string; label: string }[], path: string, count?: (id: string) => number | undefined): Section[] { // Takes the list, the page's address, and the optional number reader.
+  return list.map((t) => ({ id: t.id, label: t.label, href: `${path}?section=${t.id}`, count: count?.(t.id) })); // Each sub-tab with its address and number.
+} // End of subTabs.
 
 // Whether this admin checks problem reports (the owner, or on the reviewer
 // list), and how many new reports are waiting. Gives back null for anyone
@@ -141,8 +150,19 @@ const menuOnce = cache(async (role: Role, rolesKey: string): Promise<Section[]> 
 // Builds the rest of one dashboard's side menu (everything after Overview).
 async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]> { // Takes the dashboard and all of the person's roles.
   const todo = await getToDoCounts(roles); // The to-do numbers.
+  const sessionLevel = role === "admin" ? await getAdminLevel() : null; // The admin's level (only matters on the admin dashboard), which decides the Sessions sub-tabs.
   const sessions: Section[] = (await hasSessions(role)) // The Sessions tab, if this dashboard has one:
-    ? [{ id: "sessions", label: "Sessions", href: sessionsHref(role), count: todo.sessionsFor(role) }] // its words, address and number,
+    ? [{ // its details:
+        id: "sessions", // its id,
+        label: "Sessions", // its words,
+        href: sessionsHref(role), // its address,
+        count: todo.sessionsFor(role), // its number,
+        // its sub-tabs (Overview, Bookings, Notices and the rest), each with
+        // its own address and number, so the arrow can open them from any
+        // page; their numbers add up to the Sessions number.
+        items: sessionTabs(role, sessionLevel).map((t) => ({ ...t, href: sessionsHref(role, t.id), count: todo.sessionTab(role, t.id) })), // (the sub-tabs)
+        countsInside: true, // and its sub-tabs carry all of its numbers.
+      }] // End of the Sessions tab.
     : []; // otherwise nothing.
 
   if (role === "admin") { // The admin menu:
@@ -159,26 +179,29 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       id: s.id, // its id,
       label: s.label, // its words,
       href: s.id === "matching" ? "/matching" : `/admin?section=${s.id}`, // its address (Matching has its own page),
-      count: todo.get("admin", s.id), // and its number.
+      count: todo.get("admin", s.id), // its number,
+      items: s.id === "records" ? subTabs(PRIVACY_TABS, "/admin/privacy") : undefined, // and, for Privacy and records, its sub-tabs (privacy requests and the breach register).
     })); // End of the admin sections.
     items.splice(Math.min(1, items.length), 0, ...sessions); // Sessions goes second, after Families (one of an admin's main jobs).
     const billingToDo = ["families", "invoices", "pay"].reduce((t, id) => t + (todo.get("billing", id) ?? 0), 0); // Billing's total: families, invoices and pay.
-    if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined }); // Billing (owner, operations and finance),
+    const billingCount = (id: string) => (["families", "invoices", "pay"].includes(id) ? todo.get("billing", id) : undefined); // A Billing sub-tab's number (the same three that make up Billing's total).
+    if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined, items: subTabs(BILLING_TABS, "/admin/billing", billingCount), countsInside: true }); // Billing (owner, operations and finance), with its sub-tabs and their numbers,
     if (isFinance) items.push({ id: "contracts", label: "Contracts", href: "/admin/contracts", count: await contractsXeroToDo() }); // staff employment contracts (owner, operations and finance; Carla, 17 Nov 2026), with Xero invites still to send counted,
     if (isDesk || isFinance) items.push({ id: "help", label: "Help chats", href: "/admin/help", count: todo.get("admin", "help") }); // the help desk: questions from families, students, tutors and staff (Carla, 16 Nov 2026), with chats waiting for CLG counted,
-    if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: todo.get("admin", "reports") }); // Reports (owner only, because they include pay and profit), with new reports counted,
+    const reportsCount = todo.get("admin", "reports"); // How many new reports are waiting (shown on Reports, and on its "All reports" sub-tab).
+    if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: reportsCount, items: subTabs(REPORTS_TABS, "/admin/reports", (id) => (id === "reports" ? reportsCount : undefined)), countsInside: true }); // Reports (owner only, because they include pay and profit), with new reports counted, and its sub-tabs,
     const { data: me } = await (await createClient()).auth.getUser(); // Who is signed in (for the reviewer list check).
     const problems = me.user ? await problemReportsTab(level === "owner", me.user.id) : null; // The problem reports tab, if they check reports.
-    if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count }); // App issues (problem reports; owner and chosen reviewers), with new reports counted,
+    if (problems) items.push({ id: "problems", label: "App issues", href: "/admin/problems", count: problems.count, items: problemTabs(level === "owner").map((t) => ({ ...t, count: t.id === "queue" ? problems.count : undefined })), countsInside: true }); // App issues (problem reports; owner and chosen reviewers), with new reports counted, and its sub-tabs,
     if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
     if (isFull) items.push({ id: "check-ins", label: "Check-ins", href: "/admin/check-ins", count: await checkInsToFollowUp() }); // answers to the check-ins after a new match (full admins, Carla 16 Nov 2026), with ones needing follow-up counted,
     if (isFull) items.push({ id: "lateness", label: "Tutor lateness", href: "/admin/lateness", count: await latenessToReview() }); // late starts by tutors to review (full admins, Carla 18 Nov 2026), with open ones counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
-    if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams" }); // Teams links for online sessions (full admins),
+    if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams", items: subTabs(TEAMS_TABS, "/admin/teams") }); // Teams links for online sessions (full admins), with its sub-tabs,
     if (isFull) items.push({ id: "travel-map", label: "Travel map", href: "/admin/travel-map" }); // the map of libraries and tutor and family travel areas (full admins, Carla 16 Nov 2026),
-    if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials" }); // the materials library (full admins),
-    if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training" }); // writing training modules, the handbook and progress (full admins),
+    if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials", items: subTabs(MATERIALS_TABS, "/admin/materials") }); // the materials library (full admins), with its sub-tabs,
+    if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training", items: subTabs(TRAINING_SETUP_TABS, "/admin/training") }); // writing training modules, the handbook and progress (full admins), with its sub-tabs,
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,

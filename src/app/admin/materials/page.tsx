@@ -7,15 +7,12 @@ import { MATERIAL_KIND_NAMES, type MaterialKind, yearRange } from "@/lib/materia
 import { LOCAL_TIME_ZONE } from "@/lib/scheduling"; // CLG's local time zone (Adelaide).
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { UploadMaterialsForm } from "./upload-form"; // The upload form.
+import { MATERIALS_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // Materials library (admin): add materials, tag and publish them, and see
 // who has opened what.
 
-const SECTIONS = [ // The page's sections:
-  { id: "add", label: "Add materials" }, // add materials,
-  { id: "library", label: "Library" }, // the library,
-  { id: "opens", label: "Who opened what" }, // who opened what.
-] as const; // End of the list (fixed).
+const SECTIONS = MATERIALS_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 const STATUS_FILTERS = [ // The library's "show" choices:
   { id: "all", label: "All" }, // all,

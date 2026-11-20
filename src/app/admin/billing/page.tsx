@@ -26,14 +26,9 @@ import { // The billing forms:
   WaiverForm, // waive a late cancellation.
 } from "./forms"; // End of the forms.
 import { PaySection } from "./pay-section"; // The staff pay section.
+import { BILLING_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
-const SECTIONS = [ // The side menu's sections:
-  { id: "families", label: "Family billing" }, // family billing,
-  { id: "invoices", label: "Invoices" }, // invoices,
-  { id: "pay", label: "Staff pay" }, // staff pay,
-  { id: "prices", label: "Prices and settings" }, // prices and settings,
-  { id: "connections", label: "Stripe and Xero" }, // Stripe and Xero.
-] as const; // End of the sections.
+const SECTIONS = BILLING_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
 
 type Family = { // A family as read here:
   id: string; // its id,
