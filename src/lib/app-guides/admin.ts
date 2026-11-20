@@ -417,6 +417,13 @@ A late start is recorded when a tutor signs on more than 5 minutes after the boo
 3. Talk with the tutor if needed, write a private note, then choose **Mark reviewed**. Tutors see their own late starts, but not your notes.
 4. **Late starts in the last 90 days, by tutor** shows who is often late, so you can follow up early.
 
+### Staff probation
+Tutors finish probation at 3 months or 30 completed sessions, and admin staff at 3 months or 30 approved hours, whichever comes first. The app sets up a probation for each new tutor and admin staff member from the start date on their pay details.
+1. Open **Staff probation** in the side menu (Owner only). A number shows how many are due for review. You also get an app notice on the day someone becomes due.
+2. **Due for review** lists each person, why they are due and their progress. Talk with them, then choose **Passed**, **Extend probation** (with a new review date) or **Ended (not continuing)**, add a private note and choose **Save review**. An extended probation reminds you again on the new date.
+3. **On probation** shows everyone else still on probation, with their progress and due date. Choose **Change the start date** if a start date is wrong.
+4. To add someone the app did not set up (for example, with no start date on their pay details), open **Set up a probation**.
+
 ### App feedback
 **Feedback** in the side menu shows what people are saying, grouped by area. Set where each item is up to and add private notes.
 
