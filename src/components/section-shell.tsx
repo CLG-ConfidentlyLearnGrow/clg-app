@@ -96,6 +96,19 @@ export function SectionShell({
   const currentSub = current?.items?.find((s) => s.id === subSection); // The open smaller section's details (if any).
   const heading = currentSub ? `${current?.label}: ${currentSub.label}` : (current?.label ?? label); // The page heading, e.g. "Sessions: Bookings".
 
+  // The number to show beside a menu item (Carla, 20 Nov 2026). A heading
+  // with smaller sections under it (e.g. Sessions: Overview, Bookings,
+  // Notices) shows the total of their numbers while they are folded away,
+  // so nothing waiting is hidden, and shows no number while they are open,
+  // because each smaller section then shows its own. Any other item shows
+  // its own number.
+  function shownCount(s: Section, fold?: { showing: boolean }): number | undefined {
+    if (!s.items?.length) return s.count; // No smaller sections loaded: its own number (if any).
+    if (fold?.showing) return undefined; // Smaller sections showing: no total (each shows its own number).
+    const total = s.items.reduce((sum, x) => sum + (x.count ?? 0), 0); // Adds up the smaller sections' numbers.
+    return total > 0 ? total : undefined; // The total, or nothing when there is nothing to do.
+  } // End of shownCount.
+
   // One menu link (used for sections and for the smaller sections under them).
   // "fold" is given for an open heading with smaller sections: it says
   // whether they're showing, and clicking folds or unfolds them instead of
@@ -124,11 +137,11 @@ export function SectionShell({
           {s.label}{/* the section's words, */}
           {s.items?.length ? <span aria-hidden className="text-[10px] opacity-70">{fold?.showing ? "▾" : "▸"}</span> : null}{/* a small arrow: down while its smaller sections show, right otherwise (hidden from screen readers). */}
         </span>{/* End of the words. */}
-        {s.count ? ( // If there's a count:
+        {shownCount(s, fold) ? ( // If there is a number to show:
           <span // a small rounded badge:
             className={`rounded-full px-2 text-xs ${active ? activeCount : idleCount}`} // in the open or normal count look,
           >{/* (end of the badge's settings) */}
-            {s.count}{/* showing the number. */}
+            {shownCount(s, fold)}{/* showing the number. */}
           </span> // End of the badge.
         ) : null}{/* Otherwise nothing. */}
       </Link> // End of the link.

@@ -124,3 +124,16 @@ From usability research:
   `src/app/layout.tsx`, and each dashboard page.
 - A new section that needs a number: add a row to `to_do_counts()` with
   its area and section id, and the menu picks it up.
+
+## Folded menu totals (Carla, 20 Nov 2026)
+
+- When a side menu item with smaller items under it (Sessions, Billing,
+  Teams links) is folded, its badge shows the total of the smaller items'
+  numbers, so nothing waiting is hidden from view. While the smaller items
+  are open, the heading shows no total, because each shows its own number.
+- Why: research on interface design for task completion (for example
+  Nielsen's "visibility of system status") and AERO guidance on reducing
+  extraneous load both favour keeping what needs attention visible without
+  extra clicks.
+- Rules touched: none new; only numbers already shown are added up.
+- App: `shownCount` in `src/components/section-shell.tsx`.

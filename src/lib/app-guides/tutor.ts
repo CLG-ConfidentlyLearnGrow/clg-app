@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there.
+Your side menu has **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. When the smaller items under a menu item (for example under **Sessions**) are folded away, the number beside it adds up all of theirs.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
