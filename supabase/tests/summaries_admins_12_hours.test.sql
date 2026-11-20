@@ -15,9 +15,9 @@ select tests.claims(null);
 -- migrations, which bring back 24 and 48 hr), as on the live database.
 \ir ../migrations/20261118200400_summaries_due_6_hours.sql
 -- Runs both files again (twice), to check they can run more than once.
-\ir ../migrations/20261123400100_significant_dates_wording.sql
+\ir ../migrations/20261123400110_significant_dates_wording.sql
 \ir ../migrations/20261123400200_summaries_admins_12_hours.sql
-\ir ../migrations/20261123400100_significant_dates_wording.sql
+\ir ../migrations/20261123400110_significant_dates_wording.sql
 \ir ../migrations/20261123400200_summaries_admins_12_hours.sql
 
 -- Keeps the reminder job's code, split into the tutor's part and the admins' part.
