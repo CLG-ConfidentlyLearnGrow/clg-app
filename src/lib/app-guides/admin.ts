@@ -449,22 +449,22 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 ### Set a family's plan or bill payer
 1. In **Family billing**, find the family.
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
-3. If two people share invoices, choose who also pays and their share, then **Save split**.
+3. If two people share invoices, choose who also pays and their share, then **Save split** (Owner and Finance).
 
 Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students do not, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
-### Add credit
+### Add credit (Owner and Finance)
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
 
-### Waive a late cancellation (Owner and Operations)
-1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14.
+### Waive a late cancellation (Owner)
+1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14. Operations admins can see the list, but only the owner waives.
 2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
 3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Do not keep a copy of the proof. Tutors never see waivers.
 
 ### Paused families
 **Paused families** lists families on hold for an overdue invoice. Sessions start again as soon as they pay. Only the owner (or admins, if the owner allows it in Settings) can choose **Lift the pause** without payment, with a new due date or an agreed payment plan.
 
-### Run billing and check invoices
+### Run billing and check invoices (Owner and Finance)
 1. In **Invoices**, choose **Run billing now** to make this period's invoices. Drafts go to Xero on their send date.
 2. Check each invoice in the list. To cancel one, open **Cancel…**, give a reason, and choose **Cancel invoice**.
 3. For something unusual, use **Build an invoice by hand**.
@@ -556,8 +556,11 @@ If an Operations admin asks for emergency owner access, you are emailed at once 
   }, // End of the owner's guide.
   operations: { // The operations guide:
     title: "App guide for Operations admins", // its title,
-    who: "For Operations admins, who run CLG day to day: families, matching, bookings, tutors, progress and invoices.", // who it's for,
+    who: "For Operations admins, who run CLG day to day: families, matching, bookings, tutors and progress, and who can see billing.", // who it's for,
     text: START + FAMILIES + MATCHING + SESSIONS + RUNNING + BILLING + `
+### What you can change in Billing
+You can see **Billing** so you can help families and tutors: prices, each family's plan, invoices, credit and split payments. You can set a family's plan and bill payer. Only the owner or a Finance admin builds, approves or cancels invoices, adds credit, or changes split payments, and only the owner waives a late cancellation. Pass those requests to Carla.
+
 ### Staff pay (view only)
 You can see **Staff pay** under Billing, but only the owner and Finance admins change pay or approve hours.
 
