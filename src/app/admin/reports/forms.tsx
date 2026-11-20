@@ -1,11 +1,13 @@
-// Summary: the owner's report forms: make a report for chosen dates, and the
-// report settings (super and other monthly costs).
+// Summary: the owner's report forms: make a report for chosen dates, the
+// report settings (super and other monthly costs), and setting a goal for a
+// quarter or financial year (Carla, 20 Nov 2026).
 //
 "use client"; // Runs in the browser, so the forms can show their result straight away.
 
-import { makeReport, saveReportSettings } from "@/app/actions/reports"; // The server actions that make a report and save settings.
+import { makeReport, saveReportSettings, setGoal } from "@/app/actions/reports"; // The server actions that make a report, save settings and set a goal.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
-import { BusyButton, Field } from "@/components/ui"; // The button that shows a spinner while busy, and the labelled input box.
+import { BusyButton, Field, Select } from "@/components/ui"; // The button that shows a spinner while busy, the labelled input box and the labelled drop-down.
+import { GOAL_METRICS } from "@/lib/reports"; // The figures a goal can be set on.
 
 // The "make a report for your dates" form, with quick choices for common ranges.
 export function MakeReportForm({ today, ranges }: { today: string; ranges: { label: string; from: string; to: string }[] }) {
@@ -69,3 +71,22 @@ export function ReportSettingsForm({ superPercent, otherCosts }: { superPercent:
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of ReportSettingsForm.
+
+// The "set a goal" form: choose the period, the figure and the target. Setting
+// a goal for a figure that already has one changes it.
+export function GoalForm({ periods }: { periods: { value: string; label: string }[] }) { // Takes the periods to offer (value like "quarterly:2027-01-01").
+  return ( // Shows:
+    <ActionForm action={setGoal} submitLabel="Save goal">{/* a form that saves the goal: */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* two columns on wider screens: */}
+        <Select label="Period" name="period" required>{/* the period drop-down: */}
+          {periods.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}{/* one choice per period. */}
+        </Select>{/* End of the period drop-down. */}
+        <Select label="Figure" name="metric" required>{/* the figure drop-down: */}
+          {GOAL_METRICS.map((m) => <option key={m.id} value={m.id}>{m.label} ({m.better === "up" ? "more is better" : "fewer is better"})</option>)}{/* one choice per figure, saying which way is better. */}
+        </Select>{/* End of the figure drop-down. */}
+        <Field label="Target" name="target" type="number" step="0.1" min={0} required hint="For example 20 students, or 10 for an average wait of 10 days." />{/* the target number, */}
+        <Field label="Note (optional)" name="note" maxLength={500} hint="Why this goal, or how it will be reached." />{/* and an optional note. */}
+      </div>{/* End of the columns. */}
+    </ActionForm> // End of the form.
+  ); // End of what's shown.
+} // End of GoalForm.

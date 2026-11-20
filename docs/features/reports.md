@@ -90,10 +90,13 @@ compiling it. The same five questions come up every month:
 
 ## 5. Privacy and child safety
 
-- **Owner only.** Reports include pay and profit, so only the owner level can
-  read or make them (database access rules on `reports` and
-  `report_settings`, and owner checks inside every function). Operations,
-  support and finance admins, tutors and families can't see them.
+- **Owner, plus Operations without money (Carla, 20 Nov 2026).** Reports
+  include pay and profit, so only the owner reads the `reports` and
+  `report_settings` tables and makes, deletes or downloads reports.
+  Operations admins read reports through `report_list` and `report_get`,
+  which take the `money` part out inside the database, so it never reaches
+  their browser. Support and finance admins, tutors and families see no
+  reports.
 - **No children's details in reports.** Figures are counts and averages. Tutor
   names appear (for their own hours); no student names, dates of birth,
   schools or notes are saved in a report.
@@ -106,6 +109,41 @@ compiling it. The same five questions come up every month:
 - **Downloads** are sent with "don't keep a copy" settings, and only to the
   owner.
 
+## 6. Quarterly and yearly goals, and the Operations view (Carla, 20 Nov 2026)
+
+What it is for: Emma (Operations admin from 2027) runs day-to-day admin.
+Carla wants goals "set for each quarter and year, with monthly reviews to
+ensure on track and discuss why/why not".
+
+Evidence: goal-setting research (Locke and Latham's work on specific,
+challenging goals with regular feedback) finds that clear numeric targets
+plus frequent progress checks lift performance more than vague aims. The
+school-improvement guidance from AERO and the EEF's implementation guide
+both stress choosing a few measurable indicators, reviewing them on a set
+cycle, and talking about why progress is or is not happening, rather than
+only reporting numbers. The design follows this:
+
+- **A few clear figures.** Goals can only be set on eight figures without
+  money: students matched, matched within 2 weeks, average wait, new
+  students, new students who booked, share who booked, families who left,
+  and students still waiting at the end. Each says whether more or fewer is
+  better.
+- **Monthly check against the share expected by now.** Figures that add up
+  over a period (such as students matched) are compared with the share of
+  the goal expected by today (target times days gone, divided by days in the
+  period). Averages, shares and "still waiting" are compared with the target
+  itself. This is on **Reports, Goals**, and monthly reports link there.
+- **Met or not met at the end.** Quarterly and yearly reports show each goal
+  for that period with **Met** or **Not met**.
+- **Who does what.** Only the owner sets or removes goals
+  (`report_set_goal`, `report_remove_goal`). The owner and Operations admins
+  read goals (`report_goals`, read only) and progress
+  (`report_goal_progress`). Periods must be a real quarter (1 January,
+  April, July or October) or financial year (1 July).
+- **Privacy.** Goals and progress hold counts only, never children's
+  details. Operations still never sees money, the spreadsheet download,
+  **Report for your dates** or **Settings**.
+
 ## Limits to know
 
 - "New students" counts student records added in the period. When existing
@@ -113,3 +151,8 @@ compiling it. The same five questions come up every month:
   that month.
 - Profit uses invoices and pay lines in the app. Costs paid outside the app
   are only included through the "other running costs a month" setting.
+- Progress for the current quarter and year is worked out live each time
+  **Goals** opens, so it can change during the day as matches are made.
+- A straight-line "share expected by now" does not allow for school
+  holidays, when enquiries are usually lower. Read **Behind** early in a
+  holiday-heavy quarter with that in mind.

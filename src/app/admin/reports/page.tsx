@@ -1,20 +1,35 @@
-// Summary: the owner's Reports page: the monthly, quarterly and yearly
-// reports the app makes by itself, reports for any dates, and the settings
-// used for profit (super and other costs).
+// Summary: the Reports page: the monthly, quarterly and yearly reports the
+// app makes by itself, reports for any dates, the settings used for profit
+// (super and other costs), and quarterly and yearly goals.
+// The owner sees everything. Operations admins (Carla, 20 Nov 2026, for
+// Emma's role) see every report without the money part, and the goals; the
+// database takes the money out before it reaches them.
 //
 import type { ReactNode } from "react"; // The type for anything React can show.
-import { deleteReport } from "@/app/actions/reports"; // The action that deletes a report made for chosen dates.
+import { deleteReport, removeGoal } from "@/app/actions/reports"; // The actions that delete a report made for chosen dates and remove a goal.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import { BackButton, BusyButton, Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: back button, button that shows a spinner while saving, card, empty line, small heading, table and text link.
 import { requireAdminLevel } from "@/lib/auth"; // Makes sure the person is an admin at the right level.
 import { addDays, localToday, shortDate } from "@/lib/scheduling"; // Date helpers.
-import { REPORT_KIND_LABELS, money, num, periodLabel, reasonLabel, type SavedReport } from "@/lib/reports"; // Report names, number and money display, and the report type.
+import { REPORT_KIND_LABELS, goalMet, goalMetric, goalPeriodLabel, goalProgress, goalTargetWords, money, num, periodLabel, quarterStart, reasonLabel, yearStart, type FiguresNoMoney, type GoalKind, type ReportGoal, type SavedReport } from "@/lib/reports"; // Report names, number and money display, goal helpers, and the report types.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
-import { MakeReportForm, ReportSettingsForm } from "./forms"; // The forms on this page.
+import { GoalForm, MakeReportForm, ReportSettingsForm } from "./forms"; // The forms on this page.
 import { REPORTS_TABS } from "@/lib/menu-sub-tabs"; // This page's sub-tabs (shared with the side menu, Carla 20 Nov 2026).
 
 // The page's sections.
 const SECTIONS = REPORTS_TABS; // This page's sub-tabs, from the shared list the side menu also uses (so the menu can show them from any page).
+const OPERATIONS_SECTIONS = ["reports", "goals"]; // The sections Operations admins can open (no making reports or settings).
+
+// A report as this page reads it: the money part is only there for the owner.
+type ViewReport = Omit<SavedReport, "figures"> & { figures: FiguresNoMoney; has_money: boolean }; // The report, plus whether money is included.
+
+// How a goal is going or turned out, as a small coloured label.
+function GoalStatus({ ok, during }: { ok: boolean | null; during: boolean }) { // Takes good (true), not (false) or unknown (null), and whether the period is still going.
+  if (ok === null) return <span className="text-sm text-zinc-500">No figure yet</span>; // Unknown: grey words.
+  return ok // Known:
+    ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">{during ? "On track" : "Met"}</span> // green when on track or met,
+    : <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">{during ? "Behind" : "Not met"}</span>; // amber when behind or not met.
+} // End of GoalStatus.
 
 // The common ranges offered as one-tap buttons, worked out from today.
 function quickRanges(today: string) { // Takes today's date (YYYY-MM-DD).
@@ -51,10 +66,12 @@ function Stats({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{children}</div>; // Two across on phones, four on wider screens.
 } // End of Stats.
 
-// Shows one report in full.
-function ReportView({ report }: { report: SavedReport }) {
+// Shows one report in full. The money card and the spreadsheet download are
+// only for the owner; goals show on quarterly and yearly reports.
+function ReportView({ report, goals, isOwner }: { report: ViewReport; goals: ReportGoal[]; isOwner: boolean }) { // Takes the report, its period's goals, and whether the viewer is the owner.
   const f = report.figures; // The report's figures.
-  const m = f.money; // The money figures.
+  const m = report.has_money ? f.money : undefined; // The money figures (owner only).
+  const hasGoals = report.kind === "quarterly" || report.kind === "yearly"; // Whether this kind of report has goals.
   return ( // Shows:
     <>{/* (a group:) */}
       <p><BackButton href="/admin/reports">Back to all reports</BackButton></p>{/* a button back to the list, */}
@@ -62,12 +79,39 @@ function ReportView({ report }: { report: SavedReport }) {
         title={`${REPORT_KIND_LABELS[report.kind]} report: ${periodLabel(report)}`} // the kind and dates,
         description={`Made ${shortDate(report.made_at)}. Figures are saved as they were on that day.`} // when it was made.
       >{/* (end of the card's settings) */}
-        <div className="flex flex-wrap gap-3">{/* a row of buttons: */}
-          <a href={`/admin/reports/csv?id=${report.id}`} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">{/* download as a spreadsheet, */}
-            Download spreadsheet (CSV){/* (its words) */}
-          </a>{/* (end of the link) */}
-        </div>{/* End of the row. */}
+        {isOwner && ( // Only the owner can download (the file includes money):
+          <div className="flex flex-wrap gap-3">{/* a row of buttons: */}
+            <a href={`/admin/reports/csv?id=${report.id}`} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">{/* download as a spreadsheet, */}
+              Download spreadsheet (CSV){/* (its words) */}
+            </a>{/* (end of the link) */}
+          </div> // End of the row.
+        )}{/* End of the download. */}
+        {!isOwner && <p className="text-sm text-zinc-600">Money (income, wages and profit) is only shown to the owner.</p>}{/* Operations: a note that money is left out. */}
+        {report.kind === "monthly" && <p className="mt-2 text-sm text-zinc-600">For the monthly check-in, see how this quarter and year are going under <TextLink href="/admin/reports?section=goals">Goals</TextLink>.</p>}{/* Monthly reports: a link to the goals. */}
       </Card>{/* End of the heading card. */}
+
+      {hasGoals && ( // Quarterly and yearly reports: were the goals met?
+        <Card title="Goals" description="The goals set for this period, and whether each was met.">{/* the goals card: */}
+          {goals.length === 0 ? ( // No goals were set:
+            <Empty>No goals were set for this period. Goals can be set under Reports, Goals.</Empty> // says so.
+          ) : ( // Otherwise:
+            <Table headings={["Figure", "Goal", "Result", ""]}>{/* a table: */}
+              {goals.map((g) => { // for each goal:
+                const metric = goalMetric(g.metric); // the figure's details,
+                const value = metric?.value(f) ?? null; // the period's figure,
+                return ( // shows:
+                  <tr key={g.id}>{/* a row: */}
+                    <td>{metric?.label ?? g.metric}</td>{/* the figure's name, */}
+                    <td>{goalTargetWords(g.metric, Number(g.target))}</td>{/* the goal, */}
+                    <td className="tabular-nums">{num(value, metric?.unit ?? "")}</td>{/* the result, */}
+                    <td><GoalStatus ok={goalMet(g.metric, Number(g.target), f)} during={false} /></td>{/* and met or not met. */}
+                  </tr> // End of the row.
+                ); // End of what is shown.
+              })}{/* End of the goals loop. */}
+            </Table> // End of the table.
+          )}{/* End of the choice. */}
+        </Card> // End of the goals card.
+      )}{/* End of the goals. */}
 
       <Card title="Matching" description="How long students waited for a tutor. A wait starts when a subject is asked for, or when their last tutor finished.">{/* The matching card: */}
         <Stats>{/* big numbers: */}
@@ -135,6 +179,7 @@ function ReportView({ report }: { report: SavedReport }) {
         )}{/* End of the reasons. */}
       </Card>{/* End of the leaving card. */}
 
+      {m && ( // Only the owner gets the money part:
       <Card title="Money and profit per hour" description={`Income is invoiced sessions in this period (before GST, cancelled invoices left out). Wages include ${m.super_percent}% super.`}>{/* The money card: */}
         <Stats>{/* big numbers: */}
           <Stat label="Profit per tutoring hour" value={money(m.profit_per_hour_after_tutors_cents)} note="After tutor wages" />{/* per hour after tutors, */}
@@ -171,37 +216,63 @@ function ReportView({ report }: { report: SavedReport }) {
             {!m.other_costs_set && <li>Other running costs are not set (Reports, Settings), so &ldquo;after all costs&rdquo; only takes off wages.</li>}{/* other costs not set. */}
           </ul> // End of the note.
         )}{/* End of the note. */}
-      </Card>{/* End of the money card. */}
+      </Card> // End of the money card.
+      )}{/* End of the owner-only money part. */}
       <p><BackButton href="/admin/reports">Back to all reports</BackButton></p>{/* The same back button at the bottom, so it's there after scrolling down. */}
     </> // (end of the group)
   ); // End of what's shown.
 } // End of ReportView.
 
-// Shows the Reports page (owner only).
+// Shows the Reports page (the owner, and Operations admins without money).
 export default async function ReportsPage({ searchParams }: PageProps<"/admin/reports">) {
-  const viewer = await requireAdminLevel(["owner"]); // Must be the owner (reports include pay and profit).
+  const viewer = await requireAdminLevel(["owner", "operations"]); // Must be the owner or an Operations admin (Carla, 20 Nov 2026).
+  const isOwner = viewer.level === "owner"; // Whether this is the owner (money, making reports and settings are theirs only).
   const params = await searchParams; // Reads the address settings.
   const supabase = await createClient(); // Connects to the database.
   const id = typeof params.id === "string" ? params.id : null; // The report to open, if any.
-  const section = id ? "reports" : SECTIONS.find((s) => s.id === params.section)?.id ?? "reports"; // The section asked for (the list by default).
+  const asked = SECTIONS.find((s) => s.id === params.section)?.id ?? "reports"; // The section asked for (the list by default).
+  const section = id ? "reports" : isOwner || OPERATIONS_SECTIONS.includes(asked) ? asked : "reports"; // Operations asking for an owner-only section gets the list instead.
+  const sections = isOwner ? SECTIONS : SECTIONS.filter((s) => OPERATIONS_SECTIONS.includes(s.id)); // The sub-tabs this person sees.
+  const today = localToday(); // Today's date.
 
-  let report: SavedReport | null = null; // The open report, if any.
+  let report: ViewReport | null = null; // The open report, if any.
+  let reportGoals: ReportGoal[] = []; // The goals for the open report's period, if any.
   if (id && /^[0-9a-f-]{36}$/.test(id)) { // A report id that looks right:
-    const { data } = await supabase.from("reports").select("id, kind, period_start, period_end, figures, made_at, read_at").eq("id", id).maybeSingle(); // reads it,
-    report = (data as SavedReport | null) ?? null; // keeps it (or nothing if not found),
-    if (report && !report.read_at) await supabase.rpc("report_mark_read", { p_id: report.id }); // and marks it read the first time it's opened.
+    const { data } = await supabase.rpc("report_get", { p_id: id }); // reads it (the database leaves out money for Operations),
+    report = ((data as ViewReport[] | null) ?? [])[0] ?? null; // keeps it (or nothing if not found),
+    if (report && isOwner && !report.read_at) await supabase.rpc("report_mark_read", { p_id: report.id }); // marks it read the first time the owner opens it,
+    if (report && (report.kind === "quarterly" || report.kind === "yearly")) { // and for a quarterly or yearly report:
+      const { data: g } = await supabase.from("report_goals").select("id, kind, period_start, metric, target, note").eq("kind", report.kind).eq("period_start", report.period_start).order("metric"); // reads that period's goals.
+      reportGoals = (g ?? []) as ReportGoal[]; // Keeps them.
+    } // End of the goals.
   } // End of reading the report.
 
-  const [listRes, settingsRes] = await Promise.all([ // Reads two things at once:
-    section === "reports" && !report // on the list:
-      ? supabase.from("reports").select("id, kind, period_start, period_end, made_at, read_at").order("made_at", { ascending: false }).limit(200) // the newest 200 reports,
-      : Promise.resolve({ data: [] }), // otherwise nothing.
-    supabase.from("report_settings").select("super_percent, monthly_other_costs_cents").maybeSingle(), // and the settings.
+  // The goal periods shown: this quarter and this financial year, plus the
+  // next of each so goals can be set ahead.
+  const thisQuarter = quarterStart(today); // This quarter's first day.
+  const nextQuarter = quarterStart(addDays(thisQuarter, 95)); // Next quarter's first day (95 days on is always in the next quarter).
+  const thisYear = yearStart(today); // This financial year's first day.
+  const nextYear = `${Number(thisYear.slice(0, 4)) + 1}-07-01`; // Next financial year's first day.
+  const goalPeriods: { kind: GoalKind; start: string }[] = [ // The periods, in order:
+    { kind: "quarterly", start: thisQuarter }, // this quarter,
+    { kind: "yearly", start: thisYear }, // this financial year,
+    { kind: "quarterly", start: nextQuarter }, // next quarter,
+    { kind: "yearly", start: nextYear }, // next financial year.
+  ]; // End of the periods.
+
+  const [listRes, settingsRes, goalsRes, quarterRes, yearRes] = await Promise.all([ // Reads these at once:
+    section === "reports" && !report ? supabase.rpc("report_list") : Promise.resolve({ data: [] }), // on the list: the newest 200 reports,
+    isOwner ? supabase.from("report_settings").select("super_percent, monthly_other_costs_cents").maybeSingle() : Promise.resolve({ data: null }), // the settings (owner only),
+    section === "goals" ? supabase.from("report_goals").select("id, kind, period_start, metric, target, note").gte("period_start", thisYear).order("metric") : Promise.resolve({ data: [] }), // on Goals: the goals from this financial year on,
+    section === "goals" ? supabase.rpc("report_goal_progress", { p_kind: "quarterly", p_period_start: thisQuarter }) : Promise.resolve({ data: null }), // how this quarter is going,
+    section === "goals" ? supabase.rpc("report_goal_progress", { p_kind: "yearly", p_period_start: thisYear }) : Promise.resolve({ data: null }), // and how this financial year is going.
   ]); // End of the reads.
   const list = (listRes.data ?? []) as Omit<SavedReport, "figures">[]; // The reports listed.
-  const unread = list.filter((r) => !r.read_at).length; // How many are new.
+  const unread = isOwner ? list.filter((r) => !r.read_at).length : 0; // How many are new (the owner's marker only).
   const settings = settingsRes.data as { super_percent: number; monthly_other_costs_cents: number } | null; // The settings.
-  const today = localToday(); // Today's date.
+  const allGoals = (goalsRes.data ?? []) as ReportGoal[]; // Every goal from this financial year on.
+  type Progress = FiguresNoMoney & { elapsed_days: number; total_days: number; period_end: string }; // How a period is going: its figures so far and how far through it is.
+  const progress: Record<string, Progress | null> = { [`quarterly:${thisQuarter}`]: quarterRes.data as Progress | null, [`yearly:${thisYear}`]: yearRes.data as Progress | null }; // The figures so far for this quarter and year.
 
   return ( // Shows:
     <DashboardFrame // the dashboard frame:
@@ -209,10 +280,10 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
       roles={viewer.roles} // the person's roles (for the tabs and numbers),
       current="reports" // this page's tab open,
       sub={section} // on the open section,
-      items={SECTIONS.map((s) => ({ ...s, href: `/admin/reports?section=${s.id}`, count: s.id === "reports" ? unread || undefined : undefined }))} // with this page's sections under the tab.
+      items={sections.map((s) => ({ ...s, href: `/admin/reports?section=${s.id}`, count: s.id === "reports" ? unread || undefined : undefined }))} // with this person's sections under the tab.
     >{/* (end of the frame's settings) */}
       {report ? ( // A report is open:
-        <ReportView report={report} /> // shows it.
+        <ReportView report={report} goals={reportGoals} isOwner={isOwner} /> // shows it.
       ) : id ? ( // An id was given but no report found:
         <Card title="Report not found">{/* a card saying so: */}
           <p className="text-sm">It may have been deleted. <TextLink href="/admin/reports">Back to all reports</TextLink></p>{/* with a link back. */}
@@ -230,14 +301,14 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
                 <tr key={r.id}>{/* a row: */}
                   <td>{/* the kind, with "New" if not opened yet: */}
                     {REPORT_KIND_LABELS[r.kind]}{/* the kind, */}
-                    {!r.read_at && <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-xs text-white">New</span>}{/* and a "New" label if unread. */}
+                    {isOwner && !r.read_at && <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-xs text-white">New</span>}{/* and a "New" label if unread. */}
                   </td>{/* (end of the cell) */}
                   <td>{periodLabel(r)}</td>{/* the dates, */}
                   <td>{shortDate(r.made_at)}</td>{/* when it was made, */}
                   <td className="text-right">{/* the actions: */}
                     <div className="flex items-center justify-end gap-3">{/* side by side: */}
                       <TextLink href={`/admin/reports?id=${r.id}`}>Open</TextLink>{/* open it, */}
-                      {r.kind === "custom" && ( // reports for chosen dates can be deleted:
+                      {isOwner && r.kind === "custom" && ( // the owner can delete reports for chosen dates:
                         <form action={deleteReport}>{/* a delete form: */}
                           <input type="hidden" name="id" value={r.id} />{/* the report's id, hidden, */}
                           <BusyButton type="submit" className="text-sm text-red-700 hover:underline">Delete</BusyButton>{/* and the delete button (shows a spinner and cannot be pressed twice while deleting). */}
@@ -250,6 +321,59 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
             </Table> // End of the table.
           )}{/* End of the choice. */}
         </Card> // End of the card.
+      ) : section === "goals" ? ( // Goals:
+        <>{/* (a group:) */}
+          <Card title="Goals" description="Goals for each quarter and financial year, and how each is going so far. Check these at the monthly review: figures that add up over time (such as students matched) are compared with the share of the goal expected by now.">{/* a card explaining goals, */}
+            {!isOwner && <p className="text-sm text-zinc-600">The owner sets the goals. Talk to the owner about any you think should change.</p>}{/* Operations: who sets goals. */}
+          </Card>{/* End of the card. */}
+          {goalPeriods.map((p) => { // For each period:
+            const key = `${p.kind}:${p.start}`; // its key,
+            const goals = allGoals.filter((g) => g.kind === p.kind && g.period_start === p.start); // its goals,
+            const sofar = progress[key] ?? null; // its figures so far (this quarter and year only),
+            const started = p.start <= today; // whether it has started,
+            if (!started && goals.length === 0) return null; // a future period with no goals: not shown.
+            return ( // shows:
+              <Card // a card:
+                key={key} // (one per period)
+                title={`${p.kind === "quarterly" ? "Quarter" : "Financial year"}: ${goalPeriodLabel(p.kind, p.start)}`} // the period,
+                description={sofar ? `${sofar.elapsed_days} of ${sofar.total_days} days gone. Figures so far, up to today.` : started ? undefined : `Starts ${shortDate(p.start)}.`} // how far through it is, or when it starts.
+              >{/* (end of the card's settings) */}
+                {goals.length === 0 ? ( // No goals:
+                  <Empty>No goals set for this period yet.</Empty> // says so.
+                ) : ( // Otherwise:
+                  <Table headings={["Figure", "Goal", "So far", "Expected by now", "", ...(isOwner ? [""] : [])]}>{/* a table: */}
+                    {goals.map((g) => { // for each goal:
+                      const metric = goalMetric(g.metric); // the figure's details,
+                      const how = sofar ? goalProgress(g.metric, Number(g.target), sofar, sofar.elapsed_days, sofar.total_days) : null; // how it is going (if started),
+                      return ( // shows:
+                        <tr key={g.id}>{/* a row: */}
+                          <td>{metric?.label ?? g.metric}{g.note && <span className="block text-xs text-zinc-500">{g.note}</span>}</td>{/* the figure's name and any note, */}
+                          <td>{goalTargetWords(g.metric, Number(g.target))}</td>{/* the goal, */}
+                          <td className="tabular-nums">{how ? num(how.value, metric?.unit ?? "") : "Not started"}</td>{/* the figure so far, */}
+                          <td className="tabular-nums">{how && metric?.grows ? num(how.expected, metric.unit) : how ? "Same as the goal" : ""}</td>{/* what is expected by now, */}
+                          <td>{how && <GoalStatus ok={how.onTrack} during />}</td>{/* on track or behind, */}
+                          {isOwner && ( // the owner can remove it:
+                            <td className="text-right">{/* a cell on the right: */}
+                              <form action={removeGoal}>{/* a remove form: */}
+                                <input type="hidden" name="id" value={g.id} />{/* the goal's id, hidden, */}
+                                <BusyButton type="submit" className="text-sm text-red-700 hover:underline">Remove</BusyButton>{/* and the remove button. */}
+                              </form>{/* End of the form. */}
+                            </td> // End of the cell.
+                          )}{/* End of remove. */}
+                        </tr> // End of the row.
+                      ); // End of what is shown.
+                    })}{/* End of the goals loop. */}
+                  </Table> // End of the table.
+                )}{/* End of the choice. */}
+              </Card> // End of the card.
+            ); // End of what is shown.
+          })}{/* End of the periods loop. */}
+          {isOwner && ( // The owner sets goals:
+            <Card title="Set a goal" description="Choose the period, the figure and the target. Setting a goal for a figure that already has one in that period changes it. Goals only use figures without money, so Operations admins can see them.">{/* a card: */}
+              <GoalForm periods={goalPeriods.map((p) => ({ value: `${p.kind}:${p.start}`, label: `${p.kind === "quarterly" ? "Quarter" : "Financial year"}: ${goalPeriodLabel(p.kind, p.start)}` }))} />{/* the form, with the four periods. */}
+            </Card> // End of the card.
+          )}{/* End of setting goals. */}
+        </> // (end of the group)
       ) : section === "make" ? ( // Making a report for chosen dates:
         <Card title="Report for your dates" description="Choose any dates. The report is saved so you can open or download it again later.">{/* a card: */}
           <MakeReportForm today={today} ranges={quickRanges(today)} />{/* the form, with quick ranges. */}
