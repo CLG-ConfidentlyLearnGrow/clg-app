@@ -16,7 +16,10 @@ import { removePushDevice, removeThisPushDevice, savePushDevice, sendMeATestPopU
 
 // CLG's public pop-up key. It is safe to show, and the browser needs it to
 // turn pop-ups on. Blank until Carla adds it in Vercel.
-const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""; // The key, or blank.
+// Any spaces, line breaks or quote marks picked up when the key was pasted
+// into Vercel are removed, because the browser refuses a key with them
+// (Carla, 20 Nov 2026: "Something went wrong" on the first try).
+const PUBLIC_KEY = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/[^A-Za-z0-9_-]/g, ""); // The key with only its own letters, numbers, - and _ kept, or blank.
 
 // Where "Not now" on the dashboard note is remembered on this device.
 const DISMISS_KEY = "clg-push-prompt-dismissed"; // The saved setting's name.
@@ -97,6 +100,14 @@ async function turnOn(): Promise<string | null> { // Starts the steps.
   return result.ok ? null : result.message; // Worked, or the plain problem.
 } // End of turnOn.
 
+// Turns a browser problem into a plain message that also names the problem,
+// so CLG can tell what went wrong from a screenshot.
+function browserProblem(err: unknown, where: string): string {
+  const name = err instanceof Error ? err.name : "Error"; // The browser's short name for the problem, e.g. "AbortError".
+  const detail = err instanceof Error ? err.message : String(err); // The browser's own words about it.
+  return `Something went wrong with this browser${where ? ` ${where}` : ""}. Please try again, or try another browser. (Details for CLG: ${name}: ${detail.slice(0, 160)})`; // The plain message, then the details (cut to 160 letters).
+} // End of browserProblem.
+
 // Turns pop-ups off on this device: removes it from CLG and from the browser.
 async function turnOff(): Promise<string | null> { // Starts the steps.
   const reg = await navigator.serviceWorker.getRegistration("/"); // CLG's service worker.
@@ -145,8 +156,8 @@ export function PushSettings({ devices }: { devices: PushDevice[] }) { // Starts
     try { // The browser steps could fail.
       const problem = await work(); // Does the work.
       setMessage(problem ? { ok: false, text: problem } : { ok: true, text: success }); // Shows how it went.
-    } catch { // Something unexpected went wrong:
-      setMessage({ ok: false, text: "Something went wrong with this browser. Please try again, or try another browser." }); // plain message.
+    } catch (err) { // Something unexpected went wrong:
+      setMessage({ ok: false, text: browserProblem(err, "") }); // plain message, with the details.
     } // End of the error handling.
     setBusy(null); // The button is free again.
     await refresh(); // Shows the device's new state.
@@ -248,7 +259,7 @@ export function PushPrompt() { // Starts the steps.
   const onPress = async () => { // Starts the steps.
     setBusy(true); // Shows the spinner.
     setProblem(null); // Clears any old problem.
-    const result = await turnOn().catch(() => "Something went wrong with this browser. Please try again from Sessions > Notices."); // Turns them on.
+    const result = await turnOn().catch((err: unknown) => browserProblem(err, "while turning on pop-ups")); // Turns them on (any problem becomes a plain message with the details).
     setBusy(false); // The button is free again.
     if (result) setProblem(result); // A problem: shows it.
     else setHidden(true); // Worked: the note goes away.
