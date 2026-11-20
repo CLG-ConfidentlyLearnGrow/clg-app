@@ -632,6 +632,23 @@ export async function markNoticesRead() {
   revalidatePath("/schedule"); // Refreshes the schedule page.
 } // End of markNoticesRead.
 
+// The rules for ticking off one notice (Carla, 20 Nov 2026):
+const tickOffSchema = z.object({
+  id: z.uuid(), // which notice,
+  action: z.enum(["seen", "done", "not_done"]), // seen, done, or not done after all.
+}); // End of the rules.
+
+// Ticks off one of this person's notices as seen, done, or not done after
+// all. The database checks the notice is their own and already delivered.
+export async function tickOffNotice(formData: FormData) {
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = tickOffSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
+  if (!parsed.success) return; // Not a real notice or action: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  await supabase.rpc("tick_off_notice", { p_id: parsed.data.id, p_action: parsed.data.action }); // Asks the database to tick it off.
+  revalidatePath("/schedule"); // Refreshes the schedule page (and its unread numbers).
+} // End of tickOffNotice.
+
 // The rules for reminder settings:
 const noticeSettingsSchema = z.object({
   first_reminder_hours: z.coerce.number().int().min(2).max(168), // hours before a session for the first reminder (2 to 168).

@@ -9,7 +9,7 @@ import Link from "next/link"; // The Next.js link, for moving between pages with
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
 import { PushSettings, type PushDevice } from "@/components/push-settings"; // The pop-up notifications controls and a device's shape (Carla, 18 Nov 2026).
-import { leaveWaitlist, markNoticesRead, removeAwayDates } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates.
+import { leaveWaitlist, markNoticesRead, removeAwayDates, tickOffNotice } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates, tick off one notice.
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, field, drop-down, small heading and text link.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -693,7 +693,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
       {section === "places" && isTutor && <PlacesSection viewerId={viewer.id} />}{/* The "where you teach" section (tutors). */}
 
-      {section === "libraries" && isAdmin && <LibrariesAdminSection />}{/* The libraries section (admins). */}
+      {section === "libraries" && isAdmin && <LibrariesAdminSection filter={one(params.libs)} hrefFor={(f) => `${here("libraries")}&libs=${f}`} />}{/* The libraries section (admins). */}
 
       {section === "requests" && (canBook || isTutor) && ( // The requests section:
         <RequestsSection viewerId={viewer.id} isAdmin={isDesk} isTutor={isTutor} canAsk={canBook && !isDesk} /> // requests (only families can ask).
@@ -1732,12 +1732,19 @@ async function TimesSection() { // The times to check section (admins).
 // ---------------------------------------------------------------------------
 async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string; unread: number; isAdmin: boolean }) { // The notices section (with the unread count, and whether they can change quiet hours).
   const supabase = await createClient(); // Connects to the database.
-  const [noticesRes, settingsRes, quietRes, devicesRes] = await Promise.all([ // Reads four things at once:
-    supabase // their notices:
+  const [noticesRes, doneRes, settingsRes, quietRes, devicesRes] = await Promise.all([ // Reads five things at once:
+    supabase // their notices not yet ticked off as done:
       .from("session_notices") // from session_notices,
       .select("id, title, body, deliver_at, read_at") // these details,
+      .is("done_at", null) // not done yet,
       .order("deliver_at", { ascending: false }) // newest first,
       .limit(50), // up to 50.
+    supabase // their notices ticked off as done (Carla, 20 Nov 2026):
+      .from("session_notices") // from session_notices,
+      .select("id, title, body, deliver_at, done_at") // these details,
+      .not("done_at", "is", null) // done,
+      .order("done_at", { ascending: false }) // most recently done first,
+      .limit(20), // up to 20.
     supabase // their reminder settings:
       .from("notice_settings") // from notice_settings,
       .select("first_reminder_hours") // the first reminder time,
@@ -1753,15 +1760,16 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
       .eq("account_id", viewerId) // for this person,
       .order("last_seen_at", { ascending: false }), // most recently used first.
   ]); // End of the reads.
-  const notices = noticesRes.data ?? []; // The notices.
+  const notices = noticesRes.data ?? []; // The notices still in the list.
+  const doneNotices = doneRes.data ?? []; // The notices ticked off as done.
   const quietStarts = ((quietRes.data?.starts_at as string | undefined) ?? "21:00:00").slice(0, 5); // When quiet hours start, e.g. "21:00" (9pm if not found).
   const quietEnds = ((quietRes.data?.ends_at as string | undefined) ?? "05:00:00").slice(0, 5); // When they end, e.g. "05:00" (5am if not found).
   const quietWords = `${shortClock(quietStarts)} and ${shortClock(quietEnds)}`; // In words, e.g. "9pm and 5am".
   return ( // Shows:
     <>{/* (a group) */}
-      <Card title="Notices" description="Reminders before each session, and news about your bookings.">{/* the notices card: */}
+      <Card title="Notices" description="Reminders before each session, and news about your bookings. Tick off each one as seen, or as done once you have dealt with it.">{/* the notices card: */}
         {notices.length === 0 ? ( // if none:
-          <Empty>No notices yet.</Empty> // says so.
+          <Empty>{doneNotices.length > 0 ? "Nothing left to look at. Well done." : "No notices yet."}</Empty> // says so (and says well done if they ticked them all off).
         ) : ( // otherwise:
           <>{/* (a group) */}
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
@@ -1774,7 +1782,11 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
                     </span>{/* End of the title. */}
                     <span className="text-xs text-zinc-500">{sessionWhen(n.deliver_at)}</span>{/* when it was sent. */}
                   </p>{/* End of the top line. */}
-                  <p className="mt-1 text-zinc-600">{n.body}</p>{/* the message. */}
+                  <p className="mt-1 text-zinc-600">{n.body}</p>{/* the message, */}
+                  <div className="mt-2 flex flex-wrap gap-4">{/* the tick-off buttons (Carla, 20 Nov 2026): */}
+                    {!n.read_at && <NoticeTickButton id={n.id} action="seen" label="Mark as seen" />}{/* "Mark as seen" (only if not yet seen), */}
+                    <NoticeTickButton id={n.id} action="done" label="Mark as done" />{/* and "Mark as done" (moves it to the Done list). */}
+                  </div>{/* End of the buttons. */}
                 </li> // End of the row.
               ))}{/* End of the loop. */}
             </ul>{/* End of the list. */}
@@ -1787,6 +1799,25 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
             )}{/* End of this part. */}
           </> // End of the group.
         )}{/* End of this part. */}
+        {doneNotices.length > 0 && ( // If any are ticked off as done:
+          <details className="mt-6">{/* a fold-out, closed to start with: */}
+            <summary className="cursor-pointer text-sm font-medium text-zinc-700">Done ({doneNotices.length === 20 ? "latest 20" : doneNotices.length})</summary>{/* its heading, with how many, */}
+            <ul className="mt-2 divide-y divide-zinc-100 text-sm text-zinc-500">{/* a greyed list: */}
+              {doneNotices.map((n) => ( // for each done notice:
+                <li key={n.id} className="py-3">{/* a row: */}
+                  <p className="flex flex-wrap items-baseline justify-between gap-2">{/* the top line: */}
+                    <span className="font-medium">{n.title}</span>{/* the title, */}
+                    <span className="text-xs">Done {sessionWhen(n.done_at as string)}</span>{/* when it was ticked off. */}
+                  </p>{/* End of the top line. */}
+                  <p className="mt-1">{n.body}</p>{/* the message, */}
+                  <div className="mt-2">{/* the undo button: */}
+                    <NoticeTickButton id={n.id} action="not_done" label="Not done yet: put it back" />{/* puts it back in the list, if ticked by mistake. */}
+                  </div>{/* End of the button. */}
+                </li> // End of the row.
+              ))}{/* End of the loop. */}
+            </ul>{/* End of the list. */}
+          </details> // End of the fold-out.
+        )}{/* End of the done list. */}
       </Card>{/* End of the card. */}
       <Card title="Pop-up notifications">{/* the pop-up notifications card (Carla, 18 Nov 2026): */}
         <PushSettings devices={(devicesRes.data ?? []) as PushDevice[]} />{/* turn pop-ups on or off for this device, see other devices, and send a test. */}
@@ -1810,6 +1841,21 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
     </> // End of the group.
   ); // End of what's shown.
 } // End of NoticesSection.
+
+// One small tick-off button for a notice (Carla, 20 Nov 2026): "Mark as
+// seen", "Mark as done", or "Not done yet". It sends the notice id and the
+// action to tickOffNotice; the database checks the notice is the person's own.
+function NoticeTickButton({ id, action, label }: { id: string; action: "seen" | "done" | "not_done"; label: string }) { // The notice, what to do, and the button words.
+  return ( // Shows:
+    <form action={tickOffNotice}>{/* a small form: */}
+      <input type="hidden" name="id" value={id} />{/* the notice (hidden), */}
+      <input type="hidden" name="action" value={action} />{/* what to do (hidden), */}
+      <BusyButton type="submit" className="text-xs text-teal-800 underline">{/* the button: */}
+        {label}{/* its words. */}
+      </BusyButton>{/* End of the button. */}
+    </form> // End of the form.
+  ); // End of what's shown.
+} // End of NoticeTickButton.
 
 // The setting for time kept free after each tutor session to write the
 // session summary (Carla, 12 Nov 2026). Shown to owner and operations admins

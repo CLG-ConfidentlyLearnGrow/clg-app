@@ -425,7 +425,17 @@ export async function BlocksSection({ // The blocks section, given:
 // ---------------------------------------------------------------------------
 // Admins: libraries, with confirmation and opening hours
 // ---------------------------------------------------------------------------
-export async function LibrariesAdminSection() { // The admin libraries section.
+// The filters for the libraries list (Carla, 20 Nov 2026: "Is there a list
+// somewhere of all active libraries?"). Each has an address key and its words.
+const LIBRARY_FILTERS = [ // the filters, in the order shown:
+  { key: "all", label: "All" }, // every library,
+  { key: "ready", label: "Active (ready for sessions)" }, // shown, confirmed and with opening hours: sessions can be offered there,
+  { key: "todo", label: "To confirm or add hours" }, // shown, but not confirmed yet or missing opening hours,
+  { key: "hidden", label: "Hidden" }, // hidden libraries.
+] as const; // (fixed list)
+type LibraryFilter = (typeof LIBRARY_FILTERS)[number]["key"]; // One filter's key, for type checking.
+
+export async function LibrariesAdminSection({ filter, hrefFor }: { filter?: string; hrefFor: (f: string) => string }) { // The admin libraries section (with the chosen filter, and how to build each filter's address).
   const supabase = await createClient(); // Connects to the database.
   const [libsRes, hoursRes, checksRes] = await Promise.all([ // Reads three things at once:
     supabase.from("libraries").select("id, name, suburb, address, active, confirmed_at, suggested_by, osm_ref").order("name"), // the libraries, by name,
@@ -444,6 +454,12 @@ export async function LibrariesAdminSection() { // The admin libraries section.
   }[]; // (end of the type)
   const hours = (hoursRes.data ?? []) as { library_id: string; weekday: number; opens: string; closes: string }[]; // The opening hours.
   const hoursOf = (id: string) => hours.filter((h) => h.library_id === id); // Gives one library's opening hours.
+  const withHours = new Set(hours.map((h) => h.library_id)); // The libraries that have opening hours (quick to look up).
+  const groupOf = (l: (typeof libraries)[number]): LibraryFilter => // Works out which group a library is in:
+    !l.active ? "hidden" : l.confirmed_at && withHours.has(l.id) ? "ready" : "todo"; // hidden, ready for sessions, or still to do.
+  const chosen: LibraryFilter = LIBRARY_FILTERS.some((f) => f.key === filter) ? (filter as LibraryFilter) : "all"; // The chosen filter (all if none or unknown).
+  const countOf = (key: LibraryFilter) => (key === "all" ? libraries.length : libraries.filter((l) => groupOf(l) === key).length); // How many libraries are in a group.
+  const shown = chosen === "all" ? libraries : libraries.filter((l) => groupOf(l) === chosen); // The libraries to list under the chosen filter.
   return ( // Shows:
     <Card // a card:
       title="Libraries" // its title,
@@ -456,7 +472,7 @@ export async function LibrariesAdminSection() { // The admin libraries section.
             {checks.map((c) => ( // for each:
               <li key={c.library_id} className="flex flex-wrap items-center justify-between gap-2">{/* a row: */}
                 <span>{/* (a group) */}
-                  <a href={`#lib-${c.library_id}`} className="font-medium underline">{/* a link to the library below: */}
+                  <a href={`${hrefFor("all")}#lib-${c.library_id}`} className="font-medium underline">{/* a link to the library below (in the full list, so it is always there): */}
                     {c.name}{/* its name, */}
                   </a>{/* end of the link. */}
                   {c.suburb && ` · ${c.suburb}`}: {c.problem}{/* its suburb and what needs doing. */}
@@ -478,11 +494,25 @@ export async function LibrariesAdminSection() { // The admin libraries section.
           </p>{/* End of the help line. */}
         </div> // End of the box.
       )}{/* End of this part. */}
-      {libraries.length === 0 ? ( // if no libraries:
-        <Empty>No libraries yet.</Empty> // says so.
+      {libraries.length > 0 && ( // If there are any libraries:
+        <nav aria-label="Filter libraries" className="mb-4 flex flex-wrap gap-2 text-xs">{/* the filter buttons: */}
+          {LIBRARY_FILTERS.map((f) => ( // for each filter:
+            <a // a link:
+              key={f.key} // (its key, for React)
+              href={hrefFor(f.key)} // to this filter,
+              aria-current={chosen === f.key ? "page" : undefined} // marked as the current one (for screen readers),
+              className={`rounded-full border px-3 py-1 ${chosen === f.key ? "border-zinc-700 bg-zinc-700 text-white" : "border-zinc-300 text-zinc-700"}`} // filled in if chosen.
+            >{/* (end of the link's settings) */}
+              {f.label} ({countOf(f.key)}){/* its words and how many. */}
+            </a> // End of the link.
+          ))}{/* End of the loop. */}
+        </nav> // End of the filter buttons.
+      )}{/* End of this part. */}
+      {shown.length === 0 ? ( // if no libraries to list:
+        <Empty>{libraries.length === 0 ? "No libraries yet." : "No libraries in this group."}</Empty> // says so.
       ) : ( // otherwise:
         <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
-          {libraries.map((l) => { // for each library:
+          {shown.map((l) => { // for each library to list:
             const h = hoursOf(l.id); // its opening hours,
             return ( // shows:
               <li key={l.id} id={`lib-${l.id}`} className="space-y-2 py-4 first:pt-0">{/* a row (with a link target): */}
