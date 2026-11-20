@@ -145,6 +145,14 @@ Tip: **Parents of each student** shows who can see each student. Use **Remove th
 1. Check with the family if you are not sure.
 2. Choose **Same child: merge**, **Same child: keep the newer one**, or **Different children**.
 
+### Change a student's details (Owner and Operations)
+Use this when checking a new family, or when a family asks CLG to correct something.
+1. In **Families**, open **Change a student's details**.
+2. Choose the student and choose **Open**. (From **Matching**, **Fill in** next to a missing year level or school opens this for that student.)
+3. Correct the year level, school, subjects and levels, goals, other information or learning needs, and choose **Save changes**.
+
+Tip: Preferred days and times, places and study dates are on the **Schedule** page, under the student's places.
+
 ### Give a student their own login
 1. In **Families**, open **Give a student their own login** (students 16 and over).
 2. Choose the student and enter their own email, then send. They keep their details, history and tutor, and their parent can still see everything.
@@ -357,7 +365,7 @@ Open **Progress** in the side menu.
 4. Tutors cannot send a term review until they have finished the term review training modules.
 
 ### Keep notes on track
-- **Notes overdue** lists sessions with no note after the due time. Follow up with the tutor.
+- **Notes overdue** lists sessions still without a note 12 hr after they ended. The tutor was already reminded at 6 hr, when the note was due, so follow up with the tutor. Families are promised the note within 48 hr.
 - **Students to check** lists students with no goals, or whose skills have not moved for a while.
 - **Recent notes to spot-check**: is the next step specific, and the tip for home a small habit?
 - **How progress tracking is going** shows the measures for any dates you choose.

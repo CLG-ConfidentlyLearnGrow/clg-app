@@ -179,8 +179,8 @@ Tip: Adding away dates early gets you full credit for those sessions.
 
 ### Ask for an extra or one-off session
 1. In **Sessions**, choose **Requests**, then **Ask for a session**.
-2. Choose your child, the subject and what you would like: an extra session before a test or exam, a one-off in a public holiday week, or another time or tutor while your tutor is away.
-3. Add the date and any times that suit.
+2. Choose your child, the subject and what you would like: an extra session before a significant date (a test, exam or assignment due date), a one-off in a public holiday week, or another time or tutor while your tutor is away.
+3. For an extra session, enter the **Significant date** (the day of the test or exam, or the day the assignment is due) and what it is for. The extra session is booked before that day. Add any times that suit.
 4. Choose **Send request**. CLG or your tutor offers a time for you to approve.
 
 ### Skip public holidays

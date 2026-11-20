@@ -47,6 +47,7 @@ import { // The curriculum forms:
 } from "./curriculum-forms"; // End of the forms.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
 import { loadBirthDates } from "@/lib/birth-dates"; // Reads students' birth dates through the database's check.
+import { StudentDetailsCard } from "./student-details-section"; // The "change a student's details" card.
 
 type PendingLink = { // A parent's link to a child waiting for CLG:
   parent_id: string; // the parent,
@@ -373,6 +374,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             >{/* (end of the card's settings) */}
               <ParentLinkList rows={parentLinks} />{/* the list. */}
             </Card>{/* End of the card. */}
+            {isFull && ( // For full admins (the database lets owner and Operations admins change student details):
+              <StudentDetailsCard // the "change a student's details" card:
+                students={studentRows.map((s) => ({ id: s.id, full_name: s.full_name }))} // every student by id and name,
+                chosenId={typeof params.student === "string" ? params.student : undefined} // the student chosen in the address (if any),
+                birthDates={birthDates} // and their birth dates.
+              /> // End of the card.
+            )}{/* End of this part. */}
             <Card // the "own login" card:
               collapsible // can fold,
               defaultOpen={false} // folded to start,
