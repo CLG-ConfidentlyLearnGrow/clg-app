@@ -56,6 +56,7 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
   applications: [{ part: "tutor-applications" }], // Tutor applications: the whole part.
   "check-ins": [{ part: "other-admin-tools", tasks: ["check-ins"] }], // Check-ins after a new match.
   lateness: [{ part: "other-admin-tools", tasks: ["lateness"] }], // Tutor lateness.
+  probation: [{ part: "other-admin-tools", tasks: ["probation"] }], // Staff probation (owner).
   feedback: [{ part: "other-admin-tools", tasks: ["feedback"] }], // App feedback.
   "whats-new": [{ part: "other-admin-tools", tasks: ["what is new"] }], // Writing "What is new" pop-ups.
   teams: [{ part: "other-admin-tools", tasks: ["teams"] }], // Teams links.

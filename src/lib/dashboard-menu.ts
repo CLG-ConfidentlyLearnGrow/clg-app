@@ -105,6 +105,14 @@ async function latenessToReview(): Promise<number | undefined> { // No inputs: i
   return error || !count ? undefined : count; // No number if none, or if it could not be counted.
 } // End of latenessToReview.
 
+// How many staff probations are due for review now (owner only; Carla,
+// 20 Nov 2026). Shown on the Staff probation tab. None (or a problem
+// reading it) shows no number.
+async function probationsDue(): Promise<number | undefined> { // No inputs: it counts for the signed-in owner.
+  const { data, error } = await (await createClient()).rpc("staff_probation_due_count"); // Asks the database how many are due.
+  return error || !data ? undefined : (data as number); // No number if none, or if it could not be counted.
+} // End of probationsDue.
+
 // The signed-in staff member's own contracts: whether they have any (so the
 // "My contract" tab only shows once CLG has sent one), and how many are
 // waiting for them to sign or finish (Carla, 17 Nov 2026). A problem reading
@@ -197,6 +205,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFull) items.push({ id: "applications", label: "Tutor applications", href: "/admin/applications", count: await newApplications() }); // tutor applications from the public Apply to tutor page (full admins, Carla 16 Nov 2026), with new ones counted,
     if (isFull) items.push({ id: "check-ins", label: "Check-ins", href: "/admin/check-ins", count: await checkInsToFollowUp() }); // answers to the check-ins after a new match (full admins, Carla 16 Nov 2026), with ones needing follow-up counted,
     if (isFull) items.push({ id: "lateness", label: "Tutor lateness", href: "/admin/lateness", count: await latenessToReview() }); // late starts by tutors to review (full admins, Carla 18 Nov 2026), with open ones counted,
+    if (level === "owner") items.push({ id: "probation", label: "Staff probation", href: "/admin/probation", count: await probationsDue() }); // staff probation reviews (owner only, Carla 20 Nov 2026), with ones due for review counted,
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams", items: subTabs(TEAMS_TABS, "/admin/teams") }); // Teams links for online sessions (full admins), with its sub-tabs,

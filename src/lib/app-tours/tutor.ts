@@ -76,7 +76,7 @@ Where: **Sessions**, then **Overview**, and your **Weekly calendar**.
 
 Write a short note within 6 hr of each session: what went well, a specific next step, any practice, and one small thing to try at home. It takes about three minutes.
 
-Why: Specific feedback on the next step is one of the most effective things a tutor can give. Families are promised notes within 48 hr, so CLG follows up anything later than 6 hr.
+Why: Specific feedback on the next step is one of the most effective things a tutor can give. Families are promised notes within 48 hr, so the app reminds you at 6 hr and CLG follows up anything still missing at 12 hr.
 
 Where: **Your students**, then **Session notes to write**.
 

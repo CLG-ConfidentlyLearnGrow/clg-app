@@ -132,7 +132,7 @@ If your tutor or CLG cancels a session, or CLG needs to change your tutor or tim
 
 ### Ask for an extra session
 1. In **Sessions**, choose **Requests**, then **Ask for a session**.
-2. Choose the subject and what you would like (for example an extra session before a test), the date, and times that suit.
+2. Choose the subject and what you would like (for example an extra session before a significant date, such as a test, exam or assignment due date), the **Significant date**, and times that suit.
 3. Choose **Send request**.
 
 ### Answer a check-in about your tutor

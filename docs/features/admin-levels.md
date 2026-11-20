@@ -15,7 +15,7 @@ holds children's learning records, contact details and money.
 | Level | Who | What they do |
 | --- | --- | --- |
 | Owner | Carla | Everything. Only the owner adds or removes admins, changes levels, prices, pay rates, billing rules and record-keeping periods, overrides a billing pause (unless she allows Operations), and erases records. |
-| Operations | Lauren | Day-to-day running: families, matching, bookings, tutor checks, progress, curriculum, invoices, inviting tutors. Sees tutor pay but doesn't change it. (This is what "staff admin" was.) |
+| Operations | Lauren (Emma from 2027) | Day-to-day running: families, matching, bookings, tutor checks, progress, curriculum, inviting tutors. Sees prices, invoices, credit and tutor pay but doesn't change money matters (since 20 Nov 2026, see below). (This is what "staff admin" was.) |
 | Support | Future office help | Family contact details, setting up families, login links, bookings and sessions, and whether a family is paused. No progress notes, tutor checks or money details. |
 | Finance | Future bookkeeper | Invoices, payments, credits, tutor pay and pay rates. Sees names on invoices; no student records, sessions, notes or tutor checks. |
 
@@ -103,3 +103,22 @@ family-setup file is ever run again, run `20261029900200_admin_levels.sql`
 again afterwards, because older files put back their old rules. The same
 goes for `20261029700100_email_sender.sql`. Don't re-run
 `20261029800100_staff_invite_links.sql` after this.
+
+## Operations sees billing but does not change money (20 Nov 2026)
+
+Carla, for Emma's admin role: Operations admins keep seeing prices, kept
+family rates, invoices, credit, split payments, waivers and staff pay, so
+they can talk with families and tutors. They still set a family's plan and
+bill payer and add school terms. Building, approving and cancelling
+invoices, running billing by hand, adding credit, changing split payments
+and giving a term review at no charge are now owner and Finance only.
+Waiving a late cancellation is owner only (Finance doesn't see student
+sessions). Lifting a pause without payment still follows the billing
+setting. Migration `20261123400300_operations_billing_view_only.sql`; run it
+again after re-running any older billing file. Tests:
+`supabase/tests/staff_levels_operations_billing.test.sql`.
+
+Why: separation of duties for money (the people who keep bookings right are
+not the people who issue credit or cancel invoices), and Essential Eight
+"restrict administrative privileges". Legal: Privacy Act APP 11 (access by
+need), and ATO record keeping is unchanged (invoices are never deleted).

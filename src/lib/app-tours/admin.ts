@@ -117,6 +117,18 @@ Why: Only the people who pay see billing, and an overdue invoice pauses the whol
 Where: **Billing** in the side menu.
 `;
 
+// Billing for Operations admins: they see it all but only set plans and
+// bill payers (Carla, 20 Nov 2026: no money changes for Operations).
+const BILLING_VIEW = `
+## Billing
+
+See prices, each family's plan, invoices, credit and paused families, and set a family's plan and bill payer. Invoices, credit, split payments and waivers are changed by the owner or a Finance admin.
+
+Why: Seeing the figures lets you answer families and tutors, while money changes stay with the people who look after CLG's accounts.
+
+Where: **Billing** in the side menu.
+`;
+
 // Staff pay (Owner and Finance).
 const PAY = `
 ## Staff pay
@@ -163,7 +175,7 @@ Where: **Staff and accounts**, **Billing**, **Reports**, **Privacy and records**
   }, // End of the owner's tour.
   operations: { // The operations tour:
     title: "Welcome, Operations", // its title,
-    text: WELCOME + FAMILIES + MATCHING_SESSIONS + RUNNING + BILLING + `
+    text: WELCOME + FAMILIES + MATCHING_SESSIONS + RUNNING + BILLING_VIEW + `
 ## Reports and goals
 
 **Reports** has the monthly, quarterly and yearly reports (without money, which only the owner sees). **Goals** shows each quarterly and yearly goal the owner set, with **On track** or **Behind**.

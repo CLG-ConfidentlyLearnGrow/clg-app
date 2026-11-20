@@ -7,7 +7,7 @@
 import { revalidatePath } from "next/cache"; // Lets the code refresh pages after a change, so they show the new data.
 import { redirect } from "next/navigation"; // Lets the code send someone to another page.
 import { z } from "zod"; // The form-checking library.
-import { FINANCE, FULL_ADMIN, requireAdminLevel, requireViewer } from "@/lib/auth"; // The finance and full admin groups, and the sign-in and admin-level checks.
+import { FINANCE, PAY, requireAdminLevel, requireViewer } from "@/lib/auth"; // The billing and money-change admin groups, and the sign-in and admin-level checks.
 import { siteUrl } from "@/lib/env"; // The app's web address, for links back from Stripe.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { stripeKey } from "@/lib/billing/config"; // Checks whether Stripe is set up.
@@ -137,7 +137,7 @@ export async function addSchoolPeriod(_prev: FormState, formData: FormData): Pro
 
 // Builds a draft invoice for a family's unbilled sessions between two dates.
 export async function buildInvoice(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const parsed = z.object({ family_id: uuid, from: day, to: day }).safeParse(Object.fromEntries(formData)); // Checks the form has a family and two dates.
   if (!parsed.success) return { error: "Choose the family and both dates." }; // Problem: asks for them.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -155,7 +155,7 @@ export async function buildInvoice(_prev: FormState, formData: FormData): Promis
 
 // Runs the daily billing run straight away (the admin button).
 export async function runBillingNow(): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const s = await runBilling(); // Runs it.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
   const done = `Built ${s.invoicesBuilt} invoice(s), ${s.payLines} pay line(s) waiting to send, gave ${s.creditsGiven} cancellation credit(s), sent ${s.sentToXero} to Xero, charged ${s.charged}, ${s.pausesChanged} pause change(s).`; // What was done.
@@ -164,7 +164,7 @@ export async function runBillingNow(): Promise<FormState> {
 
 // Approves a draft invoice.
 export async function approveInvoice(formData: FormData) {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const id = uuid.safeParse(formData.get("id")); // Reads and checks the invoice id.
   if (!id.success) return; // Not a proper id: does nothing.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -174,7 +174,7 @@ export async function approveInvoice(formData: FormData) {
 
 // Cancels an invoice, with a reason.
 export async function voidInvoice(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const parsed = z.object({ id: uuid, reason: z.string() }).safeParse(Object.fromEntries(formData)); // Checks the form has an id and a reason.
   if (!parsed.success) return { error: "Please give a reason." }; // Problem: asks for a reason.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -186,7 +186,7 @@ export async function voidInvoice(_prev: FormState, formData: FormData): Promise
 
 // Gives a family a credit.
 export async function addCredit(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const parsed = z.object({ family_id: uuid, amount: z.string(), note: z.string() }).safeParse(Object.fromEntries(formData)); // Checks the form has a family, an amount and a reason.
   if (!parsed.success) return { error: "Please fill in the amount and the reason." }; // Problem: asks for them.
   const cents = parseDollars(parsed.data.amount); // Turns the amount into cents.
@@ -201,7 +201,7 @@ export async function addCredit(_prev: FormState, formData: FormData): Promise<F
 // Waives the late-cancellation rule for one session (Owner and Operations only):
 // once a year per learner, then only with proof seen (Carla, 16 Nov 2026).
 export async function waiveLateCancel(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FULL_ADMIN); // Owner and operations admins only (today Carla and Lauren).
+  await requireAdminLevel(["owner"]); // The owner only (Carla, 20 Nov 2026: Operations admins see billing but do not change money matters).
   const parsed = z.object({ session_id: uuid, reason: z.string() }).safeParse(Object.fromEntries(formData)); // Checks the form has a session and a reason.
   if (!parsed.success) return { error: "Please say briefly why." }; // Problem: asks for the reason.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
@@ -415,7 +415,7 @@ export async function payInvoiceNow(formData: FormData) {
 
 // Sets up a split: another payer pays a share of a family's invoices.
 export async function saveSplit(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const parsed = z // Checks the form has:
     .object({ family_id: uuid, payer_id: uuid, share: z.string() }) // a family, a payer and a share,
     .safeParse(Object.fromEntries(formData)); // (from the form's fields).
@@ -435,7 +435,7 @@ export async function saveSplit(_prev: FormState, formData: FormData): Promise<F
 
 // Removes a split.
 export async function removeSplit(formData: FormData) {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // Owner and Finance admins only: Operations admins see billing but do not change money matters (Carla, 20 Nov 2026).
   const family = uuid.safeParse(formData.get("family_id")); // Reads and checks the family id.
   const payer = uuid.safeParse(formData.get("payer_id")); // Reads and checks the payer id.
   if (!family.success || !payer.success) return; // Either bad: does nothing.

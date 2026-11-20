@@ -145,6 +145,14 @@ Tip: **Parents of each student** shows who can see each student. Use **Remove th
 1. Check with the family if you are not sure.
 2. Choose **Same child: merge**, **Same child: keep the newer one**, or **Different children**.
 
+### Change a student's details (Owner and Operations)
+Use this when checking a new family, or when a family asks CLG to correct something.
+1. In **Families**, open **Change a student's details**.
+2. Choose the student and choose **Open**. (From **Matching**, **Fill in** next to a missing year level or school opens this for that student.)
+3. Correct the year level, school, subjects and levels, goals, other information or learning needs, and choose **Save changes**.
+
+Tip: Preferred days and times, places and study dates are on the **Schedule** page, under the student's places.
+
 ### Give a student their own login
 1. In **Families**, open **Give a student their own login** (students 16 and over).
 2. Choose the student and enter their own email, then send. They keep their details, history and tutor, and their parent can still see everything.
@@ -357,7 +365,7 @@ Open **Progress** in the side menu.
 4. Tutors cannot send a term review until they have finished the term review training modules.
 
 ### Keep notes on track
-- **Notes overdue** lists sessions with no note after the due time. Follow up with the tutor.
+- **Notes overdue** lists sessions still without a note 12 hr after they ended. The tutor was already reminded at 6 hr, when the note was due, so follow up with the tutor. Families are promised the note within 48 hr.
 - **Students to check** lists students with no goals, or whose skills have not moved for a while.
 - **Recent notes to spot-check**: is the next step specific, and the tip for home a small habit?
 - **How progress tracking is going** shows the measures for any dates you choose.
@@ -417,6 +425,13 @@ A late start is recorded when a tutor signs on more than 5 minutes after the boo
 3. Talk with the tutor if needed, write a private note, then choose **Mark reviewed**. Tutors see their own late starts, but not your notes.
 4. **Late starts in the last 90 days, by tutor** shows who is often late, so you can follow up early.
 
+### Staff probation
+Tutors finish probation at 3 months or 30 completed sessions, and admin staff at 3 months or 30 approved hours, whichever comes first. The app sets up a probation for each new tutor and admin staff member from the start date on their pay details.
+1. Open **Staff probation** in the side menu (Owner only). A number shows how many are due for review. You also get an app notice on the day someone becomes due.
+2. **Due for review** lists each person, why they are due and their progress. Talk with them, then choose **Passed**, **Extend probation** (with a new review date) or **Ended (not continuing)**, add a private note and choose **Save review**. An extended probation reminds you again on the new date.
+3. **On probation** shows everyone else still on probation, with their progress and due date. Choose **Change the start date** if a start date is wrong.
+4. To add someone the app did not set up (for example, with no start date on their pay details), open **Set up a probation**.
+
 ### App feedback
 **Feedback** in the side menu shows what people are saying, grouped by area. Set where each item is up to and add private notes.
 
@@ -449,22 +464,22 @@ Open **Billing** in the side menu. Its sections are **Family billing**, **Invoic
 ### Set a family's plan or bill payer
 1. In **Family billing**, find the family.
 2. Choose how often they pay and the bill payer, then choose **Save plan**.
-3. If two people share invoices, choose who also pays and their share, then **Save split**.
+3. If two people share invoices, choose who also pays and their share, then **Save split** (Owner and Finance).
 
 Tip: Only the bill payer and any extra payers see a family's billing (plan, invoices and credit). Other parents and students do not, but they are still told when sessions are on hold. Until a bill payer is set, the first parent to choose the plan or agree to the terms becomes the bill payer, so set it here if someone else should pay.
 
-### Add credit
+### Add credit (Owner and Finance)
 In **Family billing**, find the family, enter the amount and reason, and choose **Add credit**. Credit comes off their next invoice.
 
-### Waive a late cancellation (Owner and Operations)
-1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14.
+### Waive a late cancellation (Owner)
+1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14. Operations admins can see the list, but only the owner waives.
 2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
 3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Do not keep a copy of the proof. Tutors never see waivers.
 
 ### Paused families
 **Paused families** lists families on hold for an overdue invoice. Sessions start again as soon as they pay. Only the owner (or admins, if the owner allows it in Settings) can choose **Lift the pause** without payment, with a new due date or an agreed payment plan.
 
-### Run billing and check invoices
+### Run billing and check invoices (Owner and Finance)
 1. In **Invoices**, choose **Run billing now** to make this period's invoices. Drafts go to Xero on their send date.
 2. Check each invoice in the list. To cancel one, open **Cancel…**, give a reason, and choose **Cancel invoice**.
 3. For something unusual, use **Build an invoice by hand**.
@@ -562,8 +577,11 @@ If an Operations admin asks for emergency owner access, you are emailed at once 
   }, // End of the owner's guide.
   operations: { // The operations guide:
     title: "App guide for Operations admins", // its title,
-    who: "For Operations admins, who run CLG day to day: families, matching, bookings, tutors, progress and invoices.", // who it's for,
+    who: "For Operations admins, who run CLG day to day: families, matching, bookings, tutors and progress, and who can see billing.", // who it's for,
     text: START + FAMILIES + MATCHING + SESSIONS + RUNNING + BILLING + `
+### What you can change in Billing
+You can see **Billing** so you can help families and tutors: prices, each family's plan, invoices, credit and split payments. You can set a family's plan and bill payer. Only the owner or a Finance admin builds, approves or cancels invoices, adds credit, or changes split payments, and only the owner waives a late cancellation. Pass those requests to Carla.
+
 ### Staff pay (view only)
 You can see **Staff pay** under Billing, but only the owner and Finance admins change pay or approve hours.
 

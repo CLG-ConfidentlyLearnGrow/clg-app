@@ -41,6 +41,7 @@ const MEANING: Record<string, string> = { // menu item id -> what its number cou
   applications: "New tutor applications.", // Tutor applications (Owner and Operations).
   "check-ins": "Check-in answers to follow up.", // Check-ins (Owner and Operations).
   lateness: "Tutor late starts to review.", // Tutor lateness (Owner and Operations).
+  probation: "Staff probation reviews due.", // Staff probation (owner).
   training: "Training modules to do.", // Training (tutors and admins).
   contract: "Your employment contract is waiting for you.", // My contract (staff).
   students: "Session notes, term reviews or family uploads to look at.", // Your students (tutor).
