@@ -129,6 +129,9 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   // Emergency owner access counts as owner here too.
   const isOwner = viewer.level === "owner" || me.data?.level === "owner"; // Whether they're the owner (or have emergency owner access).
   const canEditPay = PAY.includes(viewer.level); // Whether they can change staff pay.
+  // Operations admins see billing but do not change money matters (Carla, 20 Nov 2026):
+  // invoices, credit and split payments are for the owner and Finance admins.
+  const canChangeMoney = PAY.includes(viewer.level) || isOwner; // Whether they can change invoices, credit and splits.
   const canOverride = settings.data?.override_by === "admin" || isOwner; // Whether they can lift a pause (set in billing settings; the owner always can).
   const familyRows = (families.data ?? []) as unknown as Family[]; // The families.
   const accountOf = new Map(((accounts.data ?? []) as Account[]).map((a) => [a.family_id, a])); // Each family's billing account, by family.
@@ -164,8 +167,9 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
   // Numbers on the menu: families on hold, invoices and staff hours to approve.
   const todo = await getToDoCounts(viewer.roles); // The to-do numbers.
 
-  // Late cancels and no-shows that could be waived (Owner and Operations only).
-  const canWaive = FULL_ADMIN.includes(viewer.level); // Whether this admin can waive late cancels.
+  // Late cancels and no-shows that could be waived: Owner and Operations see
+  // the list, and only the owner waives (Carla, 20 Nov 2026).
+  const canWaive = FULL_ADMIN.includes(viewer.level); // Whether this admin sees the waiver list.
   const waiverRows = canWaive && section === "families" ? (((await supabase.rpc("billing_waiver_list")).data ?? []) as WaiverRow[]) : []; // The list, read only when shown.
 
   return ( // Shows:
@@ -181,6 +185,12 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
         <p className="text-sm">{/* a line: */}
           <TextLink href="/admin/staff">Staff directory</TextLink>{/* the staff directory. */}
         </p>{/* End of the line. */}
+        {!canChangeMoney && ( // For Operations admins:
+          <p className="rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700">{/* a grey note: */}
+            You can see billing so you can help families and tutors. Only the owner or a Finance admin builds, approves or
+            cancels invoices, adds credit, changes split payments or waives a late cancellation. Pass those requests to Carla.{/* (what they can and cannot do) */}
+          </p> // End of the note.
+        )}{/* End of this part. */}
 
         {section === "families" && ( // The family billing section:
           <>{/* (a group) */}
@@ -240,18 +250,20 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                                   {payers.get(r.account_id) ?? "Payer"}: {r.share_percent}% ·{" "}{/* their name and share, */}
                                   {r.payment_ready ? METHOD_LABELS[r.method] : "no automatic payment yet"}{/* and how they pay. */}
                                 </span>{/* End of the group. */}
-                                <form action={removeSplit}>{/* a remove form: */}
-                                  <input type="hidden" name="family_id" value={f.id} />{/* the family (hidden), */}
-                                  <input type="hidden" name="payer_id" value={r.account_id} />{/* the payer (hidden), */}
-                                  <Button type="submit">Remove</Button>{/* the remove button. */}
-                                </form>{/* End of the form. */}
+                                {canChangeMoney && ( // For the owner and Finance admins:
+                                  <form action={removeSplit}>{/* a remove form: */}
+                                    <input type="hidden" name="family_id" value={f.id} />{/* the family (hidden), */}
+                                    <input type="hidden" name="payer_id" value={r.account_id} />{/* the payer (hidden), */}
+                                    <Button type="submit">Remove</Button>{/* the remove button. */}
+                                  </form> // End of the form.
+                                )}{/* End of this part. */}
                               </li> // End of the row.
                             ))}{/* End of the loop. */}
                         </ul> // End of the list.
                       ) : ( // otherwise:
                         <p className="mb-3 text-sm text-zinc-600">The bill payer pays each invoice in full.</p> // the bill payer pays in full.
                       )}{/* End of this part. */}
-                      {acct.bill_payer_id ? ( // If there's a bill payer:
+                      {!canChangeMoney ? null : acct.bill_payer_id ? ( // For the owner and Finance admins, if there's a bill payer:
                         <SplitForm // the add-a-split form:
                           familyId={f.id} // the family,
                           payers={[...payers].filter(([id]) => id !== acct.bill_payer_id).map(([id, name]) => ({ id, name }))} // the other parents to choose from.
@@ -270,8 +282,12 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                         <p className="mb-3 text-sm text-zinc-600">Pays the price list.</p> // they pay the price list.
                       )}{/* End of this part. */}
                       {isOwner && <KeptRateForm familyId={f.id} prices={sessionPrices} />}{/* The kept rate form (owner only). */}
-                      <SubHeading>Add credit</SubHeading>{/* a small heading, */}
-                      <CreditForm familyId={f.id} />{/* the add credit form. */}
+                      {canChangeMoney && ( // For the owner and Finance admins:
+                        <>{/* (a group) */}
+                          <SubHeading>Add credit</SubHeading>{/* a small heading, */}
+                          <CreditForm familyId={f.id} />{/* the add credit form. */}
+                        </> // End of the group.
+                      )}{/* End of this part. */}
                       {acct.paused && canOverride && ( // If paused and this admin can lift it:
                         <>{/* (a group) */}
                           <SubHeading>Lift the pause without payment</SubHeading>{/* a small heading, */}
@@ -292,7 +308,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
             {canWaive && ( // For Owner and Operations admins:
               <Card // a fold-up card:
                 title="Late-cancel waivers" // its title,
-                description="Family cancels and no-shows from the last 60 days and next 14. Each learner gets one waiver a calendar year; after that, see proof first. Tutors never see this." // what it's for,
+                description="Family cancels and no-shows from the last 60 days and next 14. Each learner gets one waiver a calendar year; after that, see proof first. Only the owner waives one. Tutors never see this." // what it's for,
                 collapsible // can fold,
                 defaultOpen={false} // folded to start.
               >{/* (end of the card's settings) */}
@@ -308,7 +324,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                         </p>{/* End of the line. */}
                         {w.waived ? ( // If already waived:
                           <p className="mt-2 text-sm text-emerald-800">Waived: full credit.</p> // says so.
-                        ) : w.credit_percent === 100 ? null : ( // Full credit already: nothing to do. Otherwise:
+                        ) : w.credit_percent === 100 || !isOwner ? null : ( // Full credit already, or not the owner: nothing to do. Otherwise:
                           <div className="mt-2"><WaiverForm sessionId={w.session_id} needsProof={w.used_this_year >= 1} /></div> // the waiver form (proof needed after the first).
                         )}{/* (end of this part) */}
                       </li> // End of the box.
@@ -322,9 +338,11 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
 
         {section === "invoices" && ( // The invoices section:
           <>{/* (a group) */}
-            <Card title="Run billing">{/* a "Run billing" card: */}
-              <RunNowForm />{/* the run-now form. */}
-            </Card>{/* End of the card. */}
+            {canChangeMoney && ( // For the owner and Finance admins:
+              <Card title="Run billing">{/* a "Run billing" card: */}
+                <RunNowForm />{/* the run-now form. */}
+              </Card> // End of the card.
+            )}{/* End of this part. */}
             <Card title="Invoices" description="Newest first. Drafts go to Xero on their send date.">{/* the invoices card: */}
               {invoiceRows.length === 0 ? ( // if none:
                 <Empty>No invoices yet.</Empty> // says so.
@@ -345,13 +363,13 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       </td>{/* End of the cell. */}
                       <td>{STATUS_LABELS[i.status]}</td>{/* the status, */}
                       <td className="space-y-2">{/* the buttons cell: */}
-                        {(i.status === "draft" || i.status === "awaiting_approval") && ( // if a draft or awaiting approval:
+                        {canChangeMoney && (i.status === "draft" || i.status === "awaiting_approval") && ( // if a draft or awaiting approval (owner and Finance only):
                           <form action={approveInvoice}>{/* the approve form: */}
                             <input type="hidden" name="id" value={i.id} />{/* the invoice (hidden), */}
                             <Button type="submit">{i.xero_invoice_id ? "Mark approved" : "Approve and send"}</Button>{/* the button (approve only if already in Xero; otherwise approve and send). */}
                           </form> // End of the form.
                         )}{/* End of this part. */}
-                        {(i.status === "draft" || i.status === "awaiting_approval" || i.status === "open") && ( // if not yet paid or cancelled:
+                        {canChangeMoney && (i.status === "draft" || i.status === "awaiting_approval" || i.status === "open") && ( // if not yet paid or cancelled (owner and Finance only):
                           <details>{/* a fold-out: */}
                             <summary className="cursor-pointer text-sm text-teal-800">Cancel…</summary>{/* its heading, */}
                             <VoidInvoiceForm id={i.id} />{/* the cancel form. */}
@@ -363,9 +381,11 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                 </Table> // End of the table.
               )}{/* End of this part. */}
             </Card>{/* End of the card. */}
-            <Card title="Build an invoice by hand" collapsible defaultOpen={false}>{/* a fold-up card: */}
-              <BuildInvoiceForm families={familyRows.filter((f) => accountOf.has(f.id)).map((f) => ({ id: f.id, name: f.name }))} />{/* the build-an-invoice form, for families with an account. */}
-            </Card>{/* End of the card. */}
+            {canChangeMoney && ( // For the owner and Finance admins:
+              <Card title="Build an invoice by hand" collapsible defaultOpen={false}>{/* a fold-up card: */}
+                <BuildInvoiceForm families={familyRows.filter((f) => accountOf.has(f.id)).map((f) => ({ id: f.id, name: f.name }))} />{/* the build-an-invoice form, for families with an account. */}
+              </Card> // End of the card.
+            )}{/* End of this part. */}
           </> // End of the group.
         )}{/* End of the invoices section. */}
 

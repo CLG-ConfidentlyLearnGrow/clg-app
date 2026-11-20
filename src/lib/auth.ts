@@ -75,7 +75,7 @@ export const ADMIN_LEVEL_NAMES: Record<AdminLevel, string> = {
 export const FULL_ADMIN: AdminLevel[] = ["owner", "operations"]; // The full admin tools.
 export const FRONT_DESK: AdminLevel[] = ["owner", "operations", "support"]; // Family and booking help.
 export const FINANCE: AdminLevel[] = ["owner", "operations", "finance"]; // Billing pages.
-export const PAY: AdminLevel[] = ["owner", "finance"]; // Staff pay.
+export const PAY: AdminLevel[] = ["owner", "finance"]; // Staff pay, and money changes (invoices, credit, split payments).
 export const ANY_ADMIN: AdminLevel[] = ["owner", "operations", "support", "finance"]; // Every admin.
 
 // The level the signed-in admin is acting at (owner while emergency owner
