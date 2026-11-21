@@ -32,14 +32,32 @@ create function tests.waiver_session( -- A test helper that adds a session and g
   returning id -- and hands back its id.
 $$; -- (end of the helper)
 
--- Sessions in October 2026 (one learner, one year) and January 2027 (the next year).
-select tests.waiver_session(:'cara', '2026-10-05', interval '1 hour', 'family') as late_1 \gset
-select tests.waiver_session(:'cara', '2026-10-06', interval '1 hour', 'family') as late_2 \gset
-select tests.waiver_session(:'cara', '2026-10-07', interval '1 hour', 'family') as late_3 \gset
-select tests.waiver_session(:'cara', '2026-10-08', null, null, 'no_show') as no_show \gset
-select tests.waiver_session(:'cara', '2026-10-09', interval '1 hour', 'tutor') as tutor_cancel \gset
-select tests.waiver_session(:'cara', '2026-10-12', interval '3 days', 'family') as early \gset
-select tests.waiver_session(:'cara', '2027-01-11', interval '1 hour', 'family') as next_year \gset
+-- The test week starts on a Monday (wbase) worked out from today, so these
+-- tests give the same result whatever day they run. It is about three to
+-- four weeks ago: inside the 60 days the waiver list shows. If that week
+-- would run into a new year, the week before is used, so the whole week
+-- sits in one calendar year (wy).
+select b - case when extract(year from b + 7) <> extract(year from b) then 7 else 0 end as wbase -- Keeps the Monday as wbase (a week earlier if the week crosses New Year):
+from (select current_date - 21 - (extract(isodow from current_date - 21)::int - 1) as b) x \gset
+-- (b is the Monday on or before 21 days ago.)
+select extract(year from :'wbase'::date)::int as wy \gset
+-- Keeps the test week's calendar year as wy.
+
+-- Sessions in the test week (one learner, one year) and in January of the next year.
+select tests.waiver_session(:'cara', :'wbase'::date, interval '1 hour', 'family') as late_1 \gset
+-- Monday: the family cancelled 1 hour before; keeps its id as late_1.
+select tests.waiver_session(:'cara', :'wbase'::date + 1, interval '1 hour', 'family') as late_2 \gset
+-- Tuesday: the family cancelled 1 hour before; keeps its id as late_2.
+select tests.waiver_session(:'cara', :'wbase'::date + 2, interval '1 hour', 'family') as late_3 \gset
+-- Wednesday: the family cancelled 1 hour before; keeps its id as late_3.
+select tests.waiver_session(:'cara', :'wbase'::date + 3, null, null, 'no_show') as no_show \gset
+-- Thursday: the learner did not show up; keeps its id as no_show.
+select tests.waiver_session(:'cara', :'wbase'::date + 4, interval '1 hour', 'tutor') as tutor_cancel \gset
+-- Friday: the tutor cancelled 1 hour before; keeps its id as tutor_cancel.
+select tests.waiver_session(:'cara', :'wbase'::date + 7, interval '3 days', 'family') as early \gset
+-- The next Monday: the family cancelled 3 days before; keeps its id as early.
+select tests.waiver_session(:'cara', make_date(:wy + 1, 1, 11), interval '1 hour', 'family') as next_year \gset
+-- 11 January of the next year: the family cancelled 1 hour before; keeps its id as next_year.
 
 -- ---------------------------------------------------------------------------
 -- Who may waive
@@ -71,13 +89,13 @@ reset role; -- Steps out of the signed-in role to read the private credit rule.
 select tests.eq(private.billing_session_credit_percent(:'late_1'), 100, 'waived: full credit'); -- Checks: the waived session gets full credit.
 set role authenticated; -- Back to acting as the signed-in owner.
 select tests.fails(format($$select public.billing_waive_late_cancel(%L, 'Suddenly unwell')$$, :'late_1'), 'never waived twice'); -- Checks this is refused: the same session again.
-select tests.fails(format($$select public.billing_waive_late_cancel(%L, 'Family emergency')$$, :'late_2'), 'second waiver needs proof'); -- Checks this is refused: a second waiver in 2026 without proof.
+select tests.fails(format($$select public.billing_waive_late_cancel(%L, 'Family emergency')$$, :'late_2'), 'second waiver needs proof'); -- Checks this is refused: a second waiver in the same year without proof.
 select public.billing_waive_late_cancel(:'late_2', 'Family emergency, explained to Carla', true); -- With proof seen, it goes through.
 select tests.eq((select count(*) from public.billing_cancel_waivers where session_id = :'late_2' and proof_seen), 1, 'proof seen is recorded'); -- Checks: the waiver records that proof was seen.
-select public.billing_waive_late_cancel(:'next_year', 'Sick on the day'); -- January 2027: a new year, so no proof needed.
-select tests.eq((select waiver_year from public.billing_cancel_waivers where session_id = :'next_year'), 2027, 'new year counts separately'); -- Checks: it counts against 2027.
+select public.billing_waive_late_cancel(:'next_year', 'Sick on the day'); -- January of the next year: a new year, so no proof needed.
+select tests.eq((select waiver_year from public.billing_cancel_waivers where session_id = :'next_year'), :wy + 1, 'new year counts separately'); -- Checks: it counts against the next year.
 select tests.eq((select count(*) from public.billing_cancel_waivers), 3, 'owner sees waivers'); -- Checks: the owner can read the waivers.
-select tests.eq((select used_this_year from public.billing_waiver_list() where session_id = :'late_3'), 2, 'list shows waivers used'); -- Checks: the list shows Cara has had 2 waivers in 2026.
+select tests.eq((select used_this_year from public.billing_waiver_list() where session_id = :'late_3'), 2, 'list shows waivers used'); -- Checks: the list shows Cara has had 2 waivers in the test week's year.
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- Signs in as tutor T1 again.
@@ -91,17 +109,20 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 -- ---------------------------------------------------------------------------
 -- An invoice for the no-show session, written straight in; keeps its id as inv.
 insert into public.billing_invoices (family_id, family_name, plan, method, period_start, period_end, first_session_on, send_on, due_on, charge_on, status) -- Adds an invoice:
-select s.family_id, 'One family', 'weekly', 'card', '2026-10-05', '2026-10-11', '2026-10-08', '2026-09-24', '2026-10-04', '2026-10-04', 'paid' -- a paid weekly invoice for that week,
+select s.family_id, 'One family', 'weekly', 'card', -- a paid weekly invoice, by card,
+       :'wbase'::date, :'wbase'::date + 6, :'wbase'::date + 3, -- for the test week (Monday to Sunday), first session on the Thursday,
+       :'wbase'::date - 11, :'wbase'::date - 1, :'wbase'::date - 1, 'paid' -- sent 11 days before, due and charged the day before, and paid,
 from public.students s where s.id = :'cara' -- for Cara's family,
 returning id as inv \gset
 insert into public.billing_invoice_lines (invoice_id, session_id, student_id, line_date, description, minutes, billed_minutes, hourly_cents, amount_cents) -- Adds the session's line:
-values (:'inv', :'no_show', :'cara', '2026-10-08', 'Thu 8 Oct 4:00pm Cara General Maths', 60, 60, 9500, 9500); -- $95 for the hour.
+values (:'inv', :'no_show', :'cara', :'wbase'::date + 3, -- for the no-show on the Thursday,
+        to_char(:'wbase'::date + 3, 'Dy FMDD Mon') || ' 4:00pm Cara General Maths', 60, 60, 9500, 9500); -- named like a real line; $95 for the hour.
 select tests.claims(null); -- Signs out, as the background job does.
 select public.billing_credit_cancellations(); -- The daily credit run: a no-show gets no credit (0).
 select tests.eq((select sum(amount_cents) from public.billing_credits where session_id = :'no_show'), 0, 'no-show: nothing credited yet'); -- Checks: nothing is credited before the waiver.
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select public.billing_waive_late_cancel(:'no_show', 'Learner unwell, explained to Lauren', true); -- Waives the no-show (third waiver in 2026, so proof seen).
+select public.billing_waive_late_cancel(:'no_show', 'Learner unwell, explained to Lauren', true); -- Waives the no-show (third waiver in that year, so proof seen).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.eq((select sum(amount_cents) from public.billing_credits where session_id = :'no_show'), 9500, 'waived no-show: full credit added'); -- Checks: the whole $95 is now credited.
 select tests.eq((select count(*) from public.billing_credits where session_id = :'no_show' and kind = 'goodwill'), 1, 'added as one goodwill credit'); -- Checks: the rest came as one goodwill credit.
