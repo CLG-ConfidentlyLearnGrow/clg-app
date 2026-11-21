@@ -5,7 +5,7 @@
 //
 "use client"; // Marks this file as code that runs in the browser.
 
-import { useRef, type ReactNode } from "react"; // React tools: a value that survives re-draws, and the type for "anything that can be shown".
+import { useEffect, useRef, useState, type ReactNode } from "react"; // React tools: run code after drawing, a value that survives re-draws, a value that re-draws when changed, and the type for "anything that can be shown".
 import { // The server actions these forms send to:
   addEvidence, // add an upload,
   addSeniorSubject, // add a senior subject,
@@ -19,7 +19,9 @@ import { // The server actions these forms send to:
   saveTermReview, // save a term review,
   saveFamilyNote, // save a family note,
   saveReflection, // save a student's reflection,
-  saveSessionNote, // save a session note,
+  saveSessionNote, // save a session note (the summary and the plan),
+  saveSessionPlan, // save or correct the plan for the next session,
+  addSessionFile, // add a file to a session,
   updateSeniorSubject, // update a senior subject.
 } from "@/app/actions/progress"; // (from the progress actions file)
 import { ActionForm } from "@/components/action-form"; // The form wrapper that shows errors and a submit button.
@@ -38,6 +40,7 @@ import { // Names and lists from the progress helpers:
   nextLevels, // which levels a skill can move to next,
   type SkillLevel, // and the type for a skill level.
 } from "@/lib/progress"; // (from the progress helpers file)
+import { AFTER_SESSION_MINUTES, MAX_PLAN_MATERIALS, PLAN_MINUTES, SUMMARY_MINUTES } from "@/lib/session-plans"; // The 15-minute guide (5 for the summary, 10 for the plan) and the most materials a plan can link.
 
 // A skill the tutor can tick when adding a goal: its id, words, year band, and whether it starts ticked.
 export type SkillOption = { id: string; label: string; levelBand: string; ticked?: boolean }; // (the shape)
@@ -46,24 +49,38 @@ export type GoalSkill = { id: string; label: string; level: SkillLevel; goal: st
 // A booked session the note is for: its date and length fill in by themselves.
 export type NoteSession = { id: string; date: string; minutes: number; label: string }; // (the shape: its id, date, minutes and a label to show)
 
-// Times how long the note takes, from the first tap in the form to the last
-// change, so CLG can check notes stay under three minutes. Only admins see
-// the result.
+// Times how long the summary and plan take, from the first tap in the form
+// to the last change. The tutor sees the minutes so far against the 15
+// paid minutes (Carla, 21 Nov 2026); only admins see the saved result.
 function WritingTimer({ children }: { children: ReactNode }) { // Wraps the note form and records the seconds spent writing.
   const started = useRef<number | null>(null); // When writing started (none yet).
   const out = useRef<HTMLInputElement>(null); // The hidden box that holds the seconds.
+  const [minutes, setMinutes] = useState<number | null>(null); // The whole minutes so far, shown to the tutor (none until they start).
   const tick = () => { // Runs on every tap or change in the form:
     const now = Date.now(); // the time now,
     // After a note is saved the form clears, so the next one starts afresh.
     if (started.current === null || out.current?.value === "") started.current = now; // starts the clock on the first tap, or again after a save,
-    if (out.current) out.current.value = String(Math.round((now - started.current) / 1000)); // and writes the seconds so far into the hidden box.
+    if (out.current) out.current.value = String(Math.round((now - started.current) / 1000)); // writes the seconds so far into the hidden box,
+    setMinutes(Math.floor((now - started.current) / 60000)); // and updates the minutes shown.
   }; // End of tick.
+  useEffect(() => { // Once the form is on screen:
+    const timer = window.setInterval(() => { // every 30 seconds:
+      if (started.current !== null && out.current?.value !== "") setMinutes(Math.floor((Date.now() - started.current) / 60000)); // updates the minutes shown, once writing has started.
+    }, 30000); // (30 seconds)
+    return () => window.clearInterval(timer); // Stops the timer when the form goes away.
+  }, []); // (set up once)
+  const over = minutes !== null && minutes >= AFTER_SESSION_MINUTES; // Whether they have gone past the 15 minutes.
   return ( // Shows:
     <div className="space-y-4" onFocusCapture={tick} onInputCapture={tick} onChangeCapture={tick}>{/* a block that runs tick on every tap or change inside it, */}
       <input type="hidden" name="writing_seconds" ref={out} defaultValue="" />{/* the hidden seconds box (sent with the form), */}
+      <p className={`rounded-xl px-4 py-3 text-sm ${over ? "bg-amber-50 text-amber-900" : "bg-zinc-50"}`} aria-live="polite">{/* the 15-minute guide (amber once past 15 minutes, read out when it changes): */}
+        <strong>{AFTER_SESSION_MINUTES} minutes in total (paid):</strong> about {SUMMARY_MINUTES} for the summary and about {PLAN_MINUTES} to plan the next session.{/* the guide, */}
+        {minutes !== null && ` Time so far: ${minutes} min.`}{/* the minutes so far, once started, */}
+        {over && " Keep it short: one clear focus is enough."}{/* and a gentle nudge once past 15 minutes. */}
+      </p>{/* End of the guide. */}
       {children}{/* and the form's own parts. */}
     </div> // End of the block.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of WritingTimer.
 
 // The form for adding a learning goal and ticking the skills it covers.
@@ -110,7 +127,7 @@ export function AddGoalForm({ // Its settings:
         </div>{/* End of the block. */}
       </fieldset>{/* End of the group box. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of AddGoalForm.
 
 // A material that fits the student; skillIds are its skills that are in
@@ -161,10 +178,112 @@ function MaterialsUsed({ materials, levels }: { materials: NoteMaterial[]; level
         ))}{/* End of the loop. */}
       </div>{/* End of the block. */}
     </fieldset> // End of the group box.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of MaterialsUsed.
 
-// The tutor's note after a session: attendance, skills, what went well and next step.
+// A plan saved earlier, used to fill in the plan form when correcting it.
+export type PlanValues = { // The shape:
+  focus: string; // what the next session will focus on,
+  activities: string; // how it will be taught,
+  review_first: string | null; // what to review first (or none),
+  success_check: string | null; // how the tutor will know it worked (or none),
+  other_resources: string | null; // other resources (or none),
+  material_ids: string[]; // and the linked materials' ids.
+}; // End of the shape.
+
+// The boxes of the plan for the next session, shared by the summary form
+// and the form that corrects a plan. Built on explicit teaching research
+// (AERO, EEF): one clear focus, a quick review of earlier work, the steps,
+// and how the tutor will know it worked.
+function PlanFields({ // Its settings:
+  materials, // the materials that fit the student,
+  needed, // whether the focus and activities must be filled in,
+  values, // a plan saved earlier (when correcting one).
+}: { // The settings' types:
+  materials: NoteMaterial[]; // a list of materials,
+  needed: boolean; // true or false,
+  values?: PlanValues | null; // optional saved plan.
+}) { // End of the settings.
+  const linked = new Set(values?.material_ids ?? []); // The materials already linked (when correcting).
+  return ( // Shows:
+    <div className="space-y-4">{/* a block: */}
+      <TextArea // A big text box:
+        label="Focus for the next session" // labelled for the focus,
+        name="plan_focus" // sent as plan_focus,
+        maxLength={300} // up to 300 letters,
+        rows={2} // two rows high,
+        required={needed} // must be filled in when the student came,
+        defaultValue={values?.focus ?? ""} // starting with the saved focus (if any),
+        hint='One clear learning goal, for example "Order three fractions with different denominators". Build on the next step above.' // with an example.
+      />{/* (end of the element) */}
+      <Field // A text box:
+        label="Review first (optional)" // labelled for the review,
+        name="plan_review_first" // sent as plan_review_first,
+        maxLength={300} // up to 300 letters,
+        defaultValue={values?.review_first ?? ""} // starting with the saved review (if any),
+        hint="A quick recall of earlier work to start with, for example three questions on equivalent fractions." // with an example.
+      />{/* (end of the element) */}
+      <TextArea // A big text box:
+        label="How you will teach it" // labelled for the activities,
+        name="plan_activities" // sent as plan_activities,
+        maxLength={1000} // up to 1000 letters,
+        rows={3} // three rows high,
+        required={needed} // must be filled in when the student came,
+        defaultValue={values?.activities ?? ""} // starting with the saved activities (if any),
+        hint="The steps: show it, practise it together, then the student tries on their own." // with the shape of a good plan.
+      />{/* (end of the element) */}
+      <Field // A text box:
+        label="How you will know it worked (optional)" // labelled for the success check,
+        name="plan_success_check" // sent as plan_success_check,
+        maxLength={300} // up to 300 letters,
+        defaultValue={values?.success_check ?? ""} // starting with the saved check (if any),
+        hint='For example, "Orders three fractions without the fraction wall".' // with an example.
+      />{/* (end of the element) */}
+      {materials.length > 0 && ( // If materials fit the student:
+        <fieldset className="space-y-1">{/* a group box: */}
+          <legend className="mb-1 text-sm font-medium">Materials for the next session (optional)</legend>{/* its title, */}
+          <p className="text-xs text-zinc-500">{/* a small grey note: */}
+            Tick up to {MAX_PLAN_MATERIALS} from the materials library. They are listed with your plan, ready to open.{/* says what ticking does. */}
+          </p>{/* End of the paragraph. */}
+          <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2">{/* a scrolling bordered box: */}
+            {materials.map((m) => ( // for each material:
+              <label key={m.id} className="flex items-start gap-2 text-sm">{/* a label: */}
+                <input type="checkbox" name="plan_material_id" value={m.id} defaultChecked={linked.has(m.id)} className="mt-1" />{/* a tick box (ticked if already linked), */}
+                <span>{m.title}</span>{/* and the material's name. */}
+              </label> // End of the label.
+            ))}{/* End of the loop. */}
+          </div>{/* End of the block. */}
+        </fieldset> // End of the group box.
+      )}{/* End of this part. */}
+      <Field // A text box:
+        label="Other resources (optional)" // labelled for other resources,
+        name="plan_other_resources" // sent as plan_other_resources,
+        maxLength={500} // up to 500 letters,
+        defaultValue={values?.other_resources ?? ""} // starting with the saved resources (if any),
+        hint="Anything not in the materials library: textbook pages, a website, equipment to bring." // with examples.
+      />{/* (end of the element) */}
+    </div> // End of the block.
+  ); // End of what is shown.
+} // End of PlanFields.
+
+// The boxes for one file from a session (an image or PDF), shared by the
+// summary form and the form that adds a file later.
+function SessionFileFields() { // (takes nothing)
+  return ( // Shows:
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{/* two boxes side by side on wider screens: */}
+      <label className="block space-y-1">{/* a label: */}
+        <span className="text-sm font-medium text-zinc-800">File from this session (optional)</span>{/* its words, */}
+        <input type="file" name="session_file" accept={DOCUMENT_ACCEPT} className="block w-full text-sm" />{/* the file picker (PDF or photo), */}
+        <span className="block text-xs text-zinc-500">A photo of the whiteboard or worked examples, or a PDF. Photos of work only, never of the student. Up to 3.5 MB. The student and family can open it.</span>{/* and who sees it. */}
+      </label>{/* End of the label. */}
+      <Field label="Name for the file (optional)" name="session_file_title" maxLength={200} hint='For example, "Whiteboard: fractions".' />{/* A short name for the file. */}
+    </div> // End of the boxes.
+  ); // End of what is shown.
+} // End of SessionFileFields.
+
+// The tutor's work after a session (15 paid minutes): part 1 is the summary
+// (attendance, skills, what went well, next step, files); part 2 is the plan
+// for the next session.
 export function SessionNoteForm({ // Its settings:
   studentId, // the student,
   skills, // the skills in the student's goals,
@@ -179,8 +298,10 @@ export function SessionNoteForm({ // Its settings:
   today: string; // today is text.
 }) { // End of the settings.
   const levels = new Map(skills.map((s) => [s.id, s.level])); // Each skill's current level, looked up by its id.
+  const [attendance, setAttendance] = useState<string>("attended"); // The attendance chosen (it decides which boxes must be filled in).
+  const came = attendance !== "absent"; // Whether the student came (then the summary words and the plan are needed).
   return ( // Shows:
-    <ActionForm action={saveSessionNote} submitLabel="Save note">{/* the form, sending to saveSessionNote, with a "Save note" button, */}
+    <ActionForm action={saveSessionNote} submitLabel="Save summary and plan">{/* the form, sending to saveSessionNote, with a "Save summary and plan" button, */}
       <WritingTimer>{/* inside the writing timer: */}
       <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
       {session && <input type="hidden" name="session_id" value={session.id} />}{/* the session (hidden), if there is one, */}
@@ -205,7 +326,7 @@ export function SessionNoteForm({ // Its settings:
           defaultValue={session?.minutes ?? 60} // starting at the session's length, or 60,
           required // must be filled in.
         />{/* (end of the element) */}
-        <Select label="Attendance" name="attendance" defaultValue="attended">{/* A drop-down for attendance, starting at "attended": */}
+        <Select label="Attendance" name="attendance" value={attendance} onChange={(e) => setAttendance(e.target.value)}>{/* A drop-down for attendance, starting at "attended" (remembered so the needed boxes can change): */}
           {ATTENDANCE.map((a) => ( // for each attendance choice:
             <option key={a} value={a}>{/* a choice: */}
               {ATTENDANCE_NAMES[a]}{/* its name. */}
@@ -214,6 +335,7 @@ export function SessionNoteForm({ // Its settings:
         </Select>{/* End of the Select. */}
       </div>{/* End of the block. */}
 
+      <h3 className="pt-2 text-base font-semibold">Part 1: Session summary (about {SUMMARY_MINUTES} minutes)</h3>{/* The first part's heading. */}
       {materials.length > 0 && <MaterialsUsed materials={materials} levels={levels} />}{/* The materials list, if any fit. */}
 
       {skills.length > 0 && ( // If the student has goal skills:
@@ -249,12 +371,14 @@ export function SessionNoteForm({ // Its settings:
         label="What went well" // labelled "What went well",
         name="went_well" // sent as went_well,
         maxLength={1000} // up to 1000 letters,
+        required={came} // must be filled in when the student came,
         hint="One or two sentences, written to the student. The family sees this as written." // with a note that the family sees it.
       />{/* (end of the element) */}
       <TextArea // A big text box:
         label="Next step" // labelled "Next step",
         name="next_step" // sent as next_step,
         maxLength={500} // up to 500 letters,
+        required={came} // must be filled in when the student came,
         hint="One specific thing for the student to do next, written to them. This matters most." // with a note on why it matters.
       />{/* (end of the element) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{/* A row of boxes: */}
@@ -276,10 +400,39 @@ export function SessionNoteForm({ // Its settings:
         rows={2} // two rows high,
         hint="Never shown to the student or family. For a child safety concern, use the reporting route in the child safe policy, not this box." // with a reminder to use the child safety route for concerns.
       />{/* (end of the element) */}
+      <SessionFileFields />{/* A file from the session (optional). */}
+      <h3 className="pt-2 text-base font-semibold">Part 2: Plan for the next session (about {PLAN_MINUTES} minutes)</h3>{/* The second part's heading. */}
+      <p className="text-xs text-zinc-500">{/* a small grey note: */}
+        For you, any cover tutor and CLG staff. The family does not see the plan. {came ? "" : "Optional when the student was absent."}{/* says who sees it, and that it is optional for an absence. */}
+      </p>{/* End of the paragraph. */}
+      <PlanFields materials={materials} needed={came} />{/* The plan's boxes. */}
       </WritingTimer>{/* End of the writing timer. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of SessionNoteForm.
+
+// Adds or corrects the plan for the next session on a summary already
+// written (the tutor for 7 days after it; admins at any time).
+export function PlanForm({ studentId, noteId, materials, values }: { studentId: string; noteId: string; materials: NoteMaterial[]; values?: PlanValues | null }) { // Takes the student, the summary, the materials that fit, and the saved plan (if any).
+  return ( // Shows:
+    <ActionForm action={saveSessionPlan} submitLabel={values ? "Save changes to the plan" : "Save plan"}>{/* the form, sending to saveSessionPlan, */}
+      <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
+      <input type="hidden" name="note_id" value={noteId} />{/* the summary (hidden), */}
+      <PlanFields materials={materials} needed values={values} />{/* and the plan's boxes. */}
+    </ActionForm> // End of the form.
+  ); // End of what is shown.
+} // End of PlanForm.
+
+// Adds a file (image or PDF) to a summary already written.
+export function SessionFileForm({ studentId, noteId }: { studentId: string; noteId: string }) { // Takes the student and the summary.
+  return ( // Shows:
+    <ActionForm action={addSessionFile} submitLabel="Add file">{/* the form, sending to addSessionFile, with an "Add file" button, */}
+      <input type="hidden" name="student_id" value={studentId} />{/* the student (hidden), */}
+      <input type="hidden" name="note_id" value={noteId} />{/* the summary (hidden), */}
+      <SessionFileFields />{/* and the file boxes. */}
+    </ActionForm> // End of the form.
+  ); // End of what is shown.
+} // End of SessionFileForm.
 
 // The student's own reflection on a session note.
 export function ReflectionForm({ studentId, noteId }: { studentId: string; noteId: string }) { // (takes the student and the note)
@@ -300,7 +453,7 @@ export function ReflectionForm({ studentId, noteId }: { studentId: string; noteI
       <Field label="What was hard? (optional)" name="what_was_hard" maxLength={500} />{/* What was hard (optional). */}
       <Field label="What will you try before next time? (optional)" name="what_i_will_try" maxLength={500} />{/* What they'll try next (optional). */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of ReflectionForm.
 
 // A note from the family to the tutor: progress at home, or feedback.
@@ -330,7 +483,7 @@ export function FamilyNoteForm({ studentId }: { studentId: string }) { // (takes
         hint="For example, practice done this week, something that clicked, or how sessions are going. For a worry about safety, contact CLG directly." // with examples and a safety reminder.
       />{/* (end of the element) */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of FamilyNoteForm.
 
 // Something to work towards: a school assessment (with grades) or a goal.
@@ -365,7 +518,7 @@ export function AddTargetForm({ studentId, today }: { studentId: string; today: 
         </span>{/* End of the text. */}
       </label>{/* End of the label. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of AddTargetForm.
 
 // Adds one study step, either loose or under a roadmap target.
@@ -381,7 +534,7 @@ export function AddStepForm({ studentId, targetId }: { studentId: string; target
         <Field label="By (optional)" name="due_on" type="date" />{/* and an optional date. */}
       </div>{/* End of the block. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of AddStepForm.
 
 // A term review as saved so far.
@@ -438,7 +591,7 @@ export function TermReviewForm({ studentId, review }: { studentId: string; revie
         <span>Send to CLG to check now (leave unticked to save a draft)</span>{/* its words. */}
       </label>{/* End of the label. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of TermReviewForm.
 
 // The family's reply to a term review, and whether they want a call.
@@ -453,7 +606,7 @@ export function TermReviewReplyForm({ studentId, reviewId }: { studentId: string
         <span>I would like a call to talk about next term</span>{/* its words. */}
       </label>{/* End of the label. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of TermReviewReplyForm.
 
 // Yes or no to an offer of a paid term review. CLG admins (staff) also see
@@ -472,7 +625,7 @@ export function TermReviewOfferForm({ studentId, offerId, staff }: { studentId: 
         {staff && <option value="free">Yes, at no charge (CLG gives it)</option>}{/* and, for staff, yes at no charge. */}
       </Select>{/* End of the drop-down. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of TermReviewOfferForm.
 
 // CLG approves a term review or sends it back to the tutor.
@@ -489,7 +642,7 @@ export function CheckTermReviewForm({ reviewId }: { reviewId: string }) { // (ta
       </Select>{/* End of the drop-down. */}
       <Field label="What needs changing (when sending back)" name="reason" maxLength={500} />{/* Why it's going back (when it is). */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of CheckTermReviewForm.
 
 // Upload a school report, NAPLAN results, marked work or a work sample. On a
@@ -533,7 +686,7 @@ export function EvidenceUploadForm({ // Its settings:
       </div>{/* End of the block. */}
       <TextArea label="Anything to add (optional)" name="note" rows={2} maxLength={1000} />{/* Anything to add (optional). */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of EvidenceUploadForm.
 
 // The tutor looks at an upload: a short comment for the family and the
@@ -575,7 +728,7 @@ export function EvidenceReviewForm({ // Its settings:
         </fieldset> // End of the group box.
       )}{/* End of this part. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of EvidenceReviewForm.
 
 // A senior subject the student is planning, studying or has finished.
@@ -625,7 +778,7 @@ export function SeniorSubjectForm({ // Its settings:
         <Field label="Grade (if finished)" name="grade" maxLength={3} hint="A to E at Stage 1; A+ to E- at Stage 2." />{/* the grade, with the grade scale. */}
       </div>{/* End of the block. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of SeniorSubjectForm.
 
 // Updates a senior subject's status and grade.
@@ -643,5 +796,5 @@ export function SeniorResultForm({ studentId, id, status, grade }: { studentId: 
         <Field label="Grade" name="grade" maxLength={3} defaultValue={grade ?? ""} />{/* the grade, starting at what's saved. */}
       </div>{/* End of the block. */}
     </ActionForm> // End of the form.
-  ); // End of what's shown.
+  ); // End of what is shown.
 } // End of SeniorResultForm.

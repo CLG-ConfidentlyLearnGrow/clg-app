@@ -37,7 +37,9 @@ const SOURCE_LABELS: Record<string, { place: string; fields: Record<string, stri
   waitlist: { place: "Waitlist", fields: { note: "Note" } }, // the waitlist,
   student_sensitive: { place: "Learning needs", fields: { learning_needs: "Learning needs", support_strategies: "Support strategies" } }, // learning needs,
   help_messages: { place: "Help chat", fields: { body: "Message" } }, // help chat messages (Carla, 16 Nov 2026),
-  help_chats: { place: "Help chat", fields: { subject: "Chat title" } }, // help chat titles.
+  help_chats: { place: "Help chat", fields: { subject: "Chat title" } }, // help chat titles,
+  session_plans: { place: "Plan for the next session", fields: { focus: "Focus", activities: "How you will teach it", review_first: "Review first", success_check: "How you will know it worked", other_resources: "Other resources" } }, // plans for the next session (Carla, 21 Nov 2026),
+  session_note_files: { place: "Session file", fields: { title: "File name" } }, // names of files from a session.
 }; // End of the list.
 
 // Says in words where a flagged piece of text was written, e.g. "Session summary, Next step".

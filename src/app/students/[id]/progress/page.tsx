@@ -5,7 +5,7 @@
 // see and change each part.
 //
 import { notFound, redirect } from "next/navigation"; // Tools to show "page not found" or send the person to another page.
-import { closeGoal } from "@/app/actions/progress"; // The server action that marks a goal achieved or stopped.
+import { closeGoal, removeSessionFile } from "@/app/actions/progress"; // The server actions that mark a goal achieved or stopped, and remove a session file.
 import { BackButton, Button, Card, Page, TextLink } from "@/components/ui"; // Shared page parts: a back button, a button, a card, the page frame and a text link.
 import { FRONT_DESK, getAdminLevel, needsTwoStep, requireViewer } from "@/lib/auth"; // Sign-in helpers: front-desk admin levels, the admin level, the two-step check, and the signed-in person.
 import { CourseDetails } from "@/components/course-details"; // Shows a university or TAFE student's course and units.
@@ -13,13 +13,14 @@ import { CourseOverviewForm } from "@/app/admin/course-overview-form"; // The ad
 import { ATTENDANCE_NAMES, CONFIDENCE_NAMES, SKILL_LEVELS, levelName, type Attendance, type SkillLevel } from "@/lib/progress"; // Progress helpers: attendance and confidence names, the skill levels, a level's name, and their types.
 import { YEAR_LEVELS, levelFits, subjectFits } from "@/lib/students"; // Student helpers: the year levels, and checks for whether a level or subject fits.
 import { bandCoversYear } from "@/lib/materials"; // Checks whether a material's year band covers a year.
-import { localDate, localToday, sessionWhen } from "@/lib/scheduling"; // Scheduling helpers: a local date, today's date, and a session's day and time in words.
+import { currentTime, localDate, localToday, sessionWhen } from "@/lib/scheduling"; // Scheduling helpers: the time now, a local date, today's date, and a session's day and time in words.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { Roadmap } from "./roadmap"; // The roadmap card.
 import { EvidenceCard } from "./evidence"; // The uploads (evidence) card.
 import { SeniorCertificateCard } from "./senior-certificate"; // The senior certificate card.
 import { TermReviewCard, TermReviewOfferCard } from "./term-review"; // The term review card, and the paid review offer card.
-import { AddGoalForm, FamilyNoteForm, ReflectionForm, SessionNoteForm, type GoalSkill, type NoteSession } from "./forms"; // The forms on this page, and the types they use.
+import { AddGoalForm, FamilyNoteForm, PlanForm, ReflectionForm, SessionFileForm, SessionNoteForm, type GoalSkill, type NoteSession, type PlanValues } from "./forms"; // The forms on this page, and the types they use.
+import { AFTER_SESSION_MINUTES, PLAN_MINUTES, SESSION_CHANGE_DAYS, SUMMARY_MINUTES } from "@/lib/session-plans"; // The 15-minute guide and the 7 days a tutor can still make changes.
 import { StudentMaterialsCard, type StudentMaterial } from "./materials"; // The materials card, and the type for a material.
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while it sends.
 
@@ -81,10 +82,28 @@ type Note = { // (the shape)
   homework: string | null; // homework,
   homework_due: string | null; // when it's due,
   home_tip: string | null; // a tip for home,
+  created_at: string; // when the summary was written (the tutor can correct it, its plan and files for 7 days),
+  tutor_id: string | null; // the tutor whose session it was,
   tutor: { account: { full_name: string } | null } | null; // the tutor's name,
   session_note_skills: { skill_id: string; level_before: SkillLevel; level_after: SkillLevel; skill: Skill | null }[]; // the skills worked on and how their levels moved,
   student_reflections: Reflection | Reflection[] | null; // and the student's reflection (one, a list, or none).
 }; // End of the shape.
+
+// The plan for the next session, as the database gives it (staff only).
+type Plan = { // (the shape)
+  id: string; // its id,
+  note_id: string; // the summary it goes with,
+  next_session_id: string | null; // the next booked session it is for (if any),
+  focus: string; // what the next session will focus on,
+  activities: string; // how it will be taught,
+  review_first: string | null; // what to review first (or none),
+  success_check: string | null; // how the tutor will know it worked (or none),
+  other_resources: string | null; // other resources (or none),
+  created_at: string; // when it was saved,
+  session_plan_materials: { material: { id: string; title: string } | null }[]; // and the linked materials (only those the viewer can open).
+}; // End of the shape.
+// A file from a session, as the database gives it.
+type SessionFile = { id: string; note_id: string; title: string; file_type: string }; // its id, summary, name and type.
 
 const skillLabel = (s: Skill) => s.plain_description || s.description; // A skill's plain wording if there is one, otherwise the official wording.
 const reflectionOf = (n: Note) => // A note's student reflection (the database may give one or a list):
@@ -157,7 +176,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
     supabase // the session notes:
       .from("session_notes") // from session_notes,
       .select( // these details:
-        "id, session_date, minutes, attendance, went_well, next_step, homework, homework_due, home_tip, tutor:tutor_profiles(account:accounts(full_name)), session_note_skills(skill_id, level_before, level_after, skill:curriculum_skills(id, subject, level_band, description, plain_description)), student_reflections(confidence, what_was_hard, what_i_will_try)", // each note with tutor, skills worked on and the student's reflection,
+        "id, session_date, minutes, attendance, went_well, next_step, homework, homework_due, home_tip, created_at, tutor_id, tutor:tutor_profiles(account:accounts(full_name)), session_note_skills(skill_id, level_before, level_after, skill:curriculum_skills(id, subject, level_band, description, plain_description)), student_reflections(confidence, what_was_hard, what_i_will_try)", // each note with tutor, skills worked on and the student's reflection,
       ) // (end of the details)
       .eq("student_id", id) // for this student,
       .order("session_date", { ascending: false }) // newest session first,
@@ -213,6 +232,42 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
           ) // (end of the list)
       : null; // otherwise nothing.
   const staffByNote = new Map((staffNotes?.data ?? []).map((s) => [s.note_id, s.body])); // Each staff note's words, looked up by note id.
+  // Plans for the next session (staff only: the database never shows them
+  // to families) and files from each session (everyone who can see the
+  // student). Read together, only for the notes on this page.
+  const noteIds = noteRows.map((n) => n.id); // The ids of the notes shown.
+  const [plansRes, filesRes] = await Promise.all([ // Reads both at once:
+    isStaff && noteIds.length > 0 // for staff with notes:
+      ? supabase // the plans:
+          .from("session_plans") // from session_plans,
+          .select("id, note_id, next_session_id, focus, activities, review_first, success_check, other_resources, created_at, session_plan_materials(material:materials(id, title))") // the plan and its linked materials,
+          .in("note_id", noteIds) // for these notes.
+      : null, // otherwise nothing.
+    noteIds.length > 0 // if there are notes:
+      ? supabase // the files:
+          .from("session_note_files") // from session_note_files,
+          .select("id, note_id, title, file_type") // their names and types,
+          .in("note_id", noteIds) // for these notes,
+          .order("uploaded_at") // oldest first.
+      : null, // otherwise nothing.
+  ]); // End of the reads.
+  const planByNote = new Map(((plansRes?.data ?? []) as unknown as Plan[]).map((p) => [p.note_id, p])); // Each note's plan, looked up by note id.
+  const filesByNote = new Map<string, SessionFile[]>(); // Each note's files, looked up by note id.
+  for (const f of (filesRes?.data ?? []) as SessionFile[]) filesByNote.set(f.note_id, [...(filesByNote.get(f.note_id) ?? []), f]); // Groups the files by note.
+  const latestNote = noteRows[0] ?? null; // The newest summary (any attendance).
+  const latestPlan = noteRows.map((n) => planByNote.get(n.id)).find(Boolean) ?? null; // The newest plan.
+  // The session the newest plan is for, so the card can say when it is.
+  const planSession = latestPlan?.next_session_id // If it is linked to a session:
+    ? (await supabase.from("sessions").select("starts_at, status").eq("id", latestPlan.next_session_id).maybeSingle()).data // reads when it starts and whether it is still on,
+    : null; // otherwise nothing.
+  const isAdmin = viewer.roles.includes("admin"); // Whether the viewer is an admin (admins can correct at any time).
+  // Whether the viewer can still change a summary's plan or files: an admin,
+  // or the summary's own tutor within 7 days (the database checks this too).
+  const canChange = (n: Note) => // takes a note:
+    isAdmin || (n.tutor_id === viewer.id && currentTime() - new Date(n.created_at).getTime() < SESSION_CHANGE_DAYS * 24 * 3600 * 1000); // admin, or its tutor within 7 days.
+  const planValues = (p: Plan | null | undefined): PlanValues | null => // Turns a saved plan into the form's starting values:
+    p ? { focus: p.focus, activities: p.activities, review_first: p.review_first, success_check: p.success_check, other_resources: p.other_resources, material_ids: p.session_plan_materials.flatMap((m) => (m.material ? [m.material.id] : [])) } : null; // (or nothing).
+  const noteMaterials = studentMaterials.map((m) => ({ id: m.material_id, title: m.title, kind: m.kind, skillIds: m.goal_skill_ids })); // The materials that fit, in the shape the forms use.
   const latest = noteRows.find((n) => n.attendance !== "absent"); // The latest session the student came to.
   // Skills being worked on now: those in the latest session note, or else
   // those on their way (Learning or Secure with help).
@@ -492,12 +547,35 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
 
       {isStaff && <StudentMaterialsCard materials={studentMaterials} skillNames={skillNameById} />}{/* For staff: the materials card. */}
 
+      {isStaff && ( // For staff: the plan for the next session, ready to use.
+        <Card // a card:
+          title="Plan for the next session" // titled "Plan for the next session",
+          description="For the student's tutors and CLG staff only. The family sees the next step instead." // saying who sees it.
+        >{/* (end of the card's settings) */}
+          {latestPlan ? ( // If there is a plan:
+            <PlanView plan={latestPlan} when={planSession && planSession.status === "scheduled" ? sessionWhen(planSession.starts_at) : null} /> // shows it, with when its session is (if still booked),
+          ) : ( // Otherwise:
+            <p className="text-sm">No plan yet. Write one with the session summary below.</p> // says how to add one.
+          )}{/* End of this part. */}
+          {latestNote && canChange(latestNote) && ( // If the viewer can still change the newest summary's plan:
+            <details className="mt-4 rounded-lg border border-zinc-200 p-3" open={!planByNote.get(latestNote.id)}>{/* a fold-out (open when there is no plan yet): */}
+              <summary className="cursor-pointer text-sm font-medium">{/* its heading: */}
+                {planByNote.get(latestNote.id) ? "Change this plan" : `Add the plan for the session on ${latestNote.session_date}`}{/* change, or add for that session. */}
+              </summary>{/* End of the heading. */}
+              <div className="mt-3">{/* the form, with space above: */}
+                <PlanForm key={latestNote.id} studentId={id} noteId={latestNote.id} materials={noteMaterials} values={planValues(planByNote.get(latestNote.id))} />{/* the plan form for the newest summary. */}
+              </div>{/* End of the form. */}
+            </details> // End of the fold-out.
+          )}{/* End of this part. */}
+        </Card> // End of the card.
+      )}{/* End of the plan card. */}
+
       {isStaff && ( // For staff:
         <Card // a card:
-          title="Write a session note" // titled "Write a session note",
+          title="Session summary and plan" // titled "Session summary and plan",
           description={ // with a note:
             <>{/* (a group) */}
-              About three minutes, within 24 hours of the session.{/* on how long and how soon. */}
+              {AFTER_SESSION_MINUTES} paid minutes after each session: about {SUMMARY_MINUTES} for the summary and about {PLAN_MINUTES} to plan the next session. Due within 6 hours of the session.{/* on how long and how soon. */}
             </> // End of the group.
           } // (end of the note)
         >{/* (end of the card's settings) */}
@@ -530,7 +608,7 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
             key={noteSession?.id ?? "none"} // (starts fresh when the session changes)
             studentId={id} // for this student,
             skills={noteSkills} // the goal skills,
-            materials={studentMaterials.map((m) => ({ id: m.material_id, title: m.title, kind: m.kind, skillIds: m.goal_skill_ids }))} // the materials that fit,
+            materials={noteMaterials} // the materials that fit,
             session={noteSession} // the session (if any),
             today={localToday()} // and today's date.
           />{/* (end of the form) */}
@@ -655,6 +733,35 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
                       Staff only: {staff}{/* "Staff only:" and the note. */}
                     </p> // End of the paragraph.
                   )}{/* End of this part. */}
+                  {(filesByNote.get(n.id) ?? []).length > 0 && ( // If the session has files:
+                    <ul className="mt-1 space-y-1">{/* a list: */}
+                      {(filesByNote.get(n.id) ?? []).map((f) => ( // for each file:
+                        <li key={f.id} className="flex flex-wrap items-center gap-3">{/* a row: */}
+                          <TextLink href={`/session-files/${f.id}/file`}>{f.title}</TextLink>{/* a link that opens the file, */}
+                          <span className="text-xs text-zinc-500">{f.file_type === "application/pdf" ? "PDF" : "Photo"}</span>{/* what kind it is, */}
+                          {isStaff && canChange(n) && ( // for staff who can still change it:
+                            <form action={removeSessionFile}>{/* a small form: */}
+                              <input type="hidden" name="file_id" value={f.id} />{/* the file (hidden), */}
+                              <input type="hidden" name="student_id" value={id} />{/* the student (hidden), */}
+                              <BusyButton type="submit" className="text-xs text-zinc-500 underline hover:text-red-700">Remove</BusyButton>{/* and a "Remove" button. */}
+                            </form> // End of the form.
+                          )}{/* End of this part. */}
+                        </li> // End of the row.
+                      ))}{/* End of the files. */}
+                    </ul> // End of the list.
+                  )}{/* End of the files part. */}
+                  {isStaff && planByNote.get(n.id) && n.id !== latestPlan?.note_id && ( // For staff, an older plan (the newest is shown in its own card):
+                    <details className="mt-1 text-zinc-600">{/* a fold-out: */}
+                      <summary className="cursor-pointer">Plan written after this session</summary>{/* its heading, */}
+                      <PlanView plan={planByNote.get(n.id)!} when={null} />{/* and the plan. */}
+                    </details> // End of the fold-out.
+                  )}{/* End of the older plan. */}
+                  {isStaff && canChange(n) && (filesByNote.get(n.id) ?? []).length < 10 && ( // For staff who can still add files (fewer than 10):
+                    <details className="mt-1">{/* a fold-out: */}
+                      <summary className="cursor-pointer text-zinc-600">Add a file to this session</summary>{/* its heading, */}
+                      <div className="mt-2"><SessionFileForm studentId={id} noteId={n.id} /></div>{/* and the form. */}
+                    </details> // End of the fold-out.
+                  )}{/* End of this part. */}
                 </li> // End of the list item.
               ); // End of what's shown.
             })}{/* End of the note. */}
@@ -682,3 +789,30 @@ function LevelBar({ level }: { level: SkillLevel }) { // (takes the skill's leve
     </div> // End of the row.
   ); // End of what's shown.
 } // End of LevelBar.
+
+// Shows a plan for the next session: when it is, the focus, what to review
+// first, the steps, how the tutor will know it worked, the linked materials
+// (each opens its stamped copy) and other resources.
+function PlanView({ plan, when }: { plan: Plan; when: string | null }) { // Takes the plan, and when its session is (if known).
+  const materials = plan.session_plan_materials.flatMap((m) => (m.material ? [m.material] : [])); // The linked materials the viewer can open.
+  return ( // Shows:
+    <div className="space-y-1 text-sm">{/* a block: */}
+      {when && <p className="text-zinc-600">For the session on <strong>{when}</strong>.</p>}{/* which session it is for (if known), */}
+      <p><strong>Focus:</strong> {plan.focus}</p>{/* the focus, */}
+      {plan.review_first && <p><strong>Review first:</strong> {plan.review_first}</p>}{/* what to review first, */}
+      <p className="whitespace-pre-line"><strong>How:</strong> {plan.activities}</p>{/* the steps, keeping line breaks, */}
+      {plan.success_check && <p><strong>It worked if:</strong> {plan.success_check}</p>}{/* how they will know it worked, */}
+      {materials.length > 0 && ( // if materials are linked:
+        <div>{/* a block: */}
+          <strong>Materials:</strong>{/* its label, */}
+          <ul className="list-disc pl-5">{/* a list: */}
+            {materials.map((m) => ( // for each material:
+              <li key={m.id}><TextLink href={`/materials/${m.id}/file`}>{m.title}</TextLink></li> // a link that opens its stamped copy.
+            ))}{/* End of the materials. */}
+          </ul>{/* End of the list. */}
+        </div> // End of the block.
+      )}{/* End of the materials. */}
+      {plan.other_resources && <p className="whitespace-pre-line"><strong>Other resources:</strong> {plan.other_resources}</p>}{/* and other resources. */}
+    </div> // End of the block.
+  ); // End of what is shown.
+} // End of PlanView.

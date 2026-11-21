@@ -379,6 +379,7 @@ Open **Progress** in the side menu.
 - **Students to check** lists students with no goals, or whose skills have not moved for a while.
 - **Recent notes to spot-check**: is the next step specific, and the tip for home a small habit?
 - **How progress tracking is going** shows the measures for any dates you choose.
+- Each tutor sends a session summary and a plan for the next session together, in the 15 paid minutes after the session. To read a plan, open the student's progress page: **Plan for the next session** shows the newest one with its materials, and older plans sit under **Recent sessions**. You can correct a plan or remove a session file at any time; tutors can for 7 days.
 
 ### Record a family's term review answer
 If a family tells you directly whether they want a term review, record it under **Paid term review offers**.
