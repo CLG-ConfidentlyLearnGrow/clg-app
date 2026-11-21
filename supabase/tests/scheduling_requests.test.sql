@@ -132,14 +132,28 @@ delete from public.session_requests where student_id = :'sam'; -- Clears Sam's r
 -- Public holidays
 -- ---------------------------------------------------------------------------
 select tests.eq((select count(*) from public.public_holidays where state = 'SA' and extract(year from holiday_on) = 2027), 14, 'SA 2027 public holidays loaded'); -- Checks: SA 2027 public holidays loaded.
+-- Picks the test public holiday (ph_day) so this part gives the same result
+-- whatever day the tests run. The booking below runs the week before, the
+-- week of, and the week after ph_day, so all three dates must be clear:
+select d::date as ph_day -- Keeps the chosen day as ph_day:
+from generate_series(current_date + 22, current_date + 113, interval '1 day') d -- (looking from 22 to 113 days ahead: past the "Monday after next" that earlier tests mark as a tutor away day, and inside the 120 days the public holiday list shows)
+where not exists ( -- the three weekly dates are not already real public holidays in Sam's state,
+    select 1 from public.public_holidays h -- (looks at the loaded public holidays)
+    where h.state = :'sam_state' and h.holiday_on in (d::date - 7, d::date, d::date + 7)) -- (the week before, the day itself, the week after)
+  and not exists ( -- and neither Sam nor Sam's tutor is away on any of them,
+    select 1 from public.away_dates a -- (looks at the saved away dates)
+    where (a.student_id = :'sam' or a.tutor_id = :'sam_tutor') -- (Sam's or the tutor's)
+      and a.from_date <= d::date + 7 and a.to_date >= d::date - 7) -- (any that overlap those two weeks)
+order by d -- (the earliest day that fits)
+limit 1 \gset
 insert into public.bookings (student_id, tutor_id, family_id, subject, weekday, start_time, minutes, delivery, -- Adds a confirmed booking for Sam:
                              first_date, last_date, status, confirmed_at) -- (with its dates and status)
-select :'sam', :'sam_tutor', :'sam_family', 'General Maths', extract(isodow from current_date + 9)::smallint, '05:30', 60, 'online', -- on the weekday 9 days from now, 5:30am, online,
-       current_date + 2, current_date + 16, 'confirmed', now() -- for two weeks, confirmed now,
+select :'sam', :'sam_tutor', :'sam_family', 'General Maths', extract(isodow from :'ph_day'::date)::smallint, '05:30', 60, 'online', -- on ph_day's weekday, 5:30am, online,
+       :'ph_day'::date - 7, :'ph_day'::date + 7, 'confirmed', now() -- for three weeks (ph_day in the middle), confirmed now,
 -- and keeps its id as ph_booking.
 returning id as ph_booking \gset
-insert into public.public_holidays (state, holiday_on, name) values (:'sam_state', current_date + 9, 'Test Day') -- Makes that day a public holiday in Sam's state:
-  on conflict (state, holiday_on) do update set name = 'Test Day'; -- (or renames it if one is there).
+insert into public.public_holidays (state, holiday_on, name) values (:'sam_state', :'ph_day'::date, 'Test Day') -- Makes ph_day a public holiday in Sam's state:
+  on conflict (state, holiday_on) do update set name = 'Test Day'; -- (or renames one left from an earlier run, so a rerun cannot fail).
 select private.make_sessions(:'ph_booking'); -- Makes the booking's sessions.
 select tests.claims('00000000-0000-0000-0000-000000000003'); -- Signs in as test account ...03.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.

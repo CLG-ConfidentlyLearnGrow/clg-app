@@ -84,6 +84,11 @@ select tests.eq(((select string_agg(level || ':' || min_rate_cents, ',' order by
 -- ---------------------------------------------------------------------------
 -- T1 is based in SA (public holidays follow the tutor's state; Carla, 18 Nov 2026).
 insert into public.tutor_work_settings (tutor_id, work_state) values ('00000000-0000-0000-0000-000000000011', 'SA') on conflict (tutor_id) do update set work_state = 'SA'; -- T1's work state
+-- Sets aside any real public holidays (SA or Victoria) on last week's Monday,
+-- Tuesday and Saturday, so these checks give the same result whatever week
+-- the tests run in (for example Easter, Christmas or a long weekend). The
+-- rollback at the end of this file puts them back.
+delete from public.public_holidays where state in ('SA', 'VIC') and holiday_on in (:'mon'::date, :'tue'::date, :'sat'::date); -- clears real holidays on those three days
 -- A public holiday in SA on last week's Tuesday.
 insert into public.public_holidays (state, holiday_on, name) values ('SA', :'tue', 'Test holiday') on conflict do nothing; -- the holiday
 -- Three completed sessions for T1 ($33.85): Saturday 10-11am, Monday 6:30-7:30pm, and the holiday 10-11am.
