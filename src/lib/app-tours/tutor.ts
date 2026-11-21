@@ -72,9 +72,9 @@ Why: Signing on and marking sessions is what records that the session happened, 
 
 Where: **Sessions**, then **Overview**, and your **Weekly calendar**.
 
-## Session notes
+## Session summary and plan
 
-Write a short note within 6 hr of each session: what went well, a specific next step, any practice, and one small thing to try at home. It takes about three minutes.
+Within 6 hr of each session, send the session summary (what went well, a specific next step, any practice, one small thing to try at home, and any files) and your plan for the next session (the focus, how you will teach it, and the materials). You are paid 15 minutes for both: about 5 for the summary and 10 for the plan.
 
 Why: Specific feedback on the next step is one of the most effective things a tutor can give. Families are promised notes within 48 hr, so the app reminds you at 6 hr and CLG follows up anything still missing at 12 hr.
 

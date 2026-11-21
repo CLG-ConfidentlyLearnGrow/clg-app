@@ -68,7 +68,7 @@ The first time you open your dashboard, a short **app tour** shows the main part
 - **Next step** is what your tutor suggests next, with practice or something to try.
 - **Roadmap** shows this week's steps and what is coming up, like tests and assignments.
 - **Goals and skills** shows what you are working on and how far you have come.
-- **Recent sessions** has the notes from each session.
+- **Recent sessions** has the notes from each session, and any files your tutor added (for example a photo of the whiteboard or a worked example). Choose a file's name to open it.
 
 Tip: Your parent or carer and your tutor can also see your progress page and roadmap.
 

@@ -237,7 +237,7 @@ Tip: On an iPhone or iPad, add CLG to your home screen first (see **Add CLG to y
 2. **Next step** shows what your tutor suggests next, with a tip to try at home.
 3. **Roadmap** shows this week's steps and what is coming up.
 4. **Goals and skills** shows what your child is working on and how far they have come.
-5. **Recent sessions** shows the notes from each session.
+5. **Recent sessions** shows the notes from each session, and any files the tutor added (for example a photo of the whiteboard). Choose a file's name to open it.
 
 ### Tell the tutor how it went
 1. On the progress page, use **How did it go?** after a session to share how your child felt about it.

@@ -2,6 +2,7 @@
 // what they teach, child safety checks, and hours and availability.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
+import { AFTER_SESSION_MINUTES } from "@/lib/session-plans"; // The 15 paid minutes after each session (summary and plan).
 import { removeAvailability, removeTeaching, removeTravelPlace } from "@/app/actions/tutor"; // The tutor actions: remove an available time, a subject, or a starting address.
 import { Card, Empty, SubHeading, Table, TextLink } from "@/components/ui"; // Shared page parts: card, empty line, small heading, table and text link.
 import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers.
@@ -191,7 +192,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
         {section === "students" && notesDue.length > 0 && ( // On the students section, if notes are due:
           <Card // a card:
             title="Session notes to write" // its title,
-            description={`Notes are due within ${NOTE_DUE_HOURS} hr of the session. About three minutes each.`} // when notes are due.
+            description={`Each is due within ${NOTE_DUE_HOURS} hr of the session: the session summary and your plan for the next session, ${AFTER_SESSION_MINUTES} paid minutes in total.`} // when they are due and how long they take.
           >{/* (end of the card's settings) */}
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
               {notesDue.map((d) => ( // for each note:
@@ -203,7 +204,7 @@ export default async function TutorDashboard({ searchParams }: PageProps<"/dashb
                       <span className="ml-2 text-xs text-red-700">ended {hoursAgo(d.hours_since_end)}</span> // how long ago it ended, in red.
                     )}{/* End of this part. */}
                   </span>{/* End of the group. */}
-                  <TextLink href={`/students/${d.student_id}/progress?session=${d.session_id}`}>Write note</TextLink>{/* a link to write the note. */}
+                  <TextLink href={`/students/${d.student_id}/progress?session=${d.session_id}`}>Write summary and plan</TextLink>{/* a link to write the summary and plan. */}
                 </li> // End of the row.
               ))}{/* End of the loop. */}
             </ul>{/* End of the list. */}

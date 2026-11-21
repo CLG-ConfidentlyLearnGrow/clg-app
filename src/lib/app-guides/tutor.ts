@@ -42,6 +42,7 @@ Tip: Your signed contract stays in **My contract**, so you can read it again at 
 - **Next 7 days** (sessions and hours), **Next session**, **Your students** and **Child safety checks**. Tap a box to open that page.
 - **Needs your attention**: one line for each thing waiting for you (for example session notes or term reviews to write, a booking to accept, a check to renew, or training to do). Tap a line to go straight to it. When nothing is waiting, it says **All caught up**.
 - **Coming up**: your next sessions in the coming week.
+- **Plans for your coming sessions**: the focus of your plan for each coming session, or **No plan linked yet**, with a link to open it.
 - **Child safety checks to sort out**: any check that is missing, expired or due to renew within 60 days, with a link to add or renew it.
 
 ### Set up and use two-step login
@@ -193,14 +194,24 @@ Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there
 2. Each student shows their subject and a **Progress and notes** link.
 3. You only see students you are matched with, and only what you need to teach them.
 
-### Write a session note
-Notes are due within 6 hr of each session and take about three minutes. The app reminds you at 6 hr if a note is missing, and CLG follows up anything still missing at 12 hr. Families are promised them within 48 hr.
-1. On **Your students**, **Session notes to write** lists what is due. Choose **Write note**.
-2. Fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home.
-3. Use **Note for CLG staff only** for anything just for CLG.
-4. Choose **Save note**. The family and student see the note (except the staff-only part).
+### Write the session summary and plan
+After each session you send two things in one form: the session summary and your plan for the next session. You are paid 15 minutes for both: about 5 minutes for the summary and about 10 minutes for the plan. The form shows the minutes so far. Both are due within 6 hr of the session. The app reminds you at 6 hr if one is missing, and CLG follows up anything still missing at 12 hr. Families are promised the summary within 48 hr.
+1. On **Your students**, **Session notes to write** lists what is due. Choose **Write summary and plan**.
+2. **Part 1: Session summary**: fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home. Use **Note for CLG staff only** for anything just for CLG.
+3. To share a photo of the whiteboard or a worked example, choose a file under **File from this session** (a PDF or photo up to 3.5 MB) and give it a name. Photograph the work only, never the student.
+4. **Part 2: Plan for the next session**: write the **Focus for the next session** and **How you will teach it**. You can add what to **Review first** and **How you will know it worked**.
+5. Tick the **Materials for the next session** you will use from the materials library, and add any **Other resources** (textbook pages, websites, equipment).
+6. Choose **Save summary and plan**. The family and student see the summary and any files (not the staff-only part). The plan is only for you, any cover tutor and CLG staff.
 
-Tip: Write the next step to the student, and keep it specific. For a session that was not booked in the app, use the link under **Write a session note**.
+Tip: Build the plan's focus on the next step you just wrote. One clear focus is enough. For a session that was not booked in the app, use the link under **Session summary and plan**.
+
+### Use your plan before the next session
+1. Your **Overview** has **Plans for your coming sessions**, with each plan's focus. Choose **Open plan**.
+2. On the student's progress page, **Plan for the next session** shows the focus, the steps and the materials. Choose a material to open it.
+3. To add or change the plan (for 7 days after the summary), open **Change this plan** on that card, then choose **Save changes to the plan**.
+
+### Add or remove a session file later
+For 7 days after the summary, open the student's progress page. Under **Recent sessions**, choose **Add a file to this session**, pick the file and choose **Add file**. Choose **Remove** next to a file to take it away.
 
 ### Set goals and skills
 1. Open the student's **Progress and notes**.

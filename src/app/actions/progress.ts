@@ -12,6 +12,7 @@ import type { FormState } from "@/lib/forms"; // The shape of a form's reply (er
 import { MAX_DOCUMENT_BYTES, documentType } from "@/lib/documents"; // The biggest allowed file size, and a check of the file's type.
 import { ATTENDANCE, EVIDENCE_KINDS, SKILL_LEVELS } from "@/lib/progress"; // Attendance choices, kinds of evidence and skill levels.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
+import { readPlan, savePlan, storeSessionFile } from "@/lib/session-plans-server"; // Reads and saves the plan for the next session, and stores session files.
 
 // The database decides who may do each of these (the student's tutor,
 // an admin, or the family); these actions only check the form is complete.
@@ -97,6 +98,15 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
   if (v.attendance !== "absent" && (!v.went_well || !v.next_step)) { // If the student came but "went well" or "next step" is blank:
     return { error: "Add what went well and one next step. These go to the student and their family." }; // asks for both.
   } // End of that check.
+  // The plan for the next session (Carla, 21 Nov 2026): needed whenever the
+  // student came, so it is checked before anything is saved.
+  const planRead = readPlan(formData); // Reads the plan boxes.
+  if ("error" in planRead) return planRead; // A plan box broke a rule: shows why.
+  if (v.attendance !== "absent" && !planRead.plan) { // The student came but there is no plan:
+    return { error: "Add your plan for the next session: what it will focus on and how you will teach it." }; // asks for it.
+  } // End of that check.
+  const sessionFile = formData.get("session_file"); // The file from the session (if one was chosen).
+  const fileTitle = String(formData.get("session_file_title") ?? ""); // Its short name (may be blank).
 
   // Each skill field is named skill_<id>; blank means not worked on today.
   const skills: { skill_id: string; level: string }[] = []; // The list of skills worked on, and how well.
@@ -144,14 +154,71 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
     materialsProblem = Boolean(used.error); // and notes any failure.
   } // End of the materials step.
 
+  // The plan and the file. The summary is already saved, so a problem here
+  // does not undo it; the tutor can add the plan or file again for 7 days.
+  const problems: string[] = []; // Problems to tell the tutor about.
+  if (planRead.plan && typeof noteId === "string") { // If there is a plan and the summary has an id:
+    const planProblem = await savePlan(supabase, noteId, planRead.plan); // saves the plan,
+    if (planProblem) problems.push(`The plan was not saved: ${planProblem} Add it again under "Plan for the next session".`); // and notes any problem.
+  } // End of the plan step.
+  if (sessionFile instanceof File && sessionFile.size > 0 && typeof noteId === "string") { // If a file was chosen and the summary has an id:
+    const fileProblem = await storeSessionFile(supabase, v.student_id, noteId, sessionFile, fileTitle); // stores and attaches it,
+    if (fileProblem) problems.push(`The file was not saved: ${fileProblem} Add it again under "Recent sessions".`); // and notes any problem.
+  } // End of the file step.
+  if (materialsProblem) problems.push("The booklet used could not be recorded."); // Notes if the materials used could not be recorded.
+
   revalidatePath(progressPath(v.student_id)); // Refreshes the student's progress page,
-  revalidatePath("/dashboard/tutor"); // and the tutor's dashboard.
+  revalidatePath("/dashboard/tutor"); // the tutor's dashboard,
+  revalidatePath("/home"); // and the Home overview (which lists plans for coming sessions).
+  if (problems.length > 0) return { error: `The session summary is saved. ${problems.join(" ")}` }; // Any problem: says the summary is saved, then lists them.
   return { // Tells the tutor:
     message: // (the message)
-      "Session note saved. The family can see what went well, the next step and the tip for home." + // that the note is saved and what the family sees,
-      (materialsProblem ? " The booklet used could not be recorded, but the note is saved." : ""), // plus a note if the materials couldn't be recorded.
+      "Session summary and plan saved. The family can see what went well, the next step, the tip for home and any files. The plan is for CLG staff only.", // that both are saved, and who sees what.
   }; // End of the message.
 } // End of saveSessionNote.
+
+// Saves or corrects the plan for the next session on a summary already
+// written (for 7 days after it; admins at any time).
+export async function saveSessionPlan(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer(); // Makes sure someone is signed in.
+  const ids = z.object({ note_id: z.uuid(), student_id: z.uuid() }).safeParse(Object.fromEntries(formData)); // Checks the summary and student ids.
+  if (!ids.success) return { error: "Something went wrong with this form. Please reload the page." }; // Odd ids: plain message.
+  const planRead = readPlan(formData); // Reads the plan boxes.
+  if ("error" in planRead) return planRead; // A plan box broke a rule: shows why.
+  if (!planRead.plan) return { error: "Write what the next session will focus on and how you will teach it." }; // Nothing filled in: asks for it.
+  const supabase = await createClient(); // Connects to the database.
+  const problem = await savePlan(supabase, ids.data.note_id, planRead.plan); // Saves the plan.
+  if (problem) return { error: problem }; // Failed: shows why.
+  revalidatePath(progressPath(ids.data.student_id)); // Refreshes the student's progress page,
+  revalidatePath("/home"); // and the Home overview.
+  return { message: "Plan saved." }; // Confirms it.
+} // End of saveSessionPlan.
+
+// Adds a file (image or PDF) to a summary already written (for 7 days
+// after it; admins at any time).
+export async function addSessionFile(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireViewer(); // Makes sure someone is signed in.
+  const ids = z.object({ note_id: z.uuid(), student_id: z.uuid() }).safeParse(Object.fromEntries(formData)); // Checks the summary and student ids.
+  if (!ids.success) return { error: "Something went wrong with this form. Please reload the page." }; // Odd ids: plain message.
+  const file = formData.get("session_file"); // The chosen file.
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file or take a photo." }; // No file: asks for one.
+  const supabase = await createClient(); // Connects to the database.
+  const problem = await storeSessionFile(supabase, ids.data.student_id, ids.data.note_id, file, String(formData.get("session_file_title") ?? "")); // Stores and attaches it.
+  if (problem) return { error: problem }; // Failed: shows why.
+  revalidatePath(progressPath(ids.data.student_id)); // Refreshes the student's progress page.
+  return { message: "File added. The student and family can open it from Recent sessions." }; // Confirms it, and says who can see it.
+} // End of addSessionFile.
+
+// Removes a file from a summary (the summary's tutor for 7 days, or an admin).
+export async function removeSessionFile(formData: FormData) {
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z.object({ file_id: z.uuid(), student_id: z.uuid() }).safeParse(Object.fromEntries(formData)); // Checks the file and student ids.
+  if (!parsed.success) return; // Problem: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  // The stored file itself is removed by the daily job once the record is gone.
+  await supabase.from("session_note_files").delete().eq("id", parsed.data.file_id); // Deletes the record (the database decides who may).
+  revalidatePath(progressPath(parsed.data.student_id)); // Refreshes the student's progress page.
+} // End of removeSessionFile.
 
 // The rules for a student's reflection:
 const reflectionSchema = z.object({

@@ -1,6 +1,6 @@
 // Summary: the tutor Overview: what needs the tutor now (notes, reviews,
 // session times to answer, checks, training), their week at a glance, the
-// next sessions, and each child safety check that is missing, expired or
+// next sessions with whether each has a plan, and each child safety check that is missing, expired or
 // due to renew. Only the tutor's own sessions, students and checks are
 // shown (need-to-know: no family billing or contact details).
 //
@@ -36,6 +36,13 @@ export async function TutorOverview({ viewerId, roles }: { viewerId: string; rol
   const needsAction = checks.filter((c) => c.status !== "current").sort((a, b) => (a.expires_on ?? "").localeCompare(b.expires_on ?? "")); // Checks missing, expired or due within 60 days, soonest first.
   const nextExpiry = checks.filter((c) => c.expires_on).sort((a, b) => a.expires_on!.localeCompare(b.expires_on!))[0]; // The check that expires soonest.
   const studentCount = new Set((studentsRes.data ?? []).map((r) => r.student_id)).size; // How many students they are matched with.
+  // Which of the coming sessions already have a plan (Carla, 21 Nov 2026),
+  // read for at most the 5 shown, using the index on the plan's session.
+  const shown = next.slice(0, 5); // The next 5 sessions at most.
+  const plansRes = shown.length > 0 // If there are any:
+    ? await supabase.from("session_plans").select("next_session_id, focus").in("next_session_id", shown.map((s) => s.id)) // reads their plans' focus,
+    : null; // otherwise nothing.
+  const focusBySession = new Map((plansRes?.data ?? []).map((p) => [p.next_session_id as string, p.focus as string])); // Each session's plan focus, looked up by session id.
 
   const tiles: Tile[] = [ // The quick-look tiles:
     { label: "Next 7 days", value: plural(next.length, "session"), note: minutes ? lengthLabel(minutes) : undefined, href: "/dashboard/tutor/calendar" }, // sessions and hours in the coming week,
@@ -49,6 +56,22 @@ export async function TutorOverview({ viewerId, roles }: { viewerId: string; rol
       <Tiles tiles={tiles} role="tutor" />{/* the quick-look tiles, */}
       <AttentionCard lines={attentionLines("tutor", menu, todo)} />{/* what needs them now, */}
       <ComingUpCard sessions={next} show="student" sessionsHref={sessionsHref("tutor")} empty="No sessions in the coming week." />{/* their next sessions, */}
+      {shown.length > 0 && ( // If they have sessions coming up:
+        <Card title="Plans for your coming sessions" description="Your plan from the last session summary, with its materials, is on each student's Progress page.">{/* a card: */}
+          <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+            {shown.map((s) => ( // for each session:
+              <li key={s.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2 first:pt-0 last:pb-0">{/* a row: */}
+                <span>{/* (a group) */}
+                  <span className="font-medium">{s.student_name}</span>{/* the student's name, */}
+                  <span className="text-zinc-600"> · {sessionWhen(s.starts_at)}</span>{/* when it is, */}
+                  <span className="block text-zinc-700">{focusBySession.get(s.id) ? `Focus: ${focusBySession.get(s.id)}` : "No plan linked yet"}</span>{/* and the plan's focus, or that there is none yet. */}
+                </span>{/* End of the group. */}
+                <TextLink href={`/students/${s.student_id}/progress`}>{focusBySession.get(s.id) ? "Open plan" : "Open Progress"}</TextLink>{/* a link to the plan on the Progress page. */}
+              </li> // End of the row.
+            ))}{/* End of the sessions. */}
+          </ul>{/* End of the list. */}
+        </Card> // End of the card.
+      )}{/* End of the plans card. */}
       {needsAction.length > 0 && ( // If any check needs action:
         <Card title="Child safety checks to sort out" description="You cannot be matched with students in a state until your checks for it are current.">{/* a card, saying why it matters: */}
           <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
