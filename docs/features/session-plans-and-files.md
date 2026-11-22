@@ -58,3 +58,28 @@ Tutors are already paid 15 minutes after each session: 5 minutes for the session
 - Tables: `session_plans` (one per summary), `session_plan_materials`, `session_note_files`, `session_file_removals`. File store: `session-files`.
 - Function: `public.save_session_plan(note, focus, activities, review_first, success_check, other_resources, materials)`. Daily job functions: `session_files_to_remove`, `session_files_removed` (secret key only).
 - App: `src/lib/session-plans.ts` (the 15-minute guide), `src/lib/session-plans-server.ts` (saving), the progress page and forms, `src/app/session-files/[id]/file/route.ts` (opens a file), `src/app/api/progress/cron/route.ts` (removes deleted files), the tutor Home overview.
+
+## Missing plans followed up, and no plan without a next session (Carla, 22 Nov 2026)
+
+Carla's note on Emma's Job Proposal: the 12-hour missing flag should cover
+the session summary and the plan for the next session, and no plan is
+needed when there is no next session.
+
+- **No next session, no plan needed.** The form only asks for the plan when
+  the student came and the tutor has a coming session booked with them. The
+  server checks the same thing before saving.
+- **Followed up like the summary.** If the summary is in but the plan is
+  missing (the student came and a next session is booked), the tutor gets
+  "Plan for the next session due" at 6 hr and the owner and Operations
+  admins get "Plan for the next session missing" at 12 hr. Each person is
+  told once per session. Quiet hours still apply.
+- **Evidence:** the same as above. Planning the next session from the
+  summary's next step is what links feedback to the next lesson (EEF
+  feedback guidance; AERO explicit instruction). Asking for a plan only when
+  a session is booked keeps tutor workload to what is useful (EEF tuition
+  guidance).
+- **Legal:** no new information is collected. The notices name the student
+  and tutor, which admins can already see.
+- **Where:** `supabase/migrations/20261124710400_plans_missing_12_hours.sql`
+  (new hourly job `clg-plan-reminders`), tested in
+  `supabase/tests/progress_plans_missing_12_hours.test.sql`.

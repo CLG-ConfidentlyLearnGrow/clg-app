@@ -211,6 +211,12 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
         label: `${sessionWhen(chosenDue.starts_at)} (${chosenDue.subject})`, // and a label with day, time and subject.
       } // (end of the details)
     : null; // otherwise nothing.
+  // Whether the viewer has a next session booked with this student. The plan
+  // for the next session is only needed when there is one (Carla, 22 Nov 2026).
+  const { count: nextCount } = isStaff // For staff:
+    ? await supabase.from("sessions").select("id", { count: "exact", head: true }).eq("student_id", id).eq("tutor_id", viewer.id).eq("status", "scheduled").gt("starts_at", new Date().toISOString()) // counts their coming sessions with this student,
+    : { count: 0 }; // otherwise none.
+  const hasNextSession = (nextCount ?? 0) > 0; // True if at least one is booked.
   // Materials that fit this student (staff only): tagged with their goal
   // skills, or for their subjects at the level they work at.
   const materialsRes = isStaff ? await supabase.rpc("materials_for_student", { p_student: id }) : null; // Reads the materials that fit (staff only).
@@ -610,7 +616,8 @@ export default async function ProgressPage({ params, searchParams }: PageProps<"
             skills={noteSkills} // the goal skills,
             materials={noteMaterials} // the materials that fit,
             session={noteSession} // the session (if any),
-            today={localToday()} // and today's date.
+            today={localToday()} // today's date,
+            hasNextSession={hasNextSession} // and whether a next session is booked (the plan is only needed then).
           />{/* (end of the form) */}
         </Card> // End of the card.
       )}{/* End of this part. */}

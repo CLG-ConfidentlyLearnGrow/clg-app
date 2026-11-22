@@ -289,17 +289,20 @@ export function SessionNoteForm({ // Its settings:
   skills, // the skills in the student's goals,
   materials = [], // the materials that fit (none by default),
   session, // the booked session, if any,
-  today, // and today's date.
+  today, // today's date,
+  hasNextSession = true, // and whether a next session with this tutor is booked (Carla, 22 Nov 2026: no plan needed when there is none).
 }: { // The settings' types:
   studentId: string; // student id is text,
   skills: GoalSkill[]; // skills is a list of goal skills,
   materials?: NoteMaterial[]; // materials is an optional list,
   session?: NoteSession | null; // session is optional (or nothing),
-  today: string; // today is text.
+  today: string; // today is text,
+  hasNextSession?: boolean; // whether a next session is booked (yes or no, optional).
 }) { // End of the settings.
   const levels = new Map(skills.map((s) => [s.id, s.level])); // Each skill's current level, looked up by its id.
   const [attendance, setAttendance] = useState<string>("attended"); // The attendance chosen (it decides which boxes must be filled in).
-  const came = attendance !== "absent"; // Whether the student came (then the summary words and the plan are needed).
+  const came = attendance !== "absent"; // Whether the student came (then the summary words are needed).
+  const planNeeded = came && hasNextSession; // The plan is needed when the student came and a next session is booked.
   return ( // Shows:
     <ActionForm action={saveSessionNote} submitLabel="Save summary and plan">{/* the form, sending to saveSessionNote, with a "Save summary and plan" button, */}
       <WritingTimer>{/* inside the writing timer: */}
@@ -403,9 +406,9 @@ export function SessionNoteForm({ // Its settings:
       <SessionFileFields />{/* A file from the session (optional). */}
       <h3 className="pt-2 text-base font-semibold">Part 2: Plan for the next session (about {PLAN_MINUTES} minutes)</h3>{/* The second part's heading. */}
       <p className="text-xs text-zinc-500">{/* a small grey note: */}
-        For you, any cover tutor and CLG staff. The family does not see the plan. {came ? "" : "Optional when the student was absent."}{/* says who sees it, and that it is optional for an absence. */}
+        For you, any cover tutor and CLG staff. The family does not see the plan. {!hasNextSession ? "Optional: no next session with you is booked yet." : came ? "" : "Optional when the student was absent."}{/* says who sees it, and when it is optional. */}
       </p>{/* End of the paragraph. */}
-      <PlanFields materials={materials} needed={came} />{/* The plan's boxes. */}
+      <PlanFields materials={materials} needed={planNeeded} />{/* The plan's boxes (needed when the student came and a next session is booked). */}
       </WritingTimer>{/* End of the writing timer. */}
     </ActionForm> // End of the form.
   ); // End of what is shown.
