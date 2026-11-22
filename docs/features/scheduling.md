@@ -642,6 +642,20 @@ Both are for front desk admins (owner, Operations and Support) only. No pay rate
 
 **Tests.** `supabase/tests/scheduling_matching_fill_tutor.test.sql`: tutors, parents and signed-out visitors are refused; only waiting students with a time that suits are listed; and for every tutor, the list matches the student-side shortlist exactly.
 
+## Tutor away dates no longer cancel on their own, 22 Nov 2026
+
+**Asked for by Carla** (notes on Emma's Job Proposal): "Should stop cancelling automatically so Emma can offer alternatives or cancel."
+
+**What changes.** A tutor's away dates still wait 2 hours, so a mistake can be removed quietly. After that, nothing is cancelled. The owner and Operations admins get one **Tutor away** notice listing the booked sessions on those dates, and **Sessions > Away dates** shows them a list with a number on the tab. For each session an admin offers the family another time or tutor (changing the session takes it off the list), or chooses **Cancel session**, which gives full credit (the cancel counts from when the dates were entered) and tells the family, as the old automatic cancel did. A family's or student's own away dates still cancel straight away, and new weekly bookings still skip every away date.
+
+**Why.** Keeping a session going, even at another time or with another tutor, protects the continuity that makes one-to-one and small-group tuition work (EEF Teaching and Learning Toolkit; Evidence for Learning summaries). A person offering options first is also better service than an automatic cancel.
+
+**How it is built.** Migration `20261124710600_tutor_away_no_auto_cancel.sql`: `private.apply_away_entry` no longer cancels a tutor's sessions; `public.tutor_away_sessions()` lists the sessions to sort out; `public.cancel_for_tutor_away(session)` cancels one; `to_do_counts` gains a number for **Away dates**. All are for owner and Operations admins only. The Sessions tab numbers now also show the weekly waitlist check-ins added on 22 Nov 2026, which were counted but not shown.
+
+**Legal notes.** No new personal information is collected or shared. The family notice and billing credit are unchanged (Australian Consumer Law: no charge for a session CLG cancels).
+
+**Tests.** `supabase/tests/scheduling_away.test.sql` now checks that nothing is cancelled after 2 hours, admins are told, the family is not told until an admin decides, tutors cannot use the list, and an admin's cancel gives full credit and a notice without contractions.
+
 ## Reminders at 24 hours and 1 hour, and the 48-hour unpaid notice, 22 Nov 2026
 
 **Asked for by Carla:** "just have 24 and 1 hour reminders. The family gets a reminder at 48 hours if they have not paid and that everything has gone on hold until payment has been made, and that if payment is not received or something is not organised, the next session will be cancelled. If this occurs ... a meeting is to be set up between Carla and the family (person in charge of paying)."

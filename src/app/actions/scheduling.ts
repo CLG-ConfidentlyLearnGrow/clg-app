@@ -478,11 +478,11 @@ export async function addAwayDates(_prev: FormState, formData: FormData): Promis
     p_tutor_offer: studentId ? null : v.tutor_offer || null, // the tutor's offer (tutors only, or none).
   }); // End of the request.
   if (error) return { error: plainError(error, "Could not save the away dates.") }; // Failed: plain message.
-  // A tutor's away dates wait 2 hours before sessions are cancelled, so a
-  // mistake can be fixed by removing them.
+  // A tutor's away dates wait 2 hours, so a mistake can be fixed by removing
+  // them. Then CLG is told and sorts out each session (Carla, 22 Nov 2026).
   if (!studentId) // For a tutor's own dates:
     return done( // refreshes, updates Teams, and tells them:
-      "Saved. Booked sessions on these dates will be cancelled in 2 hours, and families and CLG will be told. Remove the dates before then if you made a mistake.", // sessions will be cancelled in 2 hours unless they remove the dates.
+      "Saved. In 2 hours CLG will be told about any booked sessions on these dates, and will offer each family another time or tutor, or cancel. Remove the dates before then if you made a mistake.", // what happens next, and how to fix a mistake.
     ); // (end of the message)
   const n = Number(data ?? 0); // How many sessions were cancelled.
   return done(n ? `Saved. ${n} booked session${n === 1 ? " was" : "s were"} cancelled.` : "Saved. No booked sessions were affected."); // Refreshes, updates Teams, and says how many (or none).
@@ -561,6 +561,18 @@ export async function waitlistCheckedIn(formData: FormData) {
   await supabase.rpc("waitlist_checked_in", { p_id: id.data }); // Asks the database to record the check-in now.
   revalidatePath("/schedule"); // Refreshes the schedule page, so the tag and number update.
 } // End of waitlistCheckedIn.
+
+// An owner or Operations admin cancels a session that falls on a tutor's
+// away dates (Carla, 22 Nov 2026: away dates no longer cancel on their own).
+// The family gets full credit and is told.
+export async function cancelForTutorAway(formData: FormData) {
+  await requireViewer(); // Makes sure someone is signed in.
+  const id = z.uuid().safeParse(formData.get("id")); // Reads and checks the session's id.
+  if (!id.success) return; // Bad id: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  await supabase.rpc("cancel_for_tutor_away", { p_session: id.data }); // Asks the database to cancel it (it checks the person is an admin).
+  revalidatePath("/schedule"); // Refreshes the schedule page, so the list and number update.
+} // End of cancelForTutorAway.
 
 // ---------------------------------------------------------------------------
 // Tutor sign on and off

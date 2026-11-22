@@ -9,7 +9,7 @@ import Link from "next/link"; // The Next.js link, for moving between pages with
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
 import { PushSettings, type PushDevice } from "@/components/push-settings"; // The pop-up notifications controls and a device's shape (Carla, 18 Nov 2026).
-import { leaveWaitlist, markNoticesRead, removeAwayDates, tickOffNotice, waitlistCheckedIn } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates, tick off one notice, record a waitlist check-in.
+import { cancelForTutorAway, leaveWaitlist, markNoticesRead, removeAwayDates, tickOffNotice, waitlistCheckedIn } from "@/app/actions/scheduling"; // Scheduling actions: cancel for tutor away dates, leave the waitlist, mark notices read, remove away dates, tick off one notice, record a waitlist check-in.
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, field, drop-down, small heading and text link.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -1055,6 +1055,20 @@ async function PlacesSection({ viewerId }: { viewerId: string }) { // The "where
 // ---------------------------------------------------------------------------
 // Away dates: tutors for themselves, families for their children
 // ---------------------------------------------------------------------------
+// One booked session that falls on a tutor's away dates (admins only).
+type TutorAwaySession = { // A session:
+  session_id: string; // its id,
+  starts_at: string; // when it starts,
+  ends_at: string; // when it ends,
+  student_name: string; // the student,
+  tutor_name: string; // the tutor,
+  subject: string; // the subject,
+  away_from: string; // the first day away,
+  away_to: string; // the last day away,
+  reason: string | null; // the tutor's reason (if any),
+  tutor_offer: string | null; // and what the tutor can offer instead (if anything).
+}; // End of TutorAwaySession.
+
 async function AwaySection({ // The away dates section, given:
   viewerId, // the signed-in person,
   isAdmin, // whether they're a full admin in the admin dashboard,
@@ -1067,7 +1081,7 @@ async function AwaySection({ // The away dates section, given:
   familyStudentIds: string[] | null; // student ids (none outside a family dashboard).
 }) { // End of the types.
   const supabase = await createClient(); // Connects to the database.
-  const [awayRes, studentsRes, linksRes, tutorsRes, teachesRes] = await Promise.all([ // Reads five things at once:
+  const [awayRes, studentsRes, linksRes, tutorsRes, teachesRes, tutorAwayRes] = await Promise.all([ // Reads six things at once:
     supabase // the away dates:
       .from("away_dates") // from away_dates,
       .select("id, tutor_id, student_id, from_date, to_date, reason") // these details,
@@ -1078,8 +1092,10 @@ async function AwaySection({ // The away dates section, given:
     isAdmin ? supabase.from("accounts").select("id, full_name") : Promise.resolve({ data: [] as { id: string; full_name: string }[] }), // everyone's names (admins only),
     isTutor // and, in the tutor dashboard, the students they're matched with:
       ? supabase.from("tutor_assignments").select("student_id, starts_on, ends_on").eq("tutor_id", viewerId) // their matches,
-      : Promise.resolve({ data: [] as { student_id: string; starts_on: string; ends_on: string | null }[] }), // (none otherwise).
+      : Promise.resolve({ data: [] as { student_id: string; starts_on: string; ends_on: string | null }[] }), // (none otherwise),
+    isAdmin ? supabase.rpc("tutor_away_sessions") : Promise.resolve({ data: [] }), // and, for admins, sessions on a tutor's away dates.
   ]); // End of the reads.
+  const tutorAway = (tutorAwayRes.data ?? []) as TutorAwaySession[]; // The sessions on a tutor's away dates (admins only).
   const today = localToday(); // Today's date.
   const teaches = new Set( // The students this tutor teaches now:
     (teachesRes.data ?? []) // from their matches,
@@ -1111,9 +1127,43 @@ async function AwaySection({ // The away dates section, given:
 
   return ( // Shows:
     <>{/* (a group) */}
+      {isAdmin && ( // For owner and Operations admins:
+        <Card // the tutor away sessions card (Carla, 22 Nov 2026):
+          title="Sessions during tutor away dates" // its title,
+          description="A tutor's away dates no longer cancel sessions on their own. Contact each family to offer another time or tutor. Changing the session to another time or tutor takes it off this list. If nothing suits, choose Cancel session: the family gets full credit and is told." // what to do.
+        >{/* (end of the card's settings) */}
+          {tutorAway.length === 0 ? ( // if none:
+            <Empty>No booked sessions fall on a tutor&apos;s away dates.</Empty> // says so.
+          ) : ( // otherwise:
+            <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+              {tutorAway.map((t) => ( // for each session:
+                <li key={t.session_id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0">{/* a row: */}
+                  <span className="space-y-0.5">{/* (a group) */}
+                    <span className="block font-medium">{t.student_name} · {t.subject}</span>{/* the student and subject, */}
+                    <span className="block text-zinc-600">{/* in grey: */}
+                      {sessionWhen(t.starts_at)} with {t.tutor_name}, away {t.away_from === t.away_to ? shortDate(t.away_from) : `${shortDate(t.away_from)} to ${shortDate(t.away_to)}`}{t.reason ? ` (${t.reason})` : ""}{/* when, the tutor and their away dates, */}
+                    </span>{/* End of the grey part. */}
+                    {t.tutor_offer && <span className="block text-zinc-600">The tutor can offer instead: {t.tutor_offer}</span>}{/* and what the tutor offered (if anything). */}
+                  </span>{/* End of the group. */}
+                  <form action={cancelForTutorAway}>{/* the cancel form: */}
+                    <input type="hidden" name="id" value={t.session_id} />{/* the session (hidden), */}
+                    <BusyButton type="submit" className="text-xs text-red-700 underline">{/* the cancel button: */}
+                      Cancel session{/* its words, */}
+                    </BusyButton>{/* end of the button. */}
+                  </form>{/* End of the form. */}
+                </li> // End of the row.
+              ))}{/* End of the loop. */}
+            </ul> // End of the list.
+          )}{/* End of this part. */}
+        </Card> // End of the card.
+      )}{/* End of the admin part. */}
       <Card // the away dates card:
         title="Away dates" // its title,
-        description="Holidays, camps or exams. Sessions already booked on these dates are cancelled, and new bookings skip them." // its help text.
+        description={ // its help text:
+          isTutor // for tutors,
+            ? "Holidays, camps or exams. New bookings skip these dates. For booked sessions on your own away dates, CLG offers each family another time or tutor, or cancels." // what happens to their sessions (Carla, 22 Nov 2026),
+            : "Holidays, camps or exams. A student's booked sessions on these dates are cancelled, and new bookings skip them. For a tutor's away dates, CLG offers each family another time or tutor, or cancels." // otherwise the general wording.
+        } // (end of the help text)
       >{/* (end of the card's settings) */}
         {away.length === 0 ? ( // if none:
           <Empty>No away dates coming up.</Empty> // says so.

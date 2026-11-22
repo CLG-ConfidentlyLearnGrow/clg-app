@@ -53,7 +53,7 @@ function sessionSectionsFor(role: Role, roles: Role[]): string[] { // Takes the 
   if (role === "tutor" || (isFamily && !roles.includes("tutor"))) out.push("bookings"); // requests and offers to answer,
   if (role === first) out.push("notices"); // unread notices,
   if (role === "admin" || (isFamily && !roles.includes("admin"))) out.push("next-term", "booking-length"); // next term and how long to book,
-  if (role === "admin") out.push("libraries"); // libraries to check.
+  if (role === "admin") out.push("waitlist", "away", "libraries"); // waitlist check-ins due, sessions on a tutor's away dates (Carla, 22 Nov 2026), and libraries to check.
   return out; // Hands back the list.
 } // End of sessionSectionsFor.
 

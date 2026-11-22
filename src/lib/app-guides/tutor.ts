@@ -147,8 +147,9 @@ If CLG wants to move a student's sessions to you (or change the day and time), a
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.
 2. Choose yourself, then the first and last day away.
-3. Add times you could offer instead that week, if any. These are shared with the families whose sessions are cancelled.
-4. Choose **Save away dates**. Sessions on those days are cancelled and families are told.
+3. Add times you could offer instead that week, if any. CLG uses them when it contacts the families.
+4. Choose **Save away dates**. New bookings skip those days. If you made a mistake, choose **Remove** within 2 hours.
+5. After 2 hours, CLG is told about your booked sessions on those days. CLG contacts each family to offer another time or tutor, or cancels the session.
 
 ### Offer a time for a family's request
 1. In **Sessions**, choose **Requests**.
