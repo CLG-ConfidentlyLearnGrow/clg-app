@@ -172,6 +172,23 @@ Use this when checking a new family, or when a family asks CLG to correct someth
 
 Tip: Preferred days and times, places and study dates are on the **Schedule** page, under the student's places.
 
+### Approve places in the Student Success Program (Owner and Operations)
+Families ask about the program from their dashboard (a tick box under each child). Places are limited, and a student is only in the program once the $500 deposit is paid.
+1. In **Families**, open **Student Success Program**. The title shows how many places are used and left. It lists **Requests waiting**, places **Waiting for the deposit** (amber once overdue) and students **In the program**.
+2. Choose a student's name. This opens **Change a student's details** at the **Student Success Program** part.
+3. To offer a place, fill in the sessions planned, **Book sessions until**, whether sessions go ahead in school holidays and on public holidays, and any note for CLG (every box is optional), then choose **Approve the place and send the $500 deposit invoice**. The place now counts as used, and the family gets a notice and an email saying how to pay it in **Billing**. The family must have billing set up (a bill payer) first. You can also approve a student who has not asked in the app, for example after a phone call.
+4. To say no, add a reason for the family (optional) and choose **Decline the request**.
+5. When the family pays the deposit (Pay now in the app, or a payment entered in Xero), the student is in the program straight away and the family is told.
+
+Being in the program gives the student a study plan, includes each term review at no charge (the tutor's draft is made straight away and the family is told it is included), shows a **Student Success Program** label in **Matching**, and puts them at the top of the Matching queue and of **Fill a tutor's times**. The book-until date is also saved as the student's **How long to book**, so it must be within a year.
+
+- **Change the details** of a place: change them and choose **Save program details**.
+- **Withdraw the place** (deposit not paid yet): give a reason for the family. The place is freed and the deposit invoice is cancelled. If it is already in Xero, void it there too. If the deposit invoice is cancelled in Xero, the place is freed and the request goes back to **Requests waiting**.
+- **Remove from the program** (deposit paid): the place is freed, the program study plan ends today, term reviews are offered as usual again, and booked sessions stay booked. Any refund follows CLG's terms and is done in **Billing**.
+- **Places and payment time**: at the bottom of the card, set the number of places and the days families have to pay the deposit (7 to start), then choose **Save places**. The deposit amount is the **Student Success Program deposit** price in **Billing**, **Prices and settings** (Owner and Finance).
+
+The deposit is never charged automatically, and an unpaid deposit never puts the family's sessions on hold.
+
 ### Give a student their own login
 1. In **Families**, open **Give a student their own login** (students 16 and over).
 2. Choose the student and enter their own email, then send. They keep their details, history and tutor, and their parent can still see everything.
@@ -192,7 +209,7 @@ const MATCHING = `
 Open **Matching** in the side menu.
 
 ### Find a tutor for a student
-1. In **Matching**, choose a tab along the top: **Needs a tutor**, **Waiting for tutor**, **Waiting for family**, **Waitlist**, **Assigned, no time** or **Active**. Each tab shows how many are in it. Search or filter by year level and state if needed. The longest waiting are at the top.
+1. In **Matching**, choose a tab along the top: **Needs a tutor**, **Waiting for tutor**, **Waiting for family**, **Waitlist**, **Assigned, no time** or **Active**. Each tab shows how many are in it. Search or filter by year level and state if needed. Students in the Student Success Program are at the top, with a violet **Student Success Program** label, because they have paid the deposit. Everyone else follows, longest waiting first.
 2. **Waitlist** means no suitable tutor is available yet. It is not the first weeks with a new tutor (those students are in **Active**).
 3. Choose a student. An amber dot beside a name means a detail is missing.
 4. **Ready to offer** (or **details missing**) at the top lists year level, school, session places and how long to book. For anything missing, choose **Fill in**, or choose **Ask the family**. The family gets an app notice and an email with a link to fill it in, and a pointer to the help chat if they have questions. You can ask once a day for each detail, and the list shows when you last asked.
@@ -204,7 +221,7 @@ Open **Matching** in the side menu.
 ### Fill a tutor's free times
 1. In **Matching**, choose **Fill a tutor's times** at the top.
 2. Choose the tutor and choose **Show students**. The line under it shows how many hours a week they already have booked, and their weekly maximum if one is set.
-3. The list shows every student still waiting for a tutor (**Needs a tutor** or **Waitlist**) who fits one of that tutor's free times, longest waiting first. Each row shows the subject, how long they have waited, how many times suit and the best time and place. **Teaches a sibling** and **Over their weekly maximum** are shown when they apply.
+3. The list shows every student still waiting for a tutor (**Needs a tutor** or **Waitlist**) who fits one of that tutor's free times: Student Success Program students first, then longest waiting first. Each row shows the subject, how long they have waited, how many times suit and the best time and place. **Teaches a sibling** and **Over their weekly maximum** are shown when they apply.
 4. Choose **Make an offer** to open the student in Matching and send the offer as usual.
 
 The same rules apply as when you start from the student: the tutor teaches the subject at the student's level, their checks are current, neither has blocked the other, and a time suits both. A student with no year level yet is not listed, so fill it in first.

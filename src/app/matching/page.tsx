@@ -148,6 +148,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
     ? await supabase.rpc("matching_missing", { p_students: [...new Set(rows.map((r) => r.student_id))] }) // what is missing for each student,
     : null; // otherwise nothing.
   const missingFor = new Set(((missingRes?.data ?? []) as Missing[]).map((m) => m.student_id)); // The students with something missing.
+  const sspFor = await sspStudents(supabase, rows.map((r) => r.student_id)); // The students on this page in the Student Success Program (for the label).
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1); // How many pages.
 
   const filters = { // The current filters:
@@ -268,7 +269,8 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
                                   {missingFor.has(r.student_id) && ( // if a detail is missing,
                                     <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500" title="Details missing before an offer" aria-label="Details missing" /> // an amber dot,
                                   )}{/* (end of the dot) */}
-                                  {r.student_name}{/* their name. */}
+                                  {r.student_name}{/* their name, */}
+                                  {sspFor.has(r.student_id) && <SspLabel />}{/* and the program label if they are in it. */}
                                 </span>{/* End of the bold part. */}
                                 <span className={`text-xs ${r.days >= 7 && stage !== "active" ? "text-amber-900" : "text-zinc-600"}`}>{/* days waiting (amber after a week): */}
                                   {r.days === 0 ? "today" : `${r.days} day${r.days === 1 ? "" : "s"}`}{/* today, or the number of days. */}
@@ -335,7 +337,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
 // ---------------------------------------------------------------------------
 async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId: string; subject: string; stage: string; nextHref: string | null }) { // The panel for one student and subject (the tab they are in, and a link to the next student).
   const supabase = await createClient(); // Connects to the database.
-  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes, holdsRes, missingRes, sinceRes] = await Promise.all([ // Reads everything at once:
+  const [studentRes, subjectsRes, placesRes, librariesRes, shortlistRes, notOfferedRes, termsRes, holdsRes, missingRes, sinceRes, sspSet] = await Promise.all([ // Reads everything at once:
     supabase // the student:
       .from("students") // from students,
       .select("id, full_name, family_id, year_level, school, state, goals, learning_needs, program") // these details,
@@ -360,7 +362,8 @@ async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId
     supabase // and any "waiting since" date set by hand:
       .from("matching_waiting_since") // from matching_waiting_since,
       .select("subject, since") // the subject and date,
-      .eq("student_id", studentId), // for this student.
+      .eq("student_id", studentId), // for this student,
+    sspStudents(supabase, [studentId]), // and whether they are in the Student Success Program.
   ]); // End of the reads.
   const missing = new Map(((missingRes.data ?? []) as Missing[]).map((m) => [m.item, m.last_asked])); // Each missing detail and when the family was last asked.
   const sinceRow = ((sinceRes.data ?? []) as { subject: string; since: string }[]).find((r) => r.subject.toLowerCase() === subject.toLowerCase()); // The date set for this subject (if any).
@@ -563,7 +566,8 @@ async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId
       <Card // the student card:
         title={`${student.full_name} · ${subject}`} // the name and subject,
         description={ // links under the title:
-          <span className="flex flex-wrap gap-3">{/* (a row) */}
+          <span className="flex flex-wrap items-center gap-3">{/* (a row) */}
+            {sspSet.has(student.id) && <SspLabel />}{/* the program label if they are in it, */}
             <TextLink href={`/schedule?as=admin&section=child-places&student=${student.id}`}>Session places</TextLink>{/* to their session places, */}
             <TextLink href={`/schedule?${new URLSearchParams({ as: "admin", section: "book", student: student.id, subject, auto: "1" }).toString()}`}>{/* to all available times: */}
               All available times{/* its words, */}
@@ -687,6 +691,25 @@ async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId
   ); // End of what is shown.
 } // End of StudentPanel.
 
+// Which of the given students are in the Student Success Program now
+// (Carla, 22 Nov 2026). Program students paid a $500 deposit, so the queue
+// lists them first and shows a label.
+async function sspStudents(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]): Promise<Set<string>> { // Takes the database connection and the student ids.
+  const unique = [...new Set(ids)]; // Each student once.
+  if (unique.length === 0) return new Set(); // Nobody to check: an empty set.
+  const { data } = await supabase.from("ssp_enrolments").select("student_id").in("student_id", unique).eq("status", "enrolled"); // Reads the ones in the program now (deposit paid).
+  return new Set(((data ?? []) as { student_id: string }[]).map((r) => r.student_id)); // Their ids, as a set.
+} // End of sspStudents.
+
+// The small "Student Success Program" label.
+function SspLabel() { // No settings.
+  return ( // Shows:
+    <span className="ml-1.5 inline-block rounded-full bg-violet-50 px-2 text-xs font-medium text-violet-900" title="Student Success Program: deposit paid, top priority for matching">{/* a violet pill with an explanation on hover: */}
+      Student Success Program{/* its words. */}
+    </span> // End of the pill.
+  ); // End of what is shown.
+} // End of SspLabel.
+
 // How long ago a time was, in plain words ("today", "1 day ago", "5 days ago").
 function daysAgo(iso: string): string { // Takes a time.
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000); // Whole days since then.
@@ -735,6 +758,7 @@ async function TutorFillView({ tutorId }: { tutorId: string }) { // Takes the ch
   const chosen = tutors.find((t) => t.tutor_id === tutorId) ?? null; // The chosen tutor (only a real one).
   const { data: rowData } = chosen ? await supabase.rpc("matching_tutor_fill", { p_tutor: chosen.tutor_id }) : { data: [] }; // The students who fit their times (if a tutor is chosen).
   const rows = (rowData ?? []) as FillRow[]; // The rows.
+  const sspFor = await sspStudents(supabase, rows.map((r) => r.student_id)); // The students in the Student Success Program (for the label).
   const hoursBooked = chosen ? Math.round((chosen.booked_minutes / 60) * 10) / 10 : 0; // The tutor's hours a week already booked.
   return ( // Shows:
     <Card // a card:
@@ -770,6 +794,7 @@ async function TutorFillView({ tutorId }: { tutorId: string }) { // Takes the ch
                       <span className="text-zinc-600">{r.year_level && ` (${r.year_level})`} · {r.subject}</span>{/* their year level and subject, */}
                     </span>{/* End of the group. */}
                     <span className="flex flex-wrap items-center gap-2">{/* the tags: */}
+                      {sspFor.has(r.student_id) && <SspLabel />}{/* the program label if they are in it, */}
                       <span className="rounded-full bg-amber-50 px-2 text-xs text-amber-900">Waiting {r.days} day{r.days === 1 ? "" : "s"}</span>{/* how long they have waited, */}
                       <span className="rounded-full bg-zinc-100 px-2 text-xs text-zinc-700">{r.stage === "waitlist" ? "Waitlist" : "Needs a tutor"}</span>{/* their stage, */}
                       {r.teaches_sibling && <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">Teaches a sibling</span>}{/* if the tutor teaches a sibling, */}
