@@ -376,6 +376,7 @@ Open **Progress** in the side menu.
 
 ### Keep notes on track
 - **Notes overdue** lists sessions still without a note 12 hr after they ended. The tutor was already reminded at 6 hr, when the note was due, so follow up with the tutor. Families are promised the note within 48 hr.
+- **Plan for the next session missing**: you get this notice when a summary is in but its plan is still missing 12 hr after the session, the student came, and a next session with that tutor is booked. The tutor was reminded at 6 hr. No plan is needed when there is no next session.
 - **Students to check** lists students with no goals, or whose skills have not moved for a while.
 - **Recent notes to spot-check**: is the next step specific, and the tip for home a small habit?
 - **How progress tracking is going** shows the measures for any dates you choose.

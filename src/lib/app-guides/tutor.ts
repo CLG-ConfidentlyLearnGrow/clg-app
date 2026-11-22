@@ -199,7 +199,7 @@ After each session you send two things in one form: the session summary and your
 1. On **Your students**, **Session notes to write** lists what is due. Choose **Write summary and plan**.
 2. **Part 1: Session summary**: fill in what went well, the next step, any homework or practice and its due date, and one thing to try at home. Use **Note for CLG staff only** for anything just for CLG.
 3. To share a photo of the whiteboard or a worked example, choose a file under **File from this session** (a PDF or photo up to 3.5 MB) and give it a name. Photograph the work only, never the student.
-4. **Part 2: Plan for the next session**: write the **Focus for the next session** and **How you will teach it**. You can add what to **Review first** and **How you will know it worked**.
+4. **Part 2: Plan for the next session**: write the **Focus for the next session** and **How you will teach it**. You can add what to **Review first** and **How you will know it worked**. The plan is optional when the student was absent, or when no next session with you is booked yet.
 5. Tick the **Materials for the next session** you will use from the materials library, and add any **Other resources** (textbook pages, websites, equipment).
 6. Choose **Save summary and plan**. The family and student see the summary and any files (not the staff-only part). The plan is only for you, any cover tutor and CLG staff.
 

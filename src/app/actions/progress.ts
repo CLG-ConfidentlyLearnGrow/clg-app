@@ -99,11 +99,17 @@ export async function saveSessionNote(_prev: FormState, formData: FormData): Pro
     return { error: "Add what went well and one next step. These go to the student and their family." }; // asks for both.
   } // End of that check.
   // The plan for the next session (Carla, 21 Nov 2026): needed whenever the
-  // student came, so it is checked before anything is saved.
+  // student came and a next session is booked (22 Nov 2026), so it is
+  // checked before anything is saved.
   const planRead = readPlan(formData); // Reads the plan boxes.
   if ("error" in planRead) return planRead; // A plan box broke a rule: shows why.
   if (v.attendance !== "absent" && !planRead.plan) { // The student came but there is no plan:
-    return { error: "Add your plan for the next session: what it will focus on and how you will teach it." }; // asks for it.
+    const viewer = await requireViewer(); // the signed-in tutor,
+    const checker = await createClient(); // connects to the database,
+    const { count } = await checker.from("sessions").select("id", { count: "exact", head: true }).eq("student_id", v.student_id).eq("tutor_id", viewer.id).eq("status", "scheduled").gt("starts_at", new Date().toISOString()); // counts their coming sessions with this student,
+    if ((count ?? 0) > 0) { // a next session is booked, so the plan is needed (Carla, 22 Nov 2026: none needed when there is no next session):
+      return { error: "Add your plan for the next session: what it will focus on and how you will teach it." }; // asks for it.
+    } // End of the next-session check.
   } // End of that check.
   const sessionFile = formData.get("session_file"); // The file from the session (if one was chosen).
   const fileTitle = String(formData.get("session_file_title") ?? ""); // Its short name (may be blank).
