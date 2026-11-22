@@ -115,12 +115,15 @@ Tip: **Times to check** does not list home or school sessions for a missing loca
 2. To offer a time, choose the tutor, date, start, length and place, add a note for the family, and choose **Offer this time**. The family approves it.
 3. If it cannot be arranged, choose **Could not arrange it** and say why.
 
+### Follow up a new significant date from a family
+When a parent or student adds a test, exam or assignment due date on a student's roadmap, you get a notice: **New significant date from a family**. Check the student's tutor knows about it, and whether an extra session before that day would help. Dates added by tutors or admins do not send a notice.
+
 ### Follow up a block
 When a family blocks a tutor, or a tutor blocks a student, it shows in **Sessions**, **Blocks**. The other person is not told. Contact the person who made the block, then record what happened and choose **Save follow-up**.
 
 ### Look after the waitlist
 1. In **Sessions**, choose **Waitlist**. Everyone waiting is listed, oldest first, with how many times would now suit.
-2. Check in with anyone who has waited 4 weeks or more.
+2. Check in with each family every week. **Check in due** shows on a place when 7 days have passed since the last check-in (or since they joined), and the **Waitlist** tab shows how many are due. After you contact the family, choose **Checked in** to start the next 7 days.
 3. Booking that subject takes the student off the waitlist.
 
 ### Add away dates for a student or tutor
@@ -236,7 +239,7 @@ Choose **Staff directory** (from Admin or Billing) to search staff by name, emai
 When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it.
 
 ### Log your office hours
-1. In the side menu, choose **My pay**.
+1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
 `;
@@ -266,7 +269,7 @@ const HELP = `
 ## Help
 
 ### Answer help chats (the help desk)
-Families, students, tutors and staff ask CLG questions in the **Help chat**. Owner, Operations and Support admins answer general chats. Owner, Operations and Finance admins answer **Billing and payments** and **My pay (CLG staff)** chats.
+Families, students, tutors and staff ask CLG questions in the **Help chat**. Owner, Operations and Support admins answer general chats. Owner, Operations and Finance admins answer **Billing and payments** and **My Pay (CLG staff)** chats.
 1. Choose **Help chats** in the side menu. The number shows chats waiting for CLG.
 2. **Waiting for CLG** lists the longest waiting first. Open a chat by its title.
 3. Write your reply and choose **Send**. It is sent as CLG, and they get an email saying there is a reply (never the message itself, and not between 9pm and 5am their time).

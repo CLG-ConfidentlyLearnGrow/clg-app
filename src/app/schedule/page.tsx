@@ -9,7 +9,7 @@ import Link from "next/link"; // The Next.js link, for moving between pages with
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { after } from "next/server"; // Runs a job after the page is sent, so it doesn't slow the page.
 import { PushSettings, type PushDevice } from "@/components/push-settings"; // The pop-up notifications controls and a device's shape (Carla, 18 Nov 2026).
-import { leaveWaitlist, markNoticesRead, removeAwayDates, tickOffNotice } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates, tick off one notice.
+import { leaveWaitlist, markNoticesRead, removeAwayDates, tickOffNotice, waitlistCheckedIn } from "@/app/actions/scheduling"; // Scheduling actions: leave the waitlist, mark notices read, remove away dates, tick off one notice, record a waitlist check-in.
 import { Button, Card, Empty, Field, Select, SubHeading, TextLink } from "@/components/ui"; // Shared page parts: button, card, empty line, field, drop-down, small heading and text link.
 import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard tabs and side menu around the page.
 import type { Role } from "@/lib/auth"; // The type for a role (for type checking).
@@ -1174,7 +1174,8 @@ type WaitPlace = { // A waitlist place as listed:
   tutor_name: string | null; // a tutor they're waiting for (if any),
   note: string | null; // a note (if any),
   created_at: string; // when they joined,
-  waited_4_weeks: boolean; // whether they've waited 4 weeks,
+  checked_in_at: string | null; // when CLG last checked in with the family (if ever),
+  check_in_due: boolean; // whether a weekly check-in is due (Carla, 22 Nov 2026),
   times_now_free: number; // and how many times are free now.
 }; // End of WaitPlace.
 
@@ -1187,7 +1188,7 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) { // The waitl
       title="Waitlist" // its title,
       description={ // its help text:
         isAdmin // for admins,
-          ? "Everyone waiting for a tutor, oldest first. Check in with families who have waited 4 weeks." // their wording,
+          ? "Everyone waiting for a tutor, oldest first. Check in with each family every week: \"Check in due\" shows when 7 days have passed since the last check-in. Press \"Checked in\" after you contact them." // their wording (weekly check-ins, Carla 22 Nov 2026),
           : "Your children waiting for a suitable tutor. CLG will be in touch when one is available." // otherwise the family's.
       } // (end of the help text)
     >{/* (end of the card's settings) */}
@@ -1205,8 +1206,8 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) { // The waitl
                   </span>{/* End of the grey part. */}
                 </span>{/* End of the group. */}
                 <span className="flex items-center gap-2">{/* the tags: */}
-                  {w.waited_4_weeks && ( // if waiting 4+ weeks:
-                    <span className="rounded-full bg-amber-50 px-2 text-xs text-amber-900">Waiting 4+ weeks</span> // a tag.
+                  {isAdmin && w.check_in_due && ( // if a weekly check-in is due (admins only):
+                    <span className="rounded-full bg-amber-50 px-2 text-xs text-amber-900">Check in due</span> // a tag.
                   )}{/* End of this part. */}
                   {w.times_now_free > 0 && ( // if times are free now:
                     <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">{/* a tag: */}
@@ -1221,15 +1222,26 @@ async function WaitlistSection({ isAdmin }: { isAdmin: boolean }) { // The waitl
                 {w.earliest && ` · from ${clockTime(w.earliest)}`}{/* no earlier than (if set), */}
                 {w.latest && ` · finished by ${clockTime(w.latest)}`}{/* finished by (if set), */}
                 {w.tutor_name && ` · waiting for ${w.tutor_name}`}{/* the tutor they're waiting for (if any), */}
-                {` · since ${shortDate(w.created_at)}`}{/* and since when. */}
+                {` · since ${shortDate(w.created_at)}`}{/* since when, */}
+                {isAdmin && ` · last check-in ${w.checked_in_at ? shortDate(w.checked_in_at) : "not yet"}`}{/* and, for admins, the last check-in. */}
               </p>{/* End of the line. */}
               {w.note && <p className="text-zinc-600">Note: {w.note}</p>}{/* the note (if any). */}
-              <form action={leaveWaitlist}>{/* the remove form: */}
-                <input type="hidden" name="id" value={w.id} />{/* the place (hidden), */}
-                <BusyButton type="submit" className="text-xs text-red-700 underline">{/* the button: */}
-                  Take off the waitlist{/* its words, */}
-                </BusyButton>{/* end of the button. */}
-              </form>{/* End of the form. */}
+              <div className="flex flex-wrap items-center gap-4">{/* the row's buttons, side by side: */}
+                {isAdmin && ( // admins record check-ins:
+                  <form action={waitlistCheckedIn}>{/* the check-in form: */}
+                    <input type="hidden" name="id" value={w.id} />{/* the place (hidden), */}
+                    <BusyButton type="submit" className="text-xs text-brand underline">{/* the button: */}
+                      Checked in{/* its words, */}
+                    </BusyButton>{/* end of the button. */}
+                  </form> // End of the form.
+                )}{/* End of the check-in. */}
+                <form action={leaveWaitlist}>{/* the remove form: */}
+                  <input type="hidden" name="id" value={w.id} />{/* the place (hidden), */}
+                  <BusyButton type="submit" className="text-xs text-red-700 underline">{/* the button: */}
+                    Take off the waitlist{/* its words, */}
+                  </BusyButton>{/* end of the button. */}
+                </form>{/* End of the form. */}
+              </div>{/* End of the buttons. */}
             </li> // End of the row.
           ))}{/* End of the loop. */}
         </ul> // End of the list.

@@ -114,7 +114,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select times_now_free from public.list_waitlist() where id = :'wait'), 0, 'no times free yet'); -- Checks: no times free yet.
-select tests.eq((select count(*) from public.list_waitlist() where waited_4_weeks), 0, 'not waiting 4 weeks yet'); -- Checks: not waiting 4 weeks yet.
+select tests.eq((select count(*) from public.list_waitlist() where check_in_due), 0, 'no check-in due yet'); -- Checks: no weekly check-in is due on a place that has just started (Carla, 22 Nov 2026).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- T3 adds Tuesday availability: the admin list now shows free times.
@@ -128,7 +128,7 @@ update public.waitlist set created_at = now() - interval '30 days' where id = :'
 select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as test account ...a0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
 select tests.eq((select times_now_free from public.list_waitlist() where id = :'wait'), 5, 'five Tuesday times now free'); -- Checks: five Tuesday start times are now free (3pm to 4pm, every 15 min).
-select tests.eq((select count(*) from public.list_waitlist() where waited_4_weeks), 1, 'waited 4 weeks'); -- Checks: waited 4 weeks.
+select tests.eq((select count(*) from public.list_waitlist() where check_in_due), 1, 'check-in due after a week with no check-in'); -- Checks: a check-in is due once 7 days pass with none (here 30 days).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 -- Booking that subject closes the place.

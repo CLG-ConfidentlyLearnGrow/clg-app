@@ -1,4 +1,4 @@
-// Summary: the "My pay" page for tutors and staff: rates, logged hours and recent pay lines.
+// Summary: the "My Pay" page for tutors and staff: rates, logged hours and recent pay lines.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { withdrawMyHours } from "@/app/actions/pay"; // The server action that takes back logged hours.
@@ -33,7 +33,7 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
   const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
   if (!viewer.roles.includes("tutor") && !viewer.roles.includes("admin")) redirect("/dashboard"); // Not a tutor or admin: goes to the dashboard.
   if (needsTwoStep(viewer)) redirect("/mfa"); // Two-step login not set up: sends them to set it up.
-  // My pay is a tab on both the tutor and admin menus. Show it inside the
+  // My Pay is a tab on both the tutor and admin menus. Show it inside the
   // dashboard it was opened from (tutor first when not said).
   const { as } = await searchParams; // Which dashboard it was opened from, if said.
   const role = as === "admin" && viewer.roles.includes("admin") ? "admin" : viewer.roles.includes("tutor") ? "tutor" : "admin"; // The dashboard to show it in.
@@ -71,7 +71,7 @@ export default async function MyPayPage({ searchParams }: PageProps<"/pay">) { /
   const canAdmin = viewer.roles.includes("admin") && p?.admin_rate_cents != null; // True if they can log office admin (an admin with an admin rate).
 
   return ( // Shows:
-    <DashboardFrame role={role} roles={viewer.roles} current="pay">{/* the dashboard tabs and menu, with My pay open: */}
+    <DashboardFrame role={role} roles={viewer.roles} current="pay">{/* the dashboard tabs and menu, with My Pay open: */}
       <p className="text-sm text-zinc-600">Your pay from sessions and admin hours. CLG checks it in Xero before each pay run.</p>{/* a short explanation, */}
       <Card title="Your rates">{/* a card titled "Your rates": */}
         {p ? ( // if rates are set:
