@@ -2,10 +2,12 @@
 // 2026). Admins confirming a new family check the year level, school,
 // subjects and levels, and goals, and can now correct them here instead of
 // asking the parent. Preferred days and times stay on the Schedule page.
+// It also holds the Student Success Program section (Carla, 22 Nov 2026).
 //
 import { EditChildForm } from "@/app/dashboard/edit-child-form"; // The same "change a child's details" form parents use.
 import { Button, Card, Empty, Select } from "@/components/ui"; // Shared page parts: button, card, empty line and drop-down.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
+import { SspForm, type SspDetails } from "./ssp-form"; // The Student Success Program forms.
 
 // One student as the picker needs them.
 type StudentChoice = { id: string; full_name: string }; // their id and name.
@@ -23,7 +25,7 @@ export async function StudentDetailsCard({ // Its settings:
   const chosen = students.find((s) => s.id === chosenId); // The chosen student, if the id is one of theirs.
   const supabase = await createClient(); // Connects to the database.
   // Reads the chosen student's full details and subjects (only when one is chosen).
-  const [details, subjects] = chosen // If a student is chosen:
+  const [details, subjects, program] = chosen // If a student is chosen:
     ? await Promise.all([ // reads two things at once:
         supabase // their details:
           .from("students") // from students,
@@ -35,9 +37,16 @@ export async function StudentDetailsCard({ // Its settings:
           .select("subject, working_level, course_code, course_url") // with level and any unit code and link,
           .eq("student_id", chosen.id) // for this student,
           .order("added_at"), // oldest first.
+        supabase // and their Student Success Program place:
+          .from("ssp_enrolments") // from the program list,
+          .select("sessions_planned, book_until, deposit_paid_on, note") // the details the form shows,
+          .eq("student_id", chosen.id) // for this student,
+          .is("ended_at", null) // only while they are in it,
+          .maybeSingle(), // as one row (or none).
       ]) // (end of the reads)
-    : [null, null]; // Otherwise nothing is read.
+    : [null, null, null]; // Otherwise nothing is read.
   const row = details?.data ?? null; // The student's details (or nothing).
+  const sspRow = (program?.data ?? null) as SspDetails | null; // Their program record (or nothing if not in it).
   return ( // Shows:
     <Card // a fold-up card:
       collapsible // can fold,
@@ -75,6 +84,17 @@ export async function StudentDetailsCard({ // Its settings:
                 course_url: s.course_url ?? null, // and any unit link.
               }))} // (end of the subjects)
             /> // End of the form.
+          )}{/* End of this part. */}
+          {row && ( // Once the details are loaded, the program section:
+            <section className="space-y-3 border-t border-zinc-200 pt-4">{/* a section with a line above: */}
+              <h3 className="text-base font-semibold text-zinc-900">{/* its heading: */}
+                Student Success Program{sspRow ? ": in the program" : ""}{/* the program name, and whether they are in it. */}
+              </h3>{/* End of the heading. */}
+              <p className="text-sm text-zinc-600">{/* what the program does: */}
+                Students in the program have paid the $500 deposit. Adding them gives them a study plan, includes each term review at no charge, shows a program label, and puts them first in the Matching queue.{/* the plain explanation. */}
+              </p>{/* End of the explanation. */}
+              <SspForm key={`${row.id}-${sspRow ? "in" : "out"}`} studentId={row.id} current={sspRow} />{/* the forms (fresh after each change). */}
+            </section> // End of the section.
           )}{/* End of this part. */}
         </div> // End of the block.
       )}{/* End of this part. */}
