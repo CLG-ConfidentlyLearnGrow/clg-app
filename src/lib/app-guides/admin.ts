@@ -190,6 +190,14 @@ Open **Matching** in the side menu.
 7. Check the time and place, and send it to the tutor and family to approve. To choose someone else, open **Other tutors who suit** and choose **Offer this tutor**.
 8. Choose **Next student** to keep going.
 
+### Fill a tutor's free times
+1. In **Matching**, choose **Fill a tutor's times** at the top.
+2. Choose the tutor and choose **Show students**. The line under it shows how many hours a week they already have booked, and their weekly maximum if one is set.
+3. The list shows every student still waiting for a tutor (**Needs a tutor** or **Waitlist**) who fits one of that tutor's free times, longest waiting first. Each row shows the subject, how long they have waited, how many times suit and the best time and place. **Teaches a sibling** and **Over their weekly maximum** are shown when they apply.
+4. Choose **Make an offer** to open the student in Matching and send the offer as usual.
+
+The same rules apply as when you start from the student: the tutor teaches the subject at the student's level, their checks are current, neither has blocked the other, and a time suits both. A student with no year level yet is not listed, so fill it in first.
+
 ### Set when a student started waiting
 If a student was on CLG's waitlist before they were added to the app, open them in **Needs a tutor** or **Waitlist**, open **Waiting since**, choose the day they first asked, and choose **Save date**. Leave it empty and save to go back to the day they were added.
 
