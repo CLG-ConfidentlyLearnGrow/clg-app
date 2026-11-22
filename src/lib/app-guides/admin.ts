@@ -115,12 +115,15 @@ Tip: **Times to check** does not list home or school sessions for a missing loca
 2. To offer a time, choose the tutor, date, start, length and place, add a note for the family, and choose **Offer this time**. The family approves it.
 3. If it cannot be arranged, choose **Could not arrange it** and say why.
 
+### Follow up a new significant date from a family
+When a parent or student adds a test, exam or assignment due date on a student's roadmap, you get a notice: **New significant date from a family**. Check the student's tutor knows about it, and whether an extra session before that day would help. Dates added by tutors or admins do not send a notice.
+
 ### Follow up a block
 When a family blocks a tutor, or a tutor blocks a student, it shows in **Sessions**, **Blocks**. The other person is not told. Contact the person who made the block, then record what happened and choose **Save follow-up**.
 
 ### Look after the waitlist
 1. In **Sessions**, choose **Waitlist**. Everyone waiting is listed, oldest first, with how many times would now suit.
-2. Check in with anyone who has waited 4 weeks or more.
+2. Check in with each family every week. **Check in due** shows on a place when 7 days have passed since the last check-in (or since they joined), and the **Waitlist** tab shows how many are due. After you contact the family, choose **Checked in** to start the next 7 days.
 3. Booking that subject takes the student off the waitlist.
 
 ### Add away dates for a student or tutor

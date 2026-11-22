@@ -55,3 +55,42 @@ Operations admin; Lauren finishes at the end of 2026.
 `supabase/tests/summaries_admins_12_hours.test.sql` (hours and wording, run
 twice). The existing student edit access rules are already tested in
 `access_rules.test.sql`.
+
+## More changes from Carla's notes on Emma's Job Proposal (22 Nov 2026)
+
+### What changes
+
+- **My Pay:** the side menu item, guides and tours now say "My Pay". The
+  migration `20261124710100_my_pay_name.sql` changes the same words in
+  training lessons, quiz choices and handbook pages.
+- **Weekly waitlist check-ins:** each waitlist place remembers the last
+  check-in. "Check in due" shows once 7 days have passed since the last one
+  (or since joining), the Waitlist sub-tab counts them, and front desk
+  admins press "Checked in" after contacting the family
+  (`20261124710200_waitlist_weekly_check_ins.sql`).
+- **Significant dates from families:** when a parent or student adds a
+  test, exam or assignment due date to a roadmap, the owner and Operations
+  admins get a notice straight away. Dates added by the tutor or CLG staff
+  do not send one (`20261124710300_significant_dates_tell_admins.sql`).
+
+### Research
+
+- AERO's guidance on family engagement and the EEF's "Working with Parents
+  to Support Children's Learning" both find that regular, two-way contact
+  keeps families engaged. A weekly check-in keeps a waiting family in touch
+  instead of leaving them a month without news, which also reduces families
+  dropping out before a tutor is found.
+- The EEF's tutoring guidance says sessions work best when they are linked
+  to what the learner needs next. Knowing about a test or due date early
+  lets the tutor plan for it, and lets CLG offer an extra session in time.
+
+### Legal notes
+
+- No new personal information is collected. The check-in date and who did
+  it are admin records, kept with the waitlist place (APP 11). The notice to
+  admins names the student and the date, which admins can already see.
+
+### Tests
+
+`supabase/tests/weekly_waitlist_significant_dates.test.sql`, and the
+waitlist checks in `scheduling_away.test.sql` now test "check in due".

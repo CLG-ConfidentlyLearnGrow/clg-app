@@ -250,7 +250,7 @@ Tip: On an iPhone or iPad, add CLG to your home screen first (see **Add CLG to y
 
 ### Add steps to the roadmap
 1. On the progress page, find **Roadmap**.
-2. Choose **Add a step**, or add a school assessment or goal with its date.
+2. Choose **Add a step**, or add a school assessment or goal with its date. When you add an assessment (a test, exam or assignment due date), CLG is told straight away, so the tutor can plan for it.
 3. If your child has study plans with CLG, choose **Plan study steps for me** next to an upcoming assessment, and the app breaks it into small weekly steps.
 
 ### Term reviews

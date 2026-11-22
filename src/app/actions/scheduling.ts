@@ -551,6 +551,17 @@ export async function leaveWaitlist(formData: FormData) {
   revalidatePath("/schedule"); // Refreshes the schedule page.
 } // End of leaveWaitlist.
 
+// Records that a CLG admin checked in with a waiting family this week
+// (Carla, 22 Nov 2026). The database checks it is a front desk admin.
+export async function waitlistCheckedIn(formData: FormData) {
+  await requireViewer(); // Makes sure someone is signed in.
+  const id = z.uuid().safeParse(formData.get("id")); // Reads and checks the waitlist place's id.
+  if (!id.success) return; // Bad id: does nothing.
+  const supabase = await createClient(); // Connects to the database.
+  await supabase.rpc("waitlist_checked_in", { p_id: id.data }); // Asks the database to record the check-in now.
+  revalidatePath("/schedule"); // Refreshes the schedule page, so the tag and number update.
+} // End of waitlistCheckedIn.
+
 // ---------------------------------------------------------------------------
 // Tutor sign on and off
 // ---------------------------------------------------------------------------

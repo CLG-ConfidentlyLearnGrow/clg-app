@@ -79,7 +79,7 @@ Tip: Your parent or carer and your tutor can also see your progress page and roa
 
 ### Add a test or assignment to your roadmap
 1. On your progress page, find **Roadmap**.
-2. Add a school assessment or goal, with its date, then choose **Add to roadmap**.
+2. Add a school assessment or goal, with its date, then choose **Add to roadmap**. When you add an assessment (a test, exam or assignment due date), CLG is told straight away, so your tutor can plan for it.
 3. Use **Add a step** to break it into smaller steps, or choose **Plan study steps for me** if you have study plans with CLG.
 4. Tick steps off as you do them.
 
