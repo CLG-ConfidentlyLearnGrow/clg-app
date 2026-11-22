@@ -104,11 +104,11 @@ Where: **Sessions**: **Overview** and **Away dates**.
 
 **Training** lists your compulsory modules. Safety modules must be done before new students are matched with you.
 
-**My pay** shows your rates and sessions. Log any work outside sessions by the day after each pay week ends.
+**My Pay** shows your rates and sessions. Log any work outside sessions by the day after each pay week ends.
 
 Why: Training keeps students safe and you up to date. Logging hours on time means you are paid correctly and on time.
 
-Where: **Training**, **Handbooks** and **My pay** in the side menu.
+Where: **Training**, **Handbooks** and **My Pay** in the side menu.
 
 ## Child safety and privacy
 

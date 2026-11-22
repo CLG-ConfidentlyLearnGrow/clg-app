@@ -1,5 +1,5 @@
 // Summary: the kinds of paid work outside sessions that staff log on their
-// My pay page (Carla, 18 Nov 2026), with the words shown for each. The
+// My Pay page (Carla, 18 Nov 2026), with the words shown for each. The
 // database keeps the same list (see 20261120800200_work_outside_sessions.sql).
 
 // One kind of work: its saved name, its words, a short help line, and

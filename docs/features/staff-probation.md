@@ -8,7 +8,9 @@ review: track probation in the app and remind her when someone is due.
 - **Tutors** finish probation at **3 months or 30 completed sessions**,
   whichever comes first.
 - **Admin staff** (for example the new admin role) finish probation at
-  **3 months or 30 approved hours**, whichever comes first.
+  **3 months or 40 approved hours** (one full-time work week, 8 hours x
+  5 days), whichever comes first. Carla changed this from 30 hours on
+  22 Nov 2026 (migration `20261123700100_probation_admin_40_hours.sql`).
 - The app **reminds Carla** (the owner) when a probation review is due, so
   no review is missed while she is busy tutoring and running the business.
 
@@ -41,14 +43,14 @@ review: track probation in the app and remind her when someone is due.
   - admin staff: approved admin hours from My pay (hours still waiting for
     approval do not count yet).
 - **Due date**: the earlier of 3 months after the start and the day the
-  30th session or hour was reached. If the owner extends a probation, it is
+  30th session (tutors) or 40th hour (admin staff) was reached. If the owner extends a probation, it is
   due on the new date instead.
 - **Daily run** (`/api/probation/cron`, about 7:30am Adelaide time):
   - sets up a probation for any tutor or admin (never the owner) whose pay
     details have a start date in the last 3 months and who has no record
     for that role yet;
   - sends the owner one app notice when a probation becomes due, saying why
-    (3 months, 30 sessions, 30 hours, or the extended date).
+    (3 months, 30 sessions, 40 hours, or the extended date).
 - **Staff probation page** (`/admin/probation`, owner only): due reviews
   with a form to mark each **passed**, **extended** (new date) or
   **ended**; everyone still on probation with progress; a form to set up a

@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
+Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My Pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
@@ -251,7 +251,7 @@ When a family uploads a school report or marked work, it shows under **New uploa
 In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
 
 ### Check your pay and log extra hours
-1. In the side menu, choose **My pay**. **Your rates** shows your pay rates.
+1. In the side menu, choose **My Pay**. **Your rates** shows your pay rates.
 2. Under **Log hours**, choose **What kind of work?** (for example **Lesson preparation and planning** or **Making learning materials**), then the day and hours. Write **What you did** and **What you finished or achieved**. CLG checks both before approving. Log each pay week's hours by the day after the pay week ends.
    - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
    - The 15 minutes after each session (summary and planning), app training modules, and 1 hour for each term review CLG approves are added for you. Do not log them.
@@ -267,7 +267,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 
 ### Ask CLG a question (Help chat)
 1. Choose **Help chat** at the top of any page (on a phone, tap **Menu** first), then **Ask CLG a question**.
-2. Choose what it is about (for example **My pay (CLG staff)** or **Sessions and bookings**). If it is about one of your students, choose them under **Who is it about?**.
+2. Choose what it is about (for example **My Pay (CLG staff)** or **Sessions and bookings**). If it is about one of your students, choose them under **Who is it about?**.
 3. Give it a short title, write your message and choose **Send to CLG**. CLG replies in the chat, and you get an email saying there is a reply.
 4. CLG may also start a chat with you. A number next to **Help chat** shows chats with a new reply.
 
