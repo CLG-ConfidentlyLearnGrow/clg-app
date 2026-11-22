@@ -57,13 +57,33 @@ select tests.claims(null); -- Signs out, so no one is signed in.
 select private.apply_due_away_dates(); -- Applies away dates that are due (this one isn't yet).
 select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled'), 0, 'not cancelled before the 2 hours are up'); -- Checks: not cancelled before the 2 hours are up.
 update public.away_dates set applies_at = now() - interval '1 minute' where tutor_id = '00000000-0000-0000-0000-000000000013' and applied_at is null; -- Makes the away date due a minute ago.
-select tests.eq(private.apply_due_away_dates(), 1, 'tutor away cancels one session after 2 hours'); -- Checks: tutor away cancels one session after 2 hours.
-select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled' and cancelled_by_role = 'tutor' -- Checks the session is cancelled by the tutor, with a polite reason:
-  and cancel_reason like 'Your tutor is not available that day%'), 1, 'cancelled by the tutor, politely'); -- (one cancelled session).
+-- Since 22 Nov 2026 (Carla) a tutor's away dates no longer cancel sessions on their own: admins are told and decide.
+select tests.eq(private.apply_due_away_dates(), 0, 'tutor away cancels nothing after 2 hours'); -- Checks: nothing is cancelled when the 2 hours are up.
+select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled'), 0, 'the session is still booked'); -- Checks: the session is still on.
+select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks admins are told, and that nothing was cancelled:
+  and kind = 'staff_alert' and title like 'Tutor away%' and body like '%Nothing has been cancelled%' and body like '%Thursday 4pm that week%'), 1, 'admins told, with the tutor''s other times'); -- (one "tutor away" alert).
+select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' and kind = 'tutor_away'), 0, 'the family is not told until an admin decides'); -- Checks: no notice to the family yet.
+-- The tutor and the family cannot see or use the admin list.
+select tests.claims('00000000-0000-0000-0000-000000000013', 'aal2'); -- Signs in as tutor T3.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.fails_with($$select * from public.tutor_away_sessions()$$, 'Only CLG admins', 'tutors cannot see the list'); -- Checks this is refused: a tutor reads the list.
+select tests.fails_with(format($$select public.cancel_for_tutor_away(%L)$$, (select id from public.sessions where booking_id = :'booking' order by starts_at limit 1)), 'Only CLG admins', 'tutors cannot cancel from the list'); -- Checks this is refused: a tutor cancels from the list.
+reset role; -- Goes back to the all-powerful test user.
+-- The owner admin sees the session in the list, and cancels it.
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- Signs in as the owner admin.
+set role authenticated; -- Acts as a signed-in user, so the access rules apply.
+select tests.eq((select count(*) from public.tutor_away_sessions() where tutor_offer = 'Thursday 4pm that week'), 1::bigint, 'admin sees the session on the tutor''s away dates'); -- Checks: one session in the list.
+select tests.eq((select n::bigint from public.to_do_counts() where area = 'sessions' and section = 'away'), 1::bigint, 'the Away dates tab shows a number'); -- Checks: the to-do number is 1.
+select public.cancel_for_tutor_away(session_id) from public.tutor_away_sessions(); -- The admin cancels it.
+select tests.eq((select count(*) from public.tutor_away_sessions()), 0::bigint, 'the list is empty once it is cancelled'); -- Checks: the list is now empty.
+select tests.fails_with(format($$select public.cancel_for_tutor_away(%L)$$, (select id from public.sessions where booking_id = :'booking' order by starts_at limit 1)), 'no longer booked', 'cannot cancel it twice'); -- Checks this is refused: cancelling again.
+reset role; -- Goes back to the all-powerful test user.
+select tests.claims(null); -- Signs out.
+select tests.eq((select count(*) from public.sessions where booking_id = :'booking' and status = 'cancelled' and cancelled_by_role = 'tutor' and cancel_reason_kind = 'away' -- Checks the session is cancelled for the tutor, with a polite reason:
+  and cancel_reason like 'Your tutor is not available that day%'), 1, 'cancelled for the tutor, politely'); -- (one cancelled session).
+select tests.eq((select count(*) from public.sessions x join public.away_dates a on a.tutor_id = x.tutor_id where x.booking_id = :'booking' and x.status = 'cancelled' and x.cancelled_at = a.created_at), 1, 'cancelled from when the dates were entered (full credit)'); -- Checks: credit counts from when the dates were entered.
 select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-000000000003' -- Checks the family is told, with the tutor's other times:
-  and kind = 'tutor_away' and body like '%Thursday 4pm that week%' and body like '%Requests%'), 1, 'family told, with the tutor''s other times'); -- (one notice mentioning Thursday 4pm and Requests).
-select tests.eq((select count(*) from public.session_notices where account_id = '00000000-0000-0000-0000-0000000000a0' -- Checks admins are told:
-  and kind = 'staff_alert' and title like 'Tutor away%'), 1, 'admins told'); -- (one "tutor away" alert).
+  and kind = 'tutor_away' and body like '%Thursday 4pm that week%' and body like '%Requests%' and body not like '%''t %'), 1, 'family told, with the tutor''s other times'); -- (one notice mentioning Thursday 4pm and Requests, with no contractions).
 select tests.eq(private.apply_due_away_dates(), 0, 'applied once'); -- Checks: applied once.
 
 select tests.claims('00000000-0000-0000-0000-000000000014', 'aal2'); -- Signs in as test account ...14 with two-step sign-in.

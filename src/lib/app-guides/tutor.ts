@@ -149,8 +149,9 @@ If CLG wants to move a student's sessions to you (or change the day and time), a
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.
 2. Choose yourself, then the first and last day away.
-3. Add times you could offer instead that week, if any. These are shared with the families whose sessions are cancelled.
-4. Choose **Save away dates**. Sessions on those days are cancelled and families are told.
+3. Add times you could offer instead that week, if any. CLG uses them when it contacts the families.
+4. Choose **Save away dates**. New bookings skip those days. If you made a mistake, choose **Remove** within 2 hours.
+5. After 2 hours, CLG is told about your booked sessions on those days. CLG contacts each family to offer another time or tutor, or cancels the session.
 
 ### Offer a time for a family's request
 1. In **Sessions**, choose **Requests**.
@@ -179,7 +180,7 @@ Tip: Only CLG's office team sees your answers. The family does not, and you do n
 4. If you share the link by mistake, choose **Make a new link**.
 
 ### Notices and reminders
-In **Sessions**, choose **Notices**. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (it moves to the **Done** list at the bottom; choose **Not done yet: put it back** if you ticked one by mistake). Open **Reminder settings** to choose when your first reminder comes before each session. Nothing is sent between 9pm and 5am your local time.
+In **Sessions**, choose **Notices**. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (it moves to the **Done** list at the bottom; choose **Not done yet: put it back** if you ticked one by mistake). You get a reminder 24 hr before each session and another 1 hr before. Nothing is sent between 9pm and 5am your local time.
 
 ### Get pop-up notifications on your phone or computer
 Pop-ups tell you straight away about reminders, booking news, progress note reminders and help chat replies, even when the app is closed or you have been signed out. They never show a student's name or other details, so they are safe on a locked screen.

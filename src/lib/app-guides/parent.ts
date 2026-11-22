@@ -214,10 +214,10 @@ Tip: Only CLG's office team sees your answers. The tutor does not.
 2. Choose the tutor and write why. Only CLG sees the reason, and the tutor is not told.
 3. Choose **Block this tutor**. The app stops suggesting that tutor for your child, and CLG will contact you to talk it through.
 
-### Read and tick off notices, and choose when reminders come
+### Read and tick off notices
 1. In **Sessions**, choose **Notices** to read news about bookings and reminders before each session.
 2. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it. Done notices move to the **Done** list at the bottom (choose **Not done yet: put it back** if you ticked one by mistake).
-3. Open **Reminder settings** to choose when your first reminder comes (48 hr before by default). A final reminder always comes 1 hr before.
+3. You get a reminder 24 hr before each session and another 1 hr before.
 
 Tip: Nothing is sent between 9pm and 5am your local time.
 
@@ -293,6 +293,7 @@ Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans
 ### Credit and sessions on hold
 - Your credit is shown on your Billing card. Credit comes off your next invoice.
 - If you see **Sessions on hold**, an invoice is overdue. Once the person who pays has paid it, sessions start again straight away. Your tutor is told sessions are on hold, but not why.
+- While sessions are on hold, the person who pays gets a notice 48 hr before each session. If the payment is not made, or a payment plan agreed with CLG, at least 2 hr before the session, that session is cancelled with no charge, and CLG contacts the person who pays to find a time to talk with Carla about how we can help.
 
 ## Help, privacy and safety
 

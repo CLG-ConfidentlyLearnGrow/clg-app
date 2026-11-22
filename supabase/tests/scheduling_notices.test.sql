@@ -49,8 +49,8 @@ select tests.eq((select count(*) from public.session_notices where session_id = 
   and deliver_at = :'afternoon'::timestamptz - interval '1 hour'), 2, 'final reminder 1 hr before'); -- (two, one each for parent and tutor).
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_pm' and kind = 'reminder_first' -- Checks the parent's first reminder is 24 hr before:
   and account_id = '00000000-0000-0000-0000-000000000003' and deliver_at = :'afternoon'::timestamptz - interval '24 hours'), 1, 'parent''s first reminder at 24 hr'); -- (their setting).
-select tests.eq((select count(*) from public.session_notices where session_id = :'s_pm' and kind = 'reminder_first' -- Checks the tutor's first reminder is 48 hr before:
-  and account_id = '00000000-0000-0000-0000-000000000013' and deliver_at = :'afternoon'::timestamptz - interval '48 hours'), 1, 'tutor''s first reminder at 48 hr (default)'); -- (the default).
+select tests.eq((select count(*) from public.session_notices where session_id = :'s_pm' and kind = 'reminder_first' -- Checks the tutor's first reminder is 24 hr before too (everyone, since 22 Nov 2026):
+  and account_id = '00000000-0000-0000-0000-000000000013' and deliver_at = :'afternoon'::timestamptz - interval '24 hours'), 1, 'tutor''s first reminder at 24 hr (everyone)'); -- (24 hours for everyone).
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_final' -- Checks a 6am session's final reminder comes 1 hr before, at 5am:
   and deliver_at = :'morning'::timestamptz - interval '1 hour'), 2, '6am session: final reminder at 5am, as quiet hours end at 5am'); -- (two, one each for parent and tutor).
 select tests.eq((select count(*) from public.session_notices where session_id = :'s_am' and kind = 'reminder_first' -- Checks the first reminder for the 6am session stays at 6am:

@@ -127,7 +127,13 @@ When a family blocks a tutor, or a tutor blocks a student, it shows in **Session
 3. Booking that subject takes the student off the waitlist.
 
 ### Add away dates for a student or tutor
-In **Sessions**, choose **Away dates**, choose who will be away and the dates, and choose **Save away dates**. Booked sessions on those days are cancelled.
+In **Sessions**, choose **Away dates**, choose who will be away and the dates, and choose **Save away dates**. A student's booked sessions on those days are cancelled. A tutor's are not: see below.
+
+### Sort out sessions when a tutor is away
+A tutor's away dates do not cancel sessions on their own. Two hours after a tutor adds away dates, you get a **Tutor away** notice listing the booked sessions on those days, and a number shows on **Away dates**.
+1. In **Sessions**, choose **Away dates**. **Sessions during tutor away dates** lists each one, with any times the tutor can offer instead.
+2. Contact the family and offer another time or another tutor. Changing the session to another time or tutor takes it off the list.
+3. If nothing suits, choose **Cancel session**. The family gets full credit and is told, with the tutor's other times and how to ask for another time or tutor.
 
 ### Book again answers
 About 3 weeks before each student's book-till date (or the booking's last date, if that comes first), families are asked whether they want to keep going. They choose a new book-till date and answer the school holiday and public holiday questions again. If they choose the same again, the tutor is asked to confirm. See their answers in **Sessions**, **Book again**, and arrange any changes they asked for.
@@ -175,6 +181,8 @@ If a family's or student's link ran out before they used it, open **Send a new l
 
 ### See which families are paused
 **Families paused for an overdue bill** lists families whose sessions are on hold until they pay. Do not discuss the bill with the tutor: tutors are only told sessions are on hold.
+
+While a family is on hold, the people who pay get a notice 48 hr before each session. If the payment is not made, or the pause lifted with a payment plan, at least 2 hr before the session, the app cancels that session with no charge and tells the family and tutor (the tutor is not told why). You get a **Session cancelled for no payment** notice: set up a meeting between Carla and the person who pays, to talk about whether anything needs to change, how to support them, and how to stop it happening again.
 `;
 
 // Matching students with tutors (front-desk admins).
