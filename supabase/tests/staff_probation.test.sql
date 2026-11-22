@@ -3,7 +3,7 @@
 --      staff (never the owner);
 --   2. a tutor is due at 30 completed sessions if that comes before 3 months,
 --      and the owner is reminded once;
---   3. admin staff are due at 30 approved hours;
+--   3. admin staff are due at 40 approved hours (one full-time work week);
 --   4. anyone is due at 3 months if the target has not been reached;
 --   5. the owner records passed, extended or ended, and an extension
 --      reminds again on the new date;
@@ -18,6 +18,8 @@
 begin;
 -- Runs the update again: it must be safe to run twice.
 \ir ../migrations/20261123400100_staff_probation.sql
+-- (admin probation changed to 40 hours)
+\ir ../migrations/20261123700100_probation_admin_40_hours.sql
 
 -- Keeps today and Cara's student id.
 select private.billing_today() as today, (select id from public.students where full_name = 'Cara One') as cara \gset
@@ -37,6 +39,13 @@ select tests.claims(null); -- clears who is signed in (acts as the daily run)
 select tests.eq(public.staff_probation_daily(), 0, 'nobody is due on the first run'); -- runs the daily step
 select tests.eq((select count(*) from public.staff_probations where account_id = '00000000-0000-0000-0000-000000000011' and kind = 'tutor'), 1::bigint, 'a new tutor gets a record'); -- T1
 select tests.eq((select count(*) from public.staff_probations where account_id = '00000000-0000-0000-0000-0000000000b0' and kind = 'admin'), 1::bigint, 'new admin staff get a record'); -- Sam
+select tests.eq((select target from public.staff_probations where account_id = '00000000-0000-0000-0000-0000000000b0' and kind = 'admin'), 40, 'admin staff need 40 hours (one full-time week)'); -- Sam's target
+select tests.eq((select target from public.staff_probations where account_id = '00000000-0000-0000-0000-000000000011' and kind = 'tutor'), 30, 'tutors still need 30 sessions'); -- T1's target
+-- An admin record still at the old 30 hours moves to 40 when the change is run.
+update public.staff_probations set target = 30 where account_id = '00000000-0000-0000-0000-0000000000b0'; -- pretends Sam's record is from before the change
+\ir ../migrations/20261123700100_probation_admin_40_hours.sql
+select tests.eq((select target from public.staff_probations where account_id = '00000000-0000-0000-0000-0000000000b0'), 40, 'old admin records move to 40 hours'); -- moved
+select tests.eq((select target from public.staff_probations where account_id = '00000000-0000-0000-0000-000000000011'), 30, 'tutor records are not changed'); -- unchanged
 select tests.eq((select count(*) from public.staff_probations where account_id = '00000000-0000-0000-0000-000000000012'), 0::bigint, 'someone who started a year ago is not set up'); -- T2
 select tests.eq((select count(*) from public.staff_probations where account_id = '00000000-0000-0000-0000-0000000000a0'), 0::bigint, 'the owner is never set up'); -- the owner
 select public.staff_probation_daily() as again \gset
@@ -77,20 +86,21 @@ select tests.eq(public.staff_probation_daily(), 0, 'running again sends nothing'
 select tests.eq((select count(*) from public.session_notices where title = 'Probation review due: Tess Tutor'), 1::bigint, 'the owner is told only once'); -- no second notice
 
 -- ---------------------------------------------------------------------------
--- 3. Admin staff reaching 30 hours
+-- 3. Admin staff reaching 40 hours
 -- ---------------------------------------------------------------------------
--- 29 approved hours, plus 5 hours still waiting for approval (not counted).
+-- 39 approved hours, plus 1 hour still waiting for approval (not counted).
 insert into public.billing_hour_logs (account_id, work_date, minutes, note, status) values -- Sam's hours:
   ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 15, 600, 'Office work', 'approved'), -- 10 hours
   ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 10, 600, 'Office work', 'approved'), -- 10 hours
+  ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 8, 600, 'Office work', 'approved'), -- 10 hours
   ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 6, 540, 'Office work', 'approved'), -- 9 hours
-  ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 2, 300, 'Office work', 'submitted'); -- 5 hours, not approved yet
+  ('00000000-0000-0000-0000-0000000000b0', :'today'::date - 2, 60, 'Office work', 'submitted'); -- 1 hour, not approved yet
 select tests.claims(null); -- acts as the daily run
-select tests.eq(public.staff_probation_daily(), 0, 'not due at 29 approved hours'); -- nothing yet
-update public.billing_hour_logs set status = 'approved' where account_id = '00000000-0000-0000-0000-0000000000b0' and status = 'submitted'; -- the 5 hours are approved
-select tests.eq(public.staff_probation_daily(), 1, 'due once 30 hours are approved'); -- reminder sent
-select tests.eq((select count(*) from public.session_notices where title = 'Probation review due: Sam Staff' and body like '%(admin)%reached 30 hours on%'), 1::bigint, 'the admin reminder says 30 hours'); -- the notice
-select tests.eq((select (pr.reached_on - :'today'::date)::bigint from public.staff_probations p, private.staff_probation_progress(p.id) pr where p.account_id = '00000000-0000-0000-0000-0000000000b0'), -2, 'reached on the day the 30th hour was worked'); -- 2 days ago
+select tests.eq(public.staff_probation_daily(), 0, 'not due at 39 approved hours'); -- nothing yet
+update public.billing_hour_logs set status = 'approved' where account_id = '00000000-0000-0000-0000-0000000000b0' and status = 'submitted'; -- the last hour is approved
+select tests.eq(public.staff_probation_daily(), 1, 'due once 40 hours are approved'); -- reminder sent
+select tests.eq((select count(*) from public.session_notices where title = 'Probation review due: Sam Staff' and body like '%(admin)%reached 40 hours on%'), 1::bigint, 'the admin reminder says 40 hours'); -- the notice
+select tests.eq((select (pr.reached_on - :'today'::date)::bigint from public.staff_probations p, private.staff_probation_progress(p.id) pr where p.account_id = '00000000-0000-0000-0000-0000000000b0'), -2, 'reached on the day the 40th hour was worked'); -- 2 days ago
 
 -- ---------------------------------------------------------------------------
 -- 4. Three months with fewer than 30 sessions

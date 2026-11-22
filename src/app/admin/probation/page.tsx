@@ -1,6 +1,7 @@
 // Summary: the Staff probation page, for the owner only (Carla, 20 Nov 2026).
 // Tutors finish probation at 3 months or 30 sessions, and admin staff at
-// 3 months or 30 hours, whichever comes first. This page shows:
+// 3 months or 40 hours (one full-time work week), whichever comes first
+// (Carla changed 30 hours to 40 hours on 22 Nov 2026). This page shows:
 //   * probations due for review now, with a form to mark each passed,
 //     extended (with a new review date) or ended;
 //   * everyone still on probation, with their progress and due date;
@@ -51,7 +52,7 @@ const STATE_WORDS: Record<Probation["state"], string> = { // state -> words:
   ended: "Ended", // ended.
 }; // End of the words.
 
-// "12 of 30 sessions" or "12.5 of 30 hours".
+// "12 of 30 sessions" or "12.5 of 40 hours".
 function progress(p: Probation): string { // Takes the probation.
   const unit = p.kind === "tutor" ? "sessions" : "hours"; // Sessions for tutors, hours for admin staff.
   return `${Number(p.done)} of ${p.target} ${unit}`; // The count and the target.
@@ -108,7 +109,7 @@ export default async function ProbationPage() { // The page itself.
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="probation">{/* the dashboard frame, */}
       <div className="space-y-6">{/* the page's parts, with space between: */}
-        <Card title="Staff probation" description="Tutors finish probation at 3 months or 30 completed sessions, and admin staff at 3 months or 30 approved hours, whichever comes first. You get an app notice when someone is due for review.">{/* an explanation card: */}
+        <Card title="Staff probation" description="Tutors finish probation at 3 months or 30 completed sessions, and admin staff at 3 months or 40 approved hours (one full-time work week), whichever comes first. You get an app notice when someone is due for review.">{/* an explanation card: */}
           <p className="text-sm">The app sets up a probation by itself for new tutors and admin staff, from the start date on their pay details. Someone who is both a tutor and an admin has a probation for each role.</p>{/* how records are set up, */}
           <p className="mt-2 text-sm">Only you (the owner) can see this page.</p>{/* and who sees it. */}
         </Card>{/* End of the explanation. */}
@@ -153,7 +154,7 @@ export default async function ProbationPage() { // The page itself.
             </Select>{/* End of who. */}
             <Select label="Role" name="kind" defaultValue="tutor">{/* which role: */}
               <option value="tutor">Tutor (3 months or 30 sessions)</option>{/* tutor, */}
-              <option value="admin">Admin (3 months or 30 hours)</option>{/* or admin. */}
+              <option value="admin">Admin (3 months or 40 hours)</option>{/* or admin. */}
             </Select>{/* End of the role. */}
             <Field label="Start date" name="started_on" type="date" hint="Leave blank to use the start date on their pay details, or today if there is none." />{/* the start date, */}
             <TextArea label="Private note (optional)" name="note" maxLength={1000} rows={2} />{/* and a note. */}
