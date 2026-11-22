@@ -58,7 +58,6 @@ import { // The scheduling forms:
   MakeupConfirmForm, // confirm a picked make-up time,
   ConfirmTimesForm, // confirm a session's times,
   EndTimeForm, // change a session's end time,
-  NoticeSettingsForm, // notice settings,
   OutcomeForm, // record what happened in a session,
   RunningLateForm, // tell the family and CLG the tutor is running late,
   PlacesForm, // where a tutor teaches,
@@ -1733,7 +1732,7 @@ async function TimesSection() { // The times to check section (admins).
 // ---------------------------------------------------------------------------
 async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string; unread: number; isAdmin: boolean }) { // The notices section (with the unread count, and whether they can change quiet hours).
   const supabase = await createClient(); // Connects to the database.
-  const [noticesRes, doneRes, settingsRes, quietRes, devicesRes] = await Promise.all([ // Reads five things at once:
+  const [noticesRes, doneRes, quietRes, devicesRes] = await Promise.all([ // Reads four things at once:
     supabase // their notices not yet ticked off as done:
       .from("session_notices") // from session_notices,
       .select("id, title, body, deliver_at, read_at") // these details,
@@ -1746,11 +1745,6 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
       .not("done_at", "is", null) // done,
       .order("done_at", { ascending: false }) // most recently done first,
       .limit(20), // up to 20.
-    supabase // their reminder settings:
-      .from("notice_settings") // from notice_settings,
-      .select("first_reminder_hours") // the first reminder time,
-      .eq("account_id", viewerId) // for this person,
-      .maybeSingle(), // if any.
     supabase // CLG's quiet hours:
       .from("quiet_hours_settings") // from the one shared setting,
       .select("starts_at, ends_at") // when they start and end,
@@ -1823,11 +1817,11 @@ async function NoticesSection({ viewerId, unread, isAdmin }: { viewerId: string;
       <Card title="Pop-up notifications">{/* the pop-up notifications card (Carla, 18 Nov 2026): */}
         <PushSettings devices={(devicesRes.data ?? []) as PushDevice[]} />{/* turn pop-ups on or off for this device, see other devices, and send a test. */}
       </Card>{/* End of the card. */}
-      <Card collapsible defaultOpen={false} title="Reminder settings">{/* the reminder settings fold-up card: */}
-        <NoticeSettingsForm // the settings form:
-          settings={settingsRes.data ?? { first_reminder_hours: 48 }} // their settings (or 48 hr before, if not set),
-          quiet={quietWords} // and the quiet hours in words.
-        />{/* End of the form. */}
+      <Card collapsible defaultOpen={false} title="Reminders">{/* the reminders fold-up card (Carla, 22 Nov 2026: 24 hours and 1 hour for everyone): */}
+        <p className="text-sm text-zinc-600">{/* A note: */}
+          Everyone gets a reminder 24 hours before each session and another 1 hour before. Nothing arrives between {quietWords}, your
+          local time. Reminders and notices show here in the app and as pop-ups if you turn them on; CLG does not send them by email.{/* when reminders come, and quiet hours. */}
+        </p>{/* End of the note. */}
       </Card>{/* End of the card. */}
       {isAdmin && ( // Owner and operations admins also see:
         <Card // a card:

@@ -144,7 +144,7 @@ About 3 weeks before your book-till date, you get a notice called **Book again?*
 Tip: Most libraries are closed on public holidays, so a library session that falls on one does not go ahead. **Requests** shows **library closed** for those weeks, and you can ask for a one-off at another time that week.
 
 ### Notices and reminders
-In **Sessions**, choose **Notices** to read reminders and news. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (it moves to the **Done** list at the bottom). Open **Reminder settings** to choose when your first reminder comes. Nothing is sent between 9pm and 5am your time.
+In **Sessions**, choose **Notices** to read reminders and news. Under a notice, choose **Mark as seen** once you have read it, or **Mark as done** once you have dealt with it (it moves to the **Done** list at the bottom). You get a reminder 24 hr before each session and another 1 hr before. Nothing is sent between 9pm and 5am your time.
 
 ### Get pop-up notifications on your phone or computer
 Pop-ups tell you straight away about reminders, booking news and help chat replies, even when the app is closed or you have been signed out. They never show names or details.
