@@ -11,6 +11,9 @@
 begin;
 -- Runs this database change again (checks it can run twice).
 \ir ../migrations/20261121200200_contract_documents_in_app.sql
+-- Runs the 22 Nov 2026 policy versions change again too: it replaces the wording-save function
+-- the line above re-creates, and checks it can also run twice.
+\ir ../migrations/20261124710800_policy_versions_read_again.sql
 
 -- The two policies now open their app pages, and remember their old addresses.
 select tests.eq((select count(*) from public.employment_contract_documents where key = 'child_safe_policy' and url = '/policies/child_safe_policy' and 'https://claude.ai/artifact/X9PAk2dXuhFKpcwsPn1cpC' = any (also_known_as)), 1, 'Child Safe Policy opens its app page'); -- checks the policy link

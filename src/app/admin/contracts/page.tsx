@@ -43,7 +43,7 @@ type Contract = { // Its fields:
 }; // End of the shape.
 
 // One acknowledgement, as read from the database.
-type Ack = { statement: string; statement_title: string; statement_url: string; typed_name: string; acknowledged_at: string }; // Which document, its name and link, the typed name, and when.
+type Ack = { statement: string; statement_version: number; statement_title: string; statement_url: string; typed_name: string; acknowledged_at: string }; // Which document and version, its name and link, the typed name, and when.
 
 // The filters along the top of the list.
 const FILTERS = [ // Each filter's id, words and the statuses it shows:
@@ -78,7 +78,7 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
   if (id) { // A contract is open:
     const [{ data }, { data: acks }, { data: pay }, { data: docs }] = await Promise.all([ // reads four things at once:
       supabase.from("employment_contracts").select("*").eq("id", id).maybeSingle(), // the contract,
-      supabase.from("employment_contract_acknowledgements").select("statement, statement_title, statement_url, typed_name, acknowledged_at").eq("contract_id", id).order("acknowledged_at"), // its acknowledgements,
+      supabase.from("employment_contract_acknowledgements").select("statement, statement_version, statement_title, statement_url, typed_name, acknowledged_at").eq("contract_id", id).order("statement_version", { ascending: false }), // its acknowledgements, newest version first,
       supabase.rpc("employment_contract_pay_evidence", { p_id: id }), // pay sent since it was sent,
       supabase.from("employment_contract_documents").select("key, title, url, also_known_as"), // and the document links (with their older addresses).
     ]); // End of the reads.
@@ -106,11 +106,11 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
                 <SubHeading>Documents acknowledged</SubHeading>{/* A heading: */}
                 <ul className="space-y-1 text-sm">{/* each document: */}
                   {c.statements.map((key) => { // for each document the contract needs:
-                    const a = ackRows.find((r) => r.statement === key); // its acknowledgement, if made,
+                    const a = ackRows.find((r) => r.statement === key); // its newest acknowledgement, if made,
                     return ( // shows:
                       <li key={key} className={a ? "text-teal-800" : "text-zinc-500"}>{/* a line, green when done: */}
                         {a ? "✓" : "○"} {a ? <a href={a.statement_url} target="_blank" rel="noreferrer" className="underline">{a.statement_title}</a> : key}{/* a tick or circle and the document, */}
-                        {a ? `: acknowledged ${stamp(a.acknowledged_at)} as "${a.typed_name}"` : ": not yet"}{/* and when, as whom. */}
+                        {a ? `: version ${a.statement_version} acknowledged ${stamp(a.acknowledged_at)} as "${a.typed_name}"` : ": not yet"}{/* and which version, when, as whom. */}
                       </li> // End of the line.
                     ); // End of what's shown.
                   })}{/* End of the documents. */}
@@ -154,11 +154,13 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
 
   // The list, and the send form.
   const filter = FILTERS.find((f) => f.id === params.status) ?? FILTERS[0]; // The filter chosen (waiting on staff by default).
-  const [{ data: rows }, { data: templates }, { data: staff }] = await Promise.all([ // Reads three things at once:
+  const [{ data: rows }, { data: templates }, { data: staff }, { data: rereadRows }] = await Promise.all([ // Reads four things at once:
     supabase.from("employment_contracts").select("id, staff_name, contract_type, employment, status, sent_at, signed_at, completed_at, xero_invite_at").in("status", filter.statuses).order("sent_at", { ascending: false }).limit(300), // the contracts in this filter, newest first,
     canSend ? supabase.from("employment_contract_templates").select("id, contract_type, title, body, version").eq("status", "published").order("contract_type") : Promise.resolve({ data: [] }), // the published templates (for the send form),
-    canSend ? supabase.rpc("staff_directory") : Promise.resolve({ data: [] }), // and the staff list (for the send form).
+    canSend ? supabase.rpc("staff_directory") : Promise.resolve({ data: [] }), // the staff list (for the send form),
+    canSend ? supabase.rpc("policy_rereads_outstanding") : Promise.resolve({ data: [] }), // and who still has a new policy version to read (Carla, 22 Nov 2026).
   ]); // End of the reads.
+  const rereads = (rereadRows ?? []) as { contract_id: string; staff_name: string; title: string; version: number; version_at: string | null }[]; // Who still has a new version to read.
   const contracts = (rows ?? []) as Pick<Contract, "id" | "staff_name" | "contract_type" | "employment" | "status" | "sent_at" | "signed_at" | "completed_at" | "xero_invite_at">[]; // The contracts listed.
   const people = ((staff ?? []) as (SendStaff & { left_on: string | null })[]) // The staff list:
     .filter((s) => !s.left_on && (s.is_tutor || s.is_admin)) // current tutors and admins only,
@@ -174,6 +176,18 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
             {viewer.level === "owner" && <p className="mt-4 text-sm"><TextLink href="/admin/contracts/templates">Contract templates and document links</TextLink></p>}{/* and, for the owner, the templates link. */}
           </Card> // End of the send card.
         )}{/* End of the send part. */}
+        {rereads.length > 0 && ( // Someone still has a new policy version to read:
+          <Card title="New policy versions still to read" description="These staff have not yet read and ticked the newest version of a policy linked to their contract. They see it on My contract, with a number on the menu.">{/* a card: */}
+            <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+              {rereads.map((r) => ( // for each person and policy:
+                <li key={`${r.contract_id}-${r.title}`} className="flex flex-wrap items-center justify-between gap-2 py-2 first:pt-0">{/* a row: */}
+                  <span><span className="font-medium">{r.staff_name}</span> · {r.title}, version {r.version}{r.version_at ? ` (since ${shortDate(r.version_at)})` : ""}</span>{/* who, which policy and since when, */}
+                  <TextLink href={`/admin/contracts?id=${r.contract_id}`}>Open contract</TextLink>{/* and a link to their contract. */}
+                </li> // End of the row.
+              ))}{/* End of the list. */}
+            </ul>{/* End of the list. */}
+          </Card> // End of the card.
+        )}{/* End of the reread part. */}
         <Card title="Contracts" description="Every contract sent to staff. Open one to see its wording, the signature record and the Xero step.">{/* the list card: */}
           <div className="mb-4 flex flex-wrap gap-2">{/* the filter buttons (wrap on small screens): */}
             {FILTERS.map((f) => ( // for each filter:

@@ -70,7 +70,7 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
   // The list of templates and the document links.
   const [{ data: rows }, { data: docs }] = await Promise.all([ // Reads two things at once:
     supabase.from("employment_contract_templates").select("id, contract_type, version, title, status, updated_at, published_at").order("contract_type").order("version", { ascending: false }), // every template version,
-    supabase.from("employment_contract_documents").select("key, title, url, casual_only, body, approved_at, country_urls").order("sort"), // and the documents staff acknowledge (with any wording kept in the app).
+    supabase.from("employment_contract_documents").select("key, title, url, casual_only, body, approved_at, country_urls, version, version_note").order("sort"), // and the documents staff acknowledge (with any wording kept in the app, and each one's version).
   ]); // End of the reads.
   const templates = (rows ?? []) as Omit<Template, "body">[]; // The template versions.
   return ( // Shows:
@@ -101,7 +101,7 @@ export default async function ContractTemplatesPage({ searchParams }: PageProps<
         })}{/* End of the kinds. */}
         <Card title="Documents staff acknowledge" description="After signing, staff open each of these and acknowledge it with their typed name. Casual-only documents are skipped for part-time and full-time staff. Each acknowledgement keeps the name and link it was given at the time. The main link is for Australia; links for other countries are kept ready for when CLG works there.">{/* the documents card: */}
           <div className="space-y-6">{/* each document's form, with space between: */}
-            {((docs ?? []) as { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null }[]).map((d) => <DocumentForm key={d.key} doc={d} />)}{/* one form per document. */}
+            {((docs ?? []) as { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null; version: number; version_note: string | null }[]).map((d) => <DocumentForm key={d.key} doc={d} />)}{/* one form per document. */}
           </div>{/* End of the forms. */}
         </Card>{/* End of the documents card. */}
       </div>{/* End of the cards. */}

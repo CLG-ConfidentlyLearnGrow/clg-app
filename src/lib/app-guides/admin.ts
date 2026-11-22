@@ -244,7 +244,7 @@ Choose **Handbooks** in the side menu, and search for a word. **Something has ha
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
 
 ### Sign your own contract
-When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it.
+When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it. When a policy gets a new version, **My contract** shows a number: open your contract, read the new version and tick it again.
 
 ### Log your office hours
 1. In the side menu, choose **My Pay**.
@@ -320,7 +320,8 @@ Open **Contracts** in the side menu. Staff read and sign their contract in the a
 
 ### Follow a contract
 1. **Waiting on staff** lists contracts not yet signed or not yet finished. Choose **Open** to see where it is up to.
-2. The contract page shows the exact wording sent, when and how they signed, each document they acknowledged, and any pay sent to Xero since (accepting pay is also acceptance of the contract).
+2. The contract page shows the exact wording sent, when and how they signed, each document they acknowledged (and which version), and any pay sent to Xero since (accepting pay is also acceptance of the contract).
+3. **New policy versions still to read** (at the top of **Contracts**) lists staff who have not yet read and ticked the newest version of a policy. Choose **Open contract** to check, and remind them if needed.
 
 ### Send the Xero self-setup invite
 Once a contract is signed, the **Xero** column says **To do**, and the number next to **Contracts** counts these.
@@ -582,6 +583,7 @@ In **Privacy and records**:
 3. Choose **Save as a new draft version**, check the **Preview**, then tick the box and choose **Publish this version**. Contracts already sent keep their own wording.
 4. Under **Documents staff acknowledge**, each document shows **Link set** when it has a link, and **Open link** lets you check it opens the right document. Change the name or **Link (Australia)**, add any **Links for other countries** (one per line, for example NZ then the link), then choose **Save name and links**.
 5. The Child Safe Policy and the Staff Code of Conduct are kept in the app, so contracts show them as buttons that open a page in the app. Paste each one's wording into **Wording** (from its Claude Doc: Export, then Markdown), choose **Save wording**, and tick **Approved** once the wording is final. Until then, staff see a draft label on the page.
+6. When a document changes in a way staff need to know about, save it as a new version. For a document kept in the app, tick **This is a new version** (it must also be approved) and add **What changed**, then choose **Save wording**. For a document kept elsewhere (such as a Fair Work statement), tick the box and choose **Ask staff to read the new version**. Every staff member whose contract includes it is asked to read and tick it again, and each tick is kept. Leave the box unticked for small fixes such as spelling.
 
 ### Staff leaving CLG
 In the **Staff directory**, open the person and use the "left CLG" panel. Their matches end and their records are kept for 7 years. Then follow the checklist shown (final pay, Microsoft 365, materials, Working with Children Check link).

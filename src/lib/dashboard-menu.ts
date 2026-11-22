@@ -121,9 +121,12 @@ async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // N
   const supabase = await createClient(); // Connects to the database.
   const { data: me } = await supabase.auth.getUser(); // Who is signed in.
   if (!me.user) return { any: false }; // Nobody: no tab.
-  const { data, error } = await supabase.from("employment_contracts").select("status").eq("account_id", me.user.id); // The statuses of their own contracts.
+  const [{ data, error }, { data: rereads }] = await Promise.all([ // Reads two things at once:
+    supabase.from("employment_contracts").select("status").eq("account_id", me.user.id), // the statuses of their own contracts,
+    supabase.rpc("my_policy_rereads_count"), // and how many policies have a new version for them to read (Carla, 22 Nov 2026).
+  ]); // End of the reads.
   if (error || !data?.length) return { any: false }; // None (or a problem): no tab.
-  const waiting = data.filter((c) => c.status === "sent" || c.status === "signed").length; // How many need them.
+  const waiting = data.filter((c) => c.status === "sent" || c.status === "signed").length + Number(rereads ?? 0); // How many need them (contracts to finish, plus new policy versions to read).
   return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
 } // End of myContracts.
 
