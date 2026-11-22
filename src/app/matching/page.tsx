@@ -104,7 +104,7 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
   const isFull = FULL_ADMIN.includes(level); // Whether they are a full admin.
 
   const params = await searchParams; // The address's settings.
-  const view = ["reports", "gaps"].includes(one(params.view)) ? "reports" : "queue"; // Which view: reports (old "gaps" links too) or the queue.
+  const view = ["reports", "gaps"].includes(one(params.view)) ? "reports" : one(params.view) === "tutor" ? "tutor" : "queue"; // Which view: reports (old "gaps" links too), a tutor's free times (Carla, 22 Nov 2026), or the queue.
   const stage = STAGES.find((s) => s.id === one(params.stage))?.id ?? "needs_tutor"; // Which stage (needs a tutor if none or unknown).
   const search = one(params.q).slice(0, 100); // The search words (up to 100 letters).
   const year = (YEAR_LEVELS as readonly string[]).includes(one(params.year)) ? one(params.year) : ""; // The year level filter (only a real year level).
@@ -177,6 +177,12 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
             >{/* (end of the link's settings) */}
               Students waiting{/* its words, */}
             </Link>{/* end of the link. */}
+            <Link // the tutor-side link (Carla, 22 Nov 2026):
+              href="/matching?view=tutor" // to a tutor's free times,
+              className={`rounded-full border px-3 py-1 ${view === "tutor" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`} // highlighted when open.
+            >{/* (end of the link's settings) */}
+              Fill a tutor&apos;s times{/* its words, */}
+            </Link>{/* end of the link. */}
             <Link // the reports link:
               href="/matching?view=reports" // to the reports,
               className={`rounded-full border px-3 py-1 ${view === "reports" ? "border-teal-700 bg-teal-50" : "border-zinc-300 bg-white"}`} // highlighted when open.
@@ -188,7 +194,9 @@ export default async function MatchingPage({ searchParams }: PageProps<"/matchin
 
         <UrgentRematchBox />{/* Students who urgently need a new tutor, first (shows nothing when there are none). */}
 
-        {view === "reports" ? ( // If the reports view is open:
+        {view === "tutor" ? ( // If the tutor-side view is open:
+          <TutorFillView tutorId={one(params.tutor)} />
+        ) : view === "reports" ? ( // If the reports view is open:
           <div className="space-y-4">{/* the reports, one under another: */}
             <ResponseTimesCard />{/* how long tutors and families take to answer, */}
             <GapsView />{/* the gaps, */}
@@ -697,6 +705,92 @@ function Detail({ label, children }: { label: string; children: ReactNode }) { /
 // ---------------------------------------------------------------------------
 // Gaps: what waiting students need that no tutor offers yet
 // ---------------------------------------------------------------------------
+// One waiting student who fits a tutor's free times.
+type FillRow = { // A row:
+  student_id: string; // the student,
+  student_name: string; // their name,
+  year_level: string | null; // their year level (if known),
+  subject: string; // the subject,
+  stage: string; // their stage (needs_tutor or waitlist),
+  days: number; // days waiting,
+  times: number; // how many times suit,
+  preferred_times: number; // how many are in the family's preferred parts of the day,
+  best_weekday: number; // the best day (1 = Monday),
+  best_start: string; // the best start time,
+  best_end: string; // the best end time,
+  best_delivery: string | null; // online or in person,
+  best_library_name: string | null; // the library (if in person),
+  teaches_sibling: boolean; // whether the tutor already teaches a sibling,
+  at_max: boolean; // whether this would take the tutor past their weekly maximum.
+}; // End of FillRow.
+type FillTutor = { tutor_id: string; tutor_name: string; max_weekly_hours: number | null; booked_minutes: number }; // A tutor to choose from, with their weekly maximum and booked minutes.
+
+// The tutor-side view (Carla, 22 Nov 2026): choose a tutor, then see every
+// student waiting for a tutor who fits one of their free times, longest
+// waiting first. "Make an offer" opens the student in Matching as usual.
+async function TutorFillView({ tutorId }: { tutorId: string }) { // Takes the chosen tutor (if any).
+  const supabase = await createClient(); // Connects to the database.
+  const { data: tutorData } = await supabase.rpc("matching_fill_tutors"); // Reads the active tutors.
+  const tutors = (tutorData ?? []) as FillTutor[]; // The tutors.
+  const chosen = tutors.find((t) => t.tutor_id === tutorId) ?? null; // The chosen tutor (only a real one).
+  const { data: rowData } = chosen ? await supabase.rpc("matching_tutor_fill", { p_tutor: chosen.tutor_id }) : { data: [] }; // The students who fit their times (if a tutor is chosen).
+  const rows = (rowData ?? []) as FillRow[]; // The rows.
+  const hoursBooked = chosen ? Math.round((chosen.booked_minutes / 60) * 10) / 10 : 0; // The tutor's hours a week already booked.
+  return ( // Shows:
+    <Card // a card:
+      title="Fill a tutor's times" // its title,
+      description="Choose a tutor to see every student still waiting for a tutor who fits one of their free times, longest waiting first. The same rules as the student side apply: subject and level, checks, blocks, and a time that suits both." // what it does.
+    >{/* (end of the card's settings) */}
+      <form method="get" action="/matching" className="mb-4 flex flex-wrap items-end gap-3">{/* the tutor picker: */}
+        <input type="hidden" name="view" value="tutor" />{/* stays on this view (hidden), */}
+        <div className="min-w-56 flex-1">{/* (a wide box) */}
+          <Select label="Tutor" name="tutor" defaultValue={chosen?.tutor_id ?? ""} required>{/* the tutor drop-down: */}
+            <option value="" disabled>Choose a tutor</option>{/* a prompt, */}
+            {tutors.map((t) => <option key={t.tutor_id} value={t.tutor_id}>{t.tutor_name}</option>)}{/* one choice per active tutor. */}
+          </Select>{/* End of the drop-down. */}
+        </div>{/* End of the box. */}
+        <button type="submit" className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white">Show students</button>{/* the button. */}
+      </form>{/* End of the picker. */}
+      {!chosen ? ( // No tutor chosen yet:
+        <Empty>Choose a tutor to see the students who fit their free times.</Empty> // says what to do.
+      ) : ( // A tutor is chosen:
+        <>{/* (a group) */}
+          <p className="mb-3 text-sm text-zinc-600">{/* a grey line: */}
+            {chosen.tutor_name} has {hoursBooked} h a week booked{chosen.max_weekly_hours !== null ? ` of ${chosen.max_weekly_hours} h at most` : ""}.{/* how full their week is. */}
+          </p>{/* End of the line. */}
+          {rows.length === 0 ? ( // Nobody fits:
+            <Empty>No waiting student fits {chosen.tutor_name}&apos;s free times right now.</Empty> // says so.
+          ) : ( // Otherwise:
+            <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+              {rows.map((r) => ( // for each student and subject:
+                <li key={`${r.student_id}-${r.subject}`} className="space-y-1 py-3 first:pt-0">{/* a row: */}
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">{/* the top line: */}
+                    <span>{/* (a group) */}
+                      <span className="font-medium">{r.student_name}</span>{/* the student's name, */}
+                      <span className="text-zinc-600">{r.year_level && ` (${r.year_level})`} · {r.subject}</span>{/* their year level and subject, */}
+                    </span>{/* End of the group. */}
+                    <span className="flex flex-wrap items-center gap-2">{/* the tags: */}
+                      <span className="rounded-full bg-amber-50 px-2 text-xs text-amber-900">Waiting {r.days} day{r.days === 1 ? "" : "s"}</span>{/* how long they have waited, */}
+                      <span className="rounded-full bg-zinc-100 px-2 text-xs text-zinc-700">{r.stage === "waitlist" ? "Waitlist" : "Needs a tutor"}</span>{/* their stage, */}
+                      {r.teaches_sibling && <span className="rounded-full bg-teal-50 px-2 text-xs text-teal-900">Teaches a sibling</span>}{/* if the tutor teaches a sibling, */}
+                      {r.at_max && <span className="rounded-full bg-red-50 px-2 text-xs text-red-800">Over their weekly maximum</span>}{/* and if this would be past the tutor's maximum. */}
+                    </span>{/* End of the tags. */}
+                  </div>{/* End of the top line. */}
+                  <p className="text-zinc-600">{/* a grey line: */}
+                    {r.times} time{r.times === 1 ? "" : "s"} suit{r.times === 1 ? "s" : ""}{r.preferred_times > 0 ? ` (${r.preferred_times} at the family's preferred times)` : ""}.{/* how many times suit, */}
+                    {" "}Best: {WEEKDAY_NAMES[r.best_weekday - 1]} {clockTime(r.best_start)} to {clockTime(r.best_end)}, {placeLabel(r.best_delivery ?? "online", r.best_library_name)}.{/* and the best one. */}
+                  </p>{/* End of the line. */}
+                  <TextLink href={`/matching?${new URLSearchParams({ stage: r.stage, student: r.student_id, subject: r.subject }).toString()}`}>Make an offer</TextLink>{/* opens the student in Matching to make the offer. */}
+                </li> // End of the row.
+              ))}{/* End of the rows. */}
+            </ul> // End of the list.
+          )}{/* End of the choice. */}
+        </>
+      )}{/* End of the choice. */}
+    </Card> // End of the card.
+  ); // End of what is shown.
+} // End of TutorFillView.
+
 async function GapsView() { // The gaps list.
   const supabase = await createClient(); // Connects to the database.
   const { data } = await supabase.rpc("matching_gaps"); // Reads the gaps.

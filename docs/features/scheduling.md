@@ -623,3 +623,21 @@ Reducing the information a coordinator must scan to one recommended
 option speeds decisions and cuts errors (Hick's law; Nielsen Norman Group
 on progressive disclosure). Collecting missing details before an offer
 avoids tutors chasing families, which delays the first session.
+
+## Fill a tutor's times, 22 Nov 2026
+
+**Asked for by Carla** (notes on Emma's Job Proposal): "let admin open a tutor's weekly availability and fill it with suitable students, listed in order of urgency, instead of matching only from the student side."
+
+**What it does.** Matching gains a third view, **Fill a tutor's times**. An admin chooses a tutor and sees every student still waiting for a tutor (Needs a tutor or Waitlist) who fits one of that tutor's free times, longest waiting first. Each row shows how many times suit, the best time and place, whether the tutor already teaches a sibling, and whether the booking would take the tutor past their weekly maximum. **Make an offer** opens the student in the usual Matching view, so offers still go through the same approval steps.
+
+**Why.** When a new tutor joins, or a tutor frees up hours, the fastest way to reduce waiting is to look from the tutor's side. Continuity and a good tutor fit matter most for small-group and one-to-one tuition working well (EEF Teaching and Learning Toolkit, one-to-one tuition and small group tuition; Evidence for Learning's summaries of the same evidence), and a long wait is time without that support, so the list is ordered by how long each student has waited.
+
+**How it is built.** Migration `20261124710500_matching_fill_tutor_times.sql` adds:
+- `public.matching_fill_tutors()`: active tutors with their weekly maximum and minutes already booked.
+- `public.matching_tutor_fill(tutor)`: walks the waiting students in the Matching queue, longest waiting first, and returns each one whose student-side shortlist (`matching_shortlist`) includes that tutor with at least one time that suits. Using the same shortlist means both directions always agree.
+
+Both are for front desk admins (owner, Operations and Support) only. No pay rates are shown.
+
+**Legal notes.** Only admins who already see Matching can open it (row level security in the functions), so no extra children's data is shared (Privacy Act APP 6 and APP 11, Children's Online Privacy Code). The usual child safety rules still apply because the shortlist only includes tutors whose checks are current for that student (WWCC, SA child safety rules).
+
+**Tests.** `supabase/tests/scheduling_matching_fill_tutor.test.sql`: tutors, parents and signed-out visitors are refused; only waiting students with a time that suits are listed; and for every tutor, the list matches the student-side shortlist exactly.
