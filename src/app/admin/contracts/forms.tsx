@@ -8,7 +8,7 @@
 "use client"; // Runs in the browser, so the gap boxes can change as the contract is chosen.
 
 import { useState } from "react"; // Keeps track of the chosen contract and employment type.
-import { discardContractTemplate, publishContractTemplate, recordXeroInvite, saveContractDocument, saveContractDocumentText, saveContractTemplate, sendContract, withdrawContract } from "@/app/actions/employment-contracts"; // The server actions for contracts.
+import { discardContractTemplate, newContractDocumentVersion, publishContractTemplate, recordXeroInvite, saveContractDocument, saveContractDocumentText, saveContractTemplate, sendContract, withdrawContract } from "@/app/actions/employment-contracts"; // The server actions for contracts.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
 import { Field, Select, TextArea } from "@/components/ui"; // Form boxes and lists.
 import { AUTO_GAPS, CONTRACT_TYPES, CONTRACT_TYPE_NAMES, EMPLOYMENT_NAMES, employmentsFor, findGaps, roleFor, type ContractType } from "@/lib/employment-contracts"; // Contract words and the gap reader.
@@ -142,7 +142,7 @@ export function DiscardTemplateForm({ id }: { id: string }) {
 
 // Changes one acknowledged document's name and link, and (for a document
 // kept in the app, such as the Child Safe Policy) its wording and approval.
-export function DocumentForm({ doc }: { doc: { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null } }) {
+export function DocumentForm({ doc }: { doc: { key: string; title: string; url: string; casual_only: boolean; body: string; approved_at: string | null; country_urls: Record<string, string> | null; version: number; version_note: string | null } }) {
   const inApp = doc.url === `/policies/${doc.key}`; // Whether the document is kept in the app.
   const others = Object.entries(doc.country_urls ?? {}); // Its links for other countries, if any.
   return ( // Shows:
@@ -151,6 +151,7 @@ export function DocumentForm({ doc }: { doc: { key: string; title: string; url: 
       <p className="font-semibold">{doc.title}</p>{/* the document's name, */}
       {doc.url ? <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-900">✓ Link set{inApp ? " (in the app)" : ""}</span> : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">No link set</span>}{/* a "Link set" badge (or a warning when there is none), */}
       {inApp && <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${doc.approved_at ? "bg-teal-50 text-teal-900" : "bg-amber-50 text-amber-900"}`}>{doc.approved_at ? "Wording approved" : "Wording is a draft"}</span>}{/* whether its wording is final, for documents kept in the app, */}
+      <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700">Version {doc.version}</span>{/* its version number (Carla, 22 Nov 2026), */}
       {others.length > 0 && <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700">Also set for {others.map(([c]) => c).join(", ")}</span>}{/* which other countries have a link, */}
       {doc.url && <a href={doc.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center rounded-lg border border-brand bg-brand px-3 py-1 text-sm font-medium text-white hover:opacity-90">Open link</a>}{/* and a button to check the link opens the right document. */}
     </div>{/* End of the status line. */}
@@ -173,8 +174,23 @@ export function DocumentForm({ doc }: { doc: { key: string; title: string; url: 
           <input type="checkbox" name="approved" defaultChecked={Boolean(doc.approved_at)} className="mt-1" />{/* a tick box (ticked if already approved), */}
           <span>Approved: this wording is final (removes the draft label).</span>{/* and its words. */}
         </label>{/* End of the line. */}
+        <label className="flex items-start gap-2 text-sm">{/* the new version tick (Carla, 22 Nov 2026): */}
+          <input type="checkbox" name="new_version" className="mt-1" />{/* a tick box, */}
+          <span>This is a new version: staff whose contracts include it must read and tick it again. Leave this unticked for small fixes such as spelling.</span>{/* and its words. */}
+        </label>{/* End of the line. */}
+        <Field label="What changed (optional, shown to staff with a new version)" name="version_note" maxLength={500} />{/* what changed. */}
       </ActionForm> // End of the wording form.
     )}{/* End of the wording part. */}
+    {!inApp && ( // Kept outside the app (such as a Fair Work statement): a new version button.
+      <ActionForm action={newContractDocumentVersion} submitLabel="Ask staff to read the new version">{/* a form that records a new version: */}
+        <input type="hidden" name="key" value={doc.key} />{/* which document, hidden, */}
+        <label className="flex items-start gap-2 text-sm">{/* the confirm tick: */}
+          <input type="checkbox" name="confirm" className="mt-1" />{/* a tick box, */}
+          <span>This document has a new version: staff whose contracts include it must read and tick it again.</span>{/* and its words. */}
+        </label>{/* End of the line. */}
+        <Field label="What changed (optional, shown to staff)" name="version_note" maxLength={500} />{/* what changed. */}
+      </ActionForm> // End of the new version form.
+    )}{/* End of the new version part. */}
     </div> // End of the box.
   ); // End of what's shown.
 } // End of DocumentForm.

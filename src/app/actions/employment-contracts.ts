@@ -145,13 +145,31 @@ export async function saveContractDocumentText(_prev: FormState, formData: FormD
   const parsed = documentTextSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const approved = formData.get("approved") === "on"; // Whether "Approved" is ticked.
+  const newVersion = formData.get("new_version") === "on"; // Whether this is a new version staff must read again (Carla, 22 Nov 2026).
+  const note = String(formData.get("version_note") ?? "").trim().slice(0, 500); // What changed (optional, up to 500 characters).
   const supabase = await createClient(); // Connects as the owner.
-  const { error } = await supabase.rpc("employment_contract_document_save_text", { p_key: parsed.data.key, p_body: parsed.data.body.replace(/\r\n?/g, "\n"), p_approved: approved }); // Saves it (with tidy line endings).
+  const { error } = await supabase.rpc("employment_contract_document_save_text", { p_key: parsed.data.key, p_body: parsed.data.body.replace(/\r\n?/g, "\n"), p_approved: approved, p_new_version: newVersion, p_version_note: note || null }); // Saves it (with tidy line endings), as a new version if ticked.
   if (error) return { error: problem(error, "Could not save the wording. Please try again.") }; // Failed: says why.
   refresh(); // Refreshes the pages.
   revalidatePath(`/policies/${parsed.data.key}`); // Refreshes the document's own page.
+  if (newVersion) return { message: "Saved as a new version. Staff whose contracts include it will be asked to read and tick it again." }; // Confirms a new version.
   return { message: approved ? "Saved and approved. Staff see it without the draft label." : "Saved as a draft. Staff see it with a draft label until you tick Approved." }; // Confirms it.
 } // End of saveContractDocumentText.
+
+// Marks a document kept outside the app (such as a Fair Work statement) as a
+// new version, so staff read and tick it again (Carla, 22 Nov 2026).
+export async function newContractDocumentVersion(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdminLevel(["owner"]); // Only the owner (the database checks again).
+  const key = z.string().regex(/^[a-z_]{2,40}$/).safeParse(formData.get("key")); // Reads and checks which document.
+  if (!key.success) return { error: "That document was not found." }; // Bad key: says so.
+  if (formData.get("confirm") !== "on") return { error: "Please tick that staff should read and tick it again." }; // Asks for the tick.
+  const note = String(formData.get("version_note") ?? "").trim().slice(0, 500); // What changed (optional).
+  const supabase = await createClient(); // Connects as the owner.
+  const { error } = await supabase.rpc("employment_contract_document_new_version", { p_key: key.data, p_version_note: note || null }); // Records the new version.
+  if (error) return { error: problem(error, "Could not save. Please try again.") }; // Failed: says why.
+  refresh(); // Refreshes the pages.
+  return { message: "Saved. Staff whose contracts include it will be asked to read and tick it again." }; // Confirms it.
+} // End of newContractDocumentVersion.
 
 // ---------------------------------------------------------------------------
 // Sending and withdrawing (owner and Operations admins).

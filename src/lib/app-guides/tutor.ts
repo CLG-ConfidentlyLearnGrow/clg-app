@@ -37,6 +37,8 @@ CLG sends your contract in the app. A card on your dashboard and **My contract**
 
 Tip: Your signed contract stays in **My contract**, so you can read it again at any time.
 
+Tip: When CLG updates a policy linked to your contract, **My contract** shows a number. Open your contract, read the new version (what changed is shown) and tick it again with your name.
+
 ### See what needs you on the Overview
 **Home** (top of every page) and the **Tutor** tab open your **Overview**. It shows:
 - **Next 7 days** (sessions and hours), **Next session**, **Your students** and **Child safety checks**. Tap a box to open that page.

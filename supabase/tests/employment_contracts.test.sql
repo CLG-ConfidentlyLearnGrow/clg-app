@@ -14,6 +14,9 @@
 begin;
 -- Runs the contracts database change again (checks it can run twice).
 \ir ../migrations/20261121200100_employment_contracts.sql
+-- Runs the 22 Nov 2026 policy versions change again too: it replaces the acknowledge function
+-- the line above re-creates, and checks it can also run twice.
+\ir ../migrations/20261124710800_policy_versions_read_again.sql
 
 -- Makes sure T1's app name is known exactly, for the signature checks.
 update public.accounts set full_name = 'Tess Tutor' where id = '00000000-0000-0000-0000-000000000011'; -- sets T1's full name
@@ -153,6 +156,32 @@ select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- acting a
 set role authenticated; -- as a signed-in person
 select tests.fails(format($$update public.employment_contracts set body = 'changed' where id = %L$$, :'c2'), 'tutor edits the contract wording'); -- checks the wording cannot be changed
 select tests.fails(format($$insert into public.employment_contract_acknowledgements (contract_id, statement, statement_title, statement_url, typed_name) values (%L, 'fwis', 'x', 'x', 'x')$$, :'c1'), 'tutor adds an acknowledgement directly'); -- checks acknowledgements only go through the function
+reset role; -- back to the test user
+
+-- ---------------------------------------------------------------------------
+-- A new version of a policy: staff read and tick it again (Carla, 22 Nov 2026)
+-- ---------------------------------------------------------------------------
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- acting as tutor T1
+set role authenticated; -- as a signed-in person
+select tests.eq(public.my_policy_rereads_count()::bigint, 0, 'nothing to read again yet'); -- no new versions
+select tests.fails($$select public.employment_contract_document_new_version('child_safe_policy', 'x')$$, 'a tutor makes a new version'); -- only the owner can
+reset role; -- back to the test user
+select tests.claims('00000000-0000-0000-0000-0000000000a0', 'aal2'); -- acting as the owner
+set role authenticated; -- as a signed-in person
+select tests.fails_with($$select public.employment_contract_document_save_text('child_safe_policy', '# Child Safe Policy v2', false, true, 'x')$$, 'must be approved', 'a new version must be approved first'); -- a draft cannot be a new version
+select public.employment_contract_document_save_text('child_safe_policy', '# Child Safe Policy v2', true, true, 'Added the online safety section.'); -- saves version 2
+select tests.eq((select version::bigint from public.employment_contract_documents where key = 'child_safe_policy'), 2, 'the policy is now version 2'); -- version 2
+select tests.eq((select count(*) from public.policy_rereads_outstanding() where contract_id = :'c2' and title like '%Child Safe%' and version = 2), 1, 'the owner sees who still has to read it'); -- on the admin list
+select public.employment_contract_document_save_text('child_safe_policy', '# Child Safe Policy v2 (typo fixed)', true); -- a small fix that is not a new version
+select tests.eq((select version::bigint from public.employment_contract_documents where key = 'child_safe_policy'), 2, 'a save without a new version keeps the number'); -- still 2
+reset role; -- back to the test user
+select tests.claims('00000000-0000-0000-0000-000000000011', 'aal2'); -- acting as tutor T1
+set role authenticated; -- as a signed-in person
+select tests.eq(public.my_policy_rereads_count()::bigint, 1, 'the tutor has one policy to read again'); -- one to read
+select public.employment_contract_acknowledge(:'c2', 'child_safe_policy', 'Tess Tutor'); -- ticks version 2
+select tests.eq((select count(*) from public.employment_contract_acknowledgements where contract_id = :'c2' and statement = 'child_safe_policy'), 2, 'both ticks are kept (version 1 and 2)'); -- the record of both
+select tests.eq(public.my_policy_rereads_count()::bigint, 0, 'nothing left to read again'); -- done
+select tests.eq((select count(*) from public.employment_contracts where id = :'c2' and status = 'complete'), 1, 'the contract stays complete'); -- unchanged
 reset role; -- back to the test user
 
 \echo '  employment contracts: all checks passed'

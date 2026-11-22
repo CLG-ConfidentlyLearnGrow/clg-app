@@ -176,3 +176,17 @@ email in which is connected to the CLG app once the contract is accepted."
 - Show staff the link for their own country once CLG works outside
   Australia (the links are already stored per country).
 - Optionally block tutor matching in 2027 until the new contract is signed.
+
+## Read and tick again for each new policy version, 22 Nov 2026
+
+**Asked for by Carla** (How We Do Things): a separate "read and understood" tick for each policy document linked to a contract, repeated for each new version. She confirmed everyone ticks it again, including staff whose contracts are already signed.
+
+**What changes.** Each linked document has a version number (starting at 1) and an optional "what changed" note. The owner saves a new version from **Contract templates** (in-app policies: tick **This is a new version** when saving approved wording; documents kept elsewhere: **Ask staff to read the new version**). Every staff member with a signed or complete contract that includes the document sees an amber note on their contract, with a number on **My contract**, and ticks the new version with their typed name. Every tick is kept with its version, so the record shows each version a person read and when. Admins see **New policy versions still to read** on **Contracts**. A contract's status stays complete.
+
+**Why.** People are more likely to follow a policy they have actively confirmed reading, and a fresh confirmation after a change shows they saw the change. It also gives CLG evidence that staff were told of current child safe expectations, as the National Principles for Child Safe Organisations (Principle 7: staff are equipped with knowledge and skills) and the SA Child Safe Environments guidelines expect.
+
+**How it is built.** Migration `20261124710800_policy_versions_read_again.sql`: `version`, `version_note` and `version_at` on `employment_contract_documents`; `statement_version` on acknowledgements (key now contract, document and version); `employment_contract_document_save_text` gains `p_new_version` and `p_version_note`; new `employment_contract_document_new_version`; `employment_contract_acknowledge` records the current version and works on complete contracts; `my_policy_rereads_count()` and `policy_rereads_outstanding()` (owner and Operations).
+
+**Legal notes.** No new personal information; acknowledgements keep the typed name and time as before (Electronic Transactions Act 2000 (SA)). Fair Work statements: a new version of the FWIS or CEIS should be given to existing staff when Fair Work changes it, and this records that they received it.
+
+**Tests.** `supabase/tests/employment_contracts.test.sql` (new section): only the owner makes a new version, it must be approved, the owner sees who still has to read it, a plain save keeps the number, the tutor ticks again, both ticks are kept and the contract stays complete.

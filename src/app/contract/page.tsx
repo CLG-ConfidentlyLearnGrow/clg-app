@@ -32,12 +32,12 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
   if (id) { // A contract is open:
     const [{ data }, { data: acks }, { data: docs }] = await Promise.all([ // reads three things at once:
       supabase.from("employment_contracts").select("id, title, body, body_sha256, status, employment, sent_at, signed_at, signed_name, statements, completed_at").eq("id", id).eq("account_id", viewer.id).maybeSingle(), // their contract,
-      supabase.from("employment_contract_acknowledgements").select("statement, statement_title, statement_url, acknowledged_at").eq("contract_id", id), // what they have acknowledged,
-      supabase.from("employment_contract_documents").select("key, title, url, also_known_as, sort").order("sort"), // and the document links (with their older addresses).
+      supabase.from("employment_contract_acknowledgements").select("statement, statement_version, statement_title, statement_url, acknowledged_at").eq("contract_id", id).order("statement_version", { ascending: false }), // what they have acknowledged, newest version first,
+      supabase.from("employment_contract_documents").select("key, title, url, also_known_as, sort, version, version_note").order("sort"), // and the document links (with their older addresses and current version).
     ]); // End of the reads.
     const c = data as { id: string; title: string; body: string; body_sha256: string; status: ContractStatus; employment: Employment; sent_at: string; signed_at: string | null; signed_name: string | null; statements: string[]; completed_at: string | null } | null; // The contract (or nothing).
-    const done = (acks ?? []) as { statement: string; statement_title: string; statement_url: string; acknowledged_at: string }[]; // The acknowledgements made.
-    const links = (docs ?? []) as ContractDocument[]; // The document links.
+    const done = (acks ?? []) as { statement: string; statement_version: number; statement_title: string; statement_url: string; acknowledged_at: string }[]; // The acknowledgements made (newest version first).
+    const links = (docs ?? []) as (ContractDocument & { version: number; version_note: string | null })[]; // The document links, with each one's current version.
     return ( // Shows:
       <DashboardFrame role={role} roles={viewer.roles} current="contract">{/* the dashboard frame, */}
         <div className="space-y-6">{/* the cards, with space between: */}
@@ -60,8 +60,17 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
                 <Card title="Acknowledgements" description={c.signed_at ? `You signed this contract on ${stamp(c.signed_at)} as "${c.signed_name}". Please now open and acknowledge each document.` : undefined}>{/* the acknowledgements card: */}
                   <div className="space-y-6">{/* each document, with space between: */}
                     {c.statements.map((key) => { // for each document the contract needs:
-                      const made = done.find((a) => a.statement === key); // its acknowledgement, if made,
-                      const doc = links.find((d) => d.key === key); // and its current name and link.
+                      const made = done.find((a) => a.statement === key); // its newest acknowledgement, if made,
+                      const doc = links.find((d) => d.key === key); // and its current name, link and version.
+                      // A newer version than the one they ticked: they read and tick it again (Carla, 22 Nov 2026).
+                      if (made && doc && made.statement_version < doc.version) return ( // a new version is waiting:
+                        <div key={key} className="space-y-2">{/* (a group) */}
+                          <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{/* an amber note: */}
+                            The {doc.title} has a new version (version {doc.version}). Please read it again and tick it.{doc.version_note ? ` What changed: ${doc.version_note}` : ""}{/* what has changed, */}
+                          </p>{/* End of the note. */}
+                          <AcknowledgeForm id={c.id} statement={key} title={doc.title} href={doc.url} fullName={viewer.fullName} />{/* and the form again. */}
+                        </div> // End of the group.
+                      ); // End of the new version part.
                       if (made) return <p key={key} className="text-sm text-teal-800">✓ <a href={made.statement_url} target="_blank" rel="noreferrer" className="underline">{made.statement_title}</a> acknowledged on {stamp(made.acknowledged_at)}.</p>; // Done: a tick, the document and when.
                       if (!doc) return <p key={key} className="text-sm text-zinc-500">One document is not available right now. Please ask CLG in the Help chat.</p>; // The document has gone: says to ask.
                       return <AcknowledgeForm key={key} id={c.id} statement={key} title={doc.title} href={doc.url} fullName={viewer.fullName} />; // Still to do: the form.
@@ -78,11 +87,16 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
   } // End of the open contract.
 
   // The list of their contracts.
-  const { data } = await supabase.from("employment_contracts").select("id, title, status, sent_at, signed_at").eq("account_id", viewer.id).order("sent_at", { ascending: false }); // Reads their contracts, newest first.
+  const [{ data }, { data: rereads }] = await Promise.all([ // Reads two things at once:
+    supabase.from("employment_contracts").select("id, title, status, sent_at, signed_at").eq("account_id", viewer.id).order("sent_at", { ascending: false }), // their contracts, newest first,
+    supabase.rpc("my_policy_rereads_count"), // and how many policies have a new version for them to read (Carla, 22 Nov 2026).
+  ]); // End of the reads.
+  const toReread = Number(rereads ?? 0); // The number of new versions to read.
   const rows = (data ?? []) as { id: string; title: string; status: ContractStatus; sent_at: string; signed_at: string | null }[]; // The contracts.
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="contract">{/* the dashboard frame, */}
       <Card title="My contract" description="Employment contracts CLG has sent you. Open one to read it, sign it, or read it again later.">{/* the list card: */}
+        {toReread > 0 && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{toReread === 1 ? "A policy linked to your contract has a new version." : `${toReread} policies linked to your contract have new versions.`} Please open your contract, read it again and tick it.</p>}{/* a note when a policy has a new version. */}
         {rows.length === 0 ? ( // None:
           <Empty>CLG has not sent you a contract in the app yet.</Empty> // says so.
         ) : ( // Some:
