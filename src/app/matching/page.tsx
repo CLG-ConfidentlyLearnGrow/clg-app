@@ -697,7 +697,7 @@ async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId
 async function sspStudents(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]): Promise<Set<string>> { // Takes the database connection and the student ids.
   const unique = [...new Set(ids)]; // Each student once.
   if (unique.length === 0) return new Set(); // Nobody to check: an empty set.
-  const { data } = await supabase.from("ssp_enrolments").select("student_id").in("student_id", unique).is("ended_at", null); // Reads the ones in the program now.
+  const { data } = await supabase.from("ssp_enrolments").select("student_id").in("student_id", unique).eq("status", "enrolled"); // Reads the ones in the program now (deposit paid).
   return new Set(((data ?? []) as { student_id: string }[]).map((r) => r.student_id)); // Their ids, as a set.
 } // End of sspStudents.
 

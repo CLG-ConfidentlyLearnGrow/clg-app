@@ -154,6 +154,14 @@ Pop-ups tell you straight away about reminders, booking news and help chat repli
 
 Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there, then turn on pop-ups. To stop them on a device, choose **Turn off on this device**.
 
+### Ask about the Student Success Program (if you manage your own account)
+The Student Success Program is a planned run of sessions with a study plan, each term review included, and priority when CLG finds a tutor. Places are limited.
+1. On your dashboard, open **Student Success Program**.
+2. Tick **Yes, I would like to ask about a place**, add anything CLG should know, and choose **Send my request**.
+3. If CLG offers a place, pay the $500 deposit in **Billing** by the date shown. You are in the program once it is paid.
+
+If a parent manages your account, they ask for you, and you can see where it is up to on your dashboard.
+
 ## Billing (if you pay for yourself)
 
 ### Set up your payments

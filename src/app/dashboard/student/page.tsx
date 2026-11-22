@@ -9,6 +9,7 @@ import { requireViewer } from "@/lib/auth"; // Gets the signed-in person (or sen
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { addDays, localToday } from "@/lib/scheduling"; // Date helpers: add days, and today's date.
 import { StepRow, type Step } from "@/app/students/[id]/progress/roadmap"; // One roadmap step row, and the step type.
+import { SspFamilyBox } from "../ssp-family"; // The Student Success Program box (an adult learner can ask for themselves).
 import { NewUpdates, TutorList, loadStudentsAndTutors } from "../shared"; // Shared dashboard parts: new updates, the tutor list, and a loader for students and tutors.
 
 export default async function StudentDashboard() { // The page itself.
@@ -67,6 +68,7 @@ export default async function StudentDashboard() { // The page itself.
             <TextLink href={`/students/${me.id}/progress?view=family`}>Open your progress page</TextLink>{/* a link to their progress page. */}
           </Card> // End of the card.
         )}{/* End of this part. */}
+        {me && <SspFamilyBox studentId={me.id} name="you" self inCard />}{/* The Student Success Program card, if they have a student record (shown only when they may ask, or already asked). */}
       </DashboardFrame>{/* End of the dashboard frame. */}
     </> // End of the group.
   ); // End of what's shown.

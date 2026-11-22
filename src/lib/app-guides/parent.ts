@@ -94,6 +94,15 @@ If CLG set up your child's profile during a phone call, **Your children** shows 
 2. Under your child's name, choose **See or change details**.
 3. Make your changes and save.
 
+### Ask about the Student Success Program
+The Student Success Program is a planned run of sessions with a study plan, each term review included, and priority when CLG finds a tutor. Places are limited, so CLG looks at each request first.
+1. In **Your children**, choose **Student Success Program** under your child's name.
+2. Tick **Yes, I would like to ask about a place**, add anything CLG should know, and choose **Send my request**. You can choose **Cancel my request** until CLG answers.
+3. If CLG offers a place, you get a notice and an email, and the box says the place is waiting for the $500 deposit. The person who pays for your family's sessions pays it in **Billing** by the date shown. It is never taken automatically.
+4. Once the deposit is paid, the box says your child is in the Student Success Program.
+
+If CLG cannot offer a place, you are told, and you can ask again later.
+
 ### Give your child their own login (16 and over)
 A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything. Each child with their own login sees only their own profile, never a brother's or sister's.
 1. In **Your children**, choose **Give (name) their own login** under their name.
@@ -254,7 +263,7 @@ Tip: On an iPhone or iPad, add CLG to your home screen first (see **Add CLG to y
 3. If your child has study plans with CLG, choose **Plan study steps for me** next to an upcoming assessment, and the app breaks it into small weekly steps.
 
 ### Term reviews
-Before a term ends, you may be offered a written review of the term from your tutor. It is a paid extra, and the price is shown.
+Before a term ends, you may be offered a written review of the term from your tutor. It is a paid extra, and the price is shown. For a child in the Student Success Program, each term review is included: you are told it is booked, and there is nothing to pay.
 1. On the progress page, find **Term review for (term)?**
 2. Under **Would you like a review?**, choose **Yes, please** (it goes on an invoice) or **No, thanks**, then **Save answer**. You can change your mind until the term ends.
 3. Once your tutor has written it and CLG has checked it, the review shows on the progress page. You can reply to it there.

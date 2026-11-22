@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/server"; // Connects to the databas
 import { AddChildForm } from "../add-child-form"; // The "add a child" form.
 import { EditChildForm } from "../edit-child-form"; // The "change a child's details" form.
 import { OwnLoginForm } from "../own-login-form"; // The "give a child their own login" form.
+import { SspFamilyBox } from "../ssp-family"; // The Student Success Program box for each child.
 import { NewUpdates, TutorList, loadStudentsAndTutors, missingDetails } from "../shared"; // Shared dashboard parts: updates, tutor list, the student loader, and missing details.
 
 type SubjectRow = { // One subject a child wants help with:
@@ -153,6 +154,12 @@ export default async function ParentDashboard({ searchParams }: PageProps<"/dash
                               .join(", ")}` : "No subjects chosen yet"}{/* (end of the subjects) */}
                       </p>{/* End of the line. */}
                       <TutorList assignments={assignments.filter((a) => a.student_id === s.id)} />{/* their tutors. */}
+                      <details className="group mt-2">{/* a fold-out section for the Student Success Program (Carla, 22 Nov 2026): */}
+                        <summary className="text-sm text-teal-800 underline hover:font-bold">Student Success Program</summary>{/* its heading, */}
+                        <div className="mt-3 rounded-xl border border-zinc-200 p-4">{/* a box: */}
+                          <SspFamilyBox studentId={s.id} name={s.full_name.split(" ")[0]} />{/* where the child is up to, or the tick box to ask. */}
+                        </div>{/* End of the box. */}
+                      </details>{/* End of the fold-out. */}
                       <details className="group mt-2">{/* a fold-out section: */}
                         <summary className="text-sm text-teal-800 underline hover:font-bold">{/* its heading: */}
                           <span className="group-open:hidden">See or change details</span>{/* "See or change details" when closed, */}

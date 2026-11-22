@@ -48,6 +48,7 @@ import { // The curriculum forms:
 import { BusyButton } from "@/components/busy-button"; // A button that shows it's busy while sending.
 import { loadBirthDates } from "@/lib/birth-dates"; // Reads students' birth dates through the database's check.
 import { StudentDetailsCard } from "./student-details-section"; // The "change a student's details" card.
+import { SspSection } from "./ssp-section"; // The Student Success Program card (requests, places and deposits).
 
 type PendingLink = { // A parent's link to a child waiting for CLG:
   parent_id: string; // the parent,
@@ -374,6 +375,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             >{/* (end of the card's settings) */}
               <ParentLinkList rows={parentLinks} />{/* the list. */}
             </Card>{/* End of the card. */}
+            {isFull && <SspSection />}{/* The Student Success Program card, for owner and Operations admins (they approve places). */}
             {isFull && ( // For full admins (the database lets owner and Operations admins change student details):
               <StudentDetailsCard // the "change a student's details" card:
                 students={studentRows.map((s) => ({ id: s.id, full_name: s.full_name }))} // every student by id and name,
