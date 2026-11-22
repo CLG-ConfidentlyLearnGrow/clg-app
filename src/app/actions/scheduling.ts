@@ -688,26 +688,6 @@ export async function tickOffNotice(formData: FormData) {
   revalidatePath("/schedule"); // Refreshes the schedule page (and its unread numbers).
 } // End of tickOffNotice.
 
-// The rules for reminder settings:
-const noticeSettingsSchema = z.object({
-  first_reminder_hours: z.coerce.number().int().min(2).max(168), // hours before a session for the first reminder (2 to 168).
-}); // End of the rules.
-
-// Saves when this person's first reminder comes.
-export async function saveNoticeSettings(_prev: FormState, formData: FormData): Promise<FormState> {
-  const viewer = await requireViewer(); // Makes sure someone is signed in, and gets who they are.
-  const parsed = noticeSettingsSchema.safeParse(Object.fromEntries(formData)); // Checks the form against the rules.
-  if (!parsed.success) return { error: "Choose when the first reminder comes." }; // Problem: asks them to choose.
-
-  const supabase = await createClient(); // Connects to the database.
-  const { error } = await supabase.from("notice_settings").upsert({ // Saves the setting (adds or updates the row):
-    account_id: viewer.id, // for this person,
-    first_reminder_hours: parsed.data.first_reminder_hours, // the hours.
-  }); // End of the save.
-  if (error) return { error: "Could not save your settings." }; // Failed: plain message.
-  return done("Saved. New reminders will use these settings."); // Refreshes, updates Teams, and confirms it.
-} // End of saveNoticeSettings.
-
 // ---------------------------------------------------------------------------
 // Book again: the family's answer, and school term dates (admins)
 // ---------------------------------------------------------------------------

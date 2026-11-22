@@ -655,3 +655,20 @@ Both are for front desk admins (owner, Operations and Support) only. No pay rate
 **Legal notes.** No new personal information is collected or shared. The family notice and billing credit are unchanged (Australian Consumer Law: no charge for a session CLG cancels).
 
 **Tests.** `supabase/tests/scheduling_away.test.sql` now checks that nothing is cancelled after 2 hours, admins are told, the family is not told until an admin decides, tutors cannot use the list, and an admin's cancel gives full credit and a notice without contractions.
+
+## Reminders at 24 hours and 1 hour, and the 48-hour unpaid notice, 22 Nov 2026
+
+**Asked for by Carla:** "just have 24 and 1 hour reminders. The family gets a reminder at 48 hours if they have not paid and that everything has gone on hold until payment has been made, and that if payment is not received or something is not organised, the next session will be cancelled. If this occurs ... a meeting is to be set up between Carla and the family (person in charge of paying)."
+
+**What changes.**
+- Everyone's first reminder is now 24 hours before each session (the old per-person "First reminder" setting is gone); the final reminder stays at 1 hour before. Reminders already queued at another time move to 24 hours before.
+- While a family is on hold for an overdue payment, the people who pay (bill payer and any extra payers) get a notice 48 hours before each session: sessions are on hold until it is paid, and the session will be cancelled if it is not paid, or a payment plan agreed with CLG, at least 2 hours before.
+- 2 hours before, if the family is still on hold and was warned, the session is cancelled as a CLG cancel (full credit, pending Carla's confirmation). The family is told why; the tutor is told only that it is cancelled. The owner and Operations admins get **Session cancelled for no payment**, asking them to set up a meeting between Carla and the person who pays.
+
+**Why.** Clear, early, specific notice with a way to fix it gives families the best chance to act. Meeting after a missed payment, rather than only chasing it, matches CLG's value of supporting families and keeping students learning.
+
+**How it is built.** Migration `20261124710700_reminders_24_1_unpaid_hold.sql`: `private.queue_reminders` uses 24 hours for everyone; `private.billing_family_payer_ids` (billing module) lists who pays; `private.queue_unpaid_holds` runs every 15 minutes. Scheduling reads billing only through billing's functions and never writes billing tables.
+
+**Legal notes.** Money details go only to the people who pay (Privacy Act APP 6; billing privacy rule of 16 Nov 2026). Tutors never see why. No charge for a session CLG cancels (Australian Consumer Law), unless Carla decides otherwise.
+
+**Tests.** `supabase/tests/scheduling_unpaid_hold_reminders.test.sql`; `scheduling_notices.test.sql` now expects 24 hours for the tutor too.

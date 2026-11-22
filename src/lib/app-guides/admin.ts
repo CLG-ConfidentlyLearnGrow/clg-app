@@ -181,6 +181,8 @@ If a family's or student's link ran out before they used it, open **Send a new l
 
 ### See which families are paused
 **Families paused for an overdue bill** lists families whose sessions are on hold until they pay. Do not discuss the bill with the tutor: tutors are only told sessions are on hold.
+
+While a family is on hold, the people who pay get a notice 48 hr before each session. If the payment is not made, or the pause lifted with a payment plan, at least 2 hr before the session, the app cancels that session with no charge and tells the family and tutor (the tutor is not told why). You get a **Session cancelled for no payment** notice: set up a meeting between Carla and the person who pays, to talk about whether anything needs to change, how to support them, and how to stop it happening again.
 `;
 
 // Matching students with tutors (front-desk admins).

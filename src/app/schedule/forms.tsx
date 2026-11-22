@@ -21,7 +21,6 @@ import { // The server actions these forms send to:
   confirmAvailability, // confirm availability for next term,
   confirmTimes, // confirm a session's times,
   recordEndTime, // record a different end time,
-  saveNoticeSettings, // save reminder settings,
   recordOutcome, // record how a session went,
   tellRunningLate, // tell the family and CLG the tutor is running late,
   requestBooking, // ask for a booking,
@@ -935,31 +934,6 @@ export function ConfirmTimesForm({ id, date, from, to }: { id: string; date: str
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of ConfirmTimesForm.
-
-// The person's reminder setting: when the first reminder comes.
-export function NoticeSettingsForm({ // Its settings:
-  settings, // the current setting,
-  quiet, // and CLG's quiet hours, e.g. "9pm and 5am".
-}: { // The settings' types:
-  settings: { first_reminder_hours: number }; // hours before is a number,
-  quiet: string; // the quiet hours are words.
-}) { // End of the settings.
-  return ( // Shows:
-    <ActionForm action={saveNoticeSettings} submitLabel="Save">{/* the form, sending to saveNoticeSettings, with a "Save" button, */}
-      <Select label="First reminder" name="first_reminder_hours" defaultValue={String(settings.first_reminder_hours)}>{/* a drop-down, starting at the current setting: */}
-        {[2, 6, 12, 24, 48, 72, 168].map((h) => ( // for each choice of hours:
-          <option key={h} value={h}>{/* a choice: */}
-            {h === 168 ? "1 week" : `${h} hr`} before{/* "1 week" or the hours, then "before". */}
-          </option> // End of the choice.
-        ))}{/* End of the loop. */}
-      </Select>{/* End of the drop-down. */}
-      <p className="text-xs text-zinc-600">{/* A small note: */}
-        A final reminder always comes 1 hr before. Nothing arrives between {quiet}, your local time. Reminders and notices
-        show here in the app; CLG does not send them by email.{/* (about the final reminder and quiet hours) */}
-      </p>{/* End of the paragraph. */}
-    </ActionForm> // End of the form.
-  ); // End of what's shown.
-} // End of NoticeSettingsForm.
 
 // Book again: same again or not, a new book-till date, the two holiday
 // questions again, and what to change if not the same.
