@@ -1,6 +1,6 @@
 // Summary: the side menu for each dashboard (admin, tutor, parent, student).
 // Every page that belongs to a dashboard shows the same menu, so Sessions,
-// Matching, Billing, Teams links, Materials and My pay sit with the other
+// Matching, Billing, Teams links, Materials and My Pay sit with the other
 // tabs instead of in the top bar or a line of links (Carla, 12 Nov 2026).
 //
 import { cache } from "react"; // Remembers a result for the rest of one page load.
@@ -217,7 +217,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
     const mine = await myContracts(); // Their own contracts, if any.
     if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract, once one has been sent (Carla, 17 Nov 2026),
-    items.push({ id: "pay", label: "My pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
+    items.push({ id: "pay", label: "My Pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
 
@@ -234,7 +234,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
       ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract, once one has been sent (Carla, 17 Nov 2026),
-      { id: "pay", label: "My pay", href: "/pay?as=tutor" }, // and their pay.
+      { id: "pay", label: "My Pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.
 

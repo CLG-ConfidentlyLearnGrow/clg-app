@@ -173,7 +173,7 @@ export async function PaySection({
         </Card> // End of the reminder.
       )}{/* End of that part. */}
       {(waitingHours.data ?? []).length > 0 && ( // if hours are waiting:
-        <Card title="Hours waiting for approval" description="Tutoring work and office admin logged by staff on their My pay page, and guaranteed hours top-ups added by the app. Approved hours are paid in the next send to Xero.">{/* a card explaining them: */}
+        <Card title="Hours waiting for approval" description="Tutoring work and office admin logged by staff on their My Pay page, and guaranteed hours top-ups added by the app. Approved hours are paid in the next send to Xero.">{/* a card explaining them: */}
           <div className="space-y-4">{/* a block with space between parts: */}
             {(waitingHours.data ?? []).map((h) => ( // for each log:
               <div key={h.id} className="rounded-xl border border-zinc-200 p-4 text-sm">{/* a bordered box: */}

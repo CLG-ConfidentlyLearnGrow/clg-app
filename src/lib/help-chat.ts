@@ -10,7 +10,7 @@ export const HELP_TOPICS: Record<string, string> = { // topic id -> words on scr
   sessions: "Sessions and bookings", // session times, changes and bookings,
   matching: "Finding a tutor", // being matched with a tutor,
   billing: "Billing and payments", // invoices and payments,
-  pay: "My pay (CLG staff)", // pay questions from tutors and staff,
+  pay: "My Pay (CLG staff)", // pay questions from tutors and staff,
   app: "Using the app", // how to do something in the app,
   other: "Something else", // anything else.
 }; // End of the topics.

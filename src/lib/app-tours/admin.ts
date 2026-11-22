@@ -150,7 +150,7 @@ Why: Every adult at CLG shares the job of keeping children safe. Concerns stay c
 
 ## Your own training and pay
 
-**Training** lists your compulsory modules, **Handbooks** has CLG's policies, and **My pay** is where you log your office hours by the day after each pay week ends.
+**Training** lists your compulsory modules, **Handbooks** has CLG's policies, and **My Pay** is where you log your office hours by the day after each pay week ends.
 
 Why: Training keeps you up to date on child safety and privacy, and logging hours on time means you are paid correctly.
 

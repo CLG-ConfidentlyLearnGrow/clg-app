@@ -236,7 +236,7 @@ Choose **Staff directory** (from Admin or Billing) to search staff by name, emai
 When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it.
 
 ### Log your office hours
-1. In the side menu, choose **My pay**.
+1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
 `;
@@ -266,7 +266,7 @@ const HELP = `
 ## Help
 
 ### Answer help chats (the help desk)
-Families, students, tutors and staff ask CLG questions in the **Help chat**. Owner, Operations and Support admins answer general chats. Owner, Operations and Finance admins answer **Billing and payments** and **My pay (CLG staff)** chats.
+Families, students, tutors and staff ask CLG questions in the **Help chat**. Owner, Operations and Support admins answer general chats. Owner, Operations and Finance admins answer **Billing and payments** and **My Pay (CLG staff)** chats.
 1. Choose **Help chats** in the side menu. The number shows chats waiting for CLG.
 2. **Waiting for CLG** lists the longest waiting first. Open a chat by its title.
 3. Write your reply and choose **Send**. It is sent as CLG, and they get an email saying there is a reply (never the message itself, and not between 9pm and 5am their time).
