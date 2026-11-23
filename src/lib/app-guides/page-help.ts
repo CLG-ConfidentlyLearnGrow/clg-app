@@ -94,6 +94,9 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "your-own-training-handbook-and-pay", tasks: ["contract", "outside"] }, // for admins (signing, and work outside CLG),
     { part: "getting-started", tasks: ["contract", "outside"] }, // or for tutors (signing, and work outside CLG).
   ], // End of My contract.
+  updates: [ // End-of-day updates (admins):
+    { part: "your-own-training-handbook-and-pay", tasks: ["end-of-day"] }, // the update tasks in the admin guide.
+  ], // End of End-of-day updates.
   decisions: [ // Decision steps (Carla, 22 Nov 2026):
     { part: "your-own-training-handbook-and-pay", tasks: ["decision steps"] }, // for admins,
     { part: "training-handbook-and-pay", tasks: ["decision steps"] }, // or for tutors.

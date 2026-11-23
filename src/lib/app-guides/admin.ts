@@ -283,6 +283,17 @@ When CLG sends you a contract, a card on your dashboard and **My contract** in t
 ### Tell CLG about work outside CLG
 Tell CLG about any educational support or administrative role you do outside CLG, paid or unpaid, before you start, and again if it changes or ends. In **My contract**, under **Work outside CLG**, open **Tell CLG about a role outside CLG**, fill it in and choose **Tell CLG**. To change it or say it has ended, open **Change or end this**. Only you and CLG's owner see these.
 
+### Send your end-of-day update
+Each day you do admin work for CLG, send a short update in dot points.
+1. In the side menu, choose **End-of-day updates**.
+2. Check the day, then write one dot point per line under **What I did**, **What went well** and **What did not go well** (include anything you need help with).
+3. Choose **Send update**. To correct it, choose the same day again, change it and choose **Send corrected update** (up to 7 days later).
+
+Tip: If you logged office hours on a day but did not send an update, the menu shows a number and the page lists the day. Choose the day to write it.
+
+### Read end-of-day updates (Owner)
+In **End-of-day updates**, **Updates from admin staff** shows the last 30 days, newest first. New ones are counted on the menu. Choose **Mark these as read** once you have read them. A corrected update shows as new again.
+
 ### Log your office hours
 1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
