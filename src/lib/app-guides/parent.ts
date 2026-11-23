@@ -276,7 +276,7 @@ Tip: Until your family has a bill payer, any parent can set it up. The first par
 
 ### Choose how often to pay
 1. In **Billing**, find **How often would you like to pay?**
-2. Choose weekly, monthly, per term or upfront.
+2. Choose weekly, monthly, per term or upfront. Monthly and weekly plans have a small payment plan fee on each invoice ($10 a month or $5 a week to start), shown next to each choice. Per term and upfront plans have no fee.
 3. Save. You need to choose before you can book or approve sessions.
 
 ### Change how often you pay
@@ -292,8 +292,12 @@ Before your first invoice, read the **Payment terms** card and agree. Sessions a
 1. In **Billing**, choose **Set up automatic payment**.
 2. Enter your card or bank details on Stripe's secure page. CLG never sees or stores them.
 3. To change them later, choose **Change card or bank account**.
+4. CLG reminds you 24 hours before every payment, by app notice and email, with the amount and invoice number. Payments are taken from your saved card or bank account automatically, so you do not need to do anything unless you want to change it.
 
 Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans, because it costs CLG less.
+
+### If an invoice is updated
+If CLG changes your family's hourly rate, unpaid invoices are updated to the new rate. You get a notice with the new total, the invoice shows when it was updated, and the amended invoice is emailed to you. Paid invoices do not change: if your rate goes down, you get credit for the difference on your next invoice.
 
 ### Pay an invoice now
 1. In **Billing**, find the invoice under **Invoices**.

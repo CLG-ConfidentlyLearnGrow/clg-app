@@ -85,10 +85,12 @@ export function SplitForm({ familyId, payers }: { familyId: string; payers: Opti
   ); // End of what's shown.
 } // End of SplitForm.
 
-// The form for keeping an existing family's old hourly rate.
-export function KeptRateForm({ familyId, prices }: { familyId: string; prices: Option[] }) {
+// The form for a family's own hourly rate (an existing family's kept rate,
+// or any agreed rate). Changing it re-prices unpaid invoices from the date
+// chosen, and an invoice already sent is amended and sent again.
+export function KeptRateForm({ familyId, prices, today }: { familyId: string; prices: Option[]; today: string }) {
   return ( // Shows:
-    <ActionForm action={saveKeptRate} submitLabel="Save kept rate">{/* a form that saves the kept rate: */}
+    <ActionForm action={saveKeptRate} submitLabel="Save hourly rate">{/* a form that saves the family's hourly rate: */}
       <input type="hidden" name="family_id" value={familyId} />{/* the family (hidden), */}
       <div className="grid gap-3 sm:grid-cols-2">{/* two columns on wider screens: */}
         <Select label="Price" name="price_item_id" defaultValue={prices[0]?.id}>{/* a drop-down of prices: */}
@@ -98,8 +100,13 @@ export function KeptRateForm({ familyId, prices }: { familyId: string; prices: O
             </option> // (end of the option)
           ))}{/* End of the loop. */}
         </Select>{/* End of the drop-down. */}
-        <Field label="Their hourly rate ($)" name="amount" inputMode="decimal" hint="Leave empty to remove the kept rate." />{/* Their hourly rate (blank removes it). */}
+        <Field label="Their hourly rate ($)" name="amount" inputMode="decimal" hint="Leave empty to go back to the price list." />{/* Their hourly rate (blank removes it). */}
+        <Field label="Applies to sessions from" name="from" type="date" defaultValue={today} hint="Unpaid invoices with sessions from this date are updated. A higher rate cannot start before today." />{/* The first session date it applies to. */}
       </div>{/* End of the columns. */}
+      <p className="text-xs text-zinc-600">{/* A small note: */}
+        If an updated invoice was already sent, the family is told the new total and the amended invoice is emailed
+        from Xero. Paid invoices do not change: a lower rate gives the family credit for the difference.{/* what happens to sent and paid invoices. */}
+      </p>{/* End of the note. */}
       <Field label="Note (optional)" name="note" maxLength={500} placeholder="For example: existing family, kept rate" />{/* A note (optional). */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
@@ -202,17 +209,19 @@ export function PriceForm({
   id, // which price,
   amount, // its amount,
   gst, // whether GST applies,
-  active, // and whether it's in use.
+  active, // whether it is in use,
+  unit, // and what it is charged per (hour, or once per invoice).
 }: { // (their types:)
   id: string; // an id,
   amount: string; // text,
   gst: boolean; // true or false,
-  active: boolean; // true or false.
+  active: boolean; // true or false,
+  unit: string; // text.
 }) { // (end of the settings)
   return ( // Shows:
     <ActionForm action={savePrice} submitLabel="Save">{/* a form that saves the price: */}
       <input type="hidden" name="id" value={id} />{/* which price (hidden), */}
-      <Field label="Price per hour ($, including any GST)" name="amount" defaultValue={amount} inputMode="decimal" required />{/* the price per hour, */}
+      <Field label={unit === "hour" ? "Price per hour ($, including any GST)" : "Price ($, including any GST)"} name="amount" defaultValue={amount} inputMode="decimal" required />{/* the price (per hour for session prices), */}
       <label className="flex items-center gap-2 text-sm">{/* a line holding: */}
         <input type="checkbox" name="gst_applies" defaultChecked={gst} /> GST applies{/* a tick box for GST. */}
       </label>{/* End of the line. */}
@@ -245,11 +254,13 @@ export function SchoolPeriodForm() {
 export function SettingsForm({
   invoiceMode, // how new invoices go to Xero,
   overrideBy, // who can lift a pause,
-  showTutor, // and whether to show the tutor on invoices.
+  showTutor, // whether to show the tutor on invoices,
+  planFeesFrom, // and the first session date plan fees apply to.
 }: { // (their types:)
   invoiceMode: string; // text,
   overrideBy: string; // text,
-  showTutor: boolean; // true or false.
+  showTutor: boolean; // true or false,
+  planFeesFrom: string; // a date (YYYY-MM-DD).
 }) { // (end of the settings)
   return ( // Shows:
     <ActionForm action={saveBillingSettings} submitLabel="Save settings">{/* a form that saves the settings: */}
@@ -265,6 +276,14 @@ export function SettingsForm({
         <input type="checkbox" name="show_tutor_on_invoice" defaultChecked={showTutor} /> Show the tutor&apos;s first
         name on invoice lines{/* a tick box to show the tutor's first name on invoices. */}
       </label>{/* End of the line. */}
+      <Field // A date box:
+        label="Plan fees start from" // its label,
+        name="plan_fees_from" // the setting it saves,
+        type="date" // a date,
+        defaultValue={planFeesFrom} // the current date,
+        required // always needed,
+        hint="Monthly and weekly invoices whose first session is on or after this date get the plan fee (see Prices). Make sure the family terms mention the fee first." // what it does.
+      />{/* End of the date box. */}
     </ActionForm> // End of the form.
   ); // End of what's shown.
 } // End of SettingsForm.

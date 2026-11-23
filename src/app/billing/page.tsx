@@ -34,6 +34,7 @@ type Invoice = {
   discount_cents: number; // any discount,
   credit_applied_cents: number; // any credit used,
   total_cents: number; // the total,
+  amended_at: string | null; // when it was last updated after an hourly rate change (if ever),
   billing_invoice_lines: { id: string; description: string; amount_cents: number; line_date: string; active: boolean }[]; // its lines,
   billing_payments: { status: string }[]; // and its payments' statuses.
 }; // End of the shape.
@@ -70,13 +71,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     ]), // (end of the set)
   ]; // End of the list.
 
-  const [accounts, families, invoices, onHold, splits] = await Promise.all([ // Reads five things at once:
+  const [accounts, families, invoices, onHold, splits, fees] = await Promise.all([ // Reads six things at once:
     supabase.from("billing_accounts").select("family_id, bill_payer_id, plan, pending_plan, method, payment_ready, terms_accepted_at, paused").in("family_id", myFamilies), // their own families' billing accounts,
     supabase.from("families").select("id, name").in("id", myFamilies), // their own families' names,
     supabase // the invoices:
       .from("billing_invoices") // (from the invoices table)
       .select( // (with these fields:)
-        "id, number, family_id, status, due_on, charge_on, subtotal_cents, gst_cents, discount_cents, credit_applied_cents, total_cents, billing_invoice_lines(id, description, amount_cents, line_date, active), billing_payments(status)", // totals, lines and payments,
+        "id, number, family_id, status, due_on, charge_on, subtotal_cents, gst_cents, discount_cents, credit_applied_cents, total_cents, amended_at, billing_invoice_lines(id, description, amount_cents, line_date, active), billing_payments(status)", // totals, when it was last updated, lines and payments,
       ) // (end of the fields)
       .in("family_id", myFamilies) // for their own families only,
       .neq("status", "void") // not cancelled,
@@ -84,8 +85,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       .limit(24), // at most 24;
     supabase.rpc("my_support_on_hold"), // whether this person's support is on hold,
     // Split payments: a payer sees their own row; the main payer sees the split.
-    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready").in("family_id", myFamilies), // and split payment shares in their own families.
+    supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready").in("family_id", myFamilies), // split payment shares in their own families,
+    supabase.from("billing_price_items").select("code, amount_cents").in("code", ["plan_fee_monthly", "plan_fee_weekly"]).eq("active", true), // and the monthly and weekly plan fees in use (Carla, 22 Nov 2026).
   ]); // End of the reads.
+  const planFees = { // The plan fees in cents, shown before a family chooses a plan:
+    monthly: fees.data?.find((f) => f.code === "plan_fee_monthly")?.amount_cents ?? 0, // the monthly fee (0 if none),
+    weekly: fees.data?.find((f) => f.code === "plan_fee_weekly")?.amount_cents ?? 0, // and the weekly fee (0 if none).
+  }; // End of the fees.
   const choiceRows = (choices.data ?? []) as { family_id: string; family_name: string; plan: BillingPlan; chosen: boolean; can_change: boolean }[]; // The plan choices.
   const choiceOf = new Map(choiceRows.map((c) => [c.family_id, c])); // Each family's plan choice, by family.
   const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[]; // The split shares.
@@ -149,7 +155,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
             title={choiceRows.length > 1 ? `How often would you like to pay? (${c.family_name})` : "How often would you like to pay?"} // titled with the question (and family name if more than one),
             description="Please choose before booking or approving sessions: it is needed first. You can change it at any time. Once you have an invoice, a change starts from your next invoice." // that it is needed first, and how changes work (Carla, 20 Nov 2026).
           >{/* (end of the card's settings) */}
-            <ChoosePlanForm familyId={c.family_id} plan={c.plan} chosen={false} />{/* The plan form. */}
+            <ChoosePlanForm familyId={c.family_id} plan={c.plan} chosen={false} fees={planFees} />{/* The plan form. */}
           </Card> // End of the card.
         ))}{/* End of the loop. */}
 
@@ -217,7 +223,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                       next invoice: until then you stay on your current plan. Invoices you already have stay as they are, so
                       please pay those as usual. You can cancel a booked change before it starts. CLG is told about the change.{/* how a change works. */}
                     </p>{/* End of the note. */}
-                    <ChoosePlanForm familyId={a.family_id} plan={a.plan} chosen />{/* the plan form. */}
+                    <ChoosePlanForm familyId={a.family_id} plan={a.plan} chosen fees={planFees} />{/* the plan form. */}
                   </div>{/* End of the block. */}
                 </details> // End of the section.
               )}{/* End of that part. */}
@@ -246,7 +252,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                 <ul className="mb-4 list-disc space-y-1 pl-5 text-sm">{/* a bulleted list: */}
                   <li>{PLAN_SCOPE_NOTE}</li>{/* what the plan covers, */}
                   <li>Sessions are paid in advance. Weekly and monthly invoices are due 4 days before the first session; per term invoices 1 week before.</li>{/* paying in advance, */}
-                  <li>Weekly and monthly plans pay automatically, by saved card (weekly) or card or bank debit (monthly).</li>{/* automatic payment, */}
+                  <li>Weekly and monthly plans pay automatically, by saved card (weekly) or card or bank debit (monthly). You can change your saved card or bank account at any time under Billing.</li>{/* automatic payment, */}
+                  {(planFees.monthly > 0 || planFees.weekly > 0) && ( // If plan fees are in use:
+                    <li>{/* a point about them: */}
+                      A payment plan fee is added to each invoice on the monthly plan ({dollars(planFees.monthly)}) and the weekly
+                      plan ({dollars(planFees.weekly)}), however you pay. Per term and all upfront plans have no fee.{/* the fees (Carla, 22 Nov 2026), */}
+                    </li> // End of the point.
+                  )}{/* End of that part. */}
+                  <li>CLG reminds you 24 hours before every payment is taken or due.</li>{/* the 24 hour reminder (Carla, 22 Nov 2026), */}
                   <li>If an invoice is overdue, all your family&apos;s sessions go on hold until it is paid.</li>{/* holds when overdue, */}
                   <li>Cancel more than 24 hr before a session for full credit, or 2 to 24 hr before for half credit. Under 2 hr or a missed session gets no credit. If a make-up session is booked instead, you pay only for the make-up, or half the cancelled session as well if you cancelled under 2 hr before. If CLG or the tutor cancels, you get full credit.</li>{/* cancellations and make-ups (Carla, 16 Nov 2026), */}
                   <li>Credit comes off your next invoice for any CLG service. Refunds are given where the law requires.</li>{/* credits and refunds. */}
@@ -268,7 +281,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                         <div key={i.id}>{/* a block: */}
                           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">{/* a row: */}
                             <span>{/* the words: */}
-                              <strong>{i.number}</strong> · due {plainDate(i.due_on)} · {pending ? "Payment on its way" : STATUS_LABELS[i.status]}{/* number, due date and status. */}
+                              <strong>{i.number}</strong> · due {plainDate(i.due_on)} · {pending ? "Payment on its way" : STATUS_LABELS[i.status]}{/* number, due date and status, */}
+                              {i.amended_at ? ` · updated ${plainDate(i.amended_at.slice(0, 10))} after an hourly rate change` : ""}{/* and when it was updated, if it was. */}
                             </span>{/* End of the words. */}
                             {open.includes(i) && (owed.get(i.id) ?? 0) > 0 && ( // If unpaid and they owe something:
                               <form action={payInvoiceNow}>{/* a form that pays it: */}

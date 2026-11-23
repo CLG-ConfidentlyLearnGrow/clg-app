@@ -11,7 +11,7 @@ import { FINANCE, PAY, requireAdminLevel, requireViewer } from "@/lib/auth"; // 
 import { siteUrl } from "@/lib/env"; // The app's web address, for links back from Stripe.
 import type { FormState } from "@/lib/forms"; // The shape of a form's reply (error or message), for type checking.
 import { stripeKey } from "@/lib/billing/config"; // Checks whether Stripe is set up.
-import { FAMILY_TERMS_VERSION, parseDollars } from "@/lib/billing/money"; // The family terms version, and turning a typed price into cents.
+import { FAMILY_TERMS_VERSION, dollars, parseDollars } from "@/lib/billing/money"; // The family terms version, showing cents as dollars, and turning a typed price into cents.
 import { runBilling } from "@/lib/billing/run"; // The daily billing run.
 import { createCustomer, createPayNowPage, createSetupPage } from "@/lib/billing/stripe"; // Stripe helpers: make a customer, a pay-now page, a setup page.
 import { createAdminClient } from "@/lib/supabase/admin"; // The all-powerful database helper (secret key).
@@ -72,35 +72,43 @@ export async function saveFamilyBilling(_prev: FormState, formData: FormData): P
   return { message: "Billing plan saved." }; // Confirms it.
 } // End of saveFamilyBilling.
 
-// Saves (or removes) a family's kept older hourly rate for one price item.
+// Sets (or removes) a family's own hourly rate for one session price, from
+// a chosen session date (Carla, 22 Nov 2026). Unpaid invoices from that
+// date are re-priced, and an invoice already sent is amended and sent to
+// the family again. Paid invoices stay as they are; a lower rate gives
+// credit for the difference.
 export async function saveKeptRate(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdminLevel(FINANCE); // Owner, operations and finance admins.
+  await requireAdminLevel(PAY); // The owner and Finance admins only (the database checks again).
   const parsed = z // Checks the form has:
-    .object({ family_id: uuid, price_item_id: uuid, amount: z.string(), note: z.string().max(500).optional() }) // a family, a price item, an amount and an optional note,
+    .object({ // (the rules:)
+      family_id: uuid, // a family,
+      price_item_id: uuid, // a session price,
+      amount: z.string(), // an amount (blank to remove),
+      note: z.string().max(500).optional(), // an optional note,
+      from: z.union([day, z.literal("")]).optional(), // and the first session date it applies to (blank for today).
+    }) // (end of the rules)
     .safeParse(Object.fromEntries(formData)); // (from the form's fields).
-  if (!parsed.success) return { error: "Please fill in the rate." }; // Problem: asks for the rate.
+  if (!parsed.success) return { error: "Please fill in the rate and choose a date." }; // Problem: asks for the rate and date.
+  const blank = parsed.data.amount.trim() === ""; // A blank amount means go back to the price list.
+  const cents = blank ? null : parseDollars(parsed.data.amount); // Turns the amount into cents (none when blank).
+  if (!blank && cents === null) return { error: "Enter the hourly rate in dollars, for example 80 or 85.50." }; // Not a price: shows an example.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
-  if (parsed.data.amount.trim() === "") { // Blank amount means remove it:
-    const { error } = await supabase // deletes:
-      .from("billing_family_rates") // from the kept rates table,
-      .delete() // (removing the row)
-      .eq("family_id", parsed.data.family_id) // for this family,
-      .eq("price_item_id", parsed.data.price_item_id); // and this price item.
-    if (error) return plain(error, "Could not remove the kept rate."); // Failed: plain message.
-    revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
-    return { message: "Kept rate removed. This family now pays the price list." }; // Confirms the family now pays the price list.
-  } // End of the remove case.
-  const cents = parseDollars(parsed.data.amount); // Turns the amount into cents.
-  if (cents === null) return { error: "Enter the hourly rate in dollars, for example 80 or 85.50." }; // Not a price: shows an example.
-  const { error } = await supabase.from("billing_family_rates").upsert({ // Saves (or replaces) the kept rate:
-    family_id: parsed.data.family_id, // family,
-    price_item_id: parsed.data.price_item_id, // price item,
-    amount_cents: cents, // amount in cents,
-    note: parsed.data.note?.trim() || null, // note (or none).
+  const { data, error } = await supabase.rpc("billing_set_family_rate", { // Saves the rate and re-prices invoices:
+    p_family: parsed.data.family_id, // for this family,
+    p_price_item: parsed.data.price_item_id, // this session price,
+    p_amount_cents: cents, // this hourly rate (none to remove it),
+    p_note: parsed.data.note?.trim() || null, // with the note (if any),
+    p_from: parsed.data.from || null, // from this session date (today if none).
   }); // End of the save.
-  if (error) return plain(error, "Could not save the kept rate."); // Failed: plain message.
+  if (error) return plain(error, "Could not save the hourly rate."); // Failed: plain message.
   revalidatePath(ADMIN_PAGE); // Refreshes the admin page so it shows the change.
-  return { message: "Kept rate saved." }; // Confirms it.
+  const result = (data ?? {}) as { repriced?: number; amended?: number; credit_cents?: number }; // What changed.
+  const parts = [blank ? "Hourly rate removed. This family now pays the price list." : "Hourly rate saved."]; // The first part of the message.
+  if (result.amended) parts.push(`${result.amended} invoice${result.amended === 1 ? "" : "s"} already sent ${result.amended === 1 ? "was" : "were"} amended; the family has been told, and the amended invoice is emailed from Xero on the next billing run.`); // Amended invoices.
+  const quiet = (result.repriced ?? 0) - (result.amended ?? 0); // Invoices re-priced before the family saw them.
+  if (quiet > 0) parts.push(`${quiet} invoice${quiet === 1 ? "" : "s"} not yet sent ${quiet === 1 ? "was" : "were"} re-priced.`); // Drafts and invoices waiting for approval.
+  if (result.credit_cents) parts.push(`${dollars(result.credit_cents)} credit was given for paid invoices.`); // Credit for paid invoices.
+  return { message: parts.join(" ") }; // Confirms it.
 } // End of saveKeptRate.
 
 // Saves a price item's amount, GST and whether it's in use.
@@ -249,10 +257,11 @@ export async function saveBillingSettings(_prev: FormState, formData: FormData):
     .object({ // (the rules:)
       invoice_mode: z.enum(["awaiting_approval", "send"]), // invoices wait for approval, or are sent,
       override_by: z.enum(["owner", "admin"]), // who can lift pauses: owner or any admin,
-      show_tutor_on_invoice: z.string().optional(), // whether the tutor's name shows on invoices.
+      show_tutor_on_invoice: z.string().optional(), // whether the tutor's name shows on invoices,
+      plan_fees_from: day, // and the first session date monthly and weekly plan fees apply to.
     }) // (end of the rules)
     .safeParse(Object.fromEntries(formData)); // (from the form's fields)
-  if (!parsed.success) return { error: "Please choose each setting." }; // Problem: asks for each setting.
+  if (!parsed.success) return { error: "Please choose each setting, including the date plan fees start." }; // Problem: asks for each setting.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
   const { data, error } = await supabase // Saves:
     .from("billing_settings") // in the billing settings table,

@@ -191,20 +191,52 @@ export type InvoiceForXero = {
   idempotencyKey: string; // A key so it's never sent twice.
 }; // End of the invoice shape.
 
-// Sends an invoice to Xero. In the pilot it waits there for approval
-// ("Awaiting approval"); later it is approved straight away.
-export async function sendInvoiceToXero(inv: InvoiceForXero): Promise<string> {
+// Turns an invoice's lines, and any bank debit discount, into Xero's line
+// format. Shared by sending a new invoice and amending one.
+function xeroLineItems(lines: InvoiceForXero["lines"], discountCents: number) {
   const cfg = xeroConfig()!; // Reads the Xero settings (known to be set by now).
-  const lineItems = inv.lines.map((l) => ({ // Turns each line into Xero's format:
+  const lineItems = lines.map((l) => ({ // Turns each line into Xero's format:
     Description: l.description, // the words,
     Quantity: l.hours, // hours as the quantity,
     UnitAmount: l.hourlyCents / 100, // the hourly price in dollars,
     AccountCode: cfg.salesAccount, // recorded against the sales account,
     TaxType: l.gst ? "OUTPUT" : "EXEMPTOUTPUT", // with GST or GST-free.
   })); // End of the lines.
-  if (inv.discountCents > 0) { // If there's a bank debit discount:
-    lineItems.push({ Description: "Bank debit discount", Quantity: 1, UnitAmount: -inv.discountCents / 100, AccountCode: cfg.salesAccount, TaxType: "EXEMPTOUTPUT" }); // adds it as a negative line.
+  if (discountCents > 0) { // If there is a bank debit discount:
+    lineItems.push({ Description: "Bank debit discount", Quantity: 1, UnitAmount: -discountCents / 100, AccountCode: cfg.salesAccount, TaxType: "EXEMPTOUTPUT" }); // adds it as a negative line.
   } // End of the discount.
+  return lineItems; // Hands back the lines.
+} // End of xeroLineItems.
+
+// Replaces an invoice's lines in Xero after it was re-priced (for example
+// a family's hourly rate changed). Xero only allows this while no payment
+// or credit has been applied to the invoice there.
+export async function amendXeroInvoice(xeroInvoiceId: string, inv: Pick<InvoiceForXero, "lines" | "discountCents">) {
+  await xero( // Sends to Xero:
+    "POST", // a change
+    `Invoices/${xeroInvoiceId}`, // to this invoice,
+    { // with:
+      Invoices: [ // the invoice:
+        { // whose details are:
+          InvoiceID: xeroInvoiceId, // Xero's id for it,
+          LineAmountTypes: "Inclusive", // prices already include any GST,
+          LineItems: xeroLineItems(inv.lines, inv.discountCents), // and the new lines (these replace the old ones).
+        }, // End of the invoice.
+      ], // End of the list.
+    }, // End of the content.
+  ); // End of the request.
+} // End of amendXeroInvoice.
+
+// Asks Xero to email an approved invoice to the family's contact, using
+// Xero's usual invoice email. Used to send an amended invoice.
+export async function emailXeroInvoice(xeroInvoiceId: string) {
+  await xero("POST", `Invoices/${xeroInvoiceId}/Email`, {}); // Asks Xero to email this invoice (the request has no content).
+} // End of emailXeroInvoice.
+
+// Sends an invoice to Xero. In the pilot it waits there for approval
+// ("Awaiting approval"); later it is approved straight away.
+export async function sendInvoiceToXero(inv: InvoiceForXero): Promise<string> {
+  const lineItems = xeroLineItems(inv.lines, inv.discountCents); // Turns the lines (and any discount) into Xero's format.
   const res = await xero<{ Invoices: { InvoiceID: string }[] }>( // Sends to Xero:
     "PUT", // making or updating,
     "Invoices", // an invoice,

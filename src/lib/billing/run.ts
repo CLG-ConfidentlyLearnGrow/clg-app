@@ -9,12 +9,16 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 // Checks whether Stripe and Xero are set up.
 import { stripeKey, xeroConfig } from "./config";
+// Checks email is set up, sends emails, and the shape of an email (for the 24 hour payment reminders).
+import { emailIsSetUp, sendEmails, type OutgoingEmail } from "@/lib/email/send";
 // The Stripe helpers: error type, charge a saved method, read a saved method, payment shape.
 import { StripeError, chargeSaved, getSetupIntent, type PaymentIntent } from "./stripe";
 // The Xero helpers used below.
 import { // Brings in:
   allocateCreditNote, // apply a credit note to an invoice,
+  amendXeroInvoice, // update an invoice's lines after a rate change,
   createCreditNote, // make a credit note,
+  emailXeroInvoice, // email an invoice to the family from Xero,
   findOrCreateContact, // find or make a family's contact,
   getXeroInvoice, // read an invoice,
   openCreditNotes, // list credit notes with credit left,
@@ -62,7 +66,9 @@ export async function runBilling(): Promise<Summary> {
   await sendDepositsToXero(summary); // Sends Student Success Program deposit invoices to Xero.
   await sendCreditNotesToXero(today, summary); // Sends new credits to Xero as credit notes.
   await applyCreditsInXero(today, summary); // Applies credit to invoices in Xero.
-  await chargeDueInvoices(today, summary); // Charges saved cards and bank debits that are due.
+  await amendInvoicesInXero(summary); // Updates invoices re-priced after a rate change in Xero, and emails the amended ones (Carla, 22 Nov 2026).
+  await sendPaymentReminders(today, summary); // Reminds each payer the day before a payment (Carla, 22 Nov 2026), before any charge below.
+  await chargeDueInvoices(today, summary); // Charges saved cards and bank debits that are due (only once their reminder is a day old).
   await syncPaymentsToXero(summary); // Records confirmed payments in Xero.
 
   const pauses = await db.rpc("billing_refresh_all_pauses", { p_today: today }); // Asks the database to start or end pauses for overdue families.
@@ -244,7 +250,7 @@ async function chargeDueInvoices(today: string, summary: Summary) {
   const db = createAdminClient(); // Connects with full access.
   const { data: due } = await db // Reads invoices to charge:
     .from("billing_invoices") // from the invoices table,
-    .select("id, number, family_id, total_cents, idempotency_key") // with id, number, family, total and never-twice key,
+    .select("id, number, family_id, total_cents, idempotency_key, kind") // with id, number, family, total, never-twice key and what it is for,
     .eq("status", "open") // only sent invoices,
     .lte("charge_on", today) // whose charge date has come,
     .is("auto_charge_attempted_at", null) // not already tried,
@@ -276,6 +282,21 @@ async function chargeDueInvoices(today: string, summary: Summary) {
     } // End of the split case.
     const ready = charges.filter((c) => c.saved.stripe_payment_method_id && c.saved.stripe_customer_id && c.saved.method !== "none"); // Keeps only charges with a complete saved method.
     if (!ready.length) continue; // None ready: the family pays by link instead.
+
+    // Session invoices are only charged once every payer was reminded at
+    // least 20 hours ago (Carla, 22 Nov 2026: a reminder 24 hours before
+    // any payment). The daily run is about 24 hours apart, so a reminder
+    // made today lets the charge go ahead tomorrow.
+    if (inv.kind === "sessions") { // A session invoice (Student Success Program invoices send their own reminders):
+      const { data: reminders } = await db // reads its reminders:
+        .from("billing_payment_reminders") // from the reminders table,
+        .select("payer_id, created_at") // who was reminded and when,
+        .eq("invoice_id", inv.id); // for this invoice.
+      const cutOff = Date.now() - 20 * 3600000; // 20 hours ago (3,600,000 ms is one hour).
+      const remindedInTime = (payer: string | null | undefined) => // True if this payer was reminded at least 20 hours ago:
+        (reminders ?? []).some((r) => r.payer_id === payer && Date.parse(r.created_at) <= cutOff); // (looks for their reminder).
+      if (!ready.every((c) => remindedInTime(c.payerId ?? acct?.bill_payer_id))) continue; // Anyone not reminded in time: waits for the next run.
+    } // End of the reminder check.
 
     // Mark the try first, so two runs at once can't both charge.
     const claimed = await db // Marks the try:
@@ -320,6 +341,70 @@ async function chargeDueInvoices(today: string, summary: Summary) {
     } // End of the charges loop.
   } // End of the invoices loop.
 } // End of chargeDueInvoices.
+
+// Reminds each person who pays the day before their payment (Carla, 22 Nov
+// 2026). The database makes the reminders (with an app notice and pop-up)
+// and hands over the reminder emails, which are sent here.
+async function sendPaymentReminders(today: string, summary: Summary) {
+  const db = createAdminClient(); // Connects with full access.
+  const queued = await db.rpc("billing_queue_payment_reminders", { p_today: today }); // Asks the database to make tomorrow's reminders.
+  if (queued.error) { // Could not make them:
+    summary.problems.push(`Payment reminders: ${queued.error.message}`); // notes the problem,
+    return; // and stops (charges then wait, because nobody was reminded).
+  } // End of the problem case.
+  if (!emailIsSetUp()) return; // Email not set up: the app notices still go out, so stops here.
+  const claimed = await db.rpc("billing_payment_reminder_emails_claim", { p_limit: 100 }); // Collects the reminder emails waiting to go.
+  if (claimed.error) { // Could not collect them:
+    summary.problems.push(`Payment reminder emails: ${claimed.error.message}`); // notes the problem,
+    return; // and stops.
+  } // End of the problem case.
+  const emails = (claimed.data ?? []) as OutgoingEmail[]; // The emails.
+  if (!emails.length) return; // None: nothing to send.
+  const problem = await sendEmails(emails); // Sends them.
+  if (problem) { // The email service refused them:
+    summary.problems.push(`Payment reminder emails: ${problem}`); // notes the problem,
+    await db.rpc("billing_payment_reminder_emails_release", { p_ids: emails.map((e) => e.id) }); // and puts them back to try again on the next run.
+  } // End of the problem case.
+} // End of sendPaymentReminders.
+
+// Invoices re-priced after a family's hourly rate changed are updated in
+// Xero to match. An amended invoice the family already has is then emailed
+// to them from Xero, so they get the new version (Carla, 22 Nov 2026).
+async function amendInvoicesInXero(summary: Summary) {
+  if (!xeroConfig() || !(await xeroConnection())) return; // Xero not set up or connected: waits until it is.
+  const db = createAdminClient(); // Connects with full access.
+  const { data: amended } = await db // Reads amended invoices:
+    .from("billing_invoices") // from the invoices table,
+    .select("id, number, status, xero_invoice_id, discount_cents, amended_at, xero_amended_at") // with the details needed,
+    .not("amended_at", "is", null) // that were amended,
+    .not("xero_invoice_id", "is", null) // that are in Xero,
+    .in("status", ["awaiting_approval", "open"]) // and not yet paid or cancelled,
+    .limit(50); // up to 50 at a time.
+  for (const inv of amended ?? []) { // Goes through each one.
+    if (inv.xero_amended_at && inv.xero_amended_at >= inv.amended_at) continue; // Xero already has this version: skips.
+    try { // Talking to Xero could fail.
+      const { data: lines } = await db // Reads the invoice's lines:
+        .from("billing_invoice_lines") // from the invoice lines table,
+        .select("description, billed_minutes, hourly_cents, gst_cents") // with words, minutes, hourly price and GST,
+        .eq("invoice_id", inv.id) // for this invoice,
+        .eq("active", true) // only lines still in use,
+        .order("line_date"); // in date order.
+      await amendXeroInvoice(inv.xero_invoice_id!, { // Replaces the invoice's lines in Xero:
+        lines: (lines ?? []).map((l) => ({ // each line:
+          description: l.description, // its words,
+          hours: l.billed_minutes / 60, // hours (minutes divided by 60),
+          hourlyCents: l.hourly_cents, // hourly price,
+          gst: l.gst_cents > 0, // and whether it has GST.
+        })), // End of the lines.
+        discountCents: inv.discount_cents, // Any bank debit discount.
+      }); // End of the update.
+      if (inv.status === "open") await emailXeroInvoice(inv.xero_invoice_id!); // Already with the family: emails them the amended invoice.
+      await db.from("billing_invoices").update({ xero_amended_at: new Date().toISOString() }).eq("id", inv.id); // Notes that Xero now matches.
+    } catch (e) { // Something went wrong:
+      summary.problems.push(`Amending invoice ${inv.number} in Xero (update it there by hand if this keeps happening): ${(e as Error).message}`); // notes which invoice, what to do, and why.
+    } // End of the error handling.
+  } // End of the loop.
+} // End of amendInvoicesInXero.
 
 // Stripe payment result to the database.
 export async function recordPaymentIntent(pi: PaymentIntent, invoiceId = pi.metadata?.invoice_id) {

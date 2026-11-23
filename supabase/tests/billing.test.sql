@@ -71,7 +71,7 @@ select tests.eq(((select charge_on from private.billing_dates('monthly', 'bank_d
 -- ---------------------------------------------------------------------------
 select tests.claims('00000000-0000-0000-0000-000000000001'); -- Signs in as test account ...01.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.billing_price_items), 5, 'parent sees active prices only (tutoring and drafting, school and tertiary, and the Student Success Program deposit)'); -- Checks: parent sees active prices only (tutoring and drafting, school and tertiary, and the program deposit added 22 Nov 2026).
+select tests.eq((select count(*) from public.billing_price_items), 7, 'parent sees active prices only (tutoring and drafting, school and tertiary, the Student Success Program deposit, and the monthly and weekly plan fees)'); -- Checks: parent sees active prices only (tutoring and drafting, school and tertiary, the program deposit added 22 Nov 2026, and the two plan fees added 22 Nov 2026, which families see so they know the fee before choosing a plan).
 select tests.eq((select count(*) from public.billing_price_items where code like 'drafting_%' and not gst_applies -- Checks the drafting prices: 90 dollars school, 110 tertiary, GST-free:
   and amount_cents in (9000, 11000)), 2, 'drafting $90 school, $110 tertiary, GST-free'); -- (two price items).
 update public.billing_price_items set amount_cents = 1 where code = 'school_tutoring'; -- Tries to change the school tutoring price.
@@ -81,12 +81,12 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal1'); -- Signs in as test account ...b0.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.billing_price_items), 5, 'admin without two-step login gets parent-level view'); -- Checks: admin without two-step login gets parent-level view (5 active prices, including the program deposit).
+select tests.eq((select count(*) from public.billing_price_items), 7, 'admin without two-step login gets parent-level view'); -- Checks: admin without two-step login gets parent-level view (7 active prices, including the program deposit and the two plan fees).
 reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.billing_price_items), 7, 'admin sees all prices'); -- Checks: admin sees all prices (including the term review price, off until set, and the Student Success Program deposit).
+select tests.eq((select count(*) from public.billing_price_items), 9, 'admin sees all prices'); -- Checks: admin sees all prices (including the term review price, off until set, the Student Success Program deposit, and the two plan fees).
 -- Prices are a billing rule: only the owner changes them.
 update public.billing_price_items set description = 'Updated' where code = 'school_tutoring'; -- Tries to change its description.
 select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 0, 'operations admin cannot edit a price'); -- Checks: operations admin cannot edit a price.
