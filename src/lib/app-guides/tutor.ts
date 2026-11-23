@@ -153,7 +153,7 @@ Tip: Only record a finish that is more than 15 minutes early, or a session that 
 If a family cancels and offers two times, **Pick a make-up time** shows on the Overview. Pick one to book it, or choose **Neither works** and say why. If CLG offered the times and the family picked one, confirm it under **Confirm a make-up time**.
 
 ### Confirm a change of tutor or time
-If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed. While a change is waiting, a session that does not go ahead is not a no-show for you or the family: if you choose **No-show**, CLG is told, follows up and rebooks it, and there is no no-show pay for it.
+If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed. If the change is still waiting 24 hr before a session, that session is cancelled. The current tutor is told not to go. As the new tutor, a **Session cancelled: please choose what happens** card shows: choose **Confirm the change** (the session comes back with you if everyone confirms in time), **Offer other times**, or **Keep it cancelled**. A session less than 2 hr away when the change is sent stays booked, and it is not a no-show for you or the family: if you choose **No-show**, CLG is told, follows up and rebooks it, and there is no no-show pay for it.
 
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.
@@ -261,6 +261,11 @@ When a family uploads a school report or marked work, it shows under **New uploa
 
 ### Use the handbook
 In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
+
+### Keep and share learnings
+1. In the side menu, choose **Learnings**. **Team learnings** shows what CLG has learned together.
+2. Under **My learnings**, give a learning a **Short title**, write **What was learned** and choose **Save learning**. Only you can see your own learnings. Do not write students' or families' names.
+3. To share one, open **Change, remove or suggest for the team** under it and choose **Suggest for the team**. Carla or Emma may change the words so they work for everyone, then add it to the team learnings. You are told either way, and if it is not added you see their note and can change it and suggest it again.
 
 ### Check your pay and log extra hours
 1. In the side menu, choose **My Pay**. **Your rates** shows your pay rates.

@@ -85,6 +85,10 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "your-own-training-handbook-and-pay", tasks: ["handbook"] }, // for admins,
     { part: "training-handbook-and-pay", tasks: ["handbook"] }, // or for tutors.
   ], // End of Handbooks.
+  learnings: [ // Learnings (Carla, 22 Nov 2026):
+    { part: "your-own-training-handbook-and-pay", tasks: ["learnings"] }, // for admins,
+    { part: "training-handbook-and-pay", tasks: ["learnings"] }, // or for tutors.
+  ], // End of Learnings.
   contract: [ // My contract:
     { part: "your-own-training-handbook-and-pay", tasks: ["contract", "outside"] }, // for admins (signing, and work outside CLG),
     { part: "getting-started", tasks: ["contract", "outside"] }, // or for tutors (signing, and work outside CLG).
