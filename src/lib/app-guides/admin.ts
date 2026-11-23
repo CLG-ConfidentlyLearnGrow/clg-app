@@ -265,6 +265,11 @@ const YOUR_OWN = `
 ### Use the handbook
 Choose **Handbooks** in the side menu, and search for a word. **Something has happened** is pinned at the top in red.
 
+### Keep and share learnings
+1. Choose **Learnings** in the side menu. Under **My learnings**, write a **Short title** and **What was learned**, then choose **Save learning**. Only you see it until you open it and choose **Suggest for the team**.
+2. Owner and Operations: a number next to **Learnings** shows suggestions waiting. Under **Suggested for the team**, change the words so they work for everyone and choose **Add to team learnings**, or write a note and choose **Decline for now**. The person is told either way.
+3. Owner and Operations: under **Team learnings**, open **Change or remove** to update one, or choose **Add a team learning** to add one directly.
+
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
 

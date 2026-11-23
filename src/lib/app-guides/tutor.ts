@@ -253,6 +253,11 @@ When a family uploads a school report or marked work, it shows under **New uploa
 ### Use the handbook
 In the side menu, choose **Handbooks**. Search for a word (for example late, concern, sick or privacy). **Something has happened** is pinned at the top in red.
 
+### Keep and share learnings
+1. In the side menu, choose **Learnings**. **Team learnings** shows what CLG has learned together.
+2. Under **My learnings**, give a learning a **Short title**, write **What was learned** and choose **Save learning**. Only you can see your own learnings. Do not write students' or families' names.
+3. To share one, open **Change, remove or suggest for the team** under it and choose **Suggest for the team**. Carla or Emma may change the words so they work for everyone, then add it to the team learnings. You are told either way, and if it is not added you see their note and can change it and suggest it again.
+
 ### Check your pay and log extra hours
 1. In the side menu, choose **My Pay**. **Your rates** shows your pay rates.
 2. Under **Log hours**, choose **What kind of work?** (for example **Lesson preparation and planning** or **Making learning materials**), then the day and hours. Write **What you did** and **What you finished or achieved**. CLG checks both before approving. Log each pay week's hours by the day after the pay week ends.
