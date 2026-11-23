@@ -586,6 +586,12 @@ Under **Add staff**, choose the admin role and level. Only the owner can invite 
 - **Settings**: choose whether new invoices go to Xero as drafts, who can lift a pause without payment, and **Plan fees start from** (only invoices whose first session is on or after that date get the plan fee, so check the family terms mention the fee first).
 - **Stripe and Xero**: connect CLG's Stripe and Xero accounts.
 
+### Change the quotes
+The **Quote of the day** at the top of every Overview goes through the list one a day, before any repeat. The quote of the month shows on the loading screen under Confidently Learn and Grow.
+1. Choose **Quotes** in the side menu. **Today** shows what everyone sees today.
+2. Under **Quote of the month**, choose a quote for this month or next and choose **Save**. If you do not choose one, the month uses the next quote in the list.
+3. Under **All quotes**, choose **Add a quote**, or open a quote to change it, untick **In use**, or choose **Remove quote**. Write short forms out in full.
+
 ### Change a family's hourly rate (Owner and Finance)
 1. In **Family billing**, find the family and go to **Family hourly rate**.
 2. Choose the price (school or tertiary tutoring), enter their hourly rate, and choose the first session date it **Applies to sessions from** (today to start). Leave the rate empty to go back to the price list.

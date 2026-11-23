@@ -209,6 +209,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFull) items.push({ id: "check-ins", label: "Check-ins", href: "/admin/check-ins", count: await checkInsToFollowUp() }); // answers to the check-ins after a new match (full admins, Carla 16 Nov 2026), with ones needing follow-up counted,
     if (isFull) items.push({ id: "lateness", label: "Tutor lateness", href: "/admin/lateness", count: await latenessToReview() }); // late starts by tutors to review (full admins, Carla 18 Nov 2026), with open ones counted,
     if (level === "owner") items.push({ id: "probation", label: "Staff probation", href: "/admin/probation", count: await probationsDue() }); // staff probation reviews (owner only, Carla 20 Nov 2026), with ones due for review counted,
+    if (level === "owner") items.push({ id: "quotes", label: "Quotes", href: "/admin/quotes" }); // the quote of the day and quote of the month (owner only, Carla 22 Nov 2026),
     if (isFull) items.push({ id: "feedback", label: "Feedback", href: "/admin/feedback" }); // the feedback overview, grouped by area (full admins),
     if (isFull) items.push({ id: "whats-new", label: "What is new", href: "/admin/whats-new" }); // writing the "What's new" pop-ups for each dashboard (full admins, Carla 15 Nov 2026),
     if (isFull) items.push({ id: "teams", label: "Teams links", href: "/admin/teams", items: subTabs(TEAMS_TABS, "/admin/teams") }); // Teams links for online sessions (full admins), with its sub-tabs,
