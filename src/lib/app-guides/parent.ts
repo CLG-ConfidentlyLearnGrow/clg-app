@@ -158,7 +158,7 @@ Tip: Calendar apps can take a few hours to update, and online session links stay
 4. Offer two other times that week for a make-up session. Your tutor picks one. If no other time works, tick that box and CLG will help.
 5. Choose **Cancel this session**.
 
-Credit for a session you cancel with no make-up: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If a make-up is booked, there is nothing extra to pay with 2 hr notice or more, or half the cancelled session with less. Notice counts from when you save the cancel in the app. If CLG or the tutor cancels, you get full credit.
+Credit for a session you cancel with no make-up: more than 24 hr before gets full credit, 24 to 2 hr before gets half credit, and under 2 hr (or a missed session) gets none. If a make-up is booked, there is nothing extra to pay with 2 hr notice or more, or half the cancelled session with less. Notice counts from when you save the cancel in the app. A cancel saved in quiet hours (9pm to 5am Adelaide time) counts from 5am. If CLG or the tutor cancels, you get full credit.
 
 Tip: If your child is suddenly unwell or there is a family emergency, contact CLG (not your tutor). CLG can waive the late-cancel rule once a year for each child; after that, CLG needs to see proof.
 
@@ -172,6 +172,8 @@ Sometimes CLG needs to move sessions to a new tutor or a new day and time. A **P
 1. Read what will change and from when.
 2. Choose **Confirm**, or **Decline** and say why it does not suit.
 3. Nothing changes until you and the new tutor have both confirmed.
+
+Tip: While a change is waiting, a session that does not go ahead is not counted as a missed session for you. CLG follows up and rebooks it, with no charge.
 
 ### Stop a booking
 1. In **Sessions**, choose **Bookings**.
@@ -276,7 +278,7 @@ Tip: Until your family has a bill payer, any parent can set it up. The first par
 
 ### Choose how often to pay
 1. In **Billing**, find **How often would you like to pay?**
-2. Choose weekly, monthly, per term or upfront.
+2. Choose weekly, monthly, per term or upfront. Monthly and weekly plans have a small payment plan fee on each invoice ($10 a month or $5 a week to start), shown next to each choice. Per term and upfront plans have no fee.
 3. Save. You need to choose before you can book or approve sessions.
 
 ### Change how often you pay
@@ -292,8 +294,12 @@ Before your first invoice, read the **Payment terms** card and agree. Sessions a
 1. In **Billing**, choose **Set up automatic payment**.
 2. Enter your card or bank details on Stripe's secure page. CLG never sees or stores them.
 3. To change them later, choose **Change card or bank account**.
+4. CLG reminds you 24 hours before every payment, by app notice and email, with the amount and invoice number. Payments are taken from your saved card or bank account automatically, so you do not need to do anything unless you want to change it.
 
 Tip: Weekly plans pay by card. Bank debit gets a small discount on monthly plans, because it costs CLG less.
+
+### If an invoice is updated
+If CLG changes your family's hourly rate, unpaid invoices are updated to the new rate. You get a notice with the new total, the invoice shows when it was updated, and the amended invoice is emailed to you. Paid invoices do not change: if your rate goes down, you get credit for the difference on your next invoice.
 
 ### Pay an invoice now
 1. In **Billing**, find the invoice under **Invoices**.

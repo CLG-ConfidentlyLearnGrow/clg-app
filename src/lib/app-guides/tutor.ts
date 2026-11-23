@@ -16,7 +16,7 @@ export const TUTOR_GUIDE: GuideSource = { // The guide:
   text: `
 ## Getting started
 
-Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide** and **My Pay**. Once CLG sends you an employment contract, **My contract** appears too. A number next to an item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
+Your dashboard opens on **Overview**, a quick look at everything that needs you. Your side menu has **Overview**, **Your students**, **Sessions**, **Weekly calendar**, **What you teach**, **Child safety checks**, **Hours and availability**, **CLG materials**, **Training**, **Handbooks**, **App guide**, **My Pay** and **My contract**. A number next to an item means something is waiting for you there. A menu item with smaller items under it (for example **Sessions**) has an arrow at the end of its row. Click the arrow to open or close those smaller items from any page, without leaving the page you are on. When they are folded away, the number beside the menu item adds up all of theirs.
 
 Tip: When you open a training module, a handbook page or a student's progress page, a **Back** button at the top (and at the bottom of long pages) takes you back to the list.
 
@@ -38,6 +38,15 @@ CLG sends your contract in the app. A card on your dashboard and **My contract**
 Tip: Your signed contract stays in **My contract**, so you can read it again at any time.
 
 Tip: When CLG updates a policy linked to your contract, **My contract** shows a number. Open your contract, read the new version (what changed is shown) and tick it again with your name.
+
+### Tell CLG about work outside CLG
+Your contract asks you to tell CLG about any educational support or administrative role you do outside CLG, paid or unpaid, including tutoring privately or through another business. Tell CLG before you start, and again if it changes or ends.
+1. In the side menu, choose **My contract**.
+2. Under **Work outside CLG**, open **Tell CLG about a role outside CLG**.
+3. Choose the kind of role, write the role and where (leave it blank for private work), say whether it is paid, and add the start date. Do not include students' names. Choose **Tell CLG**.
+4. To change it or say it has ended, open **Change or end this** under the role.
+
+Only you and CLG's owner see these.
 
 ### See what needs you on the Overview
 **Home** (top of every page) and the **Tutor** tab open your **Overview**. It shows:
@@ -144,7 +153,7 @@ Tip: Only record a finish that is more than 15 minutes early, or a session that 
 If a family cancels and offers two times, **Pick a make-up time** shows on the Overview. Pick one to book it, or choose **Neither works** and say why. If CLG offered the times and the family picked one, confirm it under **Confirm a make-up time**.
 
 ### Confirm a change of tutor or time
-If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed.
+If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed. While a change is waiting, a session that does not go ahead is not a no-show for you or the family: if you choose **No-show**, CLG is told, follows up and rebooks it, and there is no no-show pay for it.
 
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.
@@ -257,6 +266,7 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 1. In the side menu, choose **My Pay**. **Your rates** shows your pay rates.
 2. Under **Log hours**, choose **What kind of work?** (for example **Lesson preparation and planning** or **Making learning materials**), then the day and hours. Write **What you did** and **What you finished or achieved**. CLG checks both before approving. Log each pay week's hours by the day after the pay week ends.
    - For **Work during a no-show or late cancel**, also choose the session under **Which session?**. That time is already paid with the session, so it is recorded and checked, not paid again.
+   - If a family or CLG cancels with under 2 hr notice, or the student does not come, you get late-cancel pay. A cancel saved in quiet hours (9pm to 5am Adelaide time) counts from 5am, so a 7am session cancelled at 11pm the night before counts as 2 hr notice.
    - The 15 minutes after each session (summary and planning), app training modules, and 1 hour for each term review CLG approves are added for you. Do not log them.
 3. Changed your mind? Choose **Take back** before it is approved.
 4. **Last 8 weeks** shows your sessions and hours. If you tutor school students on a weekday before 7am or after 7pm, a weekend or a public holiday, and your rate is below the award rate for that time, a **Penalty rate top-up** line pays the difference. Under the award you move from Level 1 to Level 2 after 3 months with CLG, and the app raises your school rate then if it is below the Level 2 minimum. If a time looks wrong, record the right finish time on the session, or contact CLG.

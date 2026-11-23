@@ -113,10 +113,10 @@ async function probationsDue(): Promise<number | undefined> { // No inputs: it c
   return error || !data ? undefined : (data as number); // No number if none, or if it could not be counted.
 } // End of probationsDue.
 
-// The signed-in staff member's own contracts: whether they have any (so the
-// "My contract" tab only shows once CLG has sent one), and how many are
-// waiting for them to sign or finish (Carla, 17 Nov 2026). A problem reading
-// them shows no tab.
+// The signed-in staff member's own contracts: the "My contract" tab (shown
+// to every staff member, because work outside CLG is reported there, Carla
+// 22 Nov 2026), and how many contracts are waiting for them to sign or
+// finish (Carla, 17 Nov 2026). A problem reading them shows no tab.
 async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // No inputs: it is about the signed-in person.
   const supabase = await createClient(); // Connects to the database.
   const { data: me } = await supabase.auth.getUser(); // Who is signed in.
@@ -125,7 +125,7 @@ async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // N
     supabase.from("employment_contracts").select("status").eq("account_id", me.user.id), // the statuses of their own contracts,
     supabase.rpc("my_policy_rereads_count"), // and how many policies have a new version for them to read (Carla, 22 Nov 2026).
   ]); // End of the reads.
-  if (error || !data?.length) return { any: false }; // None (or a problem): no tab.
+  if (error) return { any: false }; // A problem: no tab.
   const waiting = data.filter((c) => c.status === "sent" || c.status === "signed").length + Number(rereads ?? 0); // How many need them (contracts to finish, plus new policy versions to read).
   return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
 } // End of myContracts.
@@ -232,7 +232,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
     const mine = await myContracts(); // Their own contracts, if any.
-    if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract, once one has been sent (Carla, 17 Nov 2026),
+    if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract and work outside CLG (every staff member; Carla, 17 and 22 Nov 2026),
     items.push({ id: "updates", label: "End-of-day updates", href: "/updates", count: await dayUpdatesToDo() }); // their end-of-day updates (and, for the owner, everyone's) (Carla, 22 Nov 2026),
     items.push({ id: "pay", label: "My Pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
@@ -250,7 +250,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
-      ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract, once one has been sent (Carla, 17 Nov 2026),
+      ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract and work outside CLG (every staff member; Carla, 17 and 22 Nov 2026),
       { id: "pay", label: "My Pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.

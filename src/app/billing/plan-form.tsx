@@ -5,6 +5,7 @@
 
 import { cancelBillingPlanChange, chooseBillingPlan } from "@/app/actions/billing"; // The server actions that save the choice and cancel a booked change.
 import { ActionForm } from "@/components/action-form"; // The form that sends to a server action and shows its reply.
+import { dollars } from "@/lib/billing/money"; // Shows cents as dollars, for the plan fees.
 
 // What each plan means, in the family's words.
 const CHOICES = [ // The choices:
@@ -14,8 +15,14 @@ const CHOICES = [ // The choices:
   { value: "upfront", label: "All upfront", note: "Pay for a longer booking in one go." }, // all upfront.
 ] as const; // End of the choices (fixed).
 
-// Shows the plan choices, with the current one ticked.
-export function ChoosePlanForm({ familyId, plan, chosen }: { familyId: string; plan: string; chosen: boolean }) {
+// The plan fee note for a plan (Carla, 22 Nov 2026), or nothing when there is no fee.
+function feeNote(value: string, fees: { monthly: number; weekly: number }): string { // Takes the plan and the fees in cents.
+  const cents = value === "monthly" ? fees.monthly : value === "weekly" ? fees.weekly : 0; // The fee for this plan (none for per term or all upfront).
+  return cents > 0 ? ` A ${dollars(cents)} payment plan fee is added to each invoice, however you pay.` : ""; // The note, or nothing.
+} // End of feeNote.
+
+// Shows the plan choices, with the current one ticked, and any plan fee.
+export function ChoosePlanForm({ familyId, plan, chosen, fees }: { familyId: string; plan: string; chosen: boolean; fees: { monthly: number; weekly: number } }) {
   return ( // Shows:
     <ActionForm action={chooseBillingPlan} submitLabel={chosen ? "Save change" : "Save my choice"}>{/* a form that saves the choice, with the right button words: */}
       <input type="hidden" name="family_id" value={familyId} />{/* the family's id (hidden), */}
@@ -26,7 +33,7 @@ export function ChoosePlanForm({ familyId, plan, chosen }: { familyId: string; p
             <input type="radio" name="plan" value={c.value} required defaultChecked={chosen && plan === c.value} className="mt-1" />{/* a round button for this choice, ticked if it is the current plan, */}
             <span>{/* the words: */}
               <strong>{c.label}</strong>{/* the plan's name in bold, */}
-              <span className="block text-zinc-600">{c.note}</span>{/* and its note below. */}
+              <span className="block text-zinc-600">{c.note}{feeNote(c.value, fees)}</span>{/* and its note below, with any plan fee. */}
             </span>{/* End of the words. */}
           </label> // End of the line.
         ))}{/* End of the choices loop. */}
