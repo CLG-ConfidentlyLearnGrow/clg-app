@@ -190,3 +190,12 @@ email in which is connected to the CLG app once the contract is accepted."
 **Legal notes.** No new personal information; acknowledgements keep the typed name and time as before (Electronic Transactions Act 2000 (SA)). Fair Work statements: a new version of the FWIS or CEIS should be given to existing staff when Fair Work changes it, and this records that they received it.
 
 **Tests.** `supabase/tests/employment_contracts.test.sql` (new section): only the owner makes a new version, it must be approved, the owner sees who still has to read it, a plain save keeps the number, the tutor ticks again, both ticks are kept and the contract stays complete.
+
+## Casual tutor contract v1.4 loaded as a draft (22 Nov 2026)
+
+Carla asked for the contract's Word copy to go into the app. The newest version, v1.4 (22 Nov 2026, after v1.2 and v1.3 the same day), is loaded by `20261124711200_casual_contract_v14_template.sql` as the **draft** "Tutor, casual" template. It was turned into the simple Markdown the app shows; the logo box was left out and "(draft)" was taken off the version line.
+
+- If the draft is still the app's starter wording, v1.4 replaces it. If there is no draft, one is added with the next version number. If the owner has already edited the draft, nothing changes and a notice says so.
+- Nothing is published: the owner checks it under Contracts > Templates and publishes it (the contract is still waiting on the lawyer review).
+- Gaps the app fills: tutor name, tutor email, CLG signatory. Gaps an admin types: start date, school award level, school rate and its from date. The tertiary and admin rows show "Not applicable" when left empty.
+- Tests: `supabase/tests/contract_v14_template.test.sql`.

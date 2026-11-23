@@ -193,3 +193,7 @@ so that invoice is on the new plan. The family sees the booked change and can
 cancel it. See
 [payment-plan-change-next-invoice.md](payment-plan-change-next-invoice.md).
 Migration: `20261123500100_payment_plan_change_next_invoice.sql`.
+
+## Plan fees, family hourly rate changes and payment reminders (22 Nov 2026, Carla)
+
+Monthly invoices get a $10 plan fee and weekly invoices a $5 plan fee (prices the owner can change; none for per term or upfront). The owner or a Finance admin can change a family's hourly rate at any time: unpaid invoices are re-priced, an invoice already sent is amended and emailed again from Xero, and paid invoices never change (a lower rate gives credit). Everyone who pays is reminded 24 hours before each payment, and a saved card or bank account is only charged once that reminder is a day old. Full brief: [plan-fees-rate-changes-payment-reminders.md](plan-fees-rate-changes-payment-reminders.md).

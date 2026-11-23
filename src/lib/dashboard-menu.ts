@@ -113,10 +113,10 @@ async function probationsDue(): Promise<number | undefined> { // No inputs: it c
   return error || !data ? undefined : (data as number); // No number if none, or if it could not be counted.
 } // End of probationsDue.
 
-// The signed-in staff member's own contracts: whether they have any (so the
-// "My contract" tab only shows once CLG has sent one), and how many are
-// waiting for them to sign or finish (Carla, 17 Nov 2026). A problem reading
-// them shows no tab.
+// The signed-in staff member's own contracts: the "My contract" tab (shown
+// to every staff member, because work outside CLG is reported there, Carla
+// 22 Nov 2026), and how many contracts are waiting for them to sign or
+// finish (Carla, 17 Nov 2026). A problem reading them shows no tab.
 async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // No inputs: it is about the signed-in person.
   const supabase = await createClient(); // Connects to the database.
   const { data: me } = await supabase.auth.getUser(); // Who is signed in.
@@ -125,10 +125,19 @@ async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // N
     supabase.from("employment_contracts").select("status").eq("account_id", me.user.id), // the statuses of their own contracts,
     supabase.rpc("my_policy_rereads_count"), // and how many policies have a new version for them to read (Carla, 22 Nov 2026).
   ]); // End of the reads.
-  if (error || !data?.length) return { any: false }; // None (or a problem): no tab.
+  if (error) return { any: false }; // A problem: no tab.
   const waiting = data.filter((c) => c.status === "sent" || c.status === "signed").length + Number(rereads ?? 0); // How many need them (contracts to finish, plus new policy versions to read).
   return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
 } // End of myContracts.
+
+// The number on the "Learnings" menu item for the owner and Operations
+// admins (Carla, 22 Nov 2026): learnings staff have suggested for the team
+// that are waiting for a decision. A problem reading it shows no number.
+async function learningsWaiting(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
+  const supabase = await createClient(); // Connects to the database.
+  const { data } = await supabase.rpc("learnings_waiting_count"); // Asks the database how many are waiting.
+  return Number(data ?? 0) || undefined; // The number (none when zero).
+} // End of learningsWaiting.
 
 // How many signed contracts still need the Xero self-setup invite, for the
 // Contracts tab number. Only admins who can see contracts get a number.
@@ -199,6 +208,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined, items: subTabs(BILLING_TABS, "/admin/billing", billingCount), countsInside: true }); // Billing (owner, operations and finance), with its sub-tabs and their numbers,
     if (isFinance) items.push({ id: "contracts", label: "Contracts", href: "/admin/contracts", count: await contractsXeroToDo() }); // staff employment contracts (owner, operations and finance; Carla, 17 Nov 2026), with Xero invites still to send counted,
     if (isDesk || isFinance) items.push({ id: "help", label: "Help chats", href: "/admin/help", count: todo.get("admin", "help") }); // the help desk: questions from families, students, tutors and staff (Carla, 16 Nov 2026), with chats waiting for CLG counted,
+    items.push({ id: "decisions", label: "Decision steps", href: "/decisions?as=admin" }); // their decision steps record and decisions log (and, for the owner and Operations, other people's records) (Carla, 22 Nov 2026),
     const reportsCount = todo.get("admin", "reports"); // How many new reports are waiting (shown on Reports, and on its "All reports" sub-tab).
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: reportsCount, items: subTabs(REPORTS_TABS, "/admin/reports", (id) => (id === "reports" ? reportsCount : undefined)), countsInside: true }); // Reports for the owner (everything, including pay and profit), with new reports counted, and its sub-tabs,
     if (level === "operations") items.push({ id: "reports", label: "Reports", href: "/admin/reports", items: subTabs(REPORTS_TABS.filter((t) => t.id === "reports" || t.id === "goals"), "/admin/reports") }); // Reports for Operations admins (Carla, 20 Nov 2026): reports without money, and goals; no "new" number, which is the owner's,
@@ -217,9 +227,10 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training", items: subTabs(TRAINING_SETUP_TABS, "/admin/training") }); // writing training modules, the handbook and progress (full admins), with its sub-tabs,
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
+    items.push({ id: "learnings", label: "Learnings", href: "/learnings?as=admin", count: isFull ? await learningsWaiting() : undefined }); // personal and team learnings (Carla, 22 Nov 2026), with suggestions waiting counted for the owner and Operations,
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
     const mine = await myContracts(); // Their own contracts, if any.
-    if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract, once one has been sent (Carla, 17 Nov 2026),
+    if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract and work outside CLG (every staff member; Carla, 17 and 22 Nov 2026),
     items.push({ id: "pay", label: "My Pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
@@ -232,11 +243,13 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       ...sessions, // Sessions,
       { id: "calendar", label: "Weekly calendar", href: "/dashboard/tutor/calendar" }, // their week at a glance, and the link for their own calendar (Carla, 12 Nov 2026),
       ...rest, // the other tutor sections,
+      { id: "decisions", label: "Decision steps", href: "/decisions?as=tutor" }, // their decision steps record and decisions log (Carla, 22 Nov 2026),
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
+      { id: "learnings", label: "Learnings", href: "/learnings?as=tutor" }, // their personal learnings and the team learnings (Carla, 22 Nov 2026),
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
-      ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract, once one has been sent (Carla, 17 Nov 2026),
+      ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract and work outside CLG (every staff member; Carla, 17 and 22 Nov 2026),
       { id: "pay", label: "My Pay", href: "/pay?as=tutor" }, // and their pay.
     ]; // End of the tutor menu.
   } // End of the tutor menu.

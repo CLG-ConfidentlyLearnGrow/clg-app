@@ -269,16 +269,30 @@ const YOUR_OWN = `
 ### Use the handbook
 Choose **Handbooks** in the side menu, and search for a word. **Something has happened** is pinned at the top in red.
 
+### Keep and share learnings
+1. Choose **Learnings** in the side menu. Under **My learnings**, write a **Short title** and **What was learned**, then choose **Save learning**. Only you see it until you open it and choose **Suggest for the team**.
+2. Owner and Operations: a number next to **Learnings** shows suggestions waiting. Under **Suggested for the team**, change the words so they work for everyone and choose **Add to team learnings**, or write a note and choose **Decline for now**. The person is told either way.
+3. Owner and Operations: under **Team learnings**, open **Change or remove** to update one, or choose **Add a team learning** to add one directly.
+
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
 
 ### Sign your own contract
 When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it. When a policy gets a new version, **My contract** shows a number: open your contract, read the new version and tick it again.
 
+### Tell CLG about work outside CLG
+Tell CLG about any educational support or administrative role you do outside CLG, paid or unpaid, before you start, and again if it changes or ends. In **My contract**, under **Work outside CLG**, open **Tell CLG about a role outside CLG**, fill it in and choose **Tell CLG**. To change it or say it has ended, open **Change or end this**. Only you and CLG's owner see these.
+
 ### Log your office hours
 1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
+
+### Check your decision steps
+1. In the side menu, choose **Decision steps**. **My decision steps** has one line for each kind of problem: your step, your goal, and when it last moved. Open **What each step means** for the five steps.
+2. At Step 4, open **Record a decision** under **My decisions log**. Write **The problem**, the **Options you considered** (at least three) and **The one you chose, and why**, then choose **Record decision**.
+3. Owner and Operations: under **Open a record**, choose a person (Operations see tutors only). Write a note under **Notes on this record** and choose **Add note**. They can read notes on their own record.
+4. Owner: on someone's record, open **Move this step** under a line, choose the **New step**, add a short note and choose **Save step**. They get an app notice. **Kinds of problem** (at the bottom) changes the lines and their starting steps.
 `;
 
 // Child safety: raising a concern (everyone) and handling one (officer and deputy).
@@ -358,6 +372,12 @@ Once a contract is signed, the **Xero** column says **To do**, and the number ne
 2. Choose **I have sent the Xero invite**.
 3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
 
+### Check work outside CLG (Owner)
+Staff tell CLG about roles outside CLG on **My contract** (contract clause 6.7). You get a notice each time one is added, changed or ended.
+1. In **Contracts**, open **Work outside CLG**. Reports not yet seen are at the top.
+2. Read the role, add a private note if you want (for example any conflict to watch), and choose **Mark as seen**. A change from the staff member puts it back to **Not yet seen**.
+
+Only the owner sees these reports.
 `;
 
 // Running CLG day to day: tutors, progress, curriculum, staff, records (Owner and Operations).
@@ -585,12 +605,24 @@ export const ADMIN_GUIDES: Record<AdminLevel, GuideSource> = { // level -> guide
 ### Invite an admin
 Under **Add staff**, choose the admin role and level. Only the owner can invite admins.
 
-### Change prices, kept rates and billing settings
-- **Billing**, **Prices and settings**: change each price. New invoices use these.
-- In **Family billing**, use **Save kept rate** for a family keeping an older rate.
-- **Settings**: choose whether new invoices go to Xero as drafts, and who can lift a pause without payment.
+### Change prices, family hourly rates and billing settings
+- **Billing**, **Prices and settings**: change each price. New invoices use these. The **Monthly payment plan fee** ($10 to start) and **Weekly payment plan fee** ($5 to start) are added once to each monthly or weekly invoice, whether the family pays by card or bank debit. Per term and all upfront invoices have no fee.
+- **Settings**: choose whether new invoices go to Xero as drafts, who can lift a pause without payment, and **Plan fees start from** (only invoices whose first session is on or after that date get the plan fee, so check the family terms mention the fee first).
 - **Stripe and Xero**: connect CLG's Stripe and Xero accounts.
 
+### Change a family's hourly rate (Owner and Finance)
+1. In **Family billing**, find the family and go to **Family hourly rate**.
+2. Choose the price (school or tertiary tutoring), enter their hourly rate, and choose the first session date it **Applies to sessions from** (today to start). Leave the rate empty to go back to the price list.
+3. Choose **Save hourly rate**. The message says how many invoices changed.
+
+What happens to invoices:
+- Unpaid invoices with sessions from that date are re-priced straight away.
+- If one was already sent, the people who pay get a notice with the new and old totals, the invoice shows **Amended** in **Invoices**, and the next billing run updates it in Xero and emails the amended invoice to the family from Xero. If it says **Xero update waiting** for more than a day, update the invoice in Xero by hand (Xero does not allow changes once a payment or credit is applied there).
+- Paid invoices never change. A lower rate gives the family credit for the difference, which comes off their next invoice. A higher rate only applies to invoices not yet paid.
+- A higher rate cannot start before today, because sessions already given were agreed at the old rate. Under the family terms, give families notice before a higher rate starts.
+
+### Payment reminders
+Every person who pays gets a reminder 24 hours before each payment: the day before their saved card or bank account is charged, or the day before an invoice they pay themselves is due. It comes as an app notice, a pop-up notification (if they turned them on) and an email. A saved card or bank account is only charged once its reminder is a day old, so an invoice approved on its charge day is charged the next day.
 ### Reports
 Open **Reports**. The app makes a report each month, each quarter and each financial year, with matching waits, enquiries, how full each tutor's week is, why people left, and money and profit per hour. Use **Report for your dates** for any dates, and **Settings** for super and running costs. Operations admins can open every report too, but never see the money part, the spreadsheet download, **Report for your dates** or **Settings**.
 
