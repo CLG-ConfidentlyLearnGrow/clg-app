@@ -173,6 +173,8 @@ Sometimes CLG needs to move sessions to a new tutor or a new day and time. A **P
 2. Choose **Confirm**, or **Decline** and say why it does not suit.
 3. Nothing changes until you and the new tutor have both confirmed.
 
+Tip: While a change is waiting, a session that does not go ahead is not counted as a missed session for you. CLG follows up and rebooks it, with no charge.
+
 ### Stop a booking
 1. In **Sessions**, choose **Bookings**.
 2. Find the booking and choose **Stop booking**.

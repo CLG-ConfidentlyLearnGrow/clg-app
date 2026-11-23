@@ -110,6 +110,8 @@ Tip: **Times to check** does not list home or school sessions for a missing loca
 4. Choose the new tutor and the reason (only matching admins see it), then send.
 5. The new tutor and the family both confirm before anything moves. **Waiting for confirmation** shows where each change is up to.
 
+Tip: If a session in the change happens before it is confirmed and someone records a no-show, it is not saved as a no-show (tutor contract clause 3.4). The session is closed as cancelled by CLG, the family gets full credit, and the tutor gets no no-show pay. You get a **Session to rebook: change not approved in time** notice: follow up and rebook it.
+
 ### Help with requests for extra or one-off sessions
 1. In **Sessions**, choose **Requests**. Families' requests are listed oldest first.
 2. To offer a time, choose the tutor, date, start, length and place, add a note for the family, and choose **Offer this time**. The family approves it.
