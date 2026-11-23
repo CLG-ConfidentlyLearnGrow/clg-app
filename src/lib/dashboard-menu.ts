@@ -130,6 +130,15 @@ async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // N
   return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
 } // End of myContracts.
 
+// The number on the meetings menu item (Carla, 22 Nov 2026): for the owner,
+// requests waiting for her answer; for anyone else, different times she
+// offered that they have not answered. A problem reading it shows no number.
+async function meetingsToDo(): Promise<number | undefined> { // No inputs: it counts for the signed-in person.
+  const supabase = await createClient(); // Connects to the database.
+  const { data } = await supabase.rpc("meeting_requests_to_do"); // Asks the database how many.
+  return Number(data ?? 0) || undefined; // The number (none when zero).
+} // End of meetingsToDo.
+
 // How many signed contracts still need the Xero self-setup invite, for the
 // Contracts tab number. Only admins who can see contracts get a number.
 async function contractsXeroToDo(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
@@ -215,6 +224,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFull) items.push({ id: "travel-map", label: "Travel map", href: "/admin/travel-map" }); // the map of libraries and tutor and family travel areas (full admins, Carla 16 Nov 2026),
     if (isFull) items.push({ id: "materials", label: "Materials library", href: "/admin/materials", items: subTabs(MATERIALS_TABS, "/admin/materials") }); // the materials library (full admins), with its sub-tabs,
     if (isFull) items.push({ id: "training-admin", label: "Training setup", href: "/admin/training", items: subTabs(TRAINING_SETUP_TABS, "/admin/training") }); // writing training modules, the handbook and progress (full admins), with its sub-tabs,
+    items.push({ id: "meetings", label: level === "owner" ? "Meeting requests" : "Meet with Carla", href: "/meetings?as=admin", count: await meetingsToDo() }); // booking a meeting with Carla, or (for the owner) answering requests (Carla, 22 Nov 2026), with ones to answer counted,
     items.push({ id: "guide", label: "App guide", href: "/guide?as=admin" }); // the step-by-step guide to the app for their admin level (Carla, 16 Nov 2026),
     items.push({ id: "training", label: "Training", href: "/training?as=admin", count: await trainingToDo() }); // their own training (every admin), with modules to do counted,
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
@@ -235,6 +245,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,
+      { id: "meetings", label: "Meet with Carla", href: "/meetings?as=tutor", count: await meetingsToDo() }, // booking a meeting with Carla (Carla, 22 Nov 2026), with different times she offered counted,
       { id: "guide", label: "App guide", href: "/guide?as=tutor" }, // the step-by-step guide to the app for tutors (Carla, 16 Nov 2026),
       ...(mine.any ? [{ id: "contract", label: "My contract", href: "/contract?as=tutor", count: mine.waiting }] : []), // their employment contract, once one has been sent (Carla, 17 Nov 2026),
       { id: "pay", label: "My Pay", href: "/pay?as=tutor" }, // and their pay.

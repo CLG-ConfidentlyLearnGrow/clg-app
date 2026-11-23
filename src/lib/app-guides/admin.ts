@@ -322,6 +322,18 @@ Chats are deleted 2 years after their last message. Chats with writing flagged b
 
 Tip: Billing details should only go to the person who pays. Messages are checked for child safety words like other writing in the app.
 
+### Book a meeting with Carla
+1. Choose **Meet with Carla** in the side menu.
+2. Fill in **About**, **Context** and **Goal**, so Carla can prepare. Choose **How urgent?**, **How long?** and **How to meet?**. If you are not sure whether it is urgent, choose urgent.
+3. Suggest 2 or 3 times you can do (Adelaide time) and choose **Send to Carla**. Carla replies within 1 business day, and straight away when it is urgent.
+4. Carla confirms one of your times, offers a different time (choose **Accept this time** or cancel), or answers without a meeting. You get an app notice each time. A quick question may be better in Help chat.
+
+### Answer meeting requests (Owner)
+1. Choose **Meeting requests** in the side menu. The number shows requests waiting, and urgent ones are listed first.
+2. Under **Choose a time**, pick one of their times and choose **Confirm or offer this time**. To offer another time, choose **A different time**, type it, and they are asked to accept it.
+3. When a short answer is enough, open **Answer without a meeting, or cancel** and write your answer.
+4. **Coming up** lists confirmed meetings. Choose **Mark as held** afterwards, or open **Change the time or cancel**.
+
 ### Give feedback or report an app issue
 - **Feedback** (top of the page, or under **Menu** on a phone): praise, ideas or worries.
 - **Report app issue**: something in the app is not working. Add a screenshot if you can.

@@ -277,6 +277,12 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 
 Tip: Families talk to CLG in their own chats, which tutors do not see, so you do not need to chase families for missing details.
 
+### Book a meeting with Carla
+1. In the side menu, choose **Meet with Carla**.
+2. Fill in **About**, **Context** and **Goal**, so Carla can prepare. Use first names or initials only for students. Choose **How urgent?**, **How long?** and **How to meet?**. If you are not sure whether it is urgent, choose urgent.
+3. Suggest 2 or 3 times you can do (Adelaide time) and choose **Send to Carla**. Carla replies within 1 business day, and straight away when it is urgent.
+4. Carla confirms one of your times, offers a different time (choose **Accept this time**, or cancel), or answers without a meeting. You get an app notice each time, and a number next to **Meet with Carla** shows a time waiting for your answer. A quick question may be better in Help chat.
+
 ### Give feedback or report an app issue
 - **Feedback**: praise, ideas or worries about the app, CLG's service or people at CLG.
 - **Report app issue**: something in the app is not working. Add a screenshot if you can.
