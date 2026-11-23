@@ -15,6 +15,7 @@ import { CONTRACT_STATUS_NAMES, CONTRACT_TYPE_NAMES, EMPLOYMENT_NAMES, documentL
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { SendContractForm, WithdrawContractForm, XeroInviteForm, type SendStaff, type SendTemplate } from "./forms"; // The admin forms.
+import { MarkOutsideWorkSeenForm, OUTSIDE_WORK_KINDS, type OutsideWork } from "@/components/outside-work-forms"; // The owner's "mark as seen" form, and the kinds of outside role in words.
 
 // One contract, as read from the database.
 type Contract = { // Its fields:
@@ -166,6 +167,11 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
     .filter((s) => !s.left_on && (s.is_tutor || s.is_admin)) // current tutors and admins only,
     .sort((a, b) => a.full_name.localeCompare(b.full_name)); // in name order.
   const preselect = typeof params.to === "string" ? params.to : undefined; // A person to choose in the send form (from a link), if any.
+  // Work outside CLG (owner only: contract clause 6.7, Carla 22 Nov 2026).
+  const outside = viewer.level === "owner" // Only for the owner:
+    ? (((await supabase.from("outside_work_reports").select("id, account_id, kind, role_title, organisation, details, paid, starts_on, ends_on, owner_seen_at, owner_note").order("owner_seen_at", { ascending: true, nullsFirst: true }).order("starts_on", { ascending: false }).limit(200)).data ?? []) as (OutsideWork & { account_id: string; owner_seen_at: string | null; owner_note: string | null })[]) // every report, not yet seen first,
+    : []; // otherwise none.
+  const outsideNames = new Map((outside.length ? ((await supabase.from("accounts").select("id, full_name").in("id", [...new Set(outside.map((o) => o.account_id))])).data ?? []) : []).map((a) => [a.id as string, a.full_name as string])); // Each staff member's name, by id.
 
   return ( // Shows:
     <DashboardFrame role="admin" roles={viewer.roles} current="contracts">{/* the dashboard frame, */}
@@ -176,6 +182,22 @@ export default async function ContractsPage({ searchParams }: PageProps<"/admin/
             {viewer.level === "owner" && <p className="mt-4 text-sm"><TextLink href="/admin/contracts/templates">Contract templates and document links</TextLink></p>}{/* and, for the owner, the templates link. */}
           </Card> // End of the send card.
         )}{/* End of the send part. */}
+        {viewer.level === "owner" && ( // The owner:
+          <Card collapsible defaultOpen={outside.some((o) => !o.owner_seen_at)} title="Work outside CLG" description="Roles staff do outside CLG (contract clause 6.7), newest not yet seen first. Staff add these on My contract, and you get a notice each time one is added, changed or ended. Only you see this.">{/* the work outside CLG card: */}
+            {outside.length === 0 ? <Empty>No staff have reported work outside CLG.</Empty> : ( // None, or the list:
+              <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+                {outside.map((o) => ( // for each report:
+                  <li key={o.id} className="space-y-2 py-3 first:pt-0">{/* a row: */}
+                    <p><span className="font-medium">{outsideNames.get(o.account_id) ?? "A staff member"}</span>: {o.role_title}{o.organisation ? ` at ${o.organisation}` : ""} · {OUTSIDE_WORK_KINDS[o.kind]} · {o.paid ? "Paid" : "Unpaid"}</p>{/* who, the role, where, kind and paid, */}
+                    <p className="text-zinc-600">From {shortDate(o.starts_on)}{o.ends_on ? ` to ${shortDate(o.ends_on)}` : ", still going"}{o.owner_seen_at ? ` · Seen ${shortDate(o.owner_seen_at)}` : " · Not yet seen"}</p>{/* the dates and whether it was seen, */}
+                    {o.details && <p className="whitespace-pre-line">{o.details}</p>}{/* their details, */}
+                    <MarkOutsideWorkSeenForm id={o.id} note={o.owner_note} />{/* and the "mark as seen" form with the note. */}
+                  </li> // End of the row.
+                ))}{/* End of the reports. */}
+              </ul> // End of the list.
+            )}{/* End of the choice. */}
+          </Card> // End of the card.
+        )}{/* End of the work outside CLG part. */}
         {rereads.length > 0 && ( // Someone still has a new policy version to read:
           <Card title="New policy versions still to read" description="These staff have not yet read and ticked the newest version of a policy linked to their contract. They see it on My contract, with a number on the menu.">{/* a card: */}
             <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}

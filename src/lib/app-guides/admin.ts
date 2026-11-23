@@ -271,6 +271,9 @@ Choose **Staff directory** (from Admin or Billing) to search staff by name, emai
 ### Sign your own contract
 When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it. When a policy gets a new version, **My contract** shows a number: open your contract, read the new version and tick it again.
 
+### Tell CLG about work outside CLG
+Tell CLG about any educational support or administrative role you do outside CLG, paid or unpaid, before you start, and again if it changes or ends. In **My contract**, under **Work outside CLG**, open **Tell CLG about a role outside CLG**, fill it in and choose **Tell CLG**. To change it or say it has ended, open **Change or end this**. Only you and CLG's owner see these.
+
 ### Log your office hours
 1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
@@ -354,6 +357,12 @@ Once a contract is signed, the **Xero** column says **To do**, and the number ne
 2. Choose **I have sent the Xero invite**.
 3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
 
+### Check work outside CLG (Owner)
+Staff tell CLG about roles outside CLG on **My contract** (contract clause 6.7). You get a notice each time one is added, changed or ended.
+1. In **Contracts**, open **Work outside CLG**. Reports not yet seen are at the top.
+2. Read the role, add a private note if you want (for example any conflict to watch), and choose **Mark as seen**. A change from the staff member puts it back to **Not yet seen**.
+
+Only the owner sees these reports.
 `;
 
 // Running CLG day to day: tutors, progress, curriculum, staff, records (Owner and Operations).
