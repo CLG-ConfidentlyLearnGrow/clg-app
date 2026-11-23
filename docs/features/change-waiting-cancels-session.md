@@ -49,6 +49,6 @@ These follow the rules already in place for a CLG cancel made 2 hr or more ahead
 
 ## Technical
 
-- Migration `20261125400100_change_waiting_cancels_session.sql` (run after `20261124711100_pending_change_no_no_show.sql`). Adds the setting, the table `change_cancelled_sessions`, the notice kind `change_cancelled`, the job `clg-change-waiting-cancels` (every 15 minutes), `private.cancel_sessions_for_waiting_changes`, `private.restore_change_cancelled_sessions` (called from `finish_tutor_change`), `public.my_change_cancelled_sessions`, `public.answer_change_cancelled_session`, and a small Teams helper so a session that comes back gets a new link. Safe to run more than once.
+- Migration `20261125400100_change_waiting_cancels_session.sql` (it includes everything in `20261124711100_pending_change_no_no_show.sql`, so it works whether or not that file was run). Adds the setting, the table `change_cancelled_sessions`, the notice kind `change_cancelled`, the job `clg-change-waiting-cancels` (every 15 minutes), `private.cancel_sessions_for_waiting_changes`, `private.restore_change_cancelled_sessions` (called from `finish_tutor_change`), `public.my_change_cancelled_sessions`, `public.answer_change_cancelled_session`, and a small Teams helper so a session that comes back gets a new link. Safe to run more than once.
 - Page: the card is in `src/components/tutor-change-answer-box.tsx`, the action in `src/app/actions/change-tutor.ts`.
 - Tests: `supabase/tests/scheduling_change_waiting_cancels.test.sql`.

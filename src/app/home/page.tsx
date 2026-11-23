@@ -15,6 +15,7 @@ import { DashboardFrame } from "@/components/dashboard-frame"; // The dashboard 
 import { needsTwoStep, requireViewer, type Role } from "@/lib/auth"; // Whether two-step sign-in is still needed, the signed-in person, and the role type.
 import { requireFamilyAgreement } from "@/lib/consent"; // Sends a family to agree to the terms first if they have not.
 import { requireStaffName } from "@/lib/staff-name"; // Asks tutors and admins for their first and last name if it is missing.
+import { getTodayQuotes } from "@/lib/quotes"; // Reads the quote of the day.
 import { ROLE_ORDER } from "@/lib/roles"; // The usual order of the dashboards.
 import { AdminOverview } from "./admin-overview"; // The admin Overview.
 import { TutorOverview } from "./tutor-overview"; // The tutor Overview.
@@ -30,9 +31,17 @@ export default async function HomePage({ searchParams }: PageProps<"/home">) { /
   const role = viewer.roles.includes(asked) ? asked : ROLE_ORDER.find((r) => viewer.roles.includes(r)); // That dashboard if they have it, otherwise their first.
   if (!role) redirect("/dashboard"); // No role at all: the welcome page explains what to do.
   if (role === "admin" || role === "tutor") await requireStaffName(viewer, `/home?as=${role}`); // Staff without a first and last name are asked for it first, then come back here.
+  const { day } = await getTodayQuotes(); // The quote of the day (Carla, 22 Nov 2026).
 
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="overview">{/* the dashboard tabs and side menu, with Overview open, */}
+      {day && ( // A quote of the day, when there is one:
+        <figure className="mb-6 rounded-2xl border border-zinc-200/80 bg-white px-5 py-4">{/* a light box at the top: */}
+          <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">Quote of the day</p>{/* its heading, */}
+          <blockquote className="mt-1 text-base text-zinc-800 italic">“{day.body}”</blockquote>{/* the quote, */}
+          {day.who && <figcaption className="mt-1 text-sm text-zinc-500">{day.who}</figcaption>}{/* and who said it. */}
+        </figure> // End of the box.
+      )}{/* End of the quote. */}
       {role === "admin" && <AdminOverview roles={viewer.roles} />}{/* the admin Overview, */}
       {role === "tutor" && <TutorOverview viewerId={viewer.id} roles={viewer.roles} />}{/* or the tutor Overview, */}
       {role === "parent" && <ParentOverview viewerId={viewer.id} roles={viewer.roles} />}{/* or the parent Overview, */}
