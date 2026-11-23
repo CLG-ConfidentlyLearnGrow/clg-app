@@ -73,6 +73,10 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
   ], // End of Billing.
   quotes: [{ part: "owner-only", tasks: ["quotes"] }], // Quotes (owner): the quote of the day and of the month.
   help: [{ part: "help", tasks: ["help chats", "start a chat", "keep a chat"] }], // Help chats (admin): answering and keeping chats.
+  meetings: [ // Meetings with Carla (Carla, 22 Nov 2026):
+    { part: "help", tasks: ["meeting"] }, // booking or answering, for admins,
+    { part: "help-and-safety", tasks: ["meeting"] }, // or booking, for tutors.
+  ], // End of Meetings.
   calendar: [{ part: "sessions", tasks: ["your week"] }], // Weekly calendar: seeing the week and adding it to a phone calendar.
   materials: [ // Materials:
     { part: "other-admin-tools", tasks: ["materials"] }, // the admin materials library,
