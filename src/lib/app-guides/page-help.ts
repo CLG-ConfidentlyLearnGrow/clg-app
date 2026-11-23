@@ -89,6 +89,9 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "your-own-training-handbook-and-pay", tasks: ["contract"] }, // for admins,
     { part: "getting-started", tasks: ["contract"] }, // or for tutors.
   ], // End of My contract.
+  updates: [ // End-of-day updates (admins):
+    { part: "your-own-training-handbook-and-pay", tasks: ["end-of-day"] }, // the update tasks in the admin guide.
+  ], // End of End-of-day updates.
   pay: [ // My Pay:
     { part: "your-own-training-handbook-and-pay", tasks: ["office hours"] }, // logging office hours (admins),
     { part: "training-handbook-and-pay", tasks: ["pay"] }, // or checking pay and logging extra hours (tutors).

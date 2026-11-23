@@ -130,6 +130,19 @@ async function myContracts(): Promise<{ any: boolean; waiting?: number }> { // N
   return { any: true, waiting: waiting || undefined }; // A tab, with the number (none when zero).
 } // End of myContracts.
 
+// The number on the "End-of-day updates" menu item (Carla, 22 Nov 2026):
+// the days with office hours but no update, plus, for the owner, updates not
+// yet read. A problem reading them shows no number.
+async function dayUpdatesToDo(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
+  const supabase = await createClient(); // Connects to the database.
+  const [{ data: missing }, { data: unread }] = await Promise.all([ // Reads two things at once:
+    supabase.rpc("my_missing_day_updates"), // the days still missing their update,
+    supabase.rpc("day_updates_unread_count"), // and the owner's unread updates (zero for anyone else).
+  ]); // End of the reads.
+  const n = ((missing ?? []) as string[]).length + Number(unread ?? 0); // Adds them up.
+  return n || undefined; // The number (none when zero).
+} // End of dayUpdatesToDo.
+
 // How many signed contracts still need the Xero self-setup invite, for the
 // Contracts tab number. Only admins who can see contracts get a number.
 async function contractsXeroToDo(): Promise<number | undefined> { // No inputs: it counts for the signed-in admin.
@@ -220,6 +233,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     items.push({ id: "handbook", label: "Handbooks", href: "/handbook?as=admin" }); // the handbook,
     const mine = await myContracts(); // Their own contracts, if any.
     if (mine.any) items.push({ id: "contract", label: "My contract", href: "/contract?as=admin", count: mine.waiting }); // their own employment contract, once one has been sent (Carla, 17 Nov 2026),
+    items.push({ id: "updates", label: "End-of-day updates", href: "/updates", count: await dayUpdatesToDo() }); // their end-of-day updates (and, for the owner, everyone's) (Carla, 22 Nov 2026),
     items.push({ id: "pay", label: "My Pay", href: "/pay?as=admin" }); // and their own pay (office admin hours).
     return items; // Hands back the admin menu.
   } // End of the admin menu.
