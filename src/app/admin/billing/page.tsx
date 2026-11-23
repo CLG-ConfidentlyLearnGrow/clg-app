@@ -62,7 +62,9 @@ type Invoice = { // An invoice as listed:
   total_cents: number; // the total (in cents),
   credit_applied_cents: number; // credit used (in cents),
   discount_cents: number; // discount (in cents),
-  xero_invoice_id: string | null; // and its Xero id (if sent there).
+  xero_invoice_id: string | null; // its Xero id (if sent there),
+  amended_at: string | null; // when it was last re-priced after a rate change (if ever),
+  xero_amended_at: string | null; // and when Xero was updated to match (if yet).
 }; // End of Invoice.
 
 type WaiverRow = { // A family cancel or no-show that could be waived:
@@ -117,12 +119,12 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
     supabase.from("billing_credits").select("family_id, amount_cents"), // every credit,
     supabase // the invoices:
       .from("billing_invoices") // from billing_invoices,
-      .select("id, number, family_name, status, period_start, period_end, send_on, due_on, total_cents, credit_applied_cents, discount_cents, xero_invoice_id") // with these details,
+      .select("id, number, family_name, status, period_start, period_end, send_on, due_on, total_cents, credit_applied_cents, discount_cents, xero_invoice_id, amended_at, xero_amended_at") // with these details (and whether it was amended after a rate change),
       .order("created_at", { ascending: false }) // newest first,
       .limit(100), // up to 100.
     supabase.from("billing_pause_overrides").select("family_id, reason, until_on, payment_plan").is("ended_at", null), // pauses lifted without payment, still in place,
     supabase.from("billing_school_periods").select("id, name, kind, state, starts_on, ends_on").order("starts_on"), // school terms and holidays, earliest first,
-    supabase.from("billing_settings").select("invoice_mode, override_by, show_tutor_on_invoice").maybeSingle(), // billing settings,
+    supabase.from("billing_settings").select("invoice_mode, override_by, show_tutor_on_invoice, plan_fees_from").maybeSingle(), // billing settings,
     supabase.from("billing_payers").select("family_id, account_id, share_percent, method, payment_ready"), // and split payers.
   ]); // End of the reads.
   const splitRows = (splits.data ?? []) as { family_id: string; account_id: string; share_percent: number; method: BillingMethod; payment_ready: boolean }[]; // The split payers.
@@ -145,7 +147,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
       (r) => r.family_id === id, // just this family's.
     ); // (end of the filter)
   const overrideOf = new Map((overrides.data ?? []).map((o) => [o.family_id, o])); // Each family's lifted pause, by family.
-  const sessionPrices = (prices.data ?? []).filter((p) => p.unit === "hour").map((p) => ({ id: p.id, name: p.name })); // Prices charged by the hour (for kept rates).
+  const sessionPrices = (prices.data ?? []).filter((p) => p.unit === "hour" && p.session_level).map((p) => ({ id: p.id, name: p.name })); // Session prices (school and tertiary tutoring), the ones a family's own hourly rate can replace.
   const invoiceRows = (invoices.data ?? []) as Invoice[]; // The invoices.
   const paused = familyRows.filter((f) => accountOf.get(f.id)?.paused); // Families on pause.
 
@@ -278,7 +280,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       ) : ( // otherwise:
                         <p className="mb-3 text-sm text-zinc-600">Choose a bill payer first to split payments.</p> // says to choose a bill payer first.
                       )}{/* End of this part. */}
-                      <SubHeading>Kept rate</SubHeading>{/* a small heading, */}
+                      <SubHeading>Family hourly rate</SubHeading>{/* a small heading, */}
                       {ratesOf(f.id).length > 0 ? ( // if they have kept rates:
                         <p className="mb-3 text-sm">{/* a line: */}
                           {ratesOf(f.id) // their kept rates:
@@ -288,7 +290,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       ) : ( // otherwise:
                         <p className="mb-3 text-sm text-zinc-600">Pays the price list.</p> // they pay the price list.
                       )}{/* End of this part. */}
-                      {isOwner && <KeptRateForm familyId={f.id} prices={sessionPrices} />}{/* The kept rate form (owner only). */}
+                      {canChangeMoney && <KeptRateForm familyId={f.id} prices={sessionPrices} today={adelaideToday()} />}{/* The family hourly rate form (owner and Finance admins, Carla 22 Nov 2026). */}
                       {canChangeMoney && ( // For the owner and Finance admins:
                         <>{/* (a group) */}
                           <SubHeading>Add credit</SubHeading>{/* a small heading, */}
@@ -368,7 +370,15 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                         {i.credit_applied_cents > 0 && <span className="block text-xs text-zinc-500">credit {dollars(i.credit_applied_cents)}</span>}{/* credit used (if any), */}
                         {i.discount_cents > 0 && <span className="block text-xs text-zinc-500">discount {dollars(i.discount_cents)}</span>}{/* discount (if any). */}
                       </td>{/* End of the cell. */}
-                      <td>{STATUS_LABELS[i.status]}</td>{/* the status, */}
+                      <td>{/* the status cell: */}
+                        {STATUS_LABELS[i.status]}{/* the status, */}
+                        {i.amended_at && ( // if it was re-priced after a rate change:
+                          <span className="block text-xs text-zinc-500">{/* a small note: */}
+                            Amended {plainDate(i.amended_at.slice(0, 10))}{/* when, */}
+                            {i.xero_invoice_id && (!i.xero_amended_at || i.xero_amended_at < i.amended_at) ? ", Xero update waiting" : ""}{/* and whether Xero still needs updating. */}
+                          </span> // End of the note.
+                        )}{/* End of this part. */}
+                      </td>{/* End of the cell. */}
                       <td className="space-y-2">{/* the buttons cell: */}
                         {canChangeMoney && (i.status === "draft" || i.status === "awaiting_approval") && ( // if a draft or awaiting approval (owner and Finance only):
                           <form action={approveInvoice}>{/* the approve form: */}
@@ -415,7 +425,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                       {p.name} {p.active ? "" : "(not in use)"}{/* the name (and if not in use). */}
                     </SubHeading>{/* End of the heading. */}
                     {isOwner ? ( // if they're the owner:
-                      <PriceForm id={p.id} amount={(p.amount_cents / 100).toFixed(2)} gst={p.gst_applies} active={p.active} /> // the price form.
+                      <PriceForm id={p.id} amount={(p.amount_cents / 100).toFixed(2)} gst={p.gst_applies} active={p.active} unit={p.unit} /> // the price form.
                     ) : ( // otherwise:
                       <p className="text-sm">{/* a line: */}
                         {dollars(p.amount_cents)}{/* the amount, */}
@@ -445,7 +455,8 @@ export default async function AdminBillingPage({ searchParams }: PageProps<"/adm
                 <SettingsForm // the settings form:
                   invoiceMode={settings.data.invoice_mode} // how invoices are sent,
                   overrideBy={settings.data.override_by} // who can lift a pause,
-                  showTutor={settings.data.show_tutor_on_invoice} // whether the tutor shows on invoices.
+                  showTutor={settings.data.show_tutor_on_invoice} // whether the tutor shows on invoices,
+                  planFeesFrom={settings.data.plan_fees_from} // and when plan fees start.
                 />{/* End of the form. */}
               </Card> // End of the card.
             )}{/* End of this part. */}
