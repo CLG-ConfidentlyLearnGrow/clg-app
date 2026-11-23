@@ -298,6 +298,12 @@ In **End-of-day updates**, **Updates from admin staff** shows the last 30 days, 
 1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
+
+### Check your decision steps
+1. In the side menu, choose **Decision steps**. **My decision steps** has one line for each kind of problem: your step, your goal, and when it last moved. Open **What each step means** for the five steps.
+2. At Step 4, open **Record a decision** under **My decisions log**. Write **The problem**, the **Options you considered** (at least three) and **The one you chose, and why**, then choose **Record decision**.
+3. Owner and Operations: under **Open a record**, choose a person (Operations see tutors only). Write a note under **Notes on this record** and choose **Add note**. They can read notes on their own record.
+4. Owner: on someone's record, open **Move this step** under a line, choose the **New step**, add a short note and choose **Save step**. They get an app notice. **Kinds of problem** (at the bottom) changes the lines and their starting steps.
 `;
 
 // Child safety: raising a concern (everyone) and handling one (officer and deputy).
@@ -614,6 +620,12 @@ Under **Add staff**, choose the admin role and level. Only the owner can invite 
 - **Billing**, **Prices and settings**: change each price. New invoices use these. The **Monthly payment plan fee** ($10 to start) and **Weekly payment plan fee** ($5 to start) are added once to each monthly or weekly invoice, whether the family pays by card or bank debit. Per term and all upfront invoices have no fee.
 - **Settings**: choose whether new invoices go to Xero as drafts, who can lift a pause without payment, and **Plan fees start from** (only invoices whose first session is on or after that date get the plan fee, so check the family terms mention the fee first).
 - **Stripe and Xero**: connect CLG's Stripe and Xero accounts.
+
+### Change the quotes
+The **Quote of the day** at the top of every Overview goes through the list one a day, before any repeat. The quote of the month shows on the loading screen under Confidently Learn and Grow.
+1. Choose **Quotes** in the side menu. **Today** shows what everyone sees today.
+2. Under **Quote of the month**, choose a quote for this month or next and choose **Save**. If you do not choose one, the month uses the next quote in the list.
+3. Under **All quotes**, choose **Add a quote**, or open a quote to change it, untick **In use**, or choose **Remove quote**. Write short forms out in full.
 
 ### Change a family's hourly rate (Owner and Finance)
 1. In **Family billing**, find the family and go to **Family hourly rate**.

@@ -71,6 +71,7 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "billing-and-payments" }, // or the parent's billing part,
     { part: "billing-if-you-pay-for-yourself" }, // or the student's.
   ], // End of Billing.
+  quotes: [{ part: "owner-only", tasks: ["quotes"] }], // Quotes (owner): the quote of the day and of the month.
   help: [{ part: "help", tasks: ["help chats", "start a chat", "keep a chat"] }], // Help chats (admin): answering and keeping chats.
   calendar: [{ part: "sessions", tasks: ["your week"] }], // Weekly calendar: seeing the week and adding it to a phone calendar.
   materials: [ // Materials:
@@ -96,6 +97,10 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
   updates: [ // End-of-day updates (admins):
     { part: "your-own-training-handbook-and-pay", tasks: ["end-of-day"] }, // the update tasks in the admin guide.
   ], // End of End-of-day updates.
+  decisions: [ // Decision steps (Carla, 22 Nov 2026):
+    { part: "your-own-training-handbook-and-pay", tasks: ["decision steps"] }, // for admins,
+    { part: "training-handbook-and-pay", tasks: ["decision steps"] }, // or for tutors.
+  ], // End of Decision steps.
   pay: [ // My Pay:
     { part: "your-own-training-handbook-and-pay", tasks: ["office hours"] }, // logging office hours (admins),
     { part: "training-handbook-and-pay", tasks: ["pay"] }, // or checking pay and logging extra hours (tutors).
