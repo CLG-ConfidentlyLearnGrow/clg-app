@@ -114,7 +114,7 @@ Tip: You or your parent can answer. The first answer counts.
 2. Choose a reason, and offer two other times that week for a make-up. Your tutor picks one. If no time works, tick that box and CLG will help.
 3. Choose **Cancel this session**.
 
-Credit: more than 24 hr before gets full credit, 24 to 2 hr before gets half, under 2 hr gets none.
+Credit: more than 24 hr before gets full credit, 24 to 2 hr before gets half, under 2 hr gets none. A cancel saved in quiet hours (9pm to 5am Adelaide time) counts from 5am.
 
 ### Pick or confirm a make-up time, or a change
 If your tutor or CLG cancels a session, or CLG needs to change your tutor or time, a card shows at the top of the **Overview** (**Pick a make-up time**, **Confirm a make-up time** or **Please confirm a change**). Choose an answer, or say why it does not work.
