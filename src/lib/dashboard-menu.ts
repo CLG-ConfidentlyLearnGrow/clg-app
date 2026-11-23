@@ -199,6 +199,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
     if (isFinance) items.push({ id: "billing", label: "Billing", href: "/admin/billing", count: billingToDo || undefined, items: subTabs(BILLING_TABS, "/admin/billing", billingCount), countsInside: true }); // Billing (owner, operations and finance), with its sub-tabs and their numbers,
     if (isFinance) items.push({ id: "contracts", label: "Contracts", href: "/admin/contracts", count: await contractsXeroToDo() }); // staff employment contracts (owner, operations and finance; Carla, 17 Nov 2026), with Xero invites still to send counted,
     if (isDesk || isFinance) items.push({ id: "help", label: "Help chats", href: "/admin/help", count: todo.get("admin", "help") }); // the help desk: questions from families, students, tutors and staff (Carla, 16 Nov 2026), with chats waiting for CLG counted,
+    items.push({ id: "decisions", label: "Decision steps", href: "/decisions?as=admin" }); // their decision steps record and decisions log (and, for the owner and Operations, other people's records) (Carla, 22 Nov 2026),
     const reportsCount = todo.get("admin", "reports"); // How many new reports are waiting (shown on Reports, and on its "All reports" sub-tab).
     if (level === "owner") items.push({ id: "reports", label: "Reports", href: "/admin/reports", count: reportsCount, items: subTabs(REPORTS_TABS, "/admin/reports", (id) => (id === "reports" ? reportsCount : undefined)), countsInside: true }); // Reports for the owner (everything, including pay and profit), with new reports counted, and its sub-tabs,
     if (level === "operations") items.push({ id: "reports", label: "Reports", href: "/admin/reports", items: subTabs(REPORTS_TABS.filter((t) => t.id === "reports" || t.id === "goals"), "/admin/reports") }); // Reports for Operations admins (Carla, 20 Nov 2026): reports without money, and goals; no "new" number, which is the owner's,
@@ -232,6 +233,7 @@ async function buildDashboardMenu(role: Role, roles: Role[]): Promise<Section[]>
       ...sessions, // Sessions,
       { id: "calendar", label: "Weekly calendar", href: "/dashboard/tutor/calendar" }, // their week at a glance, and the link for their own calendar (Carla, 12 Nov 2026),
       ...rest, // the other tutor sections,
+      { id: "decisions", label: "Decision steps", href: "/decisions?as=tutor" }, // their decision steps record and decisions log (Carla, 22 Nov 2026),
       { id: "materials", label: "CLG materials", href: "/materials" }, // CLG materials,
       { id: "training", label: "Training", href: "/training?as=tutor", count: await trainingToDo() }, // their training (Carla, 16 Nov 2026), with modules to do counted,
       { id: "handbook", label: "Handbooks", href: "/handbook?as=tutor" }, // the tutor handbook,

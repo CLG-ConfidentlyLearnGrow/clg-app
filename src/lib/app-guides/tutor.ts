@@ -262,6 +262,11 @@ In the side menu, choose **Handbooks**. Search for a word (for example late, con
 3. Changed your mind? Choose **Take back** before it is approved.
 4. **Last 8 weeks** shows your sessions and hours. If you tutor school students on a weekday before 7am or after 7pm, a weekend or a public holiday, and your rate is below the award rate for that time, a **Penalty rate top-up** line pays the difference. Under the award you move from Level 1 to Level 2 after 3 months with CLG, and the app raises your school rate then if it is below the Level 2 minimum. If a time looks wrong, record the right finish time on the session, or contact CLG.
 
+### Check your decision steps
+1. In the side menu, choose **Decision steps**. **My decision steps** has one line for each kind of problem, for example a student who does not show up. It shows your step (how much you need Carla before you act), your goal, and when it last moved. Open **What each step means** for the five steps.
+2. Carla moves your steps at your check-ins and you get an app notice. During probation everything is at Step 1.
+3. At Step 4, open **Record a decision** under **My decisions log**. Write **The problem**, the **Options you considered** (at least three) and **The one you chose, and why**, then choose **Record decision**. Carla and Emma can read your log and add notes, which you see under **Notes on this record**.
+
 ## Help and safety
 
 ### If you are worried about a child
