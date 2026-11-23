@@ -315,6 +315,12 @@ export async function recordOutcome(_prev: FormState, formData: FormData): Promi
     p_status: parsed.data.outcome, // and the outcome.
   }); // End of the request.
   if (error) return { error: plainError(error, "Could not save that.") }; // Failed: plain message.
+  if (parsed.data.outcome === "no_show") { // A no-show: checks whether it was saved as one (Carla, 22 Nov 2026; contract clause 3.4).
+    const { data: after } = await supabase.from("sessions").select("cancel_reason_kind").eq("id", parsed.data.id).maybeSingle(); // Reads why the session closed.
+    if (after?.cancel_reason_kind === "change_pending") { // A change to the session was waiting for approval:
+      return done("A change to this session was waiting for approval, so it is not a no-show for you or the family. CLG has been told and will follow up and rebook it."); // explains what happened instead.
+    } // End of the change case.
+  } // End of the no-show check.
   return done("Saved."); // Refreshes, updates Teams, and confirms it.
 } // End of recordOutcome.
 

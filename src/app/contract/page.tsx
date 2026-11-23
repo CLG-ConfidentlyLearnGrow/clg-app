@@ -2,8 +2,9 @@
 // 2026). Lists the contracts CLG has sent them, and opens one to read it,
 // sign it, then acknowledge each linked document (the Fair Work statements,
 // the Child Safe Policy and the Staff Code of Conduct). Signed contracts stay
-// here so staff can read them again at any time.
-// See docs/features/employment-contracts.md.
+// here so staff can read them again at any time. Staff also tell CLG about
+// work outside CLG here (contract clause 6.7, Carla 22 Nov 2026).
+// See docs/features/employment-contracts.md and docs/features/outside-work-reports.md.
 //
 import { redirect } from "next/navigation"; // Sends the person to another page.
 import { ContractText } from "@/components/contract-text"; // Shows a contract's wording.
@@ -14,6 +15,7 @@ import { CONTRACT_STATUS_NAMES, EMPLOYMENT_NAMES, contractHref, documentLinks, t
 import { shortDate } from "@/lib/scheduling"; // Shows a date in a short, friendly way.
 import { createClient } from "@/lib/supabase/server"; // Connects to the database as the signed-in person.
 import { AcknowledgeForm, SignForm } from "./forms"; // The signing and acknowledging forms.
+import { EndOutsideWorkForm, OUTSIDE_WORK_KINDS, OutsideWorkForm, type OutsideWork } from "@/components/outside-work-forms"; // The work outside CLG forms and words.
 
 // A date and time in Adelaide, written out.
 const stamp = (iso: string) => new Date(iso).toLocaleString("en-AU", { timeZone: "Australia/Adelaide", dateStyle: "medium", timeStyle: "short" }); // For example "18 Nov 2026, 9:30 am".
@@ -87,14 +89,18 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
   } // End of the open contract.
 
   // The list of their contracts.
-  const [{ data }, { data: rereads }] = await Promise.all([ // Reads two things at once:
+  const [{ data }, { data: rereads }, { data: outside }] = await Promise.all([ // Reads three things at once:
     supabase.from("employment_contracts").select("id, title, status, sent_at, signed_at").eq("account_id", viewer.id).order("sent_at", { ascending: false }), // their contracts, newest first,
-    supabase.rpc("my_policy_rereads_count"), // and how many policies have a new version for them to read (Carla, 22 Nov 2026).
+    supabase.rpc("my_policy_rereads_count"), // how many policies have a new version for them to read (Carla, 22 Nov 2026),
+    supabase.from("outside_work_reports").select("id, kind, role_title, organisation, details, paid, starts_on, ends_on").eq("account_id", viewer.id).order("starts_on", { ascending: false }), // and their reports of work outside CLG, newest first.
   ]); // End of the reads.
+  const reports = (outside ?? []) as OutsideWork[]; // Their reports of work outside CLG.
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Adelaide" }); // Today in Adelaide, as YYYY-MM-DD.
   const toReread = Number(rereads ?? 0); // The number of new versions to read.
   const rows = (data ?? []) as { id: string; title: string; status: ContractStatus; sent_at: string; signed_at: string | null }[]; // The contracts.
   return ( // Shows:
     <DashboardFrame role={role} roles={viewer.roles} current="contract">{/* the dashboard frame, */}
+      <div className="space-y-6">{/* the cards, with space between: */}
       <Card title="My contract" description="Employment contracts CLG has sent you. Open one to read it, sign it, or read it again later.">{/* the list card: */}
         {toReread > 0 && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{toReread === 1 ? "A policy linked to your contract has a new version." : `${toReread} policies linked to your contract have new versions.`} Please open your contract, read it again and tick it.</p>}{/* a note when a policy has a new version. */}
         {rows.length === 0 ? ( // None:
@@ -112,6 +118,32 @@ export default async function MyContractPage({ searchParams }: PageProps<"/contr
           </Table> // End of the table.
         )}{/* End of the choice. */}
       </Card>{/* End of the list card. */}
+      <Card title="Work outside CLG" description="Your contract asks you to tell CLG, here, about any educational support or administrative role you do outside CLG, paid or unpaid, including tutoring privately or through another business. Tell CLG before you start, and again if it changes or ends. Only you and CLG's owner see this.">{/* the work outside CLG card: */}
+        <div className="space-y-4">{/* a block: */}
+          {reports.length === 0 ? <Empty>You have not told CLG about any work outside CLG.</Empty> : ( // None yet, or the list:
+            <ul className="divide-y divide-zinc-100 text-sm">{/* a list: */}
+              {reports.map((r) => ( // for each report:
+                <li key={r.id} className="space-y-2 py-3 first:pt-0">{/* a row: */}
+                  <p><span className="font-medium">{r.role_title}</span>{r.organisation ? ` at ${r.organisation}` : ""} · {OUTSIDE_WORK_KINDS[r.kind]} · {r.paid ? "Paid" : "Unpaid"}</p>{/* the role, where, kind and paid, */}
+                  <p className="text-zinc-600">From {shortDate(r.starts_on)}{r.ends_on ? ` to ${shortDate(r.ends_on)}` : ", still going"}</p>{/* the dates, */}
+                  <details className="rounded-lg border border-zinc-200 px-3 py-2">{/* a fold-out to change it: */}
+                    <summary className="cursor-pointer font-medium">Change or end this</summary>{/* its heading, */}
+                    <div className="mt-3 space-y-4">{/* the forms: */}
+                      <OutsideWorkForm report={r} />{/* the change form, */}
+                      {!r.ends_on && <EndOutsideWorkForm id={r.id} today={today} />}{/* and, while it carries on, the end form. */}
+                    </div>{/* End of the forms. */}
+                  </details>{/* End of the fold-out. */}
+                </li> // End of the row.
+              ))}{/* End of the reports. */}
+            </ul> // End of the list.
+          )}{/* End of the choice. */}
+          <details className="rounded-lg border border-zinc-200 px-3 py-2">{/* a fold-out to add one: */}
+            <summary className="cursor-pointer font-medium">Tell CLG about a role outside CLG</summary>{/* its heading, */}
+            <div className="mt-3"><OutsideWorkForm /></div>{/* the new report form. */}
+          </details>{/* End of the fold-out. */}
+        </div>{/* End of the block. */}
+      </Card>{/* End of the work outside CLG card. */}
+      </div>{/* End of the cards. */}
     </DashboardFrame> // End of the frame.
   ); // End of what's shown.
 } // End of MyContractPage.

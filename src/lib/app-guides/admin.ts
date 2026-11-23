@@ -110,6 +110,10 @@ Tip: **Times to check** does not list home or school sessions for a missing loca
 4. Choose the new tutor and the reason (only matching admins see it), then send.
 5. The new tutor and the family both confirm before anything moves. **Waiting for confirmation** shows where each change is up to.
 
+Tip: If a change is still waiting 24 hr before a session in it, the app cancels that session as a CLG cancel (the family gets full credit, and the tutor gets no pay for it). You get a **Session cancelled: change still waiting** notice. The new tutor and the family are asked to confirm the change, offer other times, or keep it cancelled. If everyone confirms while the session is still more than 2 hr away, it comes back with the new tutor. Times a family offers show under **Requests**. The 24 hr can be changed if needed (ask whoever looks after the app).
+
+Tip: If a session in the change is less than 2 hr away when the change is sent, it stays booked. If someone then records a no-show, it is not saved as a no-show (tutor contract clause 3.4). The session is closed as cancelled by CLG, the family gets full credit, and the tutor gets no no-show pay. You get a **Session to rebook: change not approved in time** notice: follow up and rebook it.
+
 ### Help with requests for extra or one-off sessions
 1. In **Sessions**, choose **Requests**. Families' requests are listed oldest first.
 2. To offer a time, choose the tutor, date, start, length and place, add a note for the family, and choose **Offer this time**. The family approves it.
@@ -265,11 +269,19 @@ const YOUR_OWN = `
 ### Use the handbook
 Choose **Handbooks** in the side menu, and search for a word. **Something has happened** is pinned at the top in red.
 
+### Keep and share learnings
+1. Choose **Learnings** in the side menu. Under **My learnings**, write a **Short title** and **What was learned**, then choose **Save learning**. Only you see it until you open it and choose **Suggest for the team**.
+2. Owner and Operations: a number next to **Learnings** shows suggestions waiting. Under **Suggested for the team**, change the words so they work for everyone and choose **Add to team learnings**, or write a note and choose **Decline for now**. The person is told either way.
+3. Owner and Operations: under **Team learnings**, open **Change or remove** to update one, or choose **Add a team learning** to add one directly.
+
 ### Find a colleague
 Choose **Staff directory** (from Admin or Billing) to search staff by name, email, job title or subject.
 
 ### Sign your own contract
 When CLG sends you a contract, a card on your dashboard and **My contract** in the side menu take you to it. Read it, tick both boxes, type your full name and choose **Sign and accept**. Then open each document listed, tick that you have read it, type your name and acknowledge it. When a policy gets a new version, **My contract** shows a number: open your contract, read the new version and tick it again.
+
+### Tell CLG about work outside CLG
+Tell CLG about any educational support or administrative role you do outside CLG, paid or unpaid, before you start, and again if it changes or ends. In **My contract**, under **Work outside CLG**, open **Tell CLG about a role outside CLG**, fill it in and choose **Tell CLG**. To change it or say it has ended, open **Change or end this**. Only you and CLG's owner see these.
 
 ### Log your office hours
 1. In the side menu, choose **My Pay**.
@@ -366,6 +378,12 @@ Once a contract is signed, the **Xero** column says **To do**, and the number ne
 2. Choose **I have sent the Xero invite**.
 3. When they finish the Xero form, approve it in Xero, then match them to Xero under **Billing**, **Staff pay**.
 
+### Check work outside CLG (Owner)
+Staff tell CLG about roles outside CLG on **My contract** (contract clause 6.7). You get a notice each time one is added, changed or ended.
+1. In **Contracts**, open **Work outside CLG**. Reports not yet seen are at the top.
+2. Read the role, add a private note if you want (for example any conflict to watch), and choose **Mark as seen**. A change from the staff member puts it back to **Not yet seen**.
+
+Only the owner sees these reports.
 `;
 
 // Running CLG day to day: tutors, progress, curriculum, staff, records (Owner and Operations).
