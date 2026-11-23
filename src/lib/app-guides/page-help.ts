@@ -71,6 +71,7 @@ const PAGE_HELP: Record<string, HelpRef[]> = { // menu item id -> help:
     { part: "billing-and-payments" }, // or the parent's billing part,
     { part: "billing-if-you-pay-for-yourself" }, // or the student's.
   ], // End of Billing.
+  quotes: [{ part: "owner-only", tasks: ["quotes"] }], // Quotes (owner): the quote of the day and of the month.
   help: [{ part: "help", tasks: ["help chats", "start a chat", "keep a chat"] }], // Help chats (admin): answering and keeping chats.
   calendar: [{ part: "sessions", tasks: ["your week"] }], // Weekly calendar: seeing the week and adding it to a phone calendar.
   materials: [ // Materials:

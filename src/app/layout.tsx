@@ -14,6 +14,8 @@ import { getToDoCounts } from "@/lib/to-do-counts"; // Reads the to-do numbers (
 import { SiteHeader } from "@/components/site-header"; // The top bar (with the phone Menu button).
 import { EmailLinkCatcher } from "@/components/email-link-catcher"; // Catches sign-in links opened from emails.
 import { PressFeedback } from "@/components/press-feedback"; // Shows every press of a button or link straight away, and a loading bar while a page opens.
+import { MonthQuoteProvider } from "@/components/quote-of-the-month"; // Shares the quote of the month with the loading screen.
+import { getTodayQuotes } from "@/lib/quotes"; // Reads today's quotes.
 import { Suspense } from "react"; // Lets the press feedback wait for the page address without holding up the rest of the page.
 import "./globals.css"; // The app-wide styles.
 
@@ -38,13 +40,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) { // Th
   const newConcerns = counts?.get("safety", "concerns"); // New child safety concerns sent to this person (only the officer and deputy ever have any).
   const newFlags = counts?.get("safety", "word_flags"); // Flagged words not yet reviewed (only the officer and deputy ever have any).
   const helpUnread = counts?.get("help", "unread"); // The person's help chats with a reply they have not read yet.
+  const { month: monthQuote } = await getTodayQuotes(); // The quote of the month, for the loading screen (Carla, 22 Nov 2026).
   return ( // Shows:
     <html lang="en-AU" className={`${poppins.variable} h-full antialiased`}>{/* the whole page, in Australian English, with the font, */}
       <body className="flex min-h-full flex-col bg-cream font-sans text-charcoal">{/* the page body in the brand colours, */}
         <EmailLinkCatcher />{/* the email sign-in link catcher, */}
         <Suspense fallback={null}><PressFeedback /></Suspense>{/* the pressed look for every button and link, and the loading bar (waits for the page address, showing nothing meanwhile), */}
         <SiteHeader viewer={viewer} newConcerns={newConcerns} newFlags={newFlags} helpUnread={helpUnread} />{/* the top bar (logo, links, Child safety, who is signed in; a Menu button on phones), */}
-        <div className="flex-1">{children}</div>{/* The page's own content, filling the space. */}
+        <div className="flex-1"><MonthQuoteProvider quote={monthQuote}>{children}</MonthQuoteProvider></div>{/* The page's own content, filling the space, with the quote of the month shared for the loading screen. */}
         <footer className="mt-12 border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">{/* The footer: */}
           <p>CLG Tutoring · Confidently Learn &amp; Grow</p>{/* the company name, */}
           <p className="mt-2 space-x-4">{/* a line of links: */}
