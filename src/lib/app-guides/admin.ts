@@ -110,7 +110,9 @@ Tip: **Times to check** does not list home or school sessions for a missing loca
 4. Choose the new tutor and the reason (only matching admins see it), then send.
 5. The new tutor and the family both confirm before anything moves. **Waiting for confirmation** shows where each change is up to.
 
-Tip: If a session in the change happens before it is confirmed and someone records a no-show, it is not saved as a no-show (tutor contract clause 3.4). The session is closed as cancelled by CLG, the family gets full credit, and the tutor gets no no-show pay. You get a **Session to rebook: change not approved in time** notice: follow up and rebook it.
+Tip: If a change is still waiting 24 hr before a session in it, the app cancels that session as a CLG cancel (the family gets full credit, and the tutor gets no pay for it). You get a **Session cancelled: change still waiting** notice. The new tutor and the family are asked to confirm the change, offer other times, or keep it cancelled. If everyone confirms while the session is still more than 2 hr away, it comes back with the new tutor. Times a family offers show under **Requests**. The 24 hr can be changed if needed (ask whoever looks after the app).
+
+Tip: If a session in the change is less than 2 hr away when the change is sent, it stays booked. If someone then records a no-show, it is not saved as a no-show (tutor contract clause 3.4). The session is closed as cancelled by CLG, the family gets full credit, and the tutor gets no no-show pay. You get a **Session to rebook: change not approved in time** notice: follow up and rebook it.
 
 ### Help with requests for extra or one-off sessions
 1. In **Sessions**, choose **Requests**. Families' requests are listed oldest first.

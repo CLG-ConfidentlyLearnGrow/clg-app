@@ -204,7 +204,7 @@ export async function RequestsSection({ // The requests and public holidays sect
   const libraries = (libsRes.data ?? []) as { id: string; name: string }[]; // The libraries.
 
   const line = (r: SessionRequest) => // One line describing a request:
-    `${r.student_name} · ${r.subject} · ${KIND_NAMES[r.kind] ?? r.kind}` + // the student, subject and kind,
+    `${r.student_name} · ${r.subject} · ${r.kind === "away_cover" && r.event_label ? r.event_label : (KIND_NAMES[r.kind] ?? r.kind)}` + // the student, subject and kind (or, for cover, why it is needed when the app says, such as a session cancelled while a change was waiting),
     (r.kind === "extra" && r.event_on ? ` before ${r.event_label ?? "a significant date"} on ${shortDate(r.event_on)}` : "") + // the significant date (for an extra session),
     (r.kind !== "extra" && r.event_on ? ` · ${shortDate(r.event_on)}` : "") + // the date (for other kinds),
     (r.wants ? ` · wants ${WANTS_NAMES[r.wants] ?? r.wants}` : ""); // and what they'd like (if given).

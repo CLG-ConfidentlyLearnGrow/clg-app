@@ -144,7 +144,7 @@ Tip: Only record a finish that is more than 15 minutes early, or a session that 
 If a family cancels and offers two times, **Pick a make-up time** shows on the Overview. Pick one to book it, or choose **Neither works** and say why. If CLG offered the times and the family picked one, confirm it under **Confirm a make-up time**.
 
 ### Confirm a change of tutor or time
-If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed. While a change is waiting, a session that does not go ahead is not a no-show for you or the family: if you choose **No-show**, CLG is told, follows up and rebooks it, and there is no no-show pay for it.
+If CLG wants to move a student's sessions to you (or change the day and time), a **Please confirm a change** card shows on the Overview. Choose **Confirm**, or **Decline** and say why. Nothing changes until everyone has confirmed. If the change is still waiting 24 hr before a session, that session is cancelled. The current tutor is told not to go. As the new tutor, a **Session cancelled: please choose what happens** card shows: choose **Confirm the change** (the session comes back with you if everyone confirms in time), **Offer other times**, or **Keep it cancelled**. A session less than 2 hr away when the change is sent stays booked, and it is not a no-show for you or the family: if you choose **No-show**, CLG is told, follows up and rebooks it, and there is no no-show pay for it.
 
 ### Add away dates
 1. In **Sessions**, choose **Away dates**.

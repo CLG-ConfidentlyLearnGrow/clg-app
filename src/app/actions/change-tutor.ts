@@ -91,3 +91,23 @@ export async function answerTutorChange(_prev: FormState, formData: FormData): P
   if (data === "failed") return { message: "Thanks. The change could not be finished automatically, so CLG has been told and will be in touch." }; // It couldn't be made: CLG will sort it.
   return { message: "Thanks, confirmed. We are waiting for the others before anything changes." }; // Still waiting for the others.
 } // End of answerTutorChange.
+
+// The new tutor or the family chooses what happens to a session that was
+// cancelled because a change was still waiting (Carla, 23 Nov 2026): offer
+// other times (the days and times that suit are needed), or keep it
+// cancelled. Confirming the change uses answerTutorChange above.
+export async function answerChangeCancelledSession(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message or an error.
+  await requireViewer(); // Makes sure someone is signed in.
+  const parsed = z // Checks the form:
+    .object({ session: z.uuid(), choice: z.enum(["other_times", "kept_cancelled"]), note: z.string().trim().max(1000, "Please keep it under 1,000 characters.").optional() }) // the session, the choice, and the times that suit,
+    .safeParse(Object.fromEntries(formData)); // from the form values.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const { session, choice, note } = parsed.data; // The checked answers.
+  if (choice === "other_times" && !note) return { error: "Please say which days and times suit, so CLG can rebook the session." }; // Other times need the times.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("answer_change_cancelled_session", { p_session: session, p_choice: choice, p_note: note || null }); // Sends the choice.
+  if (error) return { error: plainError(error, "Sorry, your choice could not be saved. Please try again.") }; // The database said no.
+  refresh(); // Refreshes the pages.
+  if (choice === "other_times") return { message: "Thanks. CLG has your times and will be in touch to rebook the session." }; // Other times: says what happens next.
+  return { message: "Thanks. The session stays cancelled." }; // Kept cancelled: says so.
+} // End of answerChangeCancelledSession.
