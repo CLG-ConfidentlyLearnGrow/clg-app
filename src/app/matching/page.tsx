@@ -697,14 +697,14 @@ async function StudentPanel({ studentId, subject, stage, nextHref }: { studentId
 async function sspStudents(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]): Promise<Set<string>> { // Takes the database connection and the student ids.
   const unique = [...new Set(ids)]; // Each student once.
   if (unique.length === 0) return new Set(); // Nobody to check: an empty set.
-  const { data } = await supabase.from("ssp_enrolments").select("student_id").in("student_id", unique).eq("status", "enrolled"); // Reads the ones in the program now (deposit paid).
+  const { data } = await supabase.from("ssp_enrolments").select("student_id").in("student_id", unique).eq("status", "enrolled"); // Reads the ones in the program now (everything paid).
   return new Set(((data ?? []) as { student_id: string }[]).map((r) => r.student_id)); // Their ids, as a set.
 } // End of sspStudents.
 
 // The small "Student Success Program" label.
 function SspLabel() { // No settings.
   return ( // Shows:
-    <span className="ml-1.5 inline-block rounded-full bg-violet-50 px-2 text-xs font-medium text-violet-900" title="Student Success Program: deposit paid, top priority for matching">{/* a violet pill with an explanation on hover: */}
+    <span className="ml-1.5 inline-block rounded-full bg-violet-50 px-2 text-xs font-medium text-violet-900" title="Student Success Program: paid in full, top priority for matching">{/* a violet pill with an explanation on hover: */}
       Student Success Program{/* its words. */}
     </span> // End of the pill.
   ); // End of what is shown.

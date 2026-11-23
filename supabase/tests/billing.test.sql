@@ -86,7 +86,7 @@ reset role; -- Goes back to the all-powerful test user (access rules off).
 
 select tests.claims('00000000-0000-0000-0000-0000000000b0', 'aal2'); -- Signs in as test account ...b0 with two-step sign-in.
 set role authenticated; -- Acts as a signed-in user, so the access rules apply.
-select tests.eq((select count(*) from public.billing_price_items), 9, 'admin sees all prices'); -- Checks: admin sees all prices (including the term review price, off until set, the Student Success Program deposit, and the two plan fees).
+select tests.eq((select count(*) from public.billing_price_items), 10, 'admin sees all prices'); -- Checks: admin sees all prices (including the term review price, off until set, the Student Success Program deposit, the program price used for its lines, and the two plan fees).
 -- Prices are a billing rule: only the owner changes them.
 update public.billing_price_items set description = 'Updated' where code = 'school_tutoring'; -- Tries to change its description.
 select tests.eq((select count(*) from public.billing_price_items where description = 'Updated'), 0, 'operations admin cannot edit a price'); -- Checks: operations admin cannot edit a price.

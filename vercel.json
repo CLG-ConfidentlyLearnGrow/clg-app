@@ -8,6 +8,7 @@
     { "path": "/api/reports/cron", "schedule": "30 21 * * *" },
     { "path": "/api/problems/cron", "schedule": "15 17 * * *" },
     { "path": "/api/applications/cron", "schedule": "45 17 * * *" },
-    { "path": "/api/probation/cron", "schedule": "0 21 * * *" }
+    { "path": "/api/probation/cron", "schedule": "0 21 * * *" },
+    { "path": "/api/ssp/cron", "schedule": "5 * * * *" }
   ]
 }
