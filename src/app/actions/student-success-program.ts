@@ -1,11 +1,13 @@
 // Summary: the server actions for the Student Success Program (Carla, 22 Nov
 // 2026). A family ticks a box to ask about the program (or cancels the
 // request). An owner or Operations admin approves a place (which holds one
-// of the limited places and sends the family the $500 deposit invoice),
-// declines a request, withdraws a place before the deposit is paid, changes
+// of the limited places and makes the program invoices: the $500 deposit,
+// then the rest in full, monthly or weekly), declines a request, withdraws
+// a place before the deposit is paid, records a payment agreement, changes
 // a place's details, takes a student out of the program, or changes the
-// number of places. The student is in the program once the deposit is paid
-// (the database does that when billing marks the invoice paid). The
+// number of places and the days before a missed payment forfeits the place.
+// The deposit secures the place; the program switches on once everything is
+// paid (the database does that when billing marks each invoice paid). The
 // database checks every rule again. The book-till date is saved through
 // scheduling's own booking-length function, so the program never writes
 // scheduling's tables. See docs/features/student-success-program.md.
@@ -31,7 +33,7 @@ function refresh(): void { // No inputs.
   revalidatePath("/matching"); // The Matching page (program label and order).
   revalidatePath("/dashboard/parent"); // The family dashboard (the child's program box).
   revalidatePath("/dashboard/student"); // The student dashboard (an adult learner's program box).
-  revalidatePath("/billing"); // The Billing page (the deposit invoice to pay).
+  revalidatePath("/billing"); // The Billing page (the program invoices to pay).
 } // End of refresh.
 
 // The id of the student a form is about.
@@ -102,15 +104,29 @@ export async function cancelStudentSuccessRequest(_prev: FormState, formData: Fo
 // The admin's side (owner and Operations admins)
 // ---------------------------------------------------------------------------
 
-// Approves a place and sends the family the deposit invoice.
+// The money part of approving a place: the program total, the payment plan
+// and the date the last payment is due by.
+const programMoney = z.object({ // The rules:
+  total: z.coerce.number({ error: "Please enter the program total in dollars." }).positive("Please enter the program total in dollars.").max(100000, "Please enter a total of $100,000 or less."), // the total in dollars (deposit included),
+  plan: z.enum(["full", "monthly", "weekly"], { error: "Please choose a payment plan: pay in full, monthly or weekly." }), // the payment plan,
+  finish_on: z.iso.date("Please choose the date the last payment is due by."), // and the finish payment date.
+}); // End of the rules.
+
+// Approves a place and makes the program invoices (deposit first).
 export async function approveStudentSuccessPlace(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireAdminLevel(FULL_ADMIN); // Must be the owner or an Operations admin, with two-step sign-in.
-  const parsed = placeDetails.safeParse(Object.fromEntries(formData)); // Checks the form.
+  const form = Object.fromEntries(formData); // The form's answers.
+  const parsed = placeDetails.safeParse(form); // Checks the place details.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const money = programMoney.safeParse(form); // Checks the money details.
+  if (!money.success) return { error: money.error.issues[0].message }; // Shows the first rule that failed.
   const d = parsed.data; // The checked answers.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
-  const { error } = await supabase.rpc("ssp_approve", { // Asks the database to approve the place:
+  const { data: summary, error } = await supabase.rpc("ssp_approve", { // Asks the database to approve the place:
     p_student: d.student_id, // the student,
+    p_total_cents: Math.round(money.data.total * 100), // the program total in cents,
+    p_plan: money.data.plan, // the payment plan,
+    p_finish_on: money.data.finish_on, // the finish payment date,
     p_sessions: d.sessions === "" || d.sessions === undefined ? null : d.sessions, // sessions planned (or none),
     p_book_until: d.book_until || null, // the book-till date (or none),
     p_note: d.note || null, // and the note.
@@ -118,9 +134,30 @@ export async function approveStudentSuccessPlace(_prev: FormState, formData: For
   if (error) return { error: plainError(error, "We could not approve the place. Please try again.") }; // Failed: plain message (nothing was changed).
   const lengthProblem = await saveBookingLength(supabase, d); // Saves the book-till date as the booking length too.
   refresh(); // Refreshes the pages.
-  const done = "Place approved. The family has been sent the deposit invoice and told how to pay it in Billing. The student is in the program once it is paid."; // What happened.
+  const done = `Place approved. Payments: ${summary ?? ""} The family has been told, and each payment is taken from their saved card or bank account on its due date. The program switches on once everything is paid.`; // What happened.
   return lengthProblem ? { error: `${done} ${lengthProblem}` } : { message: done }; // Confirms, with any booking length problem.
 } // End of approveStudentSuccessPlace.
+
+// Records (or ends) a payment agreement with the family: the place is not
+// forfeited for missed payments until the date given.
+export async function saveStudentSuccessAgreement(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
+  await requireAdminLevel(FULL_ADMIN); // Must be the owner or an Operations admin, with two-step sign-in.
+  const parsed = z.object({ // The rules:
+    student_id: studentId, // which student,
+    until: optionalDate, // the date the agreement runs to (empty ends it),
+    note: z.string().trim().max(500, "Please keep the note under 500 characters.").optional(), // and what was agreed.
+  }).safeParse(Object.fromEntries(formData)); // Checks the form.
+  if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
+  const supabase = await createClient(); // Connects to the database as the signed-in person.
+  const { error } = await supabase.rpc("ssp_set_agreement", { // Asks the database to save it:
+    p_student: parsed.data.student_id, // the student,
+    p_until: parsed.data.until || null, // the date (or none, which ends it),
+    p_note: parsed.data.note || null, // and the note.
+  }); // End of the request.
+  if (error) return { error: plainError(error, "We could not save the payment agreement. Please try again.") }; // Failed: plain message.
+  refresh(); // Refreshes the pages.
+  return { message: parsed.data.until ? "Payment agreement saved. The place will not be forfeited before that date." : "Payment agreement ended." }; // Confirms.
+} // End of saveStudentSuccessAgreement.
 
 // Changes the details of a place that is approved or in the program.
 export async function saveStudentSuccessDetails(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
@@ -156,7 +193,7 @@ export async function declineStudentSuccessRequest(_prev: FormState, formData: F
   return { message: "Request declined. The family has been told." }; // Confirms.
 } // End of declineStudentSuccessRequest.
 
-// Withdraws a place before the deposit is paid (the deposit invoice is cancelled).
+// Withdraws a place before the deposit is paid (the program invoices are cancelled).
 export async function withdrawStudentSuccessPlace(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireAdminLevel(FULL_ADMIN); // Must be the owner or an Operations admin, with two-step sign-in.
   const parsed = z.object({ // The rules:
@@ -168,7 +205,7 @@ export async function withdrawStudentSuccessPlace(_prev: FormState, formData: Fo
   const { error } = await supabase.rpc("ssp_withdraw", { p_student: parsed.data.student_id, p_reason: parsed.data.reason }); // Asks the database to withdraw it.
   if (error) return { error: plainError(error, "We could not withdraw the place. Please try again.") }; // Failed: plain message.
   refresh(); // Refreshes the pages.
-  return { message: "Place withdrawn and the deposit invoice cancelled. If it was already in Xero, void it there too." }; // Confirms, with a reminder about Xero.
+  return { message: "Place withdrawn and the program invoices cancelled. If they were already in Xero, void them there too." }; // Confirms, with a reminder about Xero.
 } // End of withdrawStudentSuccessPlace.
 
 // Takes a student out of the program.
@@ -180,19 +217,19 @@ export async function leaveStudentSuccessProgram(_prev: FormState, formData: For
   const { error } = await supabase.rpc("ssp_leave", { p_student: student.data }); // Asks the database to take them out.
   if (error) return { error: plainError(error, "We could not take this student out of the program. Please try again.") }; // Failed: plain message.
   refresh(); // Refreshes the pages.
-  return { message: "Done. This student is no longer in the Student Success Program. Any refund follows CLG's terms and is done in Billing." }; // Confirms.
+  return { message: "Done. This student is no longer in the Student Success Program, and any unpaid program invoices were cancelled (void them in Xero too). Any refund follows CLG's terms and is done in Billing." }; // Confirms.
 } // End of leaveStudentSuccessProgram.
 
-// Changes the number of places and the days families have to pay the deposit.
+// Changes the number of places and the days after a missed payment before the place is forfeited.
 export async function saveStudentSuccessPlaces(_prev: FormState, formData: FormData): Promise<FormState> { // Takes the form; gives back a message.
   await requireAdminLevel(FULL_ADMIN); // Must be the owner or an Operations admin, with two-step sign-in.
   const parsed = z.object({ // The rules:
     spaces: z.coerce.number().int("Please enter a whole number of places.").min(0, "Places cannot be below 0.").max(1000, "Please enter 1000 places or fewer."), // places in total,
-    due_days: z.coerce.number().int("Please enter a whole number of days.").min(1, "Please allow at least 1 day.").max(60, "Please allow 60 days or fewer."), // and days to pay.
+    forfeit_days: z.coerce.number().int("Please enter a whole number of days.").min(1, "Please allow at least 1 day.").max(60, "Please allow 60 days or fewer."), // and days before a missed payment forfeits the place.
   }).safeParse(Object.fromEntries(formData)); // Checks the form.
   if (!parsed.success) return { error: parsed.error.issues[0].message }; // Shows the first rule that failed.
   const supabase = await createClient(); // Connects to the database as the signed-in person.
-  const { error } = await supabase.rpc("ssp_set_places", { p_spaces: parsed.data.spaces, p_due_days: parsed.data.due_days }); // Asks the database to save them.
+  const { error } = await supabase.rpc("ssp_set_places", { p_spaces: parsed.data.spaces, p_forfeit_days: parsed.data.forfeit_days }); // Asks the database to save them.
   if (error) return { error: plainError(error, "We could not save the number of places. Please try again.") }; // Failed: plain message.
   refresh(); // Refreshes the pages.
   return { message: "Saved." }; // Confirms.

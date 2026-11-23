@@ -63,7 +63,7 @@ export async function runBilling(): Promise<Summary> {
   else summary.creditsGiven = credits.data ?? 0; // or records how many credits were given.
 
   await sendDraftsToXero(today, summary); // Sends due invoices to Xero.
-  await sendDepositsToXero(summary); // Sends Student Success Program deposit invoices to Xero.
+  await sendProgramInvoicesToXero(summary); // Sends Student Success Program invoices to Xero.
   await sendCreditNotesToXero(today, summary); // Sends new credits to Xero as credit notes.
   await applyCreditsInXero(today, summary); // Applies credit to invoices in Xero.
   await amendInvoicesInXero(summary); // Updates invoices re-priced after a rate change in Xero, and emails the amended ones (Carla, 22 Nov 2026).
@@ -166,24 +166,27 @@ async function sendDraftsToXero(today: string, summary: Summary) { // For each d
   } // End of the loop.
 } // End of sendDraftsToXero.
 
-// Student Success Program deposit invoices (Carla, 22 Nov 2026) are
-// approved in the app when an admin approves the student's place, so the
-// family can pay straight away. They go to Xero already approved, so Xero's
-// records match. Their status in the app is not changed here.
-async function sendDepositsToXero(summary: Summary) { // For each deposit invoice not yet in Xero:
+// Student Success Program invoices (the deposit and each later payment,
+// Carla, 22 Nov 2026) are approved in the app when an admin approves the
+// student's place, so the family can pay straight away. Like every invoice,
+// they are charged automatically from the saved card or bank account on
+// their charge day (chargeDueInvoices below). They go to Xero already
+// approved, so Xero's records match. Their status in the app is not changed
+// here.
+async function sendProgramInvoicesToXero(summary: Summary) { // For each Student Success Program invoice not yet in Xero:
   if (!xeroConfig() || !(await xeroConnection())) return; // Stops if Xero is not set up or connected.
   const db = createAdminClient(); // Connects with full access.
-  const { data: deposits } = await db // Reads the deposits:
+  const { data: invoices } = await db // Reads the program invoices:
     .from("billing_invoices") // from the invoices table,
-    .select("id, number, family_id, send_on, due_on, idempotency_key") // with the details needed to send them,
-    .eq("kind", "deposit") // only deposit invoices,
+    .select("id, number, family_id, kind, send_on, due_on, idempotency_key") // with the details needed to send them,
+    .in("kind", ["deposit", "program"]) // only the program's deposit and later payments,
     .in("status", ["open", "paid"]) // that are ready to pay or already paid,
     .is("xero_invoice_id", null) // and not yet in Xero,
     .limit(50); // up to 50 at a time.
-  for (const inv of deposits ?? []) { // Goes through each deposit.
+  for (const inv of invoices ?? []) { // Goes through each one.
     try { // Sending could fail.
       const contactId = await familyContact(inv.family_id); // Gets (or makes) the family's Xero contact.
-      const { data: lines } = await db // Reads the deposit's line:
+      const { data: lines } = await db // Reads the invoice's lines (the payment, and any plan fee):
         .from("billing_invoice_lines") // from the invoice lines table,
         .select("description, billed_minutes, hourly_cents, gst_cents") // with words, quantity, price and GST,
         .eq("invoice_id", inv.id) // for this invoice,
@@ -194,24 +197,24 @@ async function sendDepositsToXero(summary: Summary) { // For each deposit invoic
         contactId, // the family's contact,
         date: inv.send_on, // dated the day it was made,
         dueDate: inv.due_on, // due on the due date,
-        reference: "Student Success Program deposit", // with a plain reference,
+        reference: inv.kind === "deposit" ? "Student Success Program deposit" : "Student Success Program payment", // with a plain reference,
         awaitingApproval: false, // already approved (the admin approved the place),
-        lines: (lines ?? []).map((l) => ({ // and its line:
+        lines: (lines ?? []).map((l) => ({ // and its lines:
           description: l.description, // the words,
           hours: l.billed_minutes / 60, // quantity 1 (60 minutes divided by 60),
-          hourlyCents: l.hourly_cents, // the deposit amount,
+          hourlyCents: l.hourly_cents, // the amount,
           gst: l.gst_cents > 0, // and whether it has GST.
         })), // End of the lines.
-        discountCents: 0, // No discount on a deposit.
+        discountCents: 0, // No discount on a program invoice.
         idempotencyKey: inv.idempotency_key, // The never-twice key.
       }); // End of the invoice.
       await db.from("billing_invoices").update({ xero_invoice_id: xeroId }).eq("id", inv.id); // Saves Xero's id on the invoice, so payments can be recorded against it.
       summary.sentToXero++; // Counts it as sent.
     } catch (e) { // Something went wrong:
-      summary.problems.push(`Deposit invoice ${inv.number} to Xero: ${(e as Error).message}`); // notes which invoice and why.
+      summary.problems.push(`Program invoice ${inv.number} to Xero: ${(e as Error).message}`); // notes which invoice and why.
     } // End of the error handling.
   } // End of the loop.
-} // End of sendDepositsToXero.
+} // End of sendProgramInvoicesToXero.
 
 // The family's Xero contact, made the first time it's needed.
 async function familyContact(familyId: string): Promise<string> { // Looks up (or makes) the contact for one family.
@@ -254,7 +257,6 @@ async function chargeDueInvoices(today: string, summary: Summary) {
     .eq("status", "open") // only sent invoices,
     .lte("charge_on", today) // whose charge date has come,
     .is("auto_charge_attempted_at", null) // not already tried,
-    .eq("kind", "sessions") // only session invoices (a Student Success Program deposit is paid by the family choosing Pay now, never charged automatically),
     .gt("total_cents", 0); // and for more than $0.
   for (const inv of due ?? []) { // Goes through each one.
     const { data: acct } = await db // Reads the family's saved method:

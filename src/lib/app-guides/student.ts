@@ -158,7 +158,8 @@ Tip: On an iPhone or iPad, add CLG to your home screen first, open it from there
 The Student Success Program is a planned run of sessions with a study plan, each term review included, and priority when CLG finds a tutor. Places are limited.
 1. On your dashboard, open **Student Success Program**.
 2. Tick **Yes, I would like to ask about a place**, add anything CLG should know, and choose **Send my request**.
-3. If CLG offers a place, pay the $500 deposit in **Billing** by the date shown. You are in the program once it is paid.
+3. If CLG offers a place, the $500 deposit secures it and must be paid within 72 hours, or the place is forfeited. It is taken from your saved card or bank account (or choose **Pay now** in **Billing**).
+4. The rest is paid in full, monthly or weekly, as CLG set up, and you are reminded the day before each payment. You are in the program once everything is paid.
 
 If a parent manages your account, they ask for you, and you can see where it is up to on your dashboard.
 

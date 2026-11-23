@@ -16,9 +16,11 @@ type StudentChoice = { id: string; full_name: string }; // their id and name.
 export const SSP_STATUS: Record<string, string> = { // Each status and its words:
   requested: "the family has asked", // asked, not yet decided,
   approved: "place approved, waiting for the deposit", // place held, deposit not yet paid,
-  enrolled: "in the program", // deposit paid,
+  secured: "deposit paid, paying the rest", // place secured, more to pay,
+  enrolled: "in the program", // everything paid,
   declined: "request declined", // CLG could not offer a place,
   withdrawn: "request or place withdrawn", // cancelled by the family or CLG,
+  forfeited: "place forfeited (a payment was not made in time)", // a payment was missed,
   left: "has left the program", // was in it, now left.
 }; // End of the words.
 
@@ -49,7 +51,7 @@ export async function StudentDetailsCard({ // Its settings:
           .order("added_at"), // oldest first.
         supabase // and their Student Success Program place:
           .from("ssp_enrolments") // from the program list,
-          .select("status, request_note, sessions_planned, book_until, deposit_paid_on, note") // where they are up to and the details the forms show,
+          .select("status, request_note, sessions_planned, book_until, deposit_paid_on, note, program_total_cents, plan, finish_on, deposit_deadline, agreement_until, agreement_note") // where they are up to and the details the forms show,
           .eq("student_id", chosen.id) // for this student,
           .maybeSingle(), // as one row (or none if they never asked).
       ]) // (end of the reads)
@@ -100,7 +102,7 @@ export async function StudentDetailsCard({ // Its settings:
                 Student Success Program{sspRow ? `: ${SSP_STATUS[sspRow.status] ?? sspRow.status}` : ""}{/* the program name, and where they are up to. */}
               </h3>{/* End of the heading. */}
               <p className="text-sm text-zinc-600">{/* what the program does: */}
-                Places are limited. Approving a place sends the family the $500 deposit invoice, and the student is in the program once it is paid{sspRow?.deposit_paid_on ? ` (paid ${sspRow.deposit_paid_on})` : ""}. Students in the program get a study plan, each term review at no charge, a program label, and first place in the Matching queue.{/* the plain explanation, with the day the deposit was paid if it has been. */}
+                Places are limited. Approving a place makes the program invoices, starting with the $500 deposit, which secures the place{sspRow?.deposit_paid_on ? ` (paid ${sspRow.deposit_paid_on})` : ""}. The program switches on once everything is paid{sspRow?.program_total_cents ? ` (total $${(sspRow.program_total_cents / 100).toFixed(2)}, ${sspRow.plan === "full" ? "paid in full" : sspRow.plan ?? ""}, finishing ${sspRow.finish_on ?? ""})` : ""}. Students in the program get a study plan, each term review at no charge, a program label, and first place in the Matching queue.{/* the plain explanation, with the deposit date and payment plan if there is one. */}
               </p>{/* End of the explanation. */}
               <SspForm key={`${row.id}-${sspRow?.status ?? "none"}`} studentId={row.id} current={sspRow} />{/* the forms (fresh after each change). */}
             </section> // End of the section.

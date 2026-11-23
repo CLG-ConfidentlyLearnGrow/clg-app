@@ -98,10 +98,11 @@ If CLG set up your child's profile during a phone call, **Your children** shows 
 The Student Success Program is a planned run of sessions with a study plan, each term review included, and priority when CLG finds a tutor. Places are limited, so CLG looks at each request first.
 1. In **Your children**, choose **Student Success Program** under your child's name.
 2. Tick **Yes, I would like to ask about a place**, add anything CLG should know, and choose **Send my request**. You can choose **Cancel my request** until CLG answers.
-3. If CLG offers a place, you get a notice and an email, and the box says the place is waiting for the $500 deposit. The person who pays for your family's sessions pays it in **Billing** by the date shown. It is never taken automatically.
-4. Once the deposit is paid, the box says your child is in the Student Success Program.
+3. If CLG offers a place, you get a notice and an email. The $500 deposit secures the place and must be paid within 72 hours, or the place is forfeited. It is taken from your saved card or bank account, or the person who pays can choose **Pay now** in **Billing**. They get a reminder at 48 hours if it has not been paid.
+4. Once the deposit is paid, the box says the place is secured. The rest is paid in full by the finish date, or monthly (with a $10 plan fee each payment) or weekly (with a $5 plan fee each payment), as CLG set up. The person who pays sees each payment and its date in the box and in **Billing**, and is reminded the day before each one.
+5. Once everything is paid, the box says your child is in the Student Success Program.
 
-If CLG cannot offer a place, you are told, and you can ask again later.
+If a payment is missed, the person who pays is told, and the place is forfeited after 7 days unless it is paid or a payment plan is agreed with CLG. If you pay weekly and sessions are missed two weeks in a row because the weekly invoice was not paid, the place is also forfeited unless a plan is agreed with CLG. A forfeited place puts your child back on the waiting list. If CLG cannot offer a place, you are told, and you can ask again later.
 
 ### Give your child their own login (16 and over)
 A child aged 16 or over can have their own login. They keep their details, history and tutor, and you can still see everything. Each child with their own login sees only their own profile, never a brother's or sister's.
