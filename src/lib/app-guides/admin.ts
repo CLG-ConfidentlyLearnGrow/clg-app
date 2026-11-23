@@ -287,6 +287,12 @@ Tell CLG about any educational support or administrative role you do outside CLG
 1. In the side menu, choose **My Pay**.
 2. Under **Log hours**, choose **What kind of work?** (**Office admin** for office work), then the day and hours. Write **What you did** and **What you finished or achieved**. Log each pay week by the day after it ends.
 3. **Last 8 weeks** shows your hours and pay.
+
+### Check your decision steps
+1. In the side menu, choose **Decision steps**. **My decision steps** has one line for each kind of problem: your step, your goal, and when it last moved. Open **What each step means** for the five steps.
+2. At Step 4, open **Record a decision** under **My decisions log**. Write **The problem**, the **Options you considered** (at least three) and **The one you chose, and why**, then choose **Record decision**.
+3. Owner and Operations: under **Open a record**, choose a person (Operations see tutors only). Write a note under **Notes on this record** and choose **Add note**. They can read notes on their own record.
+4. Owner: on someone's record, open **Move this step** under a line, choose the **New step**, add a short note and choose **Save step**. They get an app notice. **Kinds of problem** (at the bottom) changes the lines and their starting steps.
 `;
 
 // Child safety: raising a concern (everyone) and handling one (officer and deputy).
