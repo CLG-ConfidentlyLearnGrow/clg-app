@@ -87,7 +87,9 @@ function noticeText(row: WaiverRow): string { // Takes the row.
   if (row.status === "no_show" || !row.cancelled_at) return "No-show"; // A no-show had no notice.
   const minutes = Math.max(0, Math.round((new Date(row.starts_at).getTime() - new Date(row.cancelled_at).getTime()) / 60000)); // Minutes between the cancel and the start.
   const hours = Math.floor(minutes / 60); // Whole hours.
-  return `Cancelled with ${hours > 0 ? `${hours} hr ` : ""}${minutes % 60} min notice`; // Hours (if any) and minutes.
+  const adelaideHour = Number(new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Adelaide", hour: "numeric", hourCycle: "h23" }).format(new Date(row.cancelled_at))); // The hour it was saved, in Adelaide time (0 to 23).
+  const quiet = adelaideHour >= 21 || adelaideHour < 5; // Whether it was saved in quiet hours (9pm to 5am), when notice counts from 5am (Carla, 22 Nov 2026).
+  return `Cancelled with ${hours > 0 ? `${hours} hr ` : ""}${minutes % 60} min notice${quiet ? " (saved in quiet hours, counts from 5am)" : ""}`; // Hours (if any) and minutes, and the quiet hours note.
 } // End of noticeText.
 
 // Xero connection messages after the owner comes back from Xero.

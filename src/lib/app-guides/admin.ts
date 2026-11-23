@@ -524,7 +524,7 @@ In **Family billing**, find the family, enter the amount and reason, and choose 
 
 ### Waive a late cancellation (Owner)
 1. In **Family billing**, open **Late-cancel waivers**. It lists family cancels and no-shows from the last 60 days and the next 14. Operations admins can see the list, but only the owner waives.
-2. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
+2. A cancel saved in quiet hours shows **(saved in quiet hours, counts from 5am)**, because notice counts from 5am. Find the session, write briefly why (no health details), and choose **Waive**. The family gets a full credit for it.
 3. Each learner gets one waiver a calendar year. After that, see proof and an explanation first, then tick **Proof seen**. Do not keep a copy of the proof. Tutors never see waivers.
 
 ### Paused families
@@ -623,7 +623,7 @@ On the **Child safety** page, **Who receives concerns** sets the Child Safety Of
 If an Operations admin asks for emergency owner access, you are emailed at once with their reason. Cancel it if it is not needed. Otherwise it starts 24 hr later, lasts 7 days and ends by itself. Everything is logged.
 
 ### Quiet hours and summary time
-- **Sessions**, **Notices**: **Quiet hours (all of CLG)** sets when nothing is sent (9pm to 5am now).
+- **Sessions**, **Notices**: **Quiet hours (all of CLG)** sets when nothing is sent (9pm to 5am now). Anything done in quiet hours counts as done at the end of them: a cancel saved at 11pm counts from 5am for family credit and tutor late-cancel pay. The real time is still shown.
 - **Sessions**, **Book a session**: **Time to write session summaries** sets the paid minutes after each session.
 ` + SAFETY + YOUR_OWN + HELP, // its parts,
   }, // End of the owner's guide.
