@@ -117,7 +117,7 @@ Tip: You or your parent can answer. The first answer counts.
 Credit: more than 24 hr before gets full credit, 24 to 2 hr before gets half, under 2 hr gets none. A cancel saved in quiet hours (9pm to 5am Adelaide time) counts from 5am.
 
 ### Pick or confirm a make-up time, or a change
-If your tutor or CLG cancels a session, or CLG needs to change your tutor or time, a card shows at the top of the **Overview** (**Pick a make-up time**, **Confirm a make-up time** or **Please confirm a change**). Choose an answer, or say why it does not work. While a change is waiting, a session that does not go ahead is not counted as a missed session for you. CLG follows up and rebooks it, with no charge.
+If your tutor or CLG cancels a session, or CLG needs to change your tutor or time, a card shows at the top of the **Overview** (**Pick a make-up time**, **Confirm a make-up time** or **Please confirm a change**). Choose an answer, or say why it does not work. If the change is still waiting 24 hr before a session, that session is cancelled, with no charge, and a **Session cancelled: please choose what happens** card shows. Choose **Confirm the change**, **Offer other times** or **Keep it cancelled**. You or your parent can answer. The first answer counts.
 
 ### Tell CLG which times suit, and for how long
 1. In **Sessions**, choose **Preferred times**. Tick the days and parts of the day that suit, then **Save preferences**.
