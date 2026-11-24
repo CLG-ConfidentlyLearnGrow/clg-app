@@ -75,7 +75,7 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 - **Children's Online Privacy Code (draft) and UK Age Appropriate Design Code**: collect only what the path needs, no public leaderboards, no stamp with contact details, high privacy by default.
 - **Copyright Act 1968**: CLG owns its materials; third-party content needs permission before students can open it.
 - **Anyone can buy it**: buyers who are not yet clients need a family account and must accept the family terms. Students under 16 do not have their own login, so a parent opens materials with them.
-- **GST**: set the add-on's GST switch the way Carla decides in her finance project.
+- **GST** (Carla, 24 November 2026): GST follows the student, not the material. Two price items in the existing price list, each with its own GST setting: one GST-free for school students (Reception to Year 12), one with GST included for everyone else (for example adults, or later the Spanish modules). The invoice line uses the one that matches the student's year level.
 
 ## Choices waiting for Carla
 
@@ -83,4 +83,3 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 2. Per subject or all subjects (suggested per subject: $250 first, $150 each extra).
 3. Pass mark (suggested 80%, unlimited retries).
 4. Starting point (suggested placement quiz, tutor or admin can move).
-5. GST treatment.
