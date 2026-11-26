@@ -36,13 +36,21 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 - **Students can open this**: a tick on each material. Learning materials, worksheets, answers and quizzes in a path can be ticked; lesson plans stay tutor-only.
 - Subject and year level use the existing names ("Mathematics" for Reception to Year 10; "Mathematics: Essential, General, Methods, Specialist" for Years 11 and 12).
 
-## The step-by-step path
+## The step-by-step path (Carla, 26 November 2026)
 
-- Each subject and topic has ordered **sets**. A set holds a learning material (with worked examples) and a worksheet.
+- Every material is tagged to a **topic**. Carla will enter all topics for every subject currently tutored and tag each material.
+- Each subject and topic has ordered materials. Each material has a learning part (with worked examples), a worksheet and its own **interactive quiz**, marked by the app (multiple choice and short number answers).
 - The worksheet's **answers** open once the student says they have finished the worksheet, so they check their own work.
-- A short **quiz**, marked by the app (multiple choice and short number answers), unlocks the next set. Suggested pass mark 80%, unlimited retries, and a different order of questions each time.
-- **Where to start**: suggested short placement quiz for each subject. The student's tutor or an admin can move a student to another set.
-- Only the current set and finished sets open, which keeps the student focused and limits what can be shared.
+- A material counts as **completed only when the student scores 100%** on its quiz. Unlimited retries, with questions in a different order each time. Completing a material unlocks the next one.
+- **Where to start**: suggested short placement quiz for each subject. The student's tutor or an admin can move a student to another material.
+- Only the current material and completed materials open, which keeps the student focused and limits what can be shared.
+
+## Never running out: alerts and requests
+
+- A nightly check counts, for each student and topic, how many of the topic's published materials the student has completed.
+- At **75%** Carla gets an alert; at **90%** an urgent alert. Student Success Program students are listed first. Alerts show on the Home dashboard and in the end-of-day update. The two percentages are settings the owner can change at any time.
+- Families (and students with their own login) can **request more materials** for a topic. The request goes to admins with the student, subject, topic and how far through they are.
+- Wording in the app and the family terms: "**Unlimited\***" with the footnote "**\*New materials provided within 2 school days of request**". The footnote sits right next to the word wherever it appears (Australian Consumer Law: a qualification must be clear and close to the claim). Suggested meaning of "school days": Monday to Friday, not SA public holidays, counted the same way during school holidays.
 
 ## Protecting the materials
 
@@ -81,5 +89,5 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 
 1. Sibling discount (suggested 20% off each extra student).
 2. Per subject or all subjects (suggested per subject: $250 first, $150 each extra).
-3. Pass mark (suggested 80%, unlimited retries).
-4. Starting point (suggested placement quiz, tutor or admin can move).
+3. Starting point (suggested placement quiz, tutor or admin can move).
+4. Printing (options sent 26 November 2026; printing unchanged until Carla chooses).
