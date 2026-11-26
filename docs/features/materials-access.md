@@ -50,13 +50,14 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 - A nightly check counts, for each student and topic, how many of the topic's published materials the student has completed.
 - At **75%** Carla gets an alert; at **90%** an urgent alert. Student Success Program students are listed first. Alerts show on the Home dashboard and in the end-of-day update. The two percentages are settings the owner can change at any time.
 - Families (and students with their own login) can **request more materials** for a topic. The request goes to admins with the student, subject, topic and how far through they are.
-- Wording in the app and the family terms: "**Unlimited\***" with the footnote "**\*New materials provided within 2 school days of request**". The footnote sits right next to the word wherever it appears (Australian Consumer Law: a qualification must be clear and close to the claim). Suggested meaning of "school days": Monday to Friday, not SA public holidays, counted the same way during school holidays.
+- Wording in the app and the family terms: "**Unlimited\***" with the footnote "**\*New materials provided within 2 business days of request**". The footnote sits right next to the word wherever it appears (Australian Consumer Law: a qualification must be clear and close to the claim). "Business days" means Monday to Friday, not counting SA public holidays (Carla, 26 November 2026).
 
-## Protecting the materials
+## Protecting the materials (Carla, 26 November 2026)
 
-- No download button. Pages show inside the app. A Print button prints a copy stamped with the student's first name and a family code (no email, because many users are children).
-- Daily limit on different materials opened, and every open logged, as for tutors.
-- A photo of the screen cannot be prevented by any app. The stamp, the limit, the log and the path (only a small amount open at once) make copying unrewarding.
+- No download button. Pages show inside the app. A Print button prints a copy stamped on every page with the student's first name, a family code and the date (no email, because many users are children).
+- Every open and every print is logged, so admins can see unusual use. No print limit.
+- Answers and worked solutions are view only in the app: they cannot be printed. Quizzes are interactive in the app.
+- A photo of the screen cannot be prevented by any app. The stamp, the log and the path (only the current material open) make copying unrewarding without adding admin work.
 - Family terms need wording: materials are for the student's own use, not to be shared, copied or uploaded.
 
 ## What the evidence says
@@ -90,4 +91,3 @@ Builds on the materials library (`materials.md`, `materials in use` part), the a
 1. Sibling discount (suggested 20% off each extra student).
 2. Per subject or all subjects (suggested per subject: $250 first, $150 each extra).
 3. Starting point (suggested placement quiz, tutor or admin can move).
-4. Printing (options sent 26 November 2026; printing unchanged until Carla chooses).
